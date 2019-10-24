@@ -12,6 +12,7 @@
     using global::EventStore.ClientAPI.SystemData;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
+    using Shared.DomainDrivenDesign.EventSourcing;
 
     /// <summary>
     /// Delegate TraceHandler
