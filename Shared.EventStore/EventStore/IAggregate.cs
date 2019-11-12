@@ -37,5 +37,11 @@
         /// </summary>
         /// <returns></returns>
         String GetStreamName();
+
+        /// <summary>
+        /// Gets the aggregate metadata.
+        /// </summary>
+        /// <returns></returns>
+        Object GetAggregateMetadata();
     }
 }

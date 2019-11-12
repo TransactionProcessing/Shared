@@ -142,6 +142,19 @@
                           List<DomainEvent> aggregateEvents);
 
         /// <summary>
+        /// Inserts the events.
+        /// </summary>
+        /// <param name="streamName">Name of the stream.</param>
+        /// <param name="expectedVersion">The expected version.</param>
+        /// <param name="aggregateEvents">The aggregate events.</param>
+        /// <param name="metadata">The metadata.</param>
+        /// <returns></returns>
+        Task InsertEvents(String streamName,
+                          Int32 expectedVersion,
+                          List<DomainEvent> aggregateEvents,
+                          Object metadata);
+
+        /// <summary>
         /// Reads the events.
         /// </summary>
         /// <param name="streamName">Name of the stream.</param>

@@ -344,6 +344,21 @@
                                        Int32 expectedVersion,
                                        List<DomainEvent> aggregateEvents)
         {
+            await this.InsertEvents(streamName, expectedVersion, aggregateEvents, null);
+        }
+
+        /// <summary>
+        /// Inserts the events.
+        /// </summary>
+        /// <param name="streamName">Name of the stream.</param>
+        /// <param name="expectedVersion">The expected version.</param>
+        /// <param name="aggregateEvents">The aggregate events.</param>
+        /// <param name="metadata">The metadata.</param>
+        public async Task InsertEvents(String streamName,
+                                 Int32 expectedVersion,
+                                 List<DomainEvent> aggregateEvents,
+                                 Object metadata)
+        {
             List<EventData> eventData = new List<EventData>();
             JsonSerializerSettings s = new JsonSerializerSettings
                                        {
@@ -356,7 +371,9 @@
                                                                                domainEvent.GetType().FullName,
                                                                                true,
                                                                                Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainEvent, Formatting.None, s)),
-                                                                               null)));
+                                                                               metadata == null
+                                                                                   ? null
+                                                                                   : Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(metadata, Formatting.None, s)))));
 
             await connection.AppendToStreamAsync(streamName, expectedVersion, eventData, this.UserCredentials);
         }

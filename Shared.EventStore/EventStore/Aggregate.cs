@@ -18,7 +18,8 @@
         /// </summary>
         /// <param name="aggregateId">The aggregate identifier.</param>
         /// <param name="version">The version.</param>
-        protected Aggregate(Guid aggregateId, Int32 version)
+        protected Aggregate(Guid aggregateId,
+                            Int32 version)
         {
             this.AggregateId = aggregateId;
             this.Version = version;
@@ -66,9 +67,8 @@
 
         #endregion
 
-        #region Public Methods
+        #region Methods
 
-        #region public void Apply(DomainEvent historicEvent)        
         /// <summary>
         /// Applies the specified historic event.
         /// </summary>
@@ -91,9 +91,7 @@
             // Add this to the historic events
             this.EventHistory.Add(historicEvent);
         }
-        #endregion
 
-        #region public List<DomainEvent> GetPendingEvents()
         /// <summary>
         /// Gets the pending events.
         /// </summary>
@@ -102,24 +100,16 @@
         {
             return this.PendingEvents;
         }
-        #endregion
 
-        #region public virtual String GetStreamName()
         /// <summary>
         /// Gets the name of the stream.
         /// </summary>
         /// <returns></returns>
         public virtual String GetStreamName()
         {
-            return $"{this.GetType().Name}-{this.AggregateId.ToString().Replace("-", String.Empty)}";
+            return $"{this.GetType().Name}-{this.AggregateId.ToString().Replace("-", string.Empty)}";
         }
-        #endregion
 
-        #endregion
-
-        #region Protected Methods
-
-        #region protected void ApplyAndPend(DomainEvent domainEvent)
         /// <summary>
         /// Applies the and pend.
         /// </summary>
@@ -138,30 +128,22 @@
             // Add the event to pending events
             this.PendingEvents.Add(domainEvent);
         }
-        #endregion
 
-        #region protected virtual void Initialise()
+        protected abstract Object GetMetadata();
+
         /// <summary>
         /// Initialises this instance.
         /// </summary>
         protected virtual void Initialise()
         {
         }
-        #endregion
 
-        #region protected abstract void PlayEvent(DomainEvent domainEvent);
         /// <summary>
         /// Plays the event.
         /// </summary>
         /// <param name="domainEvent">The domain event.</param>
         protected abstract void PlayEvent(DomainEvent domainEvent);
-        #endregion
 
-        #endregion
-
-        #region Private Methods
-
-        #region private void BaseInitialise()
         /// <summary>
         /// Bases the initialise.
         /// </summary>
@@ -174,9 +156,12 @@
             // Call any init needing done by inherited classes
             this.Initialise();
         }
-        #endregion
 
-        #region private Boolean IsEventDuplicate(DomainEvent domainEvent)
+        public Object GetAggregateMetadata()
+        {
+            return this.GetAggregateMetadata();
+        }
+
         /// <summary>
         /// Determines whether [is event duplicate] [the specified domain event].
         /// </summary>
@@ -198,7 +183,6 @@
 
             return false;
         }
-        #endregion
 
         #endregion
     }
