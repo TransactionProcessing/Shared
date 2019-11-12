@@ -121,8 +121,10 @@
 
             String streamName = this.GetStreamName(aggregate.AggregateId);
 
+            Object aggregateMetadata = aggregate.GetAggregateMetadata();
+
             //TODO: duplicate Aggregate Exception handling
-            await this.Context.InsertEvents(streamName, aggregate.Version, pendingEvents);
+            await this.Context.InsertEvents(streamName, aggregate.Version, pendingEvents, aggregateMetadata);
         }
         #endregion
 
