@@ -159,7 +159,7 @@
 
         public Object GetAggregateMetadata()
         {
-            return this.GetAggregateMetadata();
+            return this.GetMetadata();
         }
 
         /// <summary>
