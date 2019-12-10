@@ -1,35 +1,23 @@
 ﻿namespace Shared.Logger
 {
     using System;
-    using System.Data;
-    using NLog;
+    using Microsoft.Extensions.Logging;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <seealso cref="Shared.Logger.ILogger" />
-    public class NlogLogger : ILogger
+    public class MicrosoftLogger : ILogger
     {
-        /// <summary>
-        /// The scenario name
-        /// </summary>
-        private String FileName;
-
         /// <summary>
         /// The logger object
         /// </summary>
-        private NLog.Logger LoggerObject;
+        private Microsoft.Extensions.Logging.ILogger LoggerObject;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Shared.Logger" /> class.
         /// </summary>
         /// <param name="loggerObject">The logger object.</param>
         /// <param name="fileName">Name of the scenario.</param>
-        public void Initialise(NLog.Logger loggerObject,
-                               String fileName)
+        public void Initialise(Microsoft.Extensions.Logging.ILogger loggerObject)
         {
             this.LoggerObject = loggerObject;
-            this.FileName = fileName;
             this.IsInitialised = true;
         }
 
@@ -47,7 +35,7 @@
         /// <param name="exception">The exception.</param>
         public void LogCritical(Exception exception)
         {
-            this.LogMessage(NLog.LogLevel.Fatal, exception.Message, exception);
+            this.LogMessage(LogLevel.Critical, exception.Message, exception);
         }
 
         /// <summary>
@@ -56,7 +44,7 @@
         /// <param name="message">The message.</param>
         public void LogDebug(String message)
         {
-            this.LogMessage(NLog.LogLevel.Debug, message);
+            this.LogMessage(LogLevel.Debug, message);
         }
 
         /// <summary>
@@ -65,7 +53,7 @@
         /// <param name="exception">The exception.</param>
         public void LogError(Exception exception)
         {
-            this.LogMessage(NLog.LogLevel.Error, exception.Message, exception);
+            this.LogMessage(LogLevel.Error, exception.Message, exception);
         }
 
         /// <summary>
@@ -74,7 +62,7 @@
         /// <param name="message">The message.</param>
         public void LogInformation(String message)
         {
-            this.LogMessage(NLog.LogLevel.Info, message);
+            this.LogMessage(LogLevel.Information, message);
         }
 
         /// <summary>
@@ -83,7 +71,7 @@
         /// <param name="message">The message.</param>
         public void LogTrace(String message)
         {
-            this.LogMessage(NLog.LogLevel.Trace, message);
+            this.LogMessage(LogLevel.Trace, message);
         }
 
         /// <summary>
@@ -92,7 +80,7 @@
         /// <param name="message">The message.</param>
         public void LogWarning(String message)
         {
-            this.LogMessage(NLog.LogLevel.Warn, message);
+            this.LogMessage(LogLevel.Warning, message);
         }
 
         /// <summary>
@@ -102,15 +90,11 @@
         /// <param name="message">The message.</param>
         /// <param name="exception">The exception.</param>
         /// <exception cref="InvalidOperationException">LoggerObject has not been set</exception>
-        private void LogMessage(NLog.LogLevel logLevel, String message, Exception exception = null)
+        private void LogMessage(LogLevel logLevel, String message, Exception exception = null)
         {
             if (this.LoggerObject != null)
             {
-                LogEventInfo eventInfo = new LogEventInfo(logLevel, "Logger", message);
-                eventInfo.Exception = exception;
-                eventInfo.Properties["FileName"] = this.FileName;
-
-                this.LoggerObject.Log(eventInfo);
+                this.LoggerObject.Log(logLevel, new EventId(),message, exception, (state,ex) => message );
             }
             else
             {

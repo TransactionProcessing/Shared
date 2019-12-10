@@ -20,13 +20,7 @@ namespace Logging.Tests
 
             Logger.IsInitialised.ShouldBeTrue();
         }
-
-        [Fact]
-        public void Logger_Initialise_NullLogger_ErrorThrown()
-        {
-            Should.Throw<ArgumentNullException>(() => { Logger.Initialise(null); });
-        }
-
+        
         [Theory]
         [InlineData(LogLevel.Critical)]
         [InlineData(LogLevel.Debug)]

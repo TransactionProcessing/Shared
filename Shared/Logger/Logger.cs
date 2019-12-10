@@ -43,6 +43,13 @@
             Logger.Initialise(logger);
         }
 
+        public static void Initialise(Microsoft.Extensions.Logging.ILogger loggerObject)
+        {
+            MicrosoftLogger logger = new MicrosoftLogger();
+            logger.Initialise(loggerObject);
+            Logger.Initialise(logger);
+        }
+
         /// <summary>
         /// Initialises the specified logger object.
         /// </summary>
