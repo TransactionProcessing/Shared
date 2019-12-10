@@ -55,7 +55,7 @@ namespace Shared.Middleware
                 logMessage.Append(" ");
                 logMessage.Append($"Body: {responseBody}");
             }
-            Logger.LogInformation(logMessage.ToString());
+            Logger.Logger.LogInformation(logMessage.ToString());
             
             responseBodyStream.Seek(0, SeekOrigin.Begin);
             await responseBodyStream.CopyToAsync(bodyStream);

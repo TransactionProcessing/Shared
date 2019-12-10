@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shared.General;
 using Shouldly;
@@ -9,6 +8,8 @@ using Xunit;
 
 namespace Logging.Tests
 {
+    using Shared.Logger;
+
     public class LoggingTests
     {
         [Fact]

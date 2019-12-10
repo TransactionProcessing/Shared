@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Newtonsoft.Json;
 using Shared.Exceptions;
-using Shared.General;
 
 namespace Shared.Middleware
 {
@@ -72,12 +71,12 @@ namespace Shared.Middleware
                 new Exception(
                     $"An unhandled exception has occurred while executing the request. Url: {context.Request.GetDisplayUrl()}",
                     exception);
-            Logger.LogError(newException);
+            Logger.Logger.LogError(newException);
 
             // Set some defaults
-            var response = context.Response;
-            var statusCode = HttpStatusCode.InternalServerError;
-            var message = "Unexpected error";
+            HttpResponse response = context.Response;
+            HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
+            String message = "Unexpected error";
 
             if (exception is ArgumentException ||
                 exception is InvalidOperationException ||
