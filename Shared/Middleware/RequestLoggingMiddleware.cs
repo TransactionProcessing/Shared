@@ -56,7 +56,7 @@ namespace Shared.Middleware
                 logMessage.Append(" ");
                 logMessage.Append($"Body: {requestBodyText}");
             }
-            Logger.LogInformation(logMessage.ToString());
+            Logger.Logger.LogInformation(logMessage.ToString());
             requestBodyStream.Seek(0, SeekOrigin.Begin);
             context.Request.Body = requestBodyStream;
 

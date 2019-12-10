@@ -11,6 +11,7 @@ using Shared.General;
 using Shared.Middleware;
 using Shouldly;
 using Xunit;
+using NullLogger = Shared.Logger.NullLogger;
 
 namespace Shared.Tests
 {
@@ -21,7 +22,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_ArgumentNullExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new ArgumentNullException("TestParam",ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
@@ -40,7 +41,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_InvalidDataExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new InvalidDataException(ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
@@ -59,7 +60,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_InvalidOperationExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new InvalidOperationException(ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
@@ -78,7 +79,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_FormatExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new FormatException(ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
@@ -97,7 +98,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_NotSupportedExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new NotSupportedException(ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
@@ -116,7 +117,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_NotFoundExceptionThrown_NotFoundHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new NotFoundException(ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
@@ -135,7 +136,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_NotImplementedExceptionThrown_NotImplementedHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new NotImplementedException(ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
@@ -154,7 +155,7 @@ namespace Shared.Tests
         [Fact]
         public async void ExceptionHandlerMiddleware_OtherExceptionThrown_InternalServerErrorHttpStatusCodeReturned()
         {
-            Logger.Initialise(NullLogger.Instance);
+            Logger.Logger.Initialise(NullLogger.Instance);
             
             ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
                 throw new Exception(ExceptionHandlerMiddewareUnitTest.ExceptionMessage));
