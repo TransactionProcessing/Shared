@@ -183,9 +183,15 @@ namespace Shared.IntegrationTesting
         {
             logger.LogInformation("About to Start Transaction Processor ACL Container");
 
+            List<String> environmentVariables = new List<String>();
+            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorACLDockerPort}");
+
             ContainerBuilder transactionProcessorACLContainer = new Builder()
                                                                 .UseContainer()
                                                                 .WithName(containerName)
+                                                                .WithEnvironment(environmentVariables.ToArray())
                                                                 .UseImage(imageName)
                                                                 .ExposePort(DockerHelper.TransactionProcessorACLDockerPort)
                                                                 .UseNetwork(new List<INetworkService> { networkService }.ToArray())
