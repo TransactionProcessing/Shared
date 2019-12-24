@@ -198,7 +198,7 @@ namespace Shared.IntegrationTesting
             }
 
             // Now build and return the container                
-            IContainerService builtContainer = transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerHelper.TransactionProcessorDockerPort}/tcp", 30000);
+            IContainerService builtContainer = transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerHelper.TransactionProcessorACLDockerPort}/tcp", 30000);
 
             logger.LogInformation("Transaction Processor Container ACL Started");
 
