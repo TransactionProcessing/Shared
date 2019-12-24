@@ -52,8 +52,8 @@ namespace Shared.IntegrationTesting
             logger.LogInformation("About to Start Security Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"ServiceOptions:PublicOrigin=http://{containerName}:SecurityServiceDockerPort");
-            environmentVariables.Add($"ServiceOptions:IssuerUrl=http://{containerName}:SecurityServiceDockerPort");
+            environmentVariables.Add($"ServiceOptions:PublicOrigin=http://{containerName}:{SecurityServiceDockerPort}");
+            environmentVariables.Add($"ServiceOptions:IssuerUrl=http://{containerName}:{SecurityServiceDockerPort}");
             environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
             environmentVariables.Add("urls=http://*:5001");
 
