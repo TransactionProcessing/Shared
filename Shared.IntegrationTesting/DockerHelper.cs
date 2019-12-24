@@ -196,7 +196,7 @@ namespace Shared.IntegrationTesting
             return builtContainer;
         }
 
-        private static String StartMySqlContainerWithOpenConnection(String containerName, ILogger logger, String imageName,
+        public static String StartSqlContainerWithOpenConnection(String containerName, ILogger logger, String imageName,
                                                                     INetworkService networkService, String hostFolder,
                                                                     (String URL, String UserName, String Password)? dockerCredentials)
         {
