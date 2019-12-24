@@ -30,10 +30,19 @@ namespace Shared.IntegrationTesting
         public const Int32 EventStoreTcpDockerPort = 1113;
         public const Int32 EventStoreHttpDockerPort = 2113;
 
-        public static INetworkService SetupTestNetwork()
+        public static INetworkService SetupTestNetwork(String networkName=null, Boolean reuseIfExists=false)
         {
+            networkName = String.IsNullOrEmpty(networkName) ? $"testnetwork{Guid.NewGuid()}" : networkName;
+            
             // Build a network
-            return new Ductus.FluentDocker.Builders.Builder().UseNetwork($"testnetwork{Guid.NewGuid()}").Build();
+            NetworkBuilder networkService = new Ductus.FluentDocker.Builders.Builder().UseNetwork(networkName);
+
+            if (reuseIfExists)
+            {
+                networkService.ReuseIfExist();
+            }
+
+            return networkService.Build();
         }
 
         public static IContainerService SetupSecurityServiceContainer(String containerName, ILogger logger, String imageName, 
