@@ -32,6 +32,7 @@
         /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="securityServiceContainerName">Name of the security service container.</param>
         /// <param name="eventStoreContainerName">Name of the event store container.</param>
+        /// <param name="clientDetails">The client details.</param>
         /// <returns></returns>
         public static IContainerService SetupEstateManagementContainer(String containerName,
                                                                        ILogger logger,
@@ -40,7 +41,8 @@
                                                                        String hostFolder,
                                                                        (String URL, String UserName, String Password)? dockerCredentials,
                                                                        String securityServiceContainerName,
-                                                                       String eventStoreContainerName)
+                                                                       String eventStoreContainerName,
+                                                                       (String clientId, String clientSecret) clientDetails)
         {
             logger.LogInformation("About to Start Estate Management Container");
 
@@ -178,6 +180,7 @@
         /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="securityServiceContainerName">Name of the security service container.</param>
         /// <param name="transactionProcessorContainerName">Name of the transaction processor container.</param>
+        /// <param name="clientDetails">The client details.</param>
         /// <returns></returns>
         public static IContainerService SetupTransactionProcessorACLContainer(String containerName,
                                                                               ILogger logger,
@@ -186,7 +189,8 @@
                                                                               String hostFolder,
                                                                               (String URL, String UserName, String Password)? dockerCredentials,
                                                                               String securityServiceContainerName,
-                                                                              String transactionProcessorContainerName)
+                                                                              String transactionProcessorContainerName,
+                                                                              (String clientId, String clientSecret) clientDetails)
         {
             logger.LogInformation("About to Start Transaction Processor ACL Container");
 
@@ -195,6 +199,8 @@
             environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorACLDockerPort}");
             environmentVariables.Add($"AppSettings:TransactionProcessorApi=http://{transactionProcessorContainerName}:{DockerHelper.TransactionProcessorDockerPort}");
+            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
 
             ContainerBuilder transactionProcessorACLContainer = new Builder()
                                                                 .UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
@@ -229,6 +235,7 @@
         /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="securityServiceContainerName">Name of the security service container.</param>
         /// <param name="eventStoreContainerName">Name of the event store container.</param>
+        /// <param name="clientDetails">The client details.</param>
         /// <returns></returns>
         public static IContainerService SetupTransactionProcessorContainer(String containerName,
                                                                            ILogger logger,
@@ -237,7 +244,8 @@
                                                                            String hostFolder,
                                                                            (String URL, String UserName, String Password)? dockerCredentials,
                                                                            String securityServiceContainerName,
-                                                                           String eventStoreContainerName)
+                                                                           String eventStoreContainerName,
+                                                                           (String clientId, String clientSecret) clientDetails)
         {
             logger.LogInformation("About to Start Transaction Processor Container");
 
