@@ -14,8 +14,8 @@ namespace Shared.IntegrationTesting
     using Ductus.FluentDocker.Model.Builders;
     using Ductus.FluentDocker.Services;
     using Ductus.FluentDocker.Services.Extensions;
-    using Logger;
     using Microsoft.Data.SqlClient;
+    using Shared.General.Logger;
 
     public abstract class DockerHelper
     {
