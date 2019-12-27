@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Shared.General
+﻿namespace Shared.General.General
 {
+    using System;
+    using System.Linq;
+
     public static class Guard
     {
         #region Public Methods

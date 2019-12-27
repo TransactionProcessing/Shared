@@ -1,8 +1,8 @@
-﻿using System;
-using System.Runtime.Serialization;
-
-namespace Shared.Middleware
+﻿namespace Shared.General.Middleware
 {
+    using System;
+    using System.Runtime.Serialization;
+
     [DataContract(Name = "ErrorResponse")]
     public class ErrorResponse
     {
@@ -10,7 +10,7 @@ namespace Shared.Middleware
 
         public ErrorResponse(String message)
         {
-            Message = message;
+            this.Message = message;
         }
     }    
 }

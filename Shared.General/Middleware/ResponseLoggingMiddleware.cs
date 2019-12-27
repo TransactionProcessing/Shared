@@ -1,12 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Shared.General;
-
-namespace Shared.Middleware
+﻿namespace Shared.General.Middleware
 {
+    using System;
+    using System.IO;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Http;
+
     public class ResponseLoggingMiddleware
     {
         #region Fields
@@ -44,7 +43,7 @@ namespace Shared.Middleware
             var responseBodyStream = new MemoryStream();
             context.Response.Body = responseBodyStream;
 
-            await next(context);
+            await this.next(context);
 
             responseBodyStream.Seek(0, SeekOrigin.Begin);
             var responseBody = new StreamReader(responseBodyStream).ReadToEnd();

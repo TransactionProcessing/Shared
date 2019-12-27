@@ -1,4 +1,4 @@
-﻿namespace Shared.EntityFramework
+﻿namespace Shared.General.EntityFramework
 {
     using System;
     using System.Threading;

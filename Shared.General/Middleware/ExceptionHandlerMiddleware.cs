@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
-using Newtonsoft.Json;
-using Shared.Exceptions;
-
-namespace Shared.Middleware
+﻿namespace Shared.General.Middleware
 {
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Threading.Tasks;
+    using Exceptions;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Http.Extensions;
+    using Newtonsoft.Json;
+
     public class ExceptionHandlerMiddleware
     {
         #region Fields
@@ -45,11 +43,11 @@ namespace Shared.Middleware
         {
             try
             {
-                await next(context);
+                await this.next(context);
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(context, ex);
+                await this.HandleExceptionAsync(context, ex);
             }
         }
         #endregion

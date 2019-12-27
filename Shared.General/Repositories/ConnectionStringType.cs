@@ -1,4 +1,4 @@
-﻿namespace Shared.Repositories
+﻿namespace Shared.General.Repositories
 {
     public enum ConnectionStringType
     {

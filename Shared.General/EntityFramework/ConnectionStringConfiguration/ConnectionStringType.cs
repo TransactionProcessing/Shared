@@ -1,4 +1,4 @@
-﻿namespace Shared.EntityFramework.ConnectionStringConfiguration
+﻿namespace Shared.General.EntityFramework.ConnectionStringConfiguration
 {
     using System;
     using System.ComponentModel.DataAnnotations;

@@ -1,11 +1,11 @@
-﻿namespace Shared.Logger
+﻿namespace Shared.General.Logger
 {
     using System;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <seealso cref="Shared.Logger.ILogger" />
+    /// <seealso cref="ILogger" />
     public class NullLogger : ILogger
     {
         #region Properties

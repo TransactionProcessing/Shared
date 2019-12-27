@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Shared.Repositories
+﻿namespace Shared.General.Repositories
 {
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
 

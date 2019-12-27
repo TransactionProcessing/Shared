@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace Shared.Exceptions
+﻿namespace Shared.General.Exceptions
 {
+    using System;
+
     public class NotFoundException : Exception
     {
         /// <summary>

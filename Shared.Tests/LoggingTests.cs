@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Logging.Tests
 {
-    using Shared.Logger;
+    using Shared.General.Logger;
 
     public class LoggingTests
     {
