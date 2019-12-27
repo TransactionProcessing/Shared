@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29326.143
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{FF85F59D-BE70-438E-9A69-5CE7E50B2E0E}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.DomainDrivenDesign", "Shared.DomainDrivenDesign\Shared.DomainDrivenDesign.csproj", "{86E66E1F-9228-4561-99F7-EBEB3293E686}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1B484B1C-212E-4CF5-B666-213E9546E11C}"
@@ -15,9 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientProxyBase", "ClientPr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.EventStore", "Shared.EventStore\Shared.EventStore.csproj", "{F8B12FE9-13DC-413F-A80C-380DBBC81EA0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.IntegrationTesting", "Shared.IntegrationTesting\Shared.IntegrationTesting.csproj", "{E9172C3C-92CE-49A6-9DCA-AD9F0D69B1D1}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.General", "Shared.General\Shared.General.csproj", "{F9A20D6D-EC72-4E15-94CE-F218D2AFCBC0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.IntegrationTesting", "Shared.IntegrationTesting\Shared.IntegrationTesting.csproj", "{E9172C3C-92CE-49A6-9DCA-AD9F0D69B1D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +25,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FF85F59D-BE70-438E-9A69-5CE7E50B2E0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF85F59D-BE70-438E-9A69-5CE7E50B2E0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF85F59D-BE70-438E-9A69-5CE7E50B2E0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF85F59D-BE70-438E-9A69-5CE7E50B2E0E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{86E66E1F-9228-4561-99F7-EBEB3293E686}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{86E66E1F-9228-4561-99F7-EBEB3293E686}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86E66E1F-9228-4561-99F7-EBEB3293E686}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,21 +49,17 @@ Global
 		{E9172C3C-92CE-49A6-9DCA-AD9F0D69B1D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9172C3C-92CE-49A6-9DCA-AD9F0D69B1D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9172C3C-92CE-49A6-9DCA-AD9F0D69B1D1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F9A20D6D-EC72-4E15-94CE-F218D2AFCBC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F9A20D6D-EC72-4E15-94CE-F218D2AFCBC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F9A20D6D-EC72-4E15-94CE-F218D2AFCBC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F9A20D6D-EC72-4E15-94CE-F218D2AFCBC0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{FF85F59D-BE70-438E-9A69-5CE7E50B2E0E} = {1B484B1C-212E-4CF5-B666-213E9546E11C}
 		{86E66E1F-9228-4561-99F7-EBEB3293E686} = {1B484B1C-212E-4CF5-B666-213E9546E11C}
 		{051F583B-DCC3-4F00-BDB2-CD39A957439D} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
 		{5656F3EB-2562-42E6-81ED-0AE672D350C1} = {1B484B1C-212E-4CF5-B666-213E9546E11C}
 		{F8B12FE9-13DC-413F-A80C-380DBBC81EA0} = {1B484B1C-212E-4CF5-B666-213E9546E11C}
 		{E9172C3C-92CE-49A6-9DCA-AD9F0D69B1D1} = {1B484B1C-212E-4CF5-B666-213E9546E11C}
-		{F9A20D6D-EC72-4E15-94CE-F218D2AFCBC0} = {1B484B1C-212E-4CF5-B666-213E9546E11C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {34032CEC-68CD-41EA-8707-D450689AEA46}
