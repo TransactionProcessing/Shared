@@ -1,8 +1,10 @@
-﻿namespace Shared.General.EntityFramework.ConnectionStringConfiguration
-{
-    using System;
-    using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
+namespace Shared.EntityFramework.ConnectionStringConfiguration
+{
     public class ConnectionStringConfigurationContext : DbContext
     {
         #region Fields

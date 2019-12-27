@@ -1,4 +1,4 @@
-﻿namespace Shared.General.Logger
+﻿namespace Shared.Logger
 {
     using System;
 

@@ -1,7 +1,10 @@
-﻿namespace Shared.General.EntityFramework.ConnectionStringConfiguration
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+
+namespace Shared.EntityFramework.ConnectionStringConfiguration
 {
-    using System;
-    using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
 
     public class ConnectionStringConfiguration
@@ -39,7 +42,7 @@
         /// <value>
         /// The type of the connection string.
         /// </value>
-        [ForeignKey(nameof(ConnectionStringConfiguration.ConnectionStringTypeId))]
+        [ForeignKey(nameof(ConnectionStringTypeId))]
         public virtual ConnectionStringType ConnectionStringType { get; set; }
 
 

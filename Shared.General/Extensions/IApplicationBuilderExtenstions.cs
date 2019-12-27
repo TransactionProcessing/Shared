@@ -1,7 +1,11 @@
-﻿namespace Shared.General.Extensions
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Shared.Middleware;
+
+namespace Shared.Extensions
 {
     using Microsoft.AspNetCore.Builder;
-    using Middleware;
 
     public static class IApplicationBuilderExtenstions
     {

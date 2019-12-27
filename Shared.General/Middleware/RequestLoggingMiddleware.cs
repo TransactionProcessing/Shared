@@ -1,12 +1,14 @@
-﻿namespace Shared.General.Middleware
-{
-    using System;
-    using System.IO;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Http.Extensions;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Shared.General;
 
+namespace Shared.Middleware
+{
     public class RequestLoggingMiddleware
     {
         #region Fields
@@ -58,7 +60,7 @@
             requestBodyStream.Seek(0, SeekOrigin.Begin);
             context.Request.Body = requestBodyStream;
 
-            await this.next(context);
+            await next(context);
             context.Request.Body = originalRequestBody;
         }
         #endregion

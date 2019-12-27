@@ -5,7 +5,7 @@
     using System.Threading;
     using DomainDrivenDesign.EventStore;
     using Microsoft.Extensions.Logging;
-    using Shared.General.Repositories;
+    using Repositories;
 
     /// <summary>
     /// 

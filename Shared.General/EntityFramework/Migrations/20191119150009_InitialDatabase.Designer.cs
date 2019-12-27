@@ -5,11 +5,10 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Shared.EntityFramework.ConnectionStringConfiguration;
 
 namespace Shared.Migrations
 {
-    using General.EntityFramework.ConnectionStringConfiguration;
-
     [DbContext(typeof(ConnectionStringConfigurationContext))]
     [Migration("20191119150009_InitialDatabase")]
     partial class InitialDatabase

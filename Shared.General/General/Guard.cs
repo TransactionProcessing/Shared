@@ -1,8 +1,10 @@
-﻿namespace Shared.General.General
-{
-    using System;
-    using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
+namespace Shared.General
+{
     public static class Guard
     {
         #region Public Methods

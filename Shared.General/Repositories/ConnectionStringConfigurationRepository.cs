@@ -1,4 +1,4 @@
-﻿namespace Shared.General.Repositories
+﻿namespace Shared.Repositories
 {
     using System;
     using System.Threading;

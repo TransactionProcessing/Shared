@@ -1,12 +1,13 @@
-﻿namespace Shared.General.Logger
+﻿namespace Shared.Logger
 {
     using System;
+    using System.Data;
     using NLog;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <seealso cref="ILogger" />
+    /// <seealso cref="Shared.Logger.ILogger" />
     public class NlogLogger : ILogger
     {
         /// <summary>

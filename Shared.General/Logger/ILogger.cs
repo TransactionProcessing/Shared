@@ -1,6 +1,7 @@
-﻿namespace Shared.General.Logger
+﻿namespace Shared.Logger
 {
     using System;
+    using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
     /// <summary>
     /// 

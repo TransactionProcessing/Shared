@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Shared.General.General;
+using Shared.General;
 using Shouldly;
 using Xunit;
 

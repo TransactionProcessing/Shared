@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Shared.DomainDrivenDesign\Shared.DomainDrivenDesign.csproj" />
-    <ProjectReference Include="..\Shared.General\Shared.General.csproj" />
   </ItemGroup>
 
 </Project>

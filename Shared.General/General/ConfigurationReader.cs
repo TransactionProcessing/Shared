@@ -1,8 +1,10 @@
-﻿namespace Shared.General.General
-{
-    using System;
-    using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
+namespace Shared.General
+{
     public static class ConfigurationReader
     {
         #region Fields        
@@ -83,7 +85,7 @@
         /// <exception cref="ArgumentNullException">configurationRoot</exception>
         public static void Initialise(IConfigurationRoot configurationRoot)
         {
-            ConfigurationReader.ConfigurationRoot = configurationRoot ?? throw new ArgumentNullException(nameof(configurationRoot));
+            ConfigurationRoot = configurationRoot ?? throw new ArgumentNullException(nameof(configurationRoot));
             ConfigurationReader.IsInitialised = true;
         }
         #endregion

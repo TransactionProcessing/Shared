@@ -1,8 +1,10 @@
-﻿namespace Shared.General.Extensions
-{
-    using System;
-    using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Newtonsoft.Json;
 
+namespace Shared.Extensions
+{
     public static class StringExtensions
     {
         #region public static Boolean TryParseJson<T>(this String obj, out T result)        
