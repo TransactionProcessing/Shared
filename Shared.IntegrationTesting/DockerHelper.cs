@@ -42,7 +42,8 @@
                                                                        (String URL, String UserName, String Password)? dockerCredentials,
                                                                        String securityServiceContainerName,
                                                                        String eventStoreContainerName,
-                                                                       (String clientId, String clientSecret) clientDetails)
+                                                                       (String clientId, String clientSecret) clientDetails,
+                                                                       Boolean forceLatestImage = false)
         {
             logger.LogInformation("About to Start Estate Management Container");
 
@@ -54,7 +55,7 @@
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateManagementDockerPort}");
 
             ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                      .UseImage(imageName).ExposePort(DockerHelper.EstateManagementDockerPort)
+                                                                      .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateManagementDockerPort)
                                                                       .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
 
             if (dockerCredentials.HasValue)
@@ -83,11 +84,12 @@
                                                                  ILogger logger,
                                                                  String imageName,
                                                                  INetworkService networkService,
-                                                                 String hostFolder)
+                                                                 String hostFolder,
+                                                                 Boolean forceLatestImage = false)
         {
             logger.LogInformation("About to Start Event Store Container");
 
-            IContainerService eventStoreContainer = new Builder().UseContainer().UseImage(imageName).ExposePort(DockerHelper.EventStoreHttpDockerPort)
+            IContainerService eventStoreContainer = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
                                                                  .ExposePort(DockerHelper.EventStoreTcpDockerPort).WithName(containerName)
                                                                  .WithEnvironment("EVENTSTORE_RUN_PROJECTIONS=all", "EVENTSTORE_START_STANDARD_PROJECTIONS=true")
                                                                  .UseNetwork(networkService).Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite).Build()
@@ -113,7 +115,8 @@
                                                                       String imageName,
                                                                       INetworkService networkService,
                                                                       String hostFolder,
-                                                                      (String URL, String UserName, String Password)? dockerCredentials)
+                                                                      (String URL, String UserName, String Password)? dockerCredentials,
+                                                                      Boolean forceLatestImage = false)
         {
             logger.LogInformation("About to Start Security Container");
 
@@ -124,7 +127,7 @@
             environmentVariables.Add("urls=http://*:5001");
 
             ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(containerName)
-                                                                     .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName)
+                                                                     .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                      .ExposePort(DockerHelper.SecurityServiceDockerPort).UseNetwork(new List<INetworkService>
                                                                                                                                     {
                                                                                                                                         networkService
@@ -190,7 +193,8 @@
                                                                               (String URL, String UserName, String Password)? dockerCredentials,
                                                                               String securityServiceContainerName,
                                                                               String transactionProcessorContainerName,
-                                                                              (String clientId, String clientSecret) clientDetails)
+                                                                              (String clientId, String clientSecret) clientDetails,
+                                                                              Boolean forceLatestImage = false)
         {
             logger.LogInformation("About to Start Transaction Processor ACL Container");
 
@@ -204,7 +208,7 @@
 
             ContainerBuilder transactionProcessorACLContainer = new Builder()
                                                                 .UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                .UseImage(imageName).ExposePort(DockerHelper.TransactionProcessorACLDockerPort)
+                                                                .UseImage(imageName,forceLatestImage).ExposePort(DockerHelper.TransactionProcessorACLDockerPort)
                                                                 .UseNetwork(new List<INetworkService>
                                                                             {
                                                                                 networkService
@@ -245,7 +249,8 @@
                                                                            (String URL, String UserName, String Password)? dockerCredentials,
                                                                            String securityServiceContainerName,
                                                                            String eventStoreContainerName,
-                                                                           (String clientId, String clientSecret) clientDetails)
+                                                                           (String clientId, String clientSecret) clientDetails,
+                                                                           Boolean forceLatestImage = false)
         {
             logger.LogInformation("About to Start Transaction Processor Container");
 
@@ -255,9 +260,11 @@
             environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
             environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorDockerPort}");
+            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
 
             ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                          .UseImage(imageName).ExposePort(DockerHelper.TransactionProcessorDockerPort)
+                                                                          .UseImage(imageName,forceLatestImage).ExposePort(DockerHelper.TransactionProcessorDockerPort)
                                                                           .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
 
             if (dockerCredentials.HasValue)
