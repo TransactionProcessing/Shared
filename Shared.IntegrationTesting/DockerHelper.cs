@@ -43,15 +43,16 @@
                                                                        String securityServiceContainerName,
                                                                        String eventStoreContainerName,
                                                                        (String clientId, String clientSecret) clientDetails,
-                                                                       Boolean forceLatestImage = false)
+                                                                       Boolean forceLatestImage = false,
+                                                                       Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
         {
             logger.LogInformation("About to Start Estate Management Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables
                 .Add($"EventStoreSettings:ConnectionString=ConnectTo=tcp://admin:changeit@{eventStoreContainerName}:{DockerHelper.EventStoreTcpDockerPort};VerboseLogging=true;");
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateManagementDockerPort}");
 
             ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
@@ -194,13 +195,14 @@
                                                                               String securityServiceContainerName,
                                                                               String transactionProcessorContainerName,
                                                                               (String clientId, String clientSecret) clientDetails,
-                                                                              Boolean forceLatestImage = false)
+                                                                              Boolean forceLatestImage = false,
+                                                                              Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
         {
             logger.LogInformation("About to Start Transaction Processor ACL Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorACLDockerPort}");
             environmentVariables.Add($"AppSettings:TransactionProcessorApi=http://{transactionProcessorContainerName}:{DockerHelper.TransactionProcessorDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
@@ -251,16 +253,17 @@
                                                                            String estateManagementContainerName,
                                                                            String eventStoreContainerName,
                                                                            (String clientId, String clientSecret) clientDetails,
-                                                                           Boolean forceLatestImage = false)
+                                                                           Boolean forceLatestImage = false,
+                                                                           Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
         {
             logger.LogInformation("About to Start Transaction Processor Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables
                 .Add($"EventStoreSettings:ConnectionString=ConnectTo=tcp://admin:changeit@{eventStoreContainerName}:{DockerHelper.EventStoreTcpDockerPort};VerboseLogging=true;");
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"AppSettings:EstateManagementApi=http://{estateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
             environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
