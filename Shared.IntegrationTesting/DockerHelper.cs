@@ -471,7 +471,7 @@
                     connection.Open();
 
                     SqlCommand command = connection.CreateCommand();
-                    command.CommandText = "SELECT * FROM EventStoreServers";
+                    command.CommandText = "SELECT * FROM EventStoreServer";
                     command.ExecuteNonQuery();
 
                     logger.LogInformation("Connection Opened");
