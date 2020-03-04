@@ -439,7 +439,7 @@
         {
             logger.LogInformation("About to start SQL Server Container");
             IContainerService databaseServerContainer = new Builder().UseContainer().WithName(containerName).UseImage(imageName)
-                                                                     .WithEnvironment("ACCEPT_EULA=Y", "SA_PASSWORD={sqlPassword}").ExposePort(1433)
+                                                                     .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={sqlPassword}").ExposePort(1433)
                                                                      .UseNetwork(networkService).KeepContainer().KeepRunning().ReuseIfExists().Build().Start()
                                                                      .WaitForPort("1433/tcp", 30000);
 
@@ -471,7 +471,7 @@
                     connection.Open();
 
                     SqlCommand command = connection.CreateCommand();
-                    command.CommandText = "SELECT * FROM EventStoreServers";
+                    command.CommandText = "SELECT * FROM EventStoreServer";
                     command.ExecuteNonQuery();
 
                     logger.LogInformation("Connection Opened");
