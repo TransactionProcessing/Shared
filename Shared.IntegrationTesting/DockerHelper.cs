@@ -5,6 +5,7 @@
     using System.Data;
     using System.IO;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using Ductus.FluentDocker.Builders;
@@ -249,6 +250,7 @@
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:EventStoreServerId={eventStoreServerId}");
             environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables
                 .Add($"ConnectionStrings:SubscriptionService=\"server={sqlServerContainerName};user id={sqlServerUserName};password={sqlServerPassword};database=SubscriptionServiceConfiguration\"");
