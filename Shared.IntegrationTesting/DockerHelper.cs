@@ -45,6 +45,9 @@
                                                                        (String URL, String UserName, String Password)? dockerCredentials,
                                                                        String securityServiceContainerName,
                                                                        String eventStoreContainerName,
+                                                                       String sqlServerContainerName,
+                                                                       String sqlServerUserName,
+                                                                       String sqlServerPassword,
                                                                        (String clientId, String clientSecret) clientDetails,
                                                                        Boolean forceLatestImage = false,
                                                                        Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
@@ -57,6 +60,8 @@
             environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateManagementDockerPort}");
+            environmentVariables
+                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerContainerName};user id={sqlServerUserName};password={sqlServerPassword};database=EstateReportingReadModel\"");
 
             ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateManagementDockerPort)
