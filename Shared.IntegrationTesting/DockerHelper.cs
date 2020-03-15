@@ -63,6 +63,8 @@
             environmentVariables
                 .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerContainerName};user id={sqlServerUserName};password={sqlServerPassword};database=EstateReportingReadModel\"");
 
+
+
             ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateManagementDockerPort)
                                                                       .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
@@ -371,6 +373,7 @@
         /// <param name="estateManagementContainerName">Name of the estate management container.</param>
         /// <param name="eventStoreContainerName">Name of the event store container.</param>
         /// <param name="clientDetails">The client details.</param>
+        /// <param name="testhostContainerName">Name of the testhost container.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
         /// <returns></returns>
@@ -384,6 +387,7 @@
                                                                            String estateManagementContainerName,
                                                                            String eventStoreContainerName,
                                                                            (String clientId, String clientSecret) clientDetails,
+                                                                           String testhostContainerName,
                                                                            Boolean forceLatestImage = false,
                                                                            Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
         {
@@ -398,6 +402,8 @@
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
             environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+
+            environmentVariables.Add($"OperatorConfiguration:Safaricom:Url=http://{testhostContainerName}:9000/api/safaricom");
 
             ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                           .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TransactionProcessorDockerPort)
