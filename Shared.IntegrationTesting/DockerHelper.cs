@@ -3,9 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Data;
-    using System.IO;
     using System.Net;
-    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using Ductus.FluentDocker.Builders;
@@ -33,9 +31,11 @@
         /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="securityServiceContainerName">Name of the security service container.</param>
         /// <param name="eventStoreContainerName">Name of the event store container.</param>
+        /// <param name="sqlServerDetails">The SQL server details.</param>
         /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
         public static IContainerService SetupEstateManagementContainer(String containerName,
                                                                        ILogger logger,
@@ -45,12 +45,12 @@
                                                                        (String URL, String UserName, String Password)? dockerCredentials,
                                                                        String securityServiceContainerName,
                                                                        String eventStoreContainerName,
-                                                                       String sqlServerContainerName,
-                                                                       String sqlServerUserName,
-                                                                       String sqlServerPassword,
+                                                                       (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
+                                                                           sqlServerDetails,
                                                                        (String clientId, String clientSecret) clientDetails,
                                                                        Boolean forceLatestImage = false,
-                                                                       Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
+                                                                       Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                       List<String> additionalEnvironmentVariables = null)
         {
             logger.LogInformation("About to Start Estate Management Container");
 
@@ -61,9 +61,12 @@
             environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateManagementDockerPort}");
             environmentVariables
-                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerContainerName};user id={sqlServerUserName};password={sqlServerPassword};database=EstateReportingReadModel\"");
+                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
 
-
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
 
             ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateManagementDockerPort)
@@ -92,12 +95,11 @@
         /// <param name="hostFolder">The host folder.</param>
         /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="sqlServerContainerName">Name of the SQL server container.</param>
-        /// <param name="sqlServerUserName">Name of the SQL server user.</param>
-        /// <param name="sqlServerPassword">The SQL server password.</param>
+        /// <param name="sqlServerDetails">The SQL server details.</param>
         /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
         public static IContainerService SetupEstateReportingContainer(String containerName,
                                                                       ILogger logger,
@@ -106,12 +108,12 @@
                                                                       String hostFolder,
                                                                       (String URL, String UserName, String Password)? dockerCredentials,
                                                                       String securityServiceContainerName,
-                                                                      String sqlServerContainerName,
-                                                                      String sqlServerUserName,
-                                                                      String sqlServerPassword,
+                                                                      (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
+                                                                          sqlServerDetails,
                                                                       (String clientId, String clientSecret) clientDetails,
                                                                       Boolean forceLatestImage = false,
-                                                                      Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
+                                                                      Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                      List<String> additionalEnvironmentVariables = null)
         {
             logger.LogInformation("About to Start Estate Reporting Container");
 
@@ -120,7 +122,12 @@
             environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateReportingDockerPort}");
             environmentVariables
-                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerContainerName};user id={sqlServerUserName};password={sqlServerPassword};database=EstateReportingReadModel\"");
+                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
+
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
 
             ContainerBuilder estateReportingContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                      .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateReportingDockerPort)
@@ -179,6 +186,7 @@
         /// <param name="hostFolder">The host folder.</param>
         /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
         public static IContainerService SetupSecurityServiceContainer(String containerName,
                                                                       ILogger logger,
@@ -186,7 +194,8 @@
                                                                       INetworkService networkService,
                                                                       String hostFolder,
                                                                       (String URL, String UserName, String Password)? dockerCredentials,
-                                                                      Boolean forceLatestImage = false)
+                                                                      Boolean forceLatestImage = false,
+                                                                      List<String> additionalEnvironmentVariables = null)
         {
             logger.LogInformation("About to Start Security Container");
 
@@ -195,6 +204,11 @@
             environmentVariables.Add($"ServiceOptions:IssuerUrl=http://{containerName}:{DockerHelper.SecurityServiceDockerPort}");
             environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
             environmentVariables.Add("urls=http://*:5001");
+
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
 
             ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(containerName)
                                                                      .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
@@ -230,13 +244,12 @@
         /// <param name="hostFolder">The host folder.</param>
         /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="sqlServerContainerName">Name of the SQL server container.</param>
-        /// <param name="sqlServerUserName">Name of the SQL server user.</param>
-        /// <param name="sqlServerPassword">The SQL server password.</param>
+        /// <param name="sqlServerDetails">The SQL server details.</param>
         /// <param name="eventStoreServerId">The event store server identifier.</param>
         /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
         public static IContainerService SetupSubscriptionServiceContainer(String containerName,
                                                                           ILogger logger,
@@ -245,13 +258,13 @@
                                                                           String hostFolder,
                                                                           (String URL, String UserName, String Password)? dockerCredentials,
                                                                           String securityServiceContainerName,
-                                                                          String sqlServerContainerName,
-                                                                          String sqlServerUserName,
-                                                                          String sqlServerPassword,
+                                                                          (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
+                                                                              sqlServerDetails,
                                                                           Guid eventStoreServerId,
                                                                           (String clientId, String clientSecret) clientDetails,
                                                                           Boolean forceLatestImage = false,
-                                                                          Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
+                                                                          Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                          List<String> additionalEnvironmentVariables = null)
         {
             logger.LogInformation("About to Start Subscription Service Container");
 
@@ -260,7 +273,12 @@
             environmentVariables.Add($"AppSettings:EventStoreServerId={eventStoreServerId}");
             environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables
-                .Add($"ConnectionStrings:SubscriptionService=\"server={sqlServerContainerName};user id={sqlServerUserName};password={sqlServerPassword};database=SubscriptionServiceConfiguration\"");
+                .Add($"ConnectionStrings:SubscriptionService=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=SubscriptionServiceConfiguration\"");
+
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
 
             ContainerBuilder subscriptionServiceContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                          .UseImage(imageName, forceLatestImage).UseNetwork(networkServices.ToArray())
@@ -315,6 +333,7 @@
         /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
         public static IContainerService SetupTransactionProcessorACLContainer(String containerName,
                                                                               ILogger logger,
@@ -326,7 +345,8 @@
                                                                               String transactionProcessorContainerName,
                                                                               (String clientId, String clientSecret) clientDetails,
                                                                               Boolean forceLatestImage = false,
-                                                                              Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
+                                                                              Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                              List<String> additionalEnvironmentVariables = null)
         {
             logger.LogInformation("About to Start Transaction Processor ACL Container");
 
@@ -337,6 +357,11 @@
             environmentVariables.Add($"AppSettings:TransactionProcessorApi=http://{transactionProcessorContainerName}:{DockerHelper.TransactionProcessorDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
             environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
 
             ContainerBuilder transactionProcessorACLContainer = new Builder()
                                                                 .UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
@@ -376,6 +401,7 @@
         /// <param name="testhostContainerName">Name of the testhost container.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
         public static IContainerService SetupTransactionProcessorContainer(String containerName,
                                                                            ILogger logger,
@@ -389,7 +415,8 @@
                                                                            (String clientId, String clientSecret) clientDetails,
                                                                            String testhostContainerName,
                                                                            Boolean forceLatestImage = false,
-                                                                           Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
+                                                                           Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                           List<String> additionalEnvironmentVariables = null)
         {
             logger.LogInformation("About to Start Transaction Processor Container");
 
@@ -404,6 +431,11 @@
             environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
 
             environmentVariables.Add($"OperatorConfiguration:Safaricom:Url=http://{testhostContainerName}:9000/api/safaricom");
+
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
 
             ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                           .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TransactionProcessorDockerPort)
