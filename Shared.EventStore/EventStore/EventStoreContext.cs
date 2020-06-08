@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net;
     using System.Text;
     using System.Threading.Tasks;
@@ -10,6 +11,7 @@
     using global::EventStore.ClientAPI.Common.Log;
     using global::EventStore.ClientAPI.Projections;
     using global::EventStore.ClientAPI.SystemData;
+    using Microsoft.EntityFrameworkCore.Internal;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
     using Shared.DomainDrivenDesign.EventSourcing;
@@ -705,7 +707,22 @@
         /// <returns></returns>
         private ProjectionsManager CreateProjectionsManager()
         {
-            IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(this.EventStoreConnectionSettings.IpAddress), this.EventStoreConnectionSettings.HttpPort);
+            if (IPAddress.TryParse(this.EventStoreConnectionSettings.IpAddress, out IPAddress address) == false)
+            {
+                // Try a DNS resolve here
+                IPAddress[] addresses = Dns.GetHostAddresses(this.EventStoreConnectionSettings.IpAddress);
+
+                if (addresses.Any())
+                {
+                    address = addresses.First();
+                }
+                else
+                {
+                    throw new ArgumentException($"Unable to get IP address for Event Store Settings Config Value [{this.EventStoreConnectionSettings.IpAddress}]");
+                }
+            }
+
+            IPEndPoint endpoint = new IPEndPoint(address, this.EventStoreConnectionSettings.HttpPort);
 
             return new ProjectionsManager(new ConsoleLogger(), endpoint, TimeSpan.FromSeconds(30));
         }
