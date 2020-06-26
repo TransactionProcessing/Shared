@@ -1,7 +1,6 @@
 ﻿namespace Shared.EventStore.EventStore
 {
     using System;
-    using DomainDrivenDesign.EventStore;
 
     public class AggregateRepositoryManager : IAggregateRepositoryManager
     {

@@ -1,4 +1,4 @@
-﻿namespace Shared.DomainDrivenDesign.EventStore
+﻿namespace Shared.EventStore.EventStore
 {
     using System;
     using System.Threading;

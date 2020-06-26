@@ -1,11 +1,11 @@
-﻿namespace Shared.DomainDrivenDesign.EventStore
+﻿namespace Shared.EventStore.EventStore
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using EventSourcing;
+    using DomainDrivenDesign.EventSourcing;
 
     public sealed class AggregateRepository<T> : IAggregateRepository<T> where T : Aggregate, new()
     {
@@ -47,7 +47,7 @@
             T aggregate = default(T);
             String streamName = this.GetStreamName(aggregateId);
 
-            List<DomainEvent> domainEvents = await this.Context.ReadEvents(streamName, 0);
+            List<DomainEvent> domainEvents = await this.Context.ReadEvents(streamName, 0, cancellationToken);
 
             if ((domainEvents != null) && (domainEvents.Any()))
             {
@@ -80,7 +80,7 @@
             //TODO:
             T aggregate = default(T);
 
-            List<DomainEvent> domainEvents = await this.Context.ReadEvents(streamName, 0);
+            List<DomainEvent> domainEvents = await this.Context.ReadEvents(streamName, 0, cancellationToken);
 
             if ((domainEvents != null) && (domainEvents.Any()))
             {
@@ -124,7 +124,7 @@
             Object aggregateMetadata = aggregate.GetAggregateMetadata();
 
             //TODO: duplicate Aggregate Exception handling
-            await this.Context.InsertEvents(streamName, aggregate.Version, pendingEvents, aggregateMetadata);
+            await this.Context.InsertEvents(streamName, aggregate.Version, pendingEvents, aggregateMetadata, cancellationToken);
         }
         #endregion
 

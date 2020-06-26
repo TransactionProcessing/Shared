@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using DomainDrivenDesign.EventStore;
     using Microsoft.Extensions.Logging;
     using Repositories;
 
