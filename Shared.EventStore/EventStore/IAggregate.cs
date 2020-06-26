@@ -1,8 +1,8 @@
-﻿namespace Shared.DomainDrivenDesign.EventStore
+﻿namespace Shared.EventStore.EventStore
 {
     using System;
     using System.Collections.Generic;
-    using EventSourcing;
+    using DomainDrivenDesign.EventSourcing;
 
     public interface IAggregate
     {

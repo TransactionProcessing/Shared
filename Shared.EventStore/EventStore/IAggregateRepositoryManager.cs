@@ -4,8 +4,6 @@ using System.Text;
 
 namespace Shared.EventStore.EventStore
 {
-    using DomainDrivenDesign.EventStore;
-
     public interface IAggregateRepositoryManager
     {
         #region Methods

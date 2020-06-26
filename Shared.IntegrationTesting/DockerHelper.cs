@@ -155,21 +155,40 @@
         /// <param name="networkService">The network service.</param>
         /// <param name="hostFolder">The host folder.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
+        /// <param name="usesEventStore2006OrLater">if set to <c>true</c> [uses event store2006 or later].</param>
         /// <returns></returns>
         public static IContainerService SetupEventStoreContainer(String containerName,
                                                                  ILogger logger,
                                                                  String imageName,
                                                                  INetworkService networkService,
                                                                  String hostFolder,
-                                                                 Boolean forceLatestImage = false)
+                                                                 Boolean forceLatestImage = false,
+                                                                 Boolean usesEventStore2006OrLater = false)
         {
             logger.LogInformation("About to Start Event Store Container");
 
-            IContainerService eventStoreContainer = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
-                                                                 .ExposePort(DockerHelper.EventStoreTcpDockerPort).WithName(containerName)
-                                                                 .WithEnvironment("EVENTSTORE_RUN_PROJECTIONS=all", "EVENTSTORE_START_STANDARD_PROJECTIONS=true")
-                                                                 .UseNetwork(networkService).Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite).Build()
-                                                                 .Start().WaitForPort("2113/tcp", 30000);
+            List<String> environmentVariables = new List<String>();
+            environmentVariables.Add("EVENTSTORE_RUN_PROJECTIONS=all");
+            environmentVariables.Add("EVENTSTORE_START_STANDARD_PROJECTIONS=true");
+
+            // Add the development mode switch on ES versions >= 20.06 otherwise 
+            // SSL cerificate needed to run
+            if (usesEventStore2006OrLater)
+            {
+                environmentVariables.Add("EVENTSTORE_DEV=true");
+                environmentVariables.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true");
+            }
+
+            var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
+                                                          .WithName(containerName).WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService)
+                                                          .Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite);
+
+            if (usesEventStore2006OrLater == false)
+            {
+                eventStoreContainerBuilder = eventStoreContainerBuilder.ExposePort(DockerHelper.EventStoreTcpDockerPort);
+            }
+                                                                 
+            IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start().WaitForPort("2113/tcp", 30000);
 
             logger.LogInformation("Event Store Container Started");
 
