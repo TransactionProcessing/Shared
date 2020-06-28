@@ -154,7 +154,7 @@
                                                                                metadata == null
                                                                                    ? null
                                                                                    : Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(metadata, Formatting.None, s)))));
-
+            this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
             await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion), eventData, cancellationToken:cancellationToken);
         }
 
@@ -169,11 +169,14 @@
                                                         Int64 fromVersion,
                                                         CancellationToken cancellationToken)
         {
+            this.LogInformation($"About to read events from Stream {streamName} fromVersion is {fromVersion}");
+
             List<DomainEvent> domainEvents = new List<DomainEvent>();
             EventStoreClient.ReadStreamResult response;
             IAsyncEnumerator<ResolvedEvent> events;
             do
             {
+
                 response = this.EventStoreClient.ReadStreamAsync(Direction.Forwards,
                                                                  streamName,
                                                                  StreamPosition.FromInt64(fromVersion),
@@ -181,10 +184,19 @@
                                                                  resolveLinkTos:true,
                                                                  cancellationToken:cancellationToken);
 
+                // Check the read state
+                ReadState readState = await response.ReadState;
+
+                if (readState == ReadState.StreamNotFound)
+                {
+                    this.LogInformation($"Read State from Stream {streamName} is {readState}");
+                    return null;
+                }
+
                 events = response.GetAsyncEnumerator(cancellationToken);
-
+                
                 String serialisedData = Encoding.UTF8.GetString(events.Current.Event.Data.ToArray());
-
+                
                 JsonSerializerSettings s = new JsonSerializerSettings
                                            {
                                                TypeNameHandling = TypeNameHandling.All
@@ -194,6 +206,7 @@
                 domainEvents.Add(deserialized);
             } while (await events.MoveNextAsync(cancellationToken));
 
+            this.LogInformation($"About to return {domainEvents.Count} events from Stream {streamName}");
             return domainEvents;
         }
 
