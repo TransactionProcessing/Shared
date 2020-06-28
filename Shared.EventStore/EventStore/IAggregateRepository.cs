@@ -7,6 +7,11 @@
     public interface IAggregateRepository<T> where T : Aggregate, new()
     {
         /// <summary>
+        /// Occurs when trace is generated
+        /// </summary>
+        event TraceHandler TraceGenerated;
+        
+        /// <summary>
         /// Gets the latest version.
         /// </summary>
         /// <param name="aggregateId">The aggregate identifier.</param>
