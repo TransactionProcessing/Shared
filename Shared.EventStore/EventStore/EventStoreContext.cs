@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -173,14 +174,13 @@
 
             List<DomainEvent> domainEvents = new List<DomainEvent>();
             EventStoreClient.ReadStreamResult response;
-            IAsyncEnumerator<ResolvedEvent> events;
+            List<ResolvedEvent> events;
             do
             {
-
                 response = this.EventStoreClient.ReadStreamAsync(Direction.Forwards,
                                                                  streamName,
                                                                  StreamPosition.FromInt64(fromVersion),
-                                                                 10,
+                                                                 2,
                                                                  resolveLinkTos:true,
                                                                  cancellationToken:cancellationToken);
 
@@ -193,18 +193,24 @@
                     return null;
                 }
 
-                events = response.GetAsyncEnumerator(cancellationToken);
-                
-                String serialisedData = Encoding.UTF8.GetString(events.Current.Event.Data.ToArray());
-                
-                JsonSerializerSettings s = new JsonSerializerSettings
-                                           {
-                                               TypeNameHandling = TypeNameHandling.All
-                                           };
-                DomainEvent deserialized = JsonConvert.DeserializeObject<DomainEvent>(serialisedData, s);
+                events = await response.ToListAsync(cancellationToken);
 
-                domainEvents.Add(deserialized);
-            } while (await events.MoveNextAsync(cancellationToken));
+                foreach (ResolvedEvent resolvedEvent in events)
+                {
+                    String serialisedData = Encoding.UTF8.GetString(resolvedEvent.Event.Data.ToArray());
+
+                    JsonSerializerSettings s = new JsonSerializerSettings
+                                               {
+                                                   TypeNameHandling = TypeNameHandling.All
+                                               };
+                    DomainEvent deserialized = JsonConvert.DeserializeObject<DomainEvent>(serialisedData, s);
+
+                    domainEvents.Add(deserialized);
+                }
+                
+                fromVersion += events.Count;
+
+            } while (events.Any());
 
             this.LogInformation($"About to return {domainEvents.Count} events from Stream {streamName}");
             return domainEvents;
