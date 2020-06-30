@@ -176,6 +176,7 @@
             {
                 environmentVariables.Add("EVENTSTORE_DEV=true");
                 environmentVariables.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true");
+                environmentVariables.Add("EVENTSTORE_DISABLE_EXTERNAL_TCP_TLS=true");
             }
 
             var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage)
