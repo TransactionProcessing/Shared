@@ -178,15 +178,12 @@
                 environmentVariables.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true");
             }
 
-            var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
+            var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage)
+                                                          .ExposePort(DockerHelper.EventStoreHttpDockerPort)
+                                                          .ExposePort(DockerHelper.EventStoreTcpDockerPort)
                                                           .WithName(containerName).WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService)
                                                           .Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite);
-
-            if (usesEventStore2006OrLater == false)
-            {
-                eventStoreContainerBuilder = eventStoreContainerBuilder.ExposePort(DockerHelper.EventStoreTcpDockerPort);
-            }
-                                                                 
+            
             IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start().WaitForPort("2113/tcp", 30000);
 
             logger.LogInformation("Event Store Container Started");
