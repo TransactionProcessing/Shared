@@ -34,20 +34,22 @@ namespace Driver
             EventStoreProjectionManagementClient projectionManagementClient = new EventStoreProjectionManagementClient(settings);
             
             IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
-            IAggregateRepository<TestAggregate> aggregateRepository = new AggregateRepository<TestAggregate>(context);
+            //IAggregateRepository<TestAggregate> aggregateRepository = new AggregateRepository<TestAggregate>(context);
 
-            Guid aggregateId = Guid.NewGuid();
-            TestAggregate aggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
+            //Guid aggregateId = Guid.NewGuid();
+            //TestAggregate aggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
 
-            aggregate.SetAggregateName("Test Name");
-            aggregate.SetAggregateName("Test Name1");
-            aggregate.SetAggregateName("Test Name2");
-            aggregate.SetAggregateName("Test Name3");
-            aggregate.SetAggregateName("Test Name4");
+            //aggregate.SetAggregateName("Test Name");
+            //aggregate.SetAggregateName("Test Name1");
+            //aggregate.SetAggregateName("Test Name2");
+            //aggregate.SetAggregateName("Test Name3");
+            //aggregate.SetAggregateName("Test Name4");
 
-            await aggregateRepository.SaveChanges(aggregate, CancellationToken.None);
+            //await aggregateRepository.SaveChanges(aggregate, CancellationToken.None);
 
-            TestAggregate existingAggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
+            //TestAggregate existingAggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
+            Guid merchantId = Guid.Parse("df33bc12-ec69-4393-899d-e68305794d5d");
+            var x = await context.GetPartitionStateFromProjection("MerchantBalanceCalculator", $"MerchantBalanceHistory-{merchantId:N}", CancellationToken.None);
 
 
         }
