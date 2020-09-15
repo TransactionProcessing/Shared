@@ -188,11 +188,9 @@
                 environmentVariables.Add("EVENTSTORE_DISABLE_EXTERNAL_TCP_TLS=true");
             }
 
-            var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage)
-                                                          .ExposePort(DockerHelper.EventStoreHttpDockerPort)
-                                                          .ExposePort(DockerHelper.EventStoreTcpDockerPort)
-                                                          .WithName(containerName).WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService)
-                                                          .Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite);
+            var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
+                                                          .ExposePort(DockerHelper.EventStoreTcpDockerPort).WithName(containerName)
+                                                          .WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService);
 
             if (String.IsNullOrEmpty(hostFolder) == false)
             {
@@ -240,15 +238,12 @@
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(containerName)
-                                                                     .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
-                                                                     .ExposePort(DockerHelper.SecurityServiceDockerPort).UseNetwork(new List<INetworkService>
-                                                                                                                                    {
-                                                                                                                                        networkService
-                                                                                                                                    }.ToArray()).Mount(hostFolder,
-                                                                                                                                                       "/home/txnproc/trace",
-                                                                                                                                                       MountType
-                                                                                                                                                           .ReadWrite);
+            ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
+                                                                     .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.SecurityServiceDockerPort)
+                                                                     .UseNetwork(new List<INetworkService>
+                                                                                 {
+                                                                                     networkService
+                                                                                 }.ToArray());
 
             if (String.IsNullOrEmpty(hostFolder) == false)
             {
