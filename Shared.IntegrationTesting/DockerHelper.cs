@@ -69,7 +69,11 @@
 
             ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateManagementDockerPort)
-                                                                      .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+                                                                      .UseNetwork(networkServices.ToArray());
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                estateManagementContainer = estateManagementContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
 
             if (dockerCredentials.HasValue)
             {
@@ -130,7 +134,12 @@
 
             ContainerBuilder estateReportingContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                      .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateReportingDockerPort)
-                                                                     .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+                                                                     .UseNetwork(networkServices.ToArray());
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                estateReportingContainer = estateReportingContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
 
             if (dockerCredentials.HasValue)
             {
@@ -184,7 +193,12 @@
                                                           .ExposePort(DockerHelper.EventStoreTcpDockerPort)
                                                           .WithName(containerName).WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService)
                                                           .Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite);
-            
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                eventStoreContainerBuilder = eventStoreContainerBuilder.Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite);
+            }
+
             IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start().WaitForPort("2113/tcp", 30000);
 
             logger.LogInformation("Event Store Container Started");
@@ -235,6 +249,11 @@
                                                                                                                                                        "/home/txnproc/trace",
                                                                                                                                                        MountType
                                                                                                                                                            .ReadWrite);
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                securityServiceContainer = securityServiceContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
 
             if (dockerCredentials.HasValue)
             {
@@ -297,8 +316,12 @@
             }
 
             ContainerBuilder subscriptionServiceContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                         .UseImage(imageName, forceLatestImage).UseNetwork(networkServices.ToArray())
-                                                                         .Mount(hostFolder, "/home", MountType.ReadWrite);
+                                                                         .UseImage(imageName, forceLatestImage).UseNetwork(networkServices.ToArray());
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                subscriptionServiceContainer = subscriptionServiceContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
 
             if (dockerCredentials.HasValue)
             {
@@ -379,13 +402,18 @@
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder transactionProcessorACLContainer = new Builder()
-                                                                .UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TransactionProcessorACLDockerPort)
-                                                                .UseNetwork(new List<INetworkService>
-                                                                            {
-                                                                                networkService
-                                                                            }.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+            ContainerBuilder transactionProcessorACLContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
+                                                                             .UseImage(imageName, forceLatestImage)
+                                                                             .ExposePort(DockerHelper.TransactionProcessorACLDockerPort)
+                                                                             .UseNetwork(new List<INetworkService>
+                                                                                         {
+                                                                                             networkService
+                                                                                         }.ToArray());
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                transactionProcessorACLContainer = transactionProcessorACLContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
 
             if (dockerCredentials.HasValue)
             {
@@ -454,8 +482,12 @@
 
             ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                           .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TransactionProcessorDockerPort)
-                                                                          .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+                                                                          .UseNetwork(networkServices.ToArray());
 
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                transactionProcessorContainer = transactionProcessorContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
             if (dockerCredentials.HasValue)
             {
                 transactionProcessorContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
