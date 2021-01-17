@@ -21,6 +21,144 @@
         #region Methods
 
         /// <summary>
+        /// Setups the voucher management acl container.
+        /// </summary>
+        /// <param name="containerName">Name of the container.</param>
+        /// <param name="logger">The logger.</param>
+        /// <param name="imageName">Name of the image.</param>
+        /// <param name="networkServices">The network services.</param>
+        /// <param name="hostFolder">The host folder.</param>
+        /// <param name="dockerCredentials">The docker credentials.</param>
+        /// <param name="securityServiceContainerName">Name of the security service container.</param>
+        /// <param name="voucherManagementContainerName">Name of the voucher management container.</param>
+        /// <param name="clientDetails">The client details.</param>
+        /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
+        /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
+        /// <returns></returns>
+        public static IContainerService SetupVoucherManagementACLContainer(String containerName, ILogger logger, String imageName,
+                                                               List<INetworkService> networkServices,
+                                                               String hostFolder,
+                                                               (String URL, String UserName, String Password)? dockerCredentials,
+                                                               String securityServiceContainerName,
+                                                               String voucherManagementContainerName,
+                                                               (string clientId, string clientSecret) clientDetails,
+                                                               Boolean forceLatestImage = false,
+                                                               Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                               List<String> additionalEnvironmentVariables = null)
+        {
+            logger.LogInformation("About to Start Voucher Management ACL Container");
+
+            List<String> environmentVariables = new List<String>();
+            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{voucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"urls=http://*:{DockerHelper.VoucherManagementACLDockerPort}");
+            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
+
+            ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(containerName)
+                                                                       .WithEnvironment(environmentVariables.ToArray())
+                                                              .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementACLDockerPort)
+                                                              .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                voucherManagementAclContainer = voucherManagementAclContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
+
+            if (dockerCredentials.HasValue)
+            {
+                voucherManagementAclContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
+            }
+
+            // Now build and return the container                
+            IContainerService builtContainer = voucherManagementAclContainer.Build().Start().WaitForPort($"{DockerHelper.VoucherManagementACLDockerPort}/tcp", 30000);
+
+            logger.LogInformation("Voucher Management ACL Container Started");
+
+            return builtContainer;
+        }
+
+        /// <summary>
+        /// Setups the voucher management container.
+        /// </summary>
+        /// <param name="containerName">Name of the container.</param>
+        /// <param name="logger">The logger.</param>
+        /// <param name="imageName">Name of the image.</param>
+        /// <param name="networkServices">The network services.</param>
+        /// <param name="hostFolder">The host folder.</param>
+        /// <param name="dockerCredentials">The docker credentials.</param>
+        /// <param name="securityServiceContainerName">Name of the security service container.</param>
+        /// <param name="estateManagementContainerName">Name of the estate management container.</param>
+        /// <param name="eventStoreContainerName">Name of the event store container.</param>
+        /// <param name="sqlServerDetails">The SQL server details.</param>
+        /// <param name="clientDetails">The client details.</param>
+        /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
+        /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
+        /// <returns></returns>
+        public static IContainerService SetupVoucherManagementContainer(String containerName, ILogger logger, String imageName,
+                                                               List<INetworkService> networkServices,
+                                                               String hostFolder,
+                                                               (String URL, String UserName, String Password)? dockerCredentials,
+                                                               String securityServiceContainerName,
+                                                               String estateManagementContainerName,
+                                                               String eventStoreContainerName,
+                                                               (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
+                                                                   sqlServerDetails,
+                                                               (string clientId, string clientSecret) clientDetails,
+                                                               Boolean forceLatestImage = false,
+                                                               Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                               List<String> additionalEnvironmentVariables = null)
+        {
+            logger.LogInformation("About to Start Voucher Management Container");
+
+            List<String> environmentVariables = new List<String>();
+            environmentVariables.Add($"EventStoreSettings:ConnectionString=https://{eventStoreContainerName}:{DockerHelper.EventStoreHttpDockerPort}");
+            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:EstateManagementApi=http://{estateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"urls=http://*:{DockerHelper.VoucherManagementDockerPort}");
+            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+            environmentVariables
+                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
+
+            if (additionalEnvironmentVariables != null)
+            {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
+
+            ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(containerName)
+                                                                       .WithEnvironment(environmentVariables.ToArray())
+                                                              .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementDockerPort)
+                                                              .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                voucherManagementContainer = voucherManagementContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
+
+            if (dockerCredentials.HasValue)
+            {
+                voucherManagementContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
+            }
+
+            // Now build and return the container                
+            IContainerService builtContainer = voucherManagementContainer.Build().Start().WaitForPort($"{DockerHelper.VoucherManagementDockerPort}/tcp", 30000);
+
+            logger.LogInformation("Voucher Management  Container Started");
+
+            return builtContainer;
+        }
+
+        /// <summary>
         /// Setups the estate management container.
         /// </summary>
         /// <param name="containerName">Name of the container.</param>
@@ -630,6 +768,15 @@
         /// The transaction processor docker port
         /// </summary>
         public const Int32 TransactionProcessorDockerPort = 5002;
+
+        /// <summary>
+        /// The voucher management docker port
+        /// </summary>
+        public const Int32 VoucherManagementDockerPort = 5007;
+        /// <summary>
+        /// The voucher management acl docker port
+        /// </summary>
+        public const Int32 VoucherManagementACLDockerPort = 5008;
 
         #endregion
     }
