@@ -91,7 +91,7 @@
                                                                   String partitionId,
                                                                   CancellationToken cancellationToken)
         {
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, partitionId, cancellationToken:cancellationToken);
+            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, partitionId, cancellationToken: cancellationToken);
 
             return jsonElement.GetRawText();
         }
@@ -105,7 +105,7 @@
         public async Task<String> GetResultFromProjection(String projectionName,
                                                           CancellationToken cancellationToken)
         {
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, cancellationToken:cancellationToken);
+            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, cancellationToken: cancellationToken);
 
             return jsonElement.GetRawText();
         }
@@ -133,7 +133,7 @@
         /// <param name="cancellationToken">The cancellation token.</param>
         public async Task InsertEvents(String streamName,
                                        Int64 expectedVersion,
-                                       List<DomainEvent> aggregateEvents,
+                                       List<EventData> aggregateEvents,
                                        CancellationToken cancellationToken)
         {
             await this.InsertEvents(streamName, expectedVersion, aggregateEvents, null, cancellationToken);
@@ -149,24 +149,18 @@
         /// <param name="cancellationToken">The cancellation token.</param>
         public async Task InsertEvents(String streamName,
                                        Int64 expectedVersion,
-                                       List<DomainEvent> aggregateEvents,
+                                       List<EventData> aggregateEvents,
                                        Object metadata,
                                        CancellationToken cancellationToken)
         {
             List<EventData> eventData = new List<EventData>();
             JsonSerializerSettings s = new JsonSerializerSettings
-                                       {
-                                           TypeNameHandling = TypeNameHandling.All
-                                       };
+            {
+                TypeNameHandling = TypeNameHandling.All
+            };
 
-            aggregateEvents.ForEach(domainEvent => eventData.Add(new EventData(Uuid.FromGuid(domainEvent.EventId),
-                                                                               domainEvent.GetType().FullName,
-                                                                               Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainEvent, Formatting.None, s)),
-                                                                               metadata == null
-                                                                                   ? null
-                                                                                   : Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(metadata, Formatting.None, s)))));
             this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
-            await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion), eventData, cancellationToken:cancellationToken);
+            await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion), aggregateEvents.AsEnumerable(), cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -176,13 +170,13 @@
         /// <param name="fromVersion">From version.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        public async Task<List<DomainEvent>> ReadEvents(String streamName,
-                                                        Int64 fromVersion,
-                                                        CancellationToken cancellationToken)
+        public async Task<List<ResolvedEvent>> ReadEvents(String streamName,
+                                                                            Int64 fromVersion,
+                                                                            CancellationToken cancellationToken)
         {
             this.LogInformation($"About to read events from Stream {streamName} fromVersion is {fromVersion}");
 
-            List<DomainEvent> domainEvents = new List<DomainEvent>();
+            List<ResolvedEvent> resolvedEvents = new List<ResolvedEvent>();
             EventStoreClient.ReadStreamResult response;
             List<ResolvedEvent> events;
             do
@@ -191,8 +185,8 @@
                                                                  streamName,
                                                                  StreamPosition.FromInt64(fromVersion),
                                                                  2,
-                                                                 resolveLinkTos:true,
-                                                                 cancellationToken:cancellationToken);
+                                                                 resolveLinkTos: true,
+                                                                 cancellationToken: cancellationToken);
 
                 // Check the read state
                 ReadState readState = await response.ReadState;
@@ -205,25 +199,14 @@
 
                 events = await response.ToListAsync(cancellationToken);
 
-                foreach (ResolvedEvent resolvedEvent in events)
-                {
-                    String serialisedData = Encoding.UTF8.GetString(resolvedEvent.Event.Data.ToArray());
+                resolvedEvents.AddRange(events);
 
-                    JsonSerializerSettings s = new JsonSerializerSettings
-                                               {
-                                                   TypeNameHandling = TypeNameHandling.All
-                                               };
-                    DomainEvent deserialized = JsonConvert.DeserializeObject<DomainEvent>(serialisedData, s);
-
-                    domainEvents.Add(deserialized);
-                }
-                
                 fromVersion += events.Count;
 
             } while (events.Any());
 
-            this.LogInformation($"About to return {domainEvents.Count} events from Stream {streamName}");
-            return domainEvents;
+            this.LogInformation($"About to return {resolvedEvents.Count} events from Stream {streamName}");
+            return resolvedEvents;
         }
 
         private void LogDebug(String trace)

@@ -1,4 +1,4 @@
-﻿namespace Shared.EventStore.EventStore
+﻿namespace Shared.EventStore.Aggregate
 {
     using System;
     using System.Collections.Generic;

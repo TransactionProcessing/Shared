@@ -1,4 +1,4 @@
-﻿namespace Shared.EventStore.EventStore
+﻿namespace Shared.EventStore.Extensions
 {
     using System;
     using global::EventStore.Client;
