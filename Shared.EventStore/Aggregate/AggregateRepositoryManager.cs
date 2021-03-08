@@ -1,6 +1,8 @@
-﻿namespace Shared.EventStore.EventStore
+﻿namespace Shared.EventStore.Aggregate
 {
     using System;
+    using DomainDrivenDesign.EventSourcing;
+    using EventStore;
 
     public class AggregateRepositoryManager : IAggregateRepositoryManager
     {
@@ -34,11 +36,12 @@
         /// <typeparam name="T"></typeparam>
         /// <param name="identifier">The identifier.</param>
         /// <returns></returns>
-        public IAggregateRepository<T> GetAggregateRepository<T>(Guid identifier) where T : Aggregate, new()
+        public IAggregateRepository<TAggregate, TDomainEvent> GetAggregateRepository<TAggregate, TDomainEvent>(Guid identifier) where TAggregate : Aggregate, new()
+        where TDomainEvent : IDomainEvent
         {
             IEventStoreContext context = this.EventStoreContextManager.GetEventStoreContext(identifier.ToString());
 
-            return new AggregateRepository<T>(context);
+            return new AggregateRepository<TAggregate, TDomainEvent>(context);
         }
 
         #endregion

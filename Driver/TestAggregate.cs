@@ -6,6 +6,7 @@ namespace Driver
 {
     using Newtonsoft.Json;
     using Shared.DomainDrivenDesign.EventSourcing;
+    using Shared.EventStore.Aggregate;
     using Shared.EventStore.EventStore;
 
     public class TestAggregate : Aggregate
@@ -32,11 +33,11 @@ namespace Driver
             return null;
         }
 
-        protected override void PlayEvent(DomainEvent domainEvent)
+        public override void PlayEvent(IDomainEvent domainEvent)
         {
             this.PlayEvent((dynamic)domainEvent);
         }
-
+        
         public Object GetAggregateMetadata()
         {
             return null;
@@ -51,7 +52,7 @@ namespace Driver
         {
             AggregateNameSetEvent aggregateNameSetEvent = AggregateNameSetEvent.Create(this.AggregateId, aggregateName);
 
-            this.ApplyAndPend(aggregateNameSetEvent);
+            this.ApplyAndAppend(aggregateNameSetEvent);
         }
     }
 

@@ -1,7 +1,8 @@
-﻿namespace Shared.EventStore.EventStore
+﻿namespace Shared.EventStore.Extensions
 {
     using System;
     using System.Collections.Generic;
+    using EventStore;
     using global::EventStore.Client;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Diagnostics.HealthChecks;

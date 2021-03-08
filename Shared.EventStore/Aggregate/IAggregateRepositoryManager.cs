@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Shared.EventStore.EventStore
+﻿namespace Shared.EventStore.Aggregate
 {
+    using System;
+    using DomainDrivenDesign.EventSourcing;
+
     public interface IAggregateRepositoryManager
     {
         #region Methods
@@ -14,7 +13,9 @@ namespace Shared.EventStore.EventStore
         /// <typeparam name="T"></typeparam>
         /// <param name="identifier">The identifier.</param>
         /// <returns></returns>
-        IAggregateRepository<T> GetAggregateRepository<T>(Guid identifier) where T : Aggregate, new();
+        IAggregateRepository<TAggregate, TDomainEvent> GetAggregateRepository<TAggregate, TDomainEvent>(Guid identifier) where TAggregate : Aggregate, new()
+            where TDomainEvent : IDomainEvent;
+
 
         #endregion
     }

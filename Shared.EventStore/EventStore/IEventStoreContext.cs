@@ -5,6 +5,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using DomainDrivenDesign.EventSourcing;
+    using global::EventStore.Client;
 
     public interface IEventStoreContext
     {
@@ -69,7 +70,7 @@
         /// <returns></returns>
         Task InsertEvents(String streamName,
                           Int64 expectedVersion,
-                          List<DomainEvent> aggregateEvents,
+                          List<EventData> aggregateEvents,
                           CancellationToken cancellationToken);
 
         /// <summary>
@@ -83,7 +84,7 @@
         /// <returns></returns>
         Task InsertEvents(String streamName,
                           Int64 expectedVersion,
-                          List<DomainEvent> aggregateEvents,
+                          List<EventData> aggregateEvents,
                           Object metadata,
                           CancellationToken cancellationToken);
 
@@ -94,7 +95,7 @@
         /// <param name="fromVersion">From version.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        Task<List<DomainEvent>> ReadEvents(String streamName,
+        Task<List<ResolvedEvent>> ReadEvents(String streamName,
                                            Int64 fromVersion,
                                            CancellationToken cancellationToken);
 
