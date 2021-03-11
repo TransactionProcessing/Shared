@@ -64,9 +64,12 @@
             loggerFactory.ConfigureNLog(Path.Combine(env.ContentRootPath, nlogConfigFilename));
             loggerFactory.AddNLog();
 
-            Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger("MessagingService");
+            Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger("SubscriptionWorkerService");
 
-            Logger.Initialise(logger);
+            if (Logger.IsInitialised == false)
+            {
+                Logger.Initialise(logger);
+            }
 
             this.DomainEventHandlerResolver = domainEventHandlerResolver;
             this.PersistentSubscriptionsClient = persistentSubscriptionsClient;
