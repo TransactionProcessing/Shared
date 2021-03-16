@@ -188,18 +188,20 @@
         /// <returns></returns>
         private async Task<List<SubscriptionInformation>> GetSubscriptionsList(CancellationToken cancellationToken)
         {
-            List<SubscriptionInformation> subscriptionList = null;
+            List<SubscriptionInformation> subscriptionList = new List<SubscriptionInformation>();
             String requestUri = $"{ConfigurationReader.GetValue("EventStoreSettings", "ConnectionString")}/subscriptions";
-
-
+            
             HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
             HttpResponseMessage responseMessage = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
-
+            String responseData = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
             if (responseMessage.IsSuccessStatusCode)
             {
-                String responseData = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
                 subscriptionList = JsonConvert.DeserializeObject<List<SubscriptionInformation>>(responseData);
+            }
+            else
+            {
+                Logger.LogWarning($"Error getting subscription list from [{requestUri}] Http Status Code [{responseMessage.StatusCode}] Content [{responseData}]");
             }
 
             return subscriptionList;
