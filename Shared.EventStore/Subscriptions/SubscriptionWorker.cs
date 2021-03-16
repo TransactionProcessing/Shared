@@ -5,6 +5,8 @@
     using System.IO;
     using System.Linq;
     using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Aggregate;
@@ -190,8 +192,13 @@
         {
             List<SubscriptionInformation> subscriptionList = new List<SubscriptionInformation>();
             String requestUri = $"{ConfigurationReader.GetValue("EventStoreSettings", "ConnectionString")}/subscriptions";
-            
+
+            String username = ConfigurationReader.GetValue("EventStoreSettings", "UserName");
+            String password = ConfigurationReader.GetValue("EventStoreSettings", "Password");
+            String credentials = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(username + ":" + password));
+
             HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
 
             HttpResponseMessage responseMessage = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
             String responseData = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
