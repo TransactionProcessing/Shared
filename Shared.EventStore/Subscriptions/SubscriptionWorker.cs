@@ -11,6 +11,7 @@
     using System.Threading.Tasks;
     using Aggregate;
     using EventHandling;
+    using EventStore;
     using General;
     using global::EventStore.Client;
     using Logger;
@@ -42,6 +43,11 @@
         private readonly HttpClient HttpClient;
 
         /// <summary>
+        /// Occurs when trace is generated.
+        /// </summary>
+        public event TraceHandler TraceGenerated;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionWorker"/> class.
         /// </summary>
         /// <param name="loggerFactory">The logger factory.</param>
@@ -49,30 +55,10 @@
         /// <param name="domainEventHandlerResolver">The domain event handler resolver.</param>
         /// <param name="persistentSubscriptionsClient">The persistent subscriptions client.</param>
         /// <param name="httpClient">The HTTP client.</param>
-        public SubscriptionWorker(ILoggerFactory loggerFactory,
-                                  IWebHostEnvironment env,
-                                  IDomainEventHandlerResolver domainEventHandlerResolver,
+        public SubscriptionWorker(IDomainEventHandlerResolver domainEventHandlerResolver,
                                   EventStorePersistentSubscriptionsClient persistentSubscriptionsClient,
                                   HttpClient httpClient)
         {
-
-            String nlogConfigFilename = "nlog.config";
-
-            if (env.IsDevelopment())
-            {
-                nlogConfigFilename = $"nlog.{env.EnvironmentName}.config";
-            }
-
-            loggerFactory.ConfigureNLog(Path.Combine(env.ContentRootPath, nlogConfigFilename));
-            loggerFactory.AddNLog();
-
-            Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger("SubscriptionWorkerService");
-
-            if (Logger.IsInitialised == false)
-            {
-                Logger.Initialise(logger);
-            }
-
             this.DomainEventHandlerResolver = domainEventHandlerResolver;
             this.PersistentSubscriptionsClient = persistentSubscriptionsClient;
             this.HttpClient = httpClient;
@@ -115,7 +101,7 @@
 
             foreach (KeyValuePair<Type, String> type in TypeMap.Map)
             {
-                Logger.LogInformation($"Type name {type.Value} mapped to {type.Key.Name}");
+                this.LogInformation($"Type name {type.Value} mapped to {type.Key.Name}");
             }
 
             while (stoppingToken.IsCancellationRequested == false)
@@ -140,11 +126,11 @@
 
                     result = result.Where(r => subscriptionFilters.Contains(r.GroupName)).ToList();
 
-                    Logger.LogInformation($"{result.Count} subscriptions retrieved for Group Filter [{groupFilter}]");
+                    this.LogInformation($"{result.Count} subscriptions retrieved for Group Filter [{groupFilter}]");
 
                     foreach (var subscriptionDto in result)
                     {
-                        Logger.LogInformation($"Creating subscription {subscriptionDto.EventStreamId}-{subscriptionDto.GroupName}");
+                        this.LogInformation($"Creating subscription {subscriptionDto.EventStreamId}-{subscriptionDto.GroupName}");
 
                         PersistentSubscriptionDetails persistentSubscriptionDetails = new(subscriptionDto.EventStreamId, subscriptionDto.GroupName);
 
@@ -154,7 +140,7 @@
 
                         await subscription.ConnectToSubscription();
 
-                        Logger.LogInformation($"Created subscription {subscriptionDto.EventStreamId}-{subscriptionDto.GroupName}");
+                        this.LogInformation($"Created subscription {subscriptionDto.EventStreamId}-{subscriptionDto.GroupName}");
 
                         this.CurrentSubscriptions.Add(subscription);
                     }
@@ -163,13 +149,13 @@
 
                     if (removedCount > 0)
                     {
-                        Logger.LogWarning($"Removed {removedCount} subscriptions because SubscriptionDropped.");
+                        this.LogWarning($"Removed {removedCount} subscriptions because SubscriptionDropped.");
                         continue;
                     }
                 }
                 catch (Exception e)
                 {
-                    Logger.LogCritical(e);
+                    this.LogCritical(e);
                 }
 
                 String persistentSubscriptionPollingInSeconds = ConfigurationReader.GetValue("EventStoreSettings", "PersistentSubscriptionPollingInSeconds");
@@ -208,10 +194,66 @@
             }
             else
             {
-                Logger.LogWarning($"Error getting subscription list from [{requestUri}] Http Status Code [{responseMessage.StatusCode}] Content [{responseData}]");
+                this.LogWarning($"Error getting subscription list from [{requestUri}] Http Status Code [{responseMessage.StatusCode}] Content [{responseData}]");
             }
 
             return subscriptionList;
+        }
+
+        private void LogDebug(String trace)
+        {
+            if (this.TraceGenerated != null)
+            {
+                this.TraceGenerated(trace, LogLevel.Debug);
+            }
+        }
+
+        /// <summary>
+        /// Traces the specified exception.
+        /// </summary>
+        /// <param name="exception">The exception.</param>
+        private void LogError(Exception exception)
+        {
+            if (this.TraceGenerated != null)
+            {
+                this.TraceGenerated(exception.Message, LogLevel.Error);
+                if (exception.InnerException != null)
+                {
+                    this.LogError(exception.InnerException);
+                }
+            }
+        }
+
+        private void LogCritical(Exception exception)
+        {
+            if (this.TraceGenerated != null)
+            {
+                this.TraceGenerated(exception.Message, LogLevel.Critical);
+                if (exception.InnerException != null)
+                {
+                    this.LogCritical(exception.InnerException);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Traces the specified trace.
+        /// </summary>
+        /// <param name="trace">The trace.</param>
+        private void LogInformation(String trace)
+        {
+            if (this.TraceGenerated != null)
+            {
+                this.TraceGenerated(trace, LogLevel.Information);
+            }
+        }
+
+        private void LogWarning(String trace)
+        {
+            if (this.TraceGenerated != null)
+            {
+                this.TraceGenerated(trace, LogLevel.Warning);
+            }
         }
     }
 }
