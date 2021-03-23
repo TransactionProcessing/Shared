@@ -146,6 +146,13 @@ namespace Shared.EventStore.Subscriptions
         {
             try
             {
+                if (resolvedEvent.Event == null)
+                {
+                    // This indicates we have a gimpy event so just ignore it as nothing can be done :|
+                    await subscription.Ack(resolvedEvent);
+                    return;
+                }
+
                 if (resolvedEvent.Event.EventType.StartsWith("$"))
                 {
                     await subscription.Ack(resolvedEvent);
