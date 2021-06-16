@@ -52,7 +52,7 @@
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{voucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.VoucherManagementACLDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
             environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
@@ -109,10 +109,10 @@
             logger.LogInformation("About to Start Security Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"ServiceOptions:PublicOrigin=http://{containerName}:{DockerHelper.SecurityServiceDockerPort}");
-            environmentVariables.Add($"ServiceOptions:IssuerUrl=http://{containerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"ServiceOptions:PublicOrigin=https://{containerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"ServiceOptions:IssuerUrl=https://{containerName}:{DockerHelper.SecurityServiceDockerPort}");
             environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
-            environmentVariables.Add("urls=http://*:5001");
+            environmentVariables.Add("urls=https://*:5001");
 
             if (additionalEnvironmentVariables != null)
             {
@@ -199,8 +199,8 @@
             logger.LogInformation("About to Start Transaction Processor ACL Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorACLDockerPort}");
             environmentVariables.Add($"AppSettings:TransactionProcessorApi=http://{transactionProcessorContainerName}:{DockerHelper.TransactionProcessorDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
@@ -447,9 +447,9 @@
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreAddress}:{DockerHelper.EventStoreHttpDockerPort}");
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"AppSettings:EstateManagementApi=http://{estateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.VoucherManagementDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
             environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
@@ -520,8 +520,8 @@
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreAddress}:{DockerHelper.EventStoreHttpDockerPort}");
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateManagementDockerPort}");
             environmentVariables
                 .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
@@ -586,9 +586,9 @@
             logger.LogInformation("About to Start Estate Reporting Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreAddress}:{DockerHelper.EventStoreHttpDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateReportingDockerPort}");
             environmentVariables
                 .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
@@ -659,10 +659,10 @@
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreAddress}:{DockerHelper.EventStoreHttpDockerPort}");
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"AppSettings:EstateManagementApi=http://{estateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
             environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{voucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorDockerPort}");
             environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
             environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
@@ -746,8 +746,8 @@
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreAddress}:{DockerHelper.EventStoreHttpDockerPort}");
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.MessagingServiceDockerPort}");
             environmentVariables.Add("AppSettings:EmailProxy=Integration");
             environmentVariables.Add("AppSettings:SMSProxy=Integration");
