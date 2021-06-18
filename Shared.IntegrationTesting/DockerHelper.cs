@@ -50,7 +50,7 @@
             logger.LogInformation("About to Start Voucher Management ACL Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"AppSettings:SecurityService=http://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{voucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
             environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.VoucherManagementACLDockerPort}");
