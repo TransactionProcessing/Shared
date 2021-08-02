@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using Extensions;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Hosting;
@@ -25,6 +26,8 @@
         /// </value>
         public static IReadOnlyDictionary<String, String> DefaultAppSettings { get; } = new Dictionary<String, String>
                                                                                         {
+                                                                                            ["AppSettings:Test"] = "",
+                                                                                            ["AppSettings:Test1"] = null,
                                                                                             ["AppSettings:ClientId"] = "clientId",
                                                                                             ["AppSettings:ClientSecret"] = "Secret1",
                                                                                             ["EventStoreSettings:ConnectionString"] = "https://192.168.1.133:2113",
@@ -42,7 +45,7 @@
         [Fact]
         public void ConfigurationRootExtensions_LogConfiguration_ConfigurationIsLogged()
         {
-            IConfigurationBuilder builder = new ConfigurationBuilder().AddInMemoryCollection(ConfigurationRootExtensionsTests.DefaultAppSettings);
+            IConfigurationBuilder builder = new ConfigurationBuilder().AddInMemoryCollection(ConfigurationRootExtensionsTests.DefaultAppSettings).AddEnvironmentVariables();
 
             IConfigurationRoot configuration = builder.Build();
 
@@ -54,6 +57,7 @@
             String[] loggedEntries = testLogger.GetLogEntries();
             Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count + 6; // 3 blank lines & 3 headers
             loggedEntries.Length.ShouldBe(expectedCount);
+            loggedEntries.Where(l => l.Contains("No Value")).Count().ShouldBe(2);
         }
 
         /// <summary>
@@ -81,7 +85,7 @@
         [Fact]
         public void ConfigurationRootExtensions_LogConfiguration_NullAction_ErrorIsThrown()
         {
-            IConfigurationBuilder builder = new ConfigurationBuilder().AddInMemoryCollection(ConfigurationRootExtensionsTests.DefaultAppSettings);
+            IConfigurationBuilder builder = new ConfigurationBuilder().AddInMemoryCollection(ConfigurationRootExtensionsTests.DefaultAppSettings).AddEnvironmentVariables();
 
             IConfigurationRoot configuration = builder.Build();
 

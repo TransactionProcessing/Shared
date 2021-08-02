@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using General;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Hosting.Internal;
@@ -37,11 +38,22 @@
         {
             IEnumerable<IConfigurationSection> children = configSection.GetChildren();
 
-            loggerAction(string.Empty);
-            loggerAction($"Configuration Section: {configSection.Key}");
-            foreach (IConfigurationSection c in children)
+            if (children.Any())
             {
-                loggerAction($"Key: {c.Key}  Value: {c.Value}");
+                loggerAction(string.Empty);
+                loggerAction($"Configuration Section: {configSection.Key}");
+                foreach (IConfigurationSection c in children)
+                {
+                    if (String.IsNullOrEmpty(c.Value))
+                    {
+                        loggerAction($"Key: {c.Key}  Value: No Value");
+                    }
+                    else
+                    {
+                        loggerAction($"Key: {c.Key}  Value: {c.Value}");
+                    }
+                    
+                }
             }
         }
     }
