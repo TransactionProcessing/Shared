@@ -62,7 +62,7 @@
         [Fact]
         public void ConfigurationRootExtensions_LogConfiguration_NoConfiguration_NoConfigurationIsLogged()
         {
-            IConfigurationBuilder builder = new ConfigurationBuilder(); //.AddInMemoryCollection(DefaultAppSettings);
+            IConfigurationBuilder builder = new ConfigurationBuilder();
 
             IConfigurationRoot configuration = builder.Build();
 
@@ -85,7 +85,6 @@
 
             IConfigurationRoot configuration = builder.Build();
 
-            TestLogger testLogger = new TestLogger();
             Action<String> loggerAction = null;
 
             Should.Throw<ArgumentNullException>(() => { configuration.LogConfiguration(loggerAction); });
