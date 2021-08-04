@@ -754,7 +754,12 @@
 
             ContainerBuilder messagingServiceContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.MessagingServiceDockerPort)
-                                                                      .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+                                                                      .UseNetwork(networkServices.ToArray());//.Mount(hostFolder, "/home", MountType.ReadWrite);
+
+            if (String.IsNullOrEmpty(hostFolder) == false)
+            {
+                messagingServiceContainer = messagingServiceContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+            }
 
             if (dockerCredentials.HasValue)
             {
