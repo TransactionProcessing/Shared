@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
     using General;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Hosting.Internal;
@@ -25,7 +26,7 @@
             IEnumerable<IConfigurationSection> sections = configurationBuilder.GetChildren();
             foreach (IConfigurationSection configurationSection in sections)
             {
-                ConfigurationRootExtensions.LogConfigurationSettings(configurationSection, loggerAction);
+                ConfigurationRootExtensions.LogConfigurationSettings(configurationBuilder,configurationSection, loggerAction);
             }
         }
 
@@ -34,7 +35,7 @@
         /// </summary>
         /// <param name="configSection">The configuration section.</param>
         /// <param name="loggerAction">The logger action.</param>
-        private static void LogConfigurationSettings(IConfigurationSection configSection, Action<String> loggerAction)
+        private static void LogConfigurationSettings(IConfigurationRoot root, IConfigurationSection configSection, Action<String> loggerAction)
         {
             IEnumerable<IConfigurationSection> children = configSection.GetChildren();
 
@@ -44,17 +45,42 @@
                 loggerAction($"Configuration Section: {configSection.Key}");
                 foreach (IConfigurationSection c in children)
                 {
-                    if (String.IsNullOrEmpty(c.Value))
+                    if (c.Value == null)
                     {
-                        loggerAction($"Key: {c.Key}  Value: No Value");
+                        IEnumerable<KeyValuePair<String, String>> g = c.AsEnumerable().Where(k => k.Value!= null);
+                        StringBuilder sbValues = new StringBuilder();
+                        var stringToRemoveFromKey = $"{configSection.Key}:{c.Key}:";
+                        loggerAction($"\tConfiguration Section: {configSection.Key}:{c.Key}");
+                        foreach (KeyValuePair<String, String> keyValuePair in g)
+                        {
+                            loggerAction($"\t\tKey: {keyValuePair.Key.Replace(stringToRemoveFromKey,"")}  Value: {keyValuePair.Value}");
+                        }
+                        
                     }
                     else
                     {
-                        loggerAction($"Key: {c.Key}  Value: {c.Value}");
+                        loggerAction($"\tKey: {c.Key}  Value: {(c.Value == String.Empty? "No Value" : c.Value)}");
                     }
                     
                 }
             }
         }
+        //(string Value, IConfigurationProvider Provider) valueAndProvider = GetValueAndProvider(root, child.Path);
+        private static (string Value, IConfigurationProvider Provider) GetValueAndProvider(
+            IConfigurationRoot root,
+            string key)
+        {
+            foreach (IConfigurationProvider provider in root.Providers.Reverse())
+            {
+                if (provider.TryGet(key, out string value))
+                {
+                    return (value, provider);
+                }
+            }
+
+            return (null, null);
+        }
+
+
     }
 }
