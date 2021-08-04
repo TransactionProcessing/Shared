@@ -39,15 +39,7 @@
             ["AppSettings:EventHandlerConfiguration:ResponseReceivedFromSMSProviderEvent:0"] =
                                                                                                 "MessagingService.BusinessLogic.EventHandling.SMSDomainEventHandler, MessagingService.BusinessLogic"
         };
-
-        //public static IReadOnlyDictionary<String, String> DefaultAppSettings { get; } = new Dictionary<String, String>
-        //{
-        //    ["AppSettings:EventHandlerConfiguration:ResponseReceivedFromEmailProviderEvent:0"] =
-        //                                                                                        "MessagingService.BusinessLogic.EventHandling.EmailDomainEventHandler, MessagingService.BusinessLogic",
-        //    ["AppSettings:EventHandlerConfiguration:ResponseReceivedFromSMSProviderEvent:0"] =
-        //                                                                                        "MessagingService.BusinessLogic.EventHandling.SMSDomainEventHandler, MessagingService.BusinessLogic"
-        //};
-
+        
         #endregion
 
         #region Methods
@@ -108,10 +100,5 @@
         }
 
         #endregion
-    }
-
-    public class EventHandlerConfig
-    {
-        public List<Dictionary<String, String[]>> EventHandlerConfiguration;
     }
 }

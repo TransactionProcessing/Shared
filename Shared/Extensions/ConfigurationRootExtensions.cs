@@ -26,7 +26,7 @@
             IEnumerable<IConfigurationSection> sections = configurationBuilder.GetChildren();
             foreach (IConfigurationSection configurationSection in sections)
             {
-                ConfigurationRootExtensions.LogConfigurationSettings(configurationBuilder,configurationSection, loggerAction);
+                ConfigurationRootExtensions.LogConfigurationSettings(configurationSection, loggerAction);
             }
         }
 
@@ -35,7 +35,7 @@
         /// </summary>
         /// <param name="configSection">The configuration section.</param>
         /// <param name="loggerAction">The logger action.</param>
-        private static void LogConfigurationSettings(IConfigurationRoot root, IConfigurationSection configSection, Action<String> loggerAction)
+        private static void LogConfigurationSettings(IConfigurationSection configSection, Action<String> loggerAction)
         {
             IEnumerable<IConfigurationSection> children = configSection.GetChildren();
 
@@ -48,8 +48,7 @@
                     if (c.Value == null)
                     {
                         IEnumerable<KeyValuePair<String, String>> g = c.AsEnumerable().Where(k => k.Value!= null);
-                        StringBuilder sbValues = new StringBuilder();
-                        var stringToRemoveFromKey = $"{configSection.Key}:{c.Key}:";
+                        String stringToRemoveFromKey = $"{configSection.Key}:{c.Key}:";
                         loggerAction($"\tConfiguration Section: {configSection.Key}:{c.Key}");
                         foreach (KeyValuePair<String, String> keyValuePair in g)
                         {
@@ -65,22 +64,5 @@
                 }
             }
         }
-        //(string Value, IConfigurationProvider Provider) valueAndProvider = GetValueAndProvider(root, child.Path);
-        private static (string Value, IConfigurationProvider Provider) GetValueAndProvider(
-            IConfigurationRoot root,
-            string key)
-        {
-            foreach (IConfigurationProvider provider in root.Providers.Reverse())
-            {
-                if (provider.TryGet(key, out string value))
-                {
-                    return (value, provider);
-                }
-            }
-
-            return (null, null);
-        }
-
-
     }
 }
