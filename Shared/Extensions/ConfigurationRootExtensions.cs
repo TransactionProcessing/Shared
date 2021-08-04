@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
     using General;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Hosting.Internal;
@@ -44,13 +45,20 @@
                 loggerAction($"Configuration Section: {configSection.Key}");
                 foreach (IConfigurationSection c in children)
                 {
-                    if (String.IsNullOrEmpty(c.Value))
+                    if (c.Value == null)
                     {
-                        loggerAction($"Key: {c.Key}  Value: No Value");
+                        IEnumerable<KeyValuePair<String, String>> g = c.AsEnumerable().Where(k => k.Value!= null);
+                        String stringToRemoveFromKey = $"{configSection.Key}:{c.Key}:";
+                        loggerAction($"\tConfiguration Section: {configSection.Key}:{c.Key}");
+                        foreach (KeyValuePair<String, String> keyValuePair in g)
+                        {
+                            loggerAction($"\t\tKey: {keyValuePair.Key.Replace(stringToRemoveFromKey,"")}  Value: {keyValuePair.Value}");
+                        }
+                        
                     }
                     else
                     {
-                        loggerAction($"Key: {c.Key}  Value: {c.Value}");
+                        loggerAction($"\tKey: {c.Key}  Value: {(c.Value == String.Empty? "No Value" : c.Value)}");
                     }
                     
                 }
