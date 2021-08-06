@@ -462,7 +462,7 @@
             ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(containerName)
                                                                        .WithEnvironment(environmentVariables.ToArray())
                                                               .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementDockerPort)
-                                                              .UseNetwork(networkServices.ToArray())-;
+                                                              .UseNetwork(networkServices.ToArray());
 
             if (String.IsNullOrEmpty(hostFolder) == false)
             {
