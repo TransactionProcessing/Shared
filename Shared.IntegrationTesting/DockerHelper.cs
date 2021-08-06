@@ -62,11 +62,9 @@
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(containerName)
-                                                                       .WithEnvironment(environmentVariables.ToArray())
-                                                              .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementACLDockerPort)
-                                                              .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
-
+            ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
+                                                                          .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementACLDockerPort)
+                                                                          .UseNetwork(networkServices.ToArray());
             if (String.IsNullOrEmpty(hostFolder) == false)
             {
                 voucherManagementAclContainer = voucherManagementAclContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
@@ -464,7 +462,7 @@
             ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(containerName)
                                                                        .WithEnvironment(environmentVariables.ToArray())
                                                               .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementDockerPort)
-                                                              .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
+                                                              .UseNetwork(networkServices.ToArray());
 
             if (String.IsNullOrEmpty(hostFolder) == false)
             {
