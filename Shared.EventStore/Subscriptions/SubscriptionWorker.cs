@@ -97,6 +97,11 @@
         /// </returns>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            Boolean useInternalSubscriptionService = Boolean.Parse(ConfigurationReader.GetValue("UseInternalSubscriptionService"));
+
+            if (useInternalSubscriptionService == false)
+                return;
+
             TypeProvider.LoadDomainEventsTypeDynamically();
 
             foreach (KeyValuePair<Type, String> type in TypeMap.Map)
