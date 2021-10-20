@@ -388,11 +388,19 @@
                                                                List<INetworkService> networkServices,
                                                                String hostFolder,
                                                                (String URL, String UserName, String Password)? dockerCredentials,
+                                                               (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
+                                                                   sqlServerDetails,
                                                                Boolean forceLatestImage = false)
         {
             logger.LogInformation("About to Start Test Hosts Container");
 
+            List<String> environmentVariables = new List<String>();
+            environmentVariables
+                .Add($"ConnectionStrings:TestBankReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=TestBankReadModel\"");
+            environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
+
             ContainerBuilder testHostContainer = new Builder().UseContainer().WithName(containerName)
+                                                              .WithEnvironment(environmentVariables.ToArray())
                                                               .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TestHostPort)
                                                               .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
 
