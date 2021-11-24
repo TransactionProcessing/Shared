@@ -102,7 +102,7 @@ namespace Shared.EventStore.Subscriptions
                                                                                                                 this.EventAppeared,
                                                                                                                 this.SubscriptionDropped,
                                                                                                                 this.UserCredentials,
-                                                                                                                200,
+                                                                                                                this.PersistentSubscriptionDetails.InflightCount == 0 ? 200 : this.PersistentSubscriptionDetails.InflightCount,
                                                                                                                 false);
 
 
