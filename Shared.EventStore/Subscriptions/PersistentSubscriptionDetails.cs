@@ -12,10 +12,12 @@
         /// <param name="streamName">Name of the stream.</param>
         /// <param name="groupName">Name of the group.</param>
         public PersistentSubscriptionDetails(String streamName,
-                                             String groupName)
+                                             String groupName, 
+                                             Int32 inflightCount)
         {
             this.StreamName = streamName;
             this.GroupName = groupName;
+            this.InflightCount = inflightCount;
         }
 
         #endregion
@@ -37,6 +39,8 @@
         /// The name of the stream.
         /// </value>
         public String StreamName { get; init; }
+
+        public Int32 InflightCount { get; init; }
 
         #endregion
 

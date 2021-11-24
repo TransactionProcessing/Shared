@@ -98,6 +98,7 @@
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Boolean useInternalSubscriptionService = Boolean.Parse(ConfigurationReader.GetValue("UseInternalSubscriptionService"));
+            String inflightMessageCount = ConfigurationReader.GetValue("InflightMessages");
 
             if (useInternalSubscriptionService == false)
                 return;
@@ -137,7 +138,8 @@
                     {
                         this.LogInformation($"Creating subscription {subscriptionDto.EventStreamId}-{subscriptionDto.GroupName}");
 
-                        PersistentSubscriptionDetails persistentSubscriptionDetails = new(subscriptionDto.EventStreamId, subscriptionDto.GroupName);
+                        PersistentSubscriptionDetails persistentSubscriptionDetails = new(subscriptionDto.EventStreamId, subscriptionDto.GroupName,
+                                                                                          String.IsNullOrEmpty(inflightMessageCount) ? 0 : Int32.Parse(inflightMessageCount));
 
                         PersistentSubscription subscription = PersistentSubscription.Create(this.PersistentSubscriptionsClient,
                                                                                             persistentSubscriptionDetails,
