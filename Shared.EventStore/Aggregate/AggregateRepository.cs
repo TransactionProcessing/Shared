@@ -445,9 +445,11 @@ namespace Shared.EventStore.Aggregate
 
         public static EventData Convertor(IDomainEvent @event)
         {
-            var eventDataFactory = new EventDataFactory();
+            EventDataFactory eventDataFactory = new EventDataFactory();
             return eventDataFactory.CreateEventData(@event);
         }
+
+        public static IDomainEvent Convertor(ResolvedEvent @event) => TypeMapConvertor.Convertor(Guid.Empty, @event);
     }
 
     public interface IEventDataFactory

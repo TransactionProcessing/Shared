@@ -14,6 +14,7 @@ namespace Shared.EventStore.Subscriptions
     using global::EventStore.Client;
     using Logger = Logger.Logger;
 
+    [Obsolete]
     public class PersistentSubscription
     {
         #region Fields

@@ -5,6 +5,7 @@
     /// <summary>
     /// 
     /// </summary>
+    [Obsolete]
     public class SubscriptionInformation
     {
         #region Properties

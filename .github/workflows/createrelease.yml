@@ -29,6 +29,7 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         
     - name: Build Nuget Packages
       run: |
