@@ -2,6 +2,7 @@
 {
     using System;
 
+    [Obsolete]
     public record PersistentSubscriptionDetails
     {
         #region Constructors

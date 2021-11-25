@@ -25,6 +25,7 @@
     /// 
     /// </summary>
     /// <seealso cref="Microsoft.Extensions.Hosting.BackgroundService" />
+    [Obsolete]
     public class SubscriptionWorker : BackgroundService
     {
         /// <summary>
