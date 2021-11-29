@@ -13,9 +13,7 @@ namespace Shared.EventStore.Tests
     {
         #region Fields
 
-        private List<IDomainEventHandler> eventHandlers;
-
-        private readonly List<IDomainEventHandler> projectionEventHandlers;
+        private Mock<IDomainEventHandlerResolver> domainEventHandlerResolver;
 
         #endregion
 
@@ -23,17 +21,7 @@ namespace Shared.EventStore.Tests
 
         public SubscriptionWorkerHelperTests()
         {
-            Mock<IDomainEventHandler> eventhandler = new();
-
-            this.eventHandlers = new List<IDomainEventHandler>
-                                 {
-                                     eventhandler.Object
-                                 };
-
-            this.projectionEventHandlers = new List<IDomainEventHandler>
-                                           {
-                                               eventhandler.Object
-                                           };
+            domainEventHandlerResolver = new();
         }
 
         #endregion
@@ -48,7 +36,7 @@ namespace Shared.EventStore.Tests
             ISubscriptionRepository subscriptionService = SubscriptionRepository.Create(getSubscriptions);
 
             SubscriptionWorker concurrentSubscriptions =
-                SubscriptionWorker.CreateConcurrentSubscriptionWorker(eventStoreConnectionString, this.projectionEventHandlers, subscriptionService);
+                SubscriptionWorker.CreateConcurrentSubscriptionWorker(eventStoreConnectionString, this.domainEventHandlerResolver.Object, subscriptionService);
 
             concurrentSubscriptions.FilterSubscriptions.ShouldBeNull();
             concurrentSubscriptions.IgnoreSubscriptions.ShouldBe("local-");

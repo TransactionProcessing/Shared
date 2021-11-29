@@ -5,6 +5,7 @@ namespace Shared.EventStore.Tests
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using DomainDrivenDesign.EventSourcing;
     using EventHandling;
     using General;
     using Logger;
@@ -19,7 +20,7 @@ namespace Shared.EventStore.Tests
 
         private readonly List<PersistentSubscriptionInfo> AllSubscriptions;
 
-        private readonly List<IDomainEventHandler> eventHandlers;
+        private readonly Mock<IDomainEventHandlerResolver> domainEventHandlerResolver;
 
         private readonly String EventStoreConnectionString;
 
@@ -37,18 +38,8 @@ namespace Shared.EventStore.Tests
         {
             Logger.Initialise(NullLogger.Instance);
 
-            Mock<IDomainEventHandler> eventhandler = new();
-
-            this.eventHandlers = new List<IDomainEventHandler>
-                                 {
-                                     eventhandler.Object
-                                 };
-
-            this.projectionEventHandlers = new List<IDomainEventHandler>
-                                           {
-                                               eventhandler.Object
-                                           };
-
+            this.domainEventHandlerResolver = new();
+            
             this.AllSubscriptions = (TestData.GetPersistentSubscriptions_DemoEstate());
 
             this.getAllSubscriptions = async _ => this.AllSubscriptions;
@@ -67,7 +58,7 @@ namespace Shared.EventStore.Tests
         public void SubscriptionWorker_CanBeCreated_IsCreated()
         {
             SubscriptionWorker sw = SubscriptionWorker.CreateConcurrentSubscriptionWorker(this.EventStoreConnectionString,
-                                                                                          this.eventHandlers,
+                                                                                          this.domainEventHandlerResolver.Object,
                                                                                           this.SubscriptionRepository).UseInMemory();
 
             sw.ShouldNotBeNull();
@@ -82,11 +73,13 @@ namespace Shared.EventStore.Tests
             TestDomainEventHandler eventHandler1 = new();
             Int32 inflight = 200;
             Int32 pollingInSeconds = 60;
-
-            this.eventHandlers.Add(eventHandler1);
+            this.domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>())).Returns(new List<IDomainEventHandler>()
+                {
+                    eventHandler1
+                });
 
             SubscriptionWorker sw = SubscriptionWorker.CreateConcurrentSubscriptionWorker(this.EventStoreConnectionString,
-                                                                                          this.eventHandlers,
+                                                                                          this.domainEventHandlerResolver.Object,
                                                                                           this.SubscriptionRepository,
                                                                                           inflight,
                                                                                           pollingInSeconds).UseInMemory();
@@ -116,7 +109,7 @@ namespace Shared.EventStore.Tests
         {
             CancellationToken cancellationToken = CancellationToken.None;
             SubscriptionWorker sw = SubscriptionWorker.CreateConcurrentSubscriptionWorker(this.EventStoreConnectionString,
-                                                                                          this.eventHandlers,
+                                                                                          this.domainEventHandlerResolver.Object,
                                                                                           this.SubscriptionRepository).UseInMemory();
 
             await sw.StartAsync(cancellationToken);
@@ -141,7 +134,7 @@ namespace Shared.EventStore.Tests
             CancellationToken cancellationToken = CancellationToken.None;
 
             SubscriptionWorker sw = SubscriptionWorker.CreateConcurrentSubscriptionWorker(this.EventStoreConnectionString,
-                                                                                          this.eventHandlers,
+                                                                                          this.domainEventHandlerResolver.Object,
                                                                                           this.SubscriptionRepository,
                                                                                           200,
                                                                                           1).UseInMemory();

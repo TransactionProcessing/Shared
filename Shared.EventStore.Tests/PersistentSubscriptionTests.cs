@@ -4,9 +4,11 @@ namespace Shared.EventStore.Tests
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using DomainDrivenDesign.EventSourcing;
     using EventHandling;
     using General;
     using Logger;
+    using Moq;
     using Shouldly;
     using SubscriptionWorker;
     using Xunit;
@@ -24,14 +26,19 @@ namespace Shared.EventStore.Tests
         public async Task PersistentSubscription_CanBeCreatedAndReceiveEventsSingleEventHandler()
         {
             PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
-            List<IDomainEventHandler> eventHandlers = new();
             TestDomainEventHandler eventHandler = new();
+            Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new Mock<IDomainEventHandlerResolver>();
+            domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>())).Returns(new List<IDomainEventHandler>()
+                                                                                                              {
+                                                                                                                  eventHandler
+                                                                                                              });
+            
             InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
             CancellationToken cancellationToken = CancellationToken.None;
 
-            eventHandlers.Add(eventHandler);
+            
 
-            var persistentSubscription = PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, eventHandlers);
+            var persistentSubscription = PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
 
             await persistentSubscription.ConnectToSubscription(cancellationToken);
 
@@ -50,15 +57,17 @@ namespace Shared.EventStore.Tests
         public async Task PersistentSubscription_CanBeCreatedAndFilterOutSystemEvent()
         {
             PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
-            List<IDomainEventHandler> eventHandlers = new();
             TestDomainEventHandler eventHandler = new();
+            Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new Mock<IDomainEventHandlerResolver>();
+            domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>())).Returns(new List<IDomainEventHandler>()
+                                                                                                              {
+                                                                                                                  eventHandler
+                                                                                                              });
             InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
             CancellationToken cancellationToken = CancellationToken.None;
-
-            eventHandlers.Add(eventHandler);
-
+            
             var persistentSubscription =
-                PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, eventHandlers);
+                PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
 
             await persistentSubscription.ConnectToSubscription(cancellationToken);
 
@@ -77,16 +86,19 @@ namespace Shared.EventStore.Tests
         public async Task PersistentSubscription_CanBeCreatedAndReceiveEventsMultipleEventHandler()
         {
             PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
-            List<IDomainEventHandler> eventHandlers = new();
             TestDomainEventHandler eventHandler1 = new();
             TestDomainEventHandler eventHandler2 = new();
+            Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new Mock<IDomainEventHandlerResolver>();
+            domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>())).Returns(new List<IDomainEventHandler>()
+                                                                                                              {
+                                                                                                                  eventHandler1,
+                                                                                                                  eventHandler2
+                                                                                                              });
             InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
             CancellationToken cancellationToken = CancellationToken.None;
-
-            eventHandlers.AddRange(new[] { eventHandler1, eventHandler2 });
-
+            
             var persistentSubscription =
-                PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, eventHandlers);
+                PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
 
             await persistentSubscription.ConnectToSubscription(cancellationToken);
 
