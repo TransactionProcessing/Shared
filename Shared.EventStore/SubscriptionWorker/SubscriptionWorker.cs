@@ -21,6 +21,8 @@
 
         private global::EventStore.Client.EventStorePersistentSubscriptionsClient EventStorePersistentSubscriptionsClient;
 
+        private readonly IDomainEventHandlerResolver DomainEventHandlerResolver;
+
         private readonly ISubscriptionRepository SubscriptionRepository;
 
         private Thread WorkerThread;
@@ -36,11 +38,11 @@
         #region Constructors
 
         private SubscriptionWorker(String eventStoreConnectionString,
-                                   List<IDomainEventHandler> eventHandlers,
+                                   IDomainEventHandlerResolver domainEventHandlerResolver,
                                    ISubscriptionRepository subscriptionRepository,
                                    Int32 persistentSubscriptionPollingInSeconds = 60)
         {
-            this.EventHandlers = eventHandlers;
+            this.DomainEventHandlerResolver = domainEventHandlerResolver;
             this.SubscriptionRepository = subscriptionRepository;
             this.EventStorePersistentSubscriptionsClient = new(EventStoreClientSettings.Create(eventStoreConnectionString));
 
@@ -91,23 +93,23 @@
         #region Methods
 
         public static SubscriptionWorker CreateConcurrentSubscriptionWorker(String eventStoreConnectionString,
-                                                                            List<IDomainEventHandler> eventHandlers,
+                                                                            IDomainEventHandlerResolver domainEventHandlerResolver,
                                                                             ISubscriptionRepository subscriptionRepository,
                                                                             Int32 inflightMessages = 200,
                                                                             Int32 persistentSubscriptionPollingInSeconds = 60)
         {
-            return new(eventStoreConnectionString, eventHandlers, subscriptionRepository, persistentSubscriptionPollingInSeconds)
+            return new(eventStoreConnectionString, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
                    {
                        InflightMessages = inflightMessages
                    };
         }
 
         public static SubscriptionWorker CreateOrderedSubscriptionWorker(String eventStoreConnectionString,
-                                                                         List<IDomainEventHandler> eventHandlers,
+                                                                         IDomainEventHandlerResolver domainEventHandlerResolver,
                                                                          ISubscriptionRepository subscriptionRepository,
                                                                          Int32 persistentSubscriptionPollingInSeconds = 60)
         {
-            return new(eventStoreConnectionString, eventHandlers, subscriptionRepository, persistentSubscriptionPollingInSeconds)
+            return new(eventStoreConnectionString, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
                    {
                        InflightMessages = 1,
                        IsOrdered = true
@@ -191,7 +193,7 @@
                         }
 
                         PersistentSubscription subscription =
-                            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, this.EventHandlers);
+                            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, this.DomainEventHandlerResolver);
 
                         subscription.SubscriptionHasDropped += (sender, args) => this.SubscriptionDropped((PersistentSubscription)sender, args);
 

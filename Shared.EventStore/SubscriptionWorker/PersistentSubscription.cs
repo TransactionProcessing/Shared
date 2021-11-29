@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Aggregate;
@@ -40,7 +41,7 @@
 
         private PersistentSubscription(IPersistentSubscriptionsClient persistentSubscriptionsClient,
                                        PersistentSubscriptionDetails persistentSubscriptionDetails,
-                                       List<IDomainEventHandler> domainEventHandlers,
+                                       IDomainEventHandlerResolver domainEventHandlerResolver,
                                        String username,
                                        String password)
         {
@@ -48,7 +49,7 @@
             this.PersistentSubscriptionDetails = persistentSubscriptionDetails;
             UserCredentials userCredentials = new(username, password);
 
-            Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared = (ps, re, retryCount, ct) => PersistentSubscription.EventAppeared(ps, re, retryCount, domainEventHandlers, ct);
+            Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared = (ps, re, retryCount, ct) => PersistentSubscription.EventAppeared(ps, re, retryCount, domainEventHandlerResolver, ct);
 
             this.Subscribe = ct => persistentSubscriptionsClient.SubscribeAsync(this.PersistentSubscriptionDetails.StreamName,
                                                                                 this.PersistentSubscriptionDetails.GroupName,
@@ -90,9 +91,9 @@
 
         public static PersistentSubscription Create(IPersistentSubscriptionsClient persistentSubscriptionsClient,
                                                     PersistentSubscriptionDetails persistentSubscriptionDetails,
-                                                    List<IDomainEventHandler> domainEventHandlers,
+                                                    IDomainEventHandlerResolver domainEventHandlerResolver,
                                                     String username = "admin",
-                                                    String password = "changeit") => new(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlers, username, password);
+                                                    String password = "changeit") => new(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver, username, password);
 
 
         public override String ToString() => $"{this.PersistentSubscriptionDetails.StreamName}-{this.PersistentSubscriptionDetails.GroupName}";
@@ -100,7 +101,7 @@
         internal static async Task EventAppeared(global::EventStore.Client.PersistentSubscription persistentSubscription,
                                                  ResolvedEvent resolvedEvent,
                                                  Int32? retryCount,
-                                                 List<IDomainEventHandler> domainEventHandlers,
+                                                 IDomainEventHandlerResolver domainEventHandlerResolver,
                                                  CancellationToken cancellationToken)
         {
             try
@@ -114,9 +115,19 @@
                 Logger.Logger.LogInformation($"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
 
                 IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
-                
-                await domainEvent.DispatchToHandlers(domainEventHandlers, cancellationToken);
 
+                List<IDomainEventHandler> domainEventHandlers = domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
+
+                if (domainEventHandlers == null || domainEventHandlers.Any() == false)
+                {
+                    // Log a warning out 
+                    Logger.Logger.LogWarning($"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
+                    await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+                    return;
+                }
+
+                await domainEvent.DispatchToHandlers(domainEventHandlers, cancellationToken);
+                
                 await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
             }
             catch (Exception e)
