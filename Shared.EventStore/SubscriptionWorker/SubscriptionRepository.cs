@@ -28,7 +28,7 @@
 
         #region Constructors
 
-        private SubscriptionRepository()
+        private SubscriptionRepository(Int32 cacheDuration = 120)
         {
             this.Subscriptions = new PersistentSubscriptions();
 
@@ -45,28 +45,28 @@
 
         #region Methods
 
-        public static SubscriptionRepository Create(String eventStoreConnectionString)
+        public static SubscriptionRepository Create(String eventStoreConnectionString,Int32 cacheDuration = 120)
         {
             EventStoreClientSettings settings = EventStoreClientSettings.Create(eventStoreConnectionString);
             HttpClient httpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
 
-            return new SubscriptionRepository
+            return new SubscriptionRepository(cacheDuration)
                    {
                        GetAllSubscriptions = cancellationToken => SubscriptionRepository.GetSubscriptions(httpClient, cancellationToken)
                    };
         }
 
-        public static SubscriptionRepository Create(Task<List<PersistentSubscriptionInfo>> func)
+        public static SubscriptionRepository Create(Task<List<PersistentSubscriptionInfo>> func,Int32 cacheDuration = 120)
         {
-            return new()
+            return new(cacheDuration)
                    {
                        GetAllSubscriptions = _ => func
                    };
         }
 
-        public static SubscriptionRepository Create(Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> func)
+        public static SubscriptionRepository Create(Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> func,Int32 cacheDuration = 120)
         {
-            return new()
+            return new(cacheDuration)
                    {
                        GetAllSubscriptions = func
                    };
@@ -151,12 +151,7 @@
         {
             TimeSpan elapsed = DateTime.Now - lastRefreshed;
 
-            //TODO: Add to configuration
-            //OR this.PersistentSubscriptionPollingInSeconds x 2 ?
-            //60 seconds is how often we are willing to refresh our cache.
-            //I suspect this could be much higher (trade of with update the UI and wanting response, versus how often we hot the hit ES essentially getting
-            //the same information each time.
-            if (elapsed.TotalSeconds < 120)
+            if (elapsed.TotalSeconds < cacheDuration)
             {
                 return false;
             }
