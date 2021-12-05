@@ -32,7 +32,7 @@
         {
             this.Subscriptions = new PersistentSubscriptions();
 
-            this.RefreshRequired = (force, s) => force || s.InitialState || SubscriptionRepository.RefreshNeeded(s.LastTimeRefreshed);
+            this.RefreshRequired = (force, s) => force || s.InitialState || SubscriptionRepository.RefreshNeeded(s.LastTimeRefreshed, cacheDuration);
         }
 
         #endregion
@@ -147,7 +147,7 @@
             return this.Subscriptions;
         }
 
-        private static Boolean RefreshNeeded(DateTime lastRefreshed)
+        private static Boolean RefreshNeeded(DateTime lastRefreshed, Int32 cacheDuration)
         {
             TimeSpan elapsed = DateTime.Now - lastRefreshed;
 
