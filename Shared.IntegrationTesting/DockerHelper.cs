@@ -643,7 +643,7 @@
             Int32 counter = 1;
 
             String server = "127.0.0.1";
-            String database = "SubscriptionServiceConfiguration";
+            String database = "master";
             String user = sqlUserName;
             String password = sqlPassword;
             String port = sqlServerEndpoint.Port.ToString();
@@ -661,7 +661,7 @@
                     connection.Open();
 
                     SqlCommand command = connection.CreateCommand();
-                    command.CommandText = "SELECT * FROM EventStoreServer";
+                    command.CommandText = "SELECT * FROM sys.databases";
                     command.ExecuteNonQuery();
 
                     logger.LogInformation("Connection Opened");
