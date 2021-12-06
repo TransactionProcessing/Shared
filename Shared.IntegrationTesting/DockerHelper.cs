@@ -10,80 +10,167 @@
     using Ductus.FluentDocker.Model.Builders;
     using Ductus.FluentDocker.Services;
     using Ductus.FluentDocker.Services.Extensions;
-    using Logger;
     using Microsoft.Data.SqlClient;
+    using Microsoft.Extensions.Logging;
+    using ILogger = Logger.ILogger;
 
     /// <summary>
     /// 
     /// </summary>
     public abstract class DockerHelper
     {
+        #region Fields
+
+        /// <summary>
+        /// The client details
+        /// </summary>
+        protected (String clientId, String clientSecret) ClientDetails;
+
+        /// <summary>
+        /// The docker credentials
+        /// </summary>
+        protected (String URL, String UserName, String Password)? DockerCredentials;
+
+        /// <summary>
+        /// The estate management container name
+        /// </summary>
+        protected String EstateManagementContainerName;
+
+        /// <summary>
+        /// The estate reporting container name
+        /// </summary>
+        protected String EstateReportingContainerName;
+
+        /// <summary>
+        /// The event store container name
+        /// </summary>
+        protected String EventStoreContainerName;
+
+        /// <summary>
+        /// The host trace folder
+        /// </summary>
+        protected String HostTraceFolder;
+
+        /// <summary>
+        /// The logger
+        /// </summary>
+        protected ILogger Logger;
+
+        /// <summary>
+        /// The messaging service container name
+        /// </summary>
+        protected String MessagingServiceContainerName;
+
+        /// <summary>
+        /// The security service container name
+        /// </summary>
+        protected String SecurityServiceContainerName;
+
+        /// <summary>
+        /// The SQL server details
+        /// </summary>
+        protected (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword) SqlServerDetails;
+
+        /// <summary>
+        /// The test host container name
+        /// </summary>
+        protected String TestHostContainerName;
+
+        /// <summary>
+        /// The transaction processor acl container name
+        /// </summary>
+        protected String TransactionProcessorACLContainerName;
+
+        /// <summary>
+        /// The transaction processor container name
+        /// </summary>
+        protected String TransactionProcessorContainerName;
+
+        /// <summary>
+        /// The voucher management acl container name
+        /// </summary>
+        protected String VoucherManagementACLContainerName;
+
+        /// <summary>
+        /// The voucher management container name
+        /// </summary>
+        protected String VoucherManagementContainerName;
+
+        #endregion
+
         #region Methods
+
+        protected void Trace(String traceMessage){
+
+            if (this.Logger.IsInitialised)
+            {
+                this.Logger.LogInformation(traceMessage);
+            }
+        }
+
+        protected ContainerBuilder MountHostFolder(ContainerBuilder containerBuilder, String containerPath= "/home/txnproc/trace")
+        {
+            if (string.IsNullOrEmpty(this.HostTraceFolder) == false)
+            {
+                containerBuilder = containerBuilder.Mount(this.HostTraceFolder, containerPath, MountType.ReadWrite);
+            }
+
+            return containerBuilder;
+        }
+
+        protected ContainerBuilder SetDockerCredentials(ContainerBuilder containerBuilder)
+        {
+            if (this.DockerCredentials.HasValue)
+            {
+                containerBuilder  = containerBuilder.WithCredential(this.DockerCredentials.Value.URL, this.DockerCredentials.Value.UserName, this.DockerCredentials.Value.Password);
+            }
+
+            return containerBuilder;
+        }
 
         /// <summary>
         /// Setups the estate management container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkServices">The network services.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="eventStoreConnectionString">The event store connection string.</param>
-        /// <param name="sqlServerDetails">The SQL server details.</param>
-        /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
         /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
-        /// <returns></returns>
-        public static IContainerService SetupEstateManagementContainer(String containerName,
-                                                                       ILogger logger,
-                                                                       String imageName,
-                                                                       List<INetworkService> networkServices,
-                                                                       String hostFolder,
-                                                                       (String URL, String UserName, String Password)? dockerCredentials,
-                                                                       String securityServiceContainerName,
-                                                                       String eventStoreConnectionString,
-                                                                       (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
-                                                                           sqlServerDetails,
-                                                                       (String clientId, String clientSecret) clientDetails,
-                                                                       Boolean forceLatestImage = false,
-                                                                       Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
-                                                                       List<String> additionalEnvironmentVariables = null)
+        /// <returns>
+        ///   <br />
+        /// </returns>
+        public virtual IContainerService SetupEstateManagementContainer(String imageName,
+                                                                        List<INetworkService> networkServices,
+                                                                        Boolean forceLatestImage = false,
+                                                                        Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                        List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Estate Management Container");
+            Trace("About to Start Estate Management Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreConnectionString}");
-            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateManagementDockerPort}");
             environmentVariables
-                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
+                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerDetails.sqlServerContainerName};user id={this.SqlServerDetails.sqlServerUserName};password={this.SqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
 
             if (additionalEnvironmentVariables != null)
             {
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                      .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateManagementDockerPort)
-                                                                      .UseNetwork(networkServices.ToArray());
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                estateManagementContainer = estateManagementContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
-            }
-
-            if (dockerCredentials.HasValue)
-            {
-                estateManagementContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
+            ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(this.EstateManagementContainerName)
+                                                                      .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                      .ExposePort(DockerHelper.EstateManagementDockerPort).UseNetwork(networkServices.ToArray());
+            
+            estateManagementContainer = MountHostFolder(estateManagementContainer);
+            estateManagementContainer = SetDockerCredentials(estateManagementContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = estateManagementContainer.Build().Start().WaitForPort($"{DockerHelper.EstateManagementDockerPort}/tcp", 30000);
 
-            logger.LogInformation("Estate Management Container Started");
+            Trace("Estate Management Container Started");
 
             return builtContainer;
         }
@@ -91,68 +178,45 @@
         /// <summary>
         /// Setups the estate reporting container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkServices">The network services.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="eventStoreConnectionString">The event store connection string.</param>
-        /// <param name="sqlServerDetails">The SQL server details.</param>
-        /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
         /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupEstateReportingContainer(String containerName,
-                                                                      ILogger logger,
-                                                                      String imageName,
-                                                                      List<INetworkService> networkServices,
-                                                                      String hostFolder,
-                                                                      (String URL, String UserName, String Password)? dockerCredentials,
-                                                                      String securityServiceContainerName,
-                                                                      String eventStoreConnectionString,
-                                                                      (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
-                                                                          sqlServerDetails,
-                                                                      (String clientId, String clientSecret) clientDetails,
-                                                                      Boolean forceLatestImage = false,
-                                                                      Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
-                                                                      List<String> additionalEnvironmentVariables = null)
+        public virtual IContainerService SetupEstateReportingContainer(String imageName,
+                                                                       List<INetworkService> networkServices,
+                                                                       Boolean forceLatestImage = false,
+                                                                       Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                       List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Estate Reporting Container");
+            Trace("About to Start Estate Reporting Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreConnectionString}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.EstateReportingDockerPort}");
             environmentVariables
-                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
+                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerDetails.sqlServerContainerName};user id={this.SqlServerDetails.sqlServerUserName};password={this.SqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
 
             if (additionalEnvironmentVariables != null)
             {
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder estateReportingContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                     .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EstateReportingDockerPort)
-                                                                     .UseNetwork(networkServices.ToArray());
+            ContainerBuilder estateReportingContainer = new Builder().UseContainer().WithName(this.EstateReportingContainerName)
+                                                                     .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                     .ExposePort(DockerHelper.EstateReportingDockerPort).UseNetwork(networkServices.ToArray());
 
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                estateReportingContainer = estateReportingContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
-            }
+            estateReportingContainer = MountHostFolder(estateReportingContainer);
+            estateReportingContainer = SetDockerCredentials(estateReportingContainer);
 
-            if (dockerCredentials.HasValue)
-            {
-                estateReportingContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
 
             // Now build and return the container                
             IContainerService builtContainer = estateReportingContainer.Build().Start().WaitForPort($"{DockerHelper.EstateReportingDockerPort}/tcp", 30000);
 
-            logger.LogInformation("Estate Reporting Container Started");
+            Trace("Estate Reporting Container Started");
 
             return builtContainer;
         }
@@ -160,21 +224,15 @@
         /// <summary>
         /// Setups the event store container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkService">The network service.</param>
-        /// <param name="hostFolder">The host folder.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <returns></returns>
-        public static IContainerService SetupEventStoreContainer(String containerName,
-                                                                 ILogger logger,
-                                                                 String imageName,
-                                                                 INetworkService networkService,
-                                                                 String hostFolder,
-                                                                 Boolean forceLatestImage = false)
+        public virtual IContainerService SetupEventStoreContainer(String imageName,
+                                                                  INetworkService networkService,
+                                                                  Boolean forceLatestImage = false)
         {
-            logger.LogInformation("About to Start Event Store Container");
+            Trace("About to Start Event Store Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add("EVENTSTORE_RUN_PROJECTIONS=all");
@@ -184,17 +242,14 @@
             environmentVariables.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true");
 
             var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
-                                                          .ExposePort(DockerHelper.EventStoreTcpDockerPort).WithName(containerName)
+                                                          .ExposePort(DockerHelper.EventStoreTcpDockerPort).WithName(this.EventStoreContainerName)
                                                           .WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService);
-
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                eventStoreContainerBuilder = eventStoreContainerBuilder.Mount(hostFolder, "/var/log/eventstore", MountType.ReadWrite);
-            }
-
+            
+            eventStoreContainerBuilder = MountHostFolder(eventStoreContainerBuilder, "/var/log/eventstore");
+            
             IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start().WaitForPort("2113/tcp", 30000);
 
-            logger.LogInformation("Event Store Container Started");
+            Trace("Event Store Container Started");
 
             return eventStoreContainer;
         }
@@ -202,58 +257,44 @@
         /// <summary>
         /// Setups the messaging service container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkServices">The network services.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="eventStoreConnectionString">The event store connection string.</param>
-        /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupMessagingServiceContainer(String containerName,
-                                                                       ILogger logger,
-                                                                       String imageName,
-                                                                       List<INetworkService> networkServices,
-                                                                       String hostFolder,
-                                                                       (String URL, String UserName, String Password)? dockerCredentials,
-                                                                       String securityServiceContainerName,
-                                                                       String eventStoreConnectionString,
-                                                                       (String clientId, String clientSecret) clientDetails,
-                                                                       Boolean forceLatestImage = false,
-                                                                       Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort)
+        public virtual IContainerService SetupMessagingServiceContainer(String imageName,
+                                                                        List<INetworkService> networkServices,
+                                                                        Boolean forceLatestImage = false,
+                                                                        Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                        List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Messaging Service Container");
+            Trace("About to Start Messaging Service Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreConnectionString}");
-            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.MessagingServiceDockerPort}");
             environmentVariables.Add("AppSettings:EmailProxy=Integration");
             environmentVariables.Add("AppSettings:SMSProxy=Integration");
 
-            ContainerBuilder messagingServiceContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                      .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.MessagingServiceDockerPort)
-                                                                      .UseNetwork(networkServices.ToArray()); //.Mount(hostFolder, "/home", MountType.ReadWrite);
-
-            if (string.IsNullOrEmpty(hostFolder) == false)
+            if (additionalEnvironmentVariables != null)
             {
-                messagingServiceContainer = messagingServiceContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
+                environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            if (dockerCredentials.HasValue)
-            {
-                messagingServiceContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
+            ContainerBuilder messagingServiceContainer = new Builder().UseContainer().WithName(this.MessagingServiceContainerName)
+                                                                      .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                      .ExposePort(DockerHelper.MessagingServiceDockerPort).UseNetwork(networkServices.ToArray());
+
+            messagingServiceContainer = MountHostFolder(messagingServiceContainer);
+            messagingServiceContainer = SetDockerCredentials(messagingServiceContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = messagingServiceContainer.Build().Start().WaitForPort($"{DockerHelper.MessagingServiceDockerPort}/tcp", 30000);
 
-            logger.LogInformation("Messaging Service Container Started");
+            Trace("Messaging Service Container Started");
 
             return builtContainer;
         }
@@ -261,29 +302,21 @@
         /// <summary>
         /// Setups the security service container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkService">The network service.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupSecurityServiceContainer(String containerName,
-                                                                      ILogger logger,
-                                                                      String imageName,
-                                                                      INetworkService networkService,
-                                                                      String hostFolder,
-                                                                      (String URL, String UserName, String Password)? dockerCredentials,
-                                                                      Boolean forceLatestImage = false,
-                                                                      List<String> additionalEnvironmentVariables = null)
+        public virtual IContainerService SetupSecurityServiceContainer(String imageName,
+                                                                       INetworkService networkService,
+                                                                       Boolean forceLatestImage = false,
+                                                                       List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Security Container");
+            Trace("About to Start Security Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"ServiceOptions:PublicOrigin=https://{containerName}:{DockerHelper.SecurityServiceDockerPort}");
-            environmentVariables.Add($"ServiceOptions:IssuerUrl=https://{containerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"ServiceOptions:PublicOrigin=https://{this.SecurityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
+            environmentVariables.Add($"ServiceOptions:IssuerUrl=https://{this.SecurityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
             environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
             environmentVariables.Add("urls=https://*:5001");
 
@@ -292,28 +325,21 @@
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                     .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.SecurityServiceDockerPort)
-                                                                     .UseNetwork(new List<INetworkService>
-                                                                                 {
-                                                                                     networkService
-                                                                                 }.ToArray());
-
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                securityServiceContainer = securityServiceContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
-            }
-
-            if (dockerCredentials.HasValue)
-            {
-                securityServiceContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
+            ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(this.SecurityServiceContainerName)
+                                                                     .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                     .ExposePort(DockerHelper.SecurityServiceDockerPort).UseNetwork(new List<INetworkService>
+                                                                         {
+                                                                             networkService
+                                                                         }.ToArray());
+            
+            securityServiceContainer = MountHostFolder(securityServiceContainer);
+            securityServiceContainer = SetDockerCredentials(securityServiceContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = securityServiceContainer.Build().Start().WaitForPort("5001/tcp", 30000);
             Thread.Sleep(20000); // This hack is in till health checks implemented :|
 
-            logger.LogInformation("Security Service Container Started");
+            Trace("Security Service Container Started");
 
             return builtContainer;
         }
@@ -321,44 +347,39 @@
         /// <summary>
         /// Setups the test host container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkServices">The network services.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="sqlServerDetails">The SQL server details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
+        /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupTestHostContainer(String containerName,
-                                                               ILogger logger,
-                                                               String imageName,
-                                                               List<INetworkService> networkServices,
-                                                               String hostFolder,
-                                                               (String URL, String UserName, String Password)? dockerCredentials,
-                                                               (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword) sqlServerDetails,
-                                                               Boolean forceLatestImage = false)
+        public virtual IContainerService SetupTestHostContainer(String imageName,
+                                                                List<INetworkService> networkServices,
+                                                                Boolean forceLatestImage = false,
+                                                                List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Test Hosts Container");
+            Trace("About to Start Test Hosts Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables
-                .Add($"ConnectionStrings:TestBankReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=TestBankReadModel\"");
+                .Add($"ConnectionStrings:TestBankReadModel=\"server={this.SqlServerDetails.sqlServerContainerName};user id={this.SqlServerDetails.sqlServerUserName};password={this.SqlServerDetails.sqlServerPassword};database=TestBankReadModel\"");
             environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
 
-            ContainerBuilder testHostContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                              .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TestHostPort)
-                                                              .UseNetwork(networkServices.ToArray()).Mount(hostFolder, "/home", MountType.ReadWrite);
-
-            if (dockerCredentials.HasValue)
+            if (additionalEnvironmentVariables != null)
             {
-                testHostContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
+                environmentVariables.AddRange(additionalEnvironmentVariables);
             }
+
+            ContainerBuilder testHostContainer = new Builder().UseContainer().WithName(this.TestHostContainerName).WithEnvironment(environmentVariables.ToArray())
+                                                              .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TestHostPort)
+                                                              .UseNetwork(networkServices.ToArray());
+
+            testHostContainer = MountHostFolder(testHostContainer);
+            testHostContainer = SetDockerCredentials(testHostContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = testHostContainer.Build().Start().WaitForPort($"{DockerHelper.TestHostPort}/tcp", 30000);
 
-            logger.LogInformation("Test Hosts Container Started");
+            Trace("Test Hosts Container Started");
 
             return builtContainer;
         }
@@ -388,70 +409,50 @@
         /// <summary>
         /// Setups the transaction processor acl container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkService">The network service.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="transactionProcessorContainerName">Name of the transaction processor container.</param>
-        /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
         /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupTransactionProcessorACLContainer(String containerName,
-                                                                              ILogger logger,
-                                                                              String imageName,
-                                                                              INetworkService networkService,
-                                                                              String hostFolder,
-                                                                              (String URL, String UserName, String Password)? dockerCredentials,
-                                                                              String securityServiceContainerName,
-                                                                              String transactionProcessorContainerName,
-                                                                              (String clientId, String clientSecret) clientDetails,
-                                                                              Boolean forceLatestImage = false,
-                                                                              Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
-                                                                              List<String> additionalEnvironmentVariables = null)
+        public virtual IContainerService SetupTransactionProcessorACLContainer(String imageName,
+                                                                               INetworkService networkService,
+                                                                               Boolean forceLatestImage = false,
+                                                                               Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                               List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Transaction Processor ACL Container");
+            Trace("About to Start Transaction Processor ACL Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorACLDockerPort}");
-            environmentVariables.Add($"AppSettings:TransactionProcessorApi=http://{transactionProcessorContainerName}:{DockerHelper.TransactionProcessorDockerPort}");
-            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
-            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+            environmentVariables
+                .Add($"AppSettings:TransactionProcessorApi=http://{this.TransactionProcessorContainerName}:{DockerHelper.TransactionProcessorDockerPort}");
+            environmentVariables.Add($"AppSettings:ClientId={this.ClientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={this.ClientDetails.clientSecret}");
 
             if (additionalEnvironmentVariables != null)
             {
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder transactionProcessorACLContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                             .UseImage(imageName, forceLatestImage)
+            ContainerBuilder transactionProcessorACLContainer = new Builder().UseContainer().WithName(this.TransactionProcessorACLContainerName)
+                                                                             .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                              .ExposePort(DockerHelper.TransactionProcessorACLDockerPort)
                                                                              .UseNetwork(new List<INetworkService>
                                                                                          {
                                                                                              networkService
                                                                                          }.ToArray());
 
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                transactionProcessorACLContainer = transactionProcessorACLContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
-            }
-
-            if (dockerCredentials.HasValue)
-            {
-                transactionProcessorACLContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
+            transactionProcessorACLContainer = MountHostFolder(transactionProcessorACLContainer);
+            transactionProcessorACLContainer = SetDockerCredentials(transactionProcessorACLContainer);
 
             // Now build and return the container                
             IContainerService builtContainer =
                 transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerHelper.TransactionProcessorACLDockerPort}/tcp", 30000);
 
-            logger.LogInformation("Transaction Processor Container ACL Started");
+            Trace("Transaction Processor Container ACL Started");
 
             return builtContainer;
         }
@@ -459,76 +460,49 @@
         /// <summary>
         /// Setups the transaction processor container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkServices">The network services.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="estateManagementContainerName">Name of the estate management container.</param>
-        /// <param name="eventStoreConnectionString">The event store connection string.</param>
-        /// <param name="clientDetails">The client details.</param>
-        /// <param name="testhostContainerName">Name of the testhost container.</param>
-        /// <param name="voucherManagementContainerName">Name of the voucher management container.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
         /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupTransactionProcessorContainer(String containerName,
-                                                                           ILogger logger,
-                                                                           String imageName,
-                                                                           List<INetworkService> networkServices,
-                                                                           String hostFolder,
-                                                                           (String URL, String UserName, String Password)? dockerCredentials,
-                                                                           String securityServiceContainerName,
-                                                                           String estateManagementContainerName,
-                                                                           String eventStoreConnectionString,
-                                                                           (String clientId, String clientSecret) clientDetails,
-                                                                           String testhostContainerName,
-                                                                           String voucherManagementContainerName,
-                                                                           Boolean forceLatestImage = false,
-                                                                           Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
-                                                                           List<String> additionalEnvironmentVariables = null)
+        public virtual IContainerService SetupTransactionProcessorContainer(String imageName,
+                                                                            List<INetworkService> networkServices,
+                                                                            Boolean forceLatestImage = false,
+                                                                            Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                            List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Transaction Processor Container");
+            Trace("About to Start Transaction Processor Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreConnectionString}");
-            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"AppSettings:EstateManagementApi=http://{estateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
-            environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{voucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
+            environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{this.VoucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.TransactionProcessorDockerPort}");
-            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
-            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+            environmentVariables.Add($"AppSettings:ClientId={this.ClientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={this.ClientDetails.clientSecret}");
             environmentVariables.Add("AppSettings:SubscriptionFilter=TransactionProcessor");
 
-            environmentVariables.Add($"OperatorConfiguration:Safaricom:Url=http://{testhostContainerName}:9000/api/safaricom");
+            environmentVariables.Add($"OperatorConfiguration:Safaricom:Url=http://{this.TestHostContainerName}:9000/api/safaricom");
 
             if (additionalEnvironmentVariables != null)
             {
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                          .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TransactionProcessorDockerPort)
-                                                                          .UseNetwork(networkServices.ToArray());
+            ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(this.TransactionProcessorContainerName)
+                                                                          .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                          .ExposePort(DockerHelper.TransactionProcessorDockerPort).UseNetwork(networkServices.ToArray());
 
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                transactionProcessorContainer = transactionProcessorContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
-            }
-
-            if (dockerCredentials.HasValue)
-            {
-                transactionProcessorContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
+            transactionProcessorContainer = MountHostFolder(transactionProcessorContainer);
+            transactionProcessorContainer = SetDockerCredentials(transactionProcessorContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = transactionProcessorContainer.Build().Start().WaitForPort($"{DockerHelper.TransactionProcessorDockerPort}/tcp", 30000);
 
-            logger.LogInformation("Transaction Processor Container Started");
+            Trace("Transaction Processor Container Started");
 
             return builtContainer;
         }
@@ -536,64 +510,43 @@
         /// <summary>
         /// Setups the voucher management acl container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkServices">The network services.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="voucherManagementContainerName">Name of the voucher management container.</param>
-        /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
         /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupVoucherManagementACLContainer(String containerName,
-                                                                           ILogger logger,
-                                                                           String imageName,
-                                                                           List<INetworkService> networkServices,
-                                                                           String hostFolder,
-                                                                           (String URL, String UserName, String Password)? dockerCredentials,
-                                                                           String securityServiceContainerName,
-                                                                           String voucherManagementContainerName,
-                                                                           (String clientId, String clientSecret) clientDetails,
-                                                                           Boolean forceLatestImage = false,
-                                                                           Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
-                                                                           List<String> additionalEnvironmentVariables = null)
+        public virtual IContainerService SetupVoucherManagementACLContainer(String imageName,
+                                                                            List<INetworkService> networkServices,
+                                                                            Boolean forceLatestImage = false,
+                                                                            Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                            List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Voucher Management ACL Container");
+            Trace("About to Start Voucher Management ACL Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{voucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:VoucherManagementApi=http://{this.VoucherManagementContainerName}:{DockerHelper.VoucherManagementDockerPort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.VoucherManagementACLDockerPort}");
-            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
-            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+            environmentVariables.Add($"AppSettings:ClientId={this.ClientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={this.ClientDetails.clientSecret}");
 
             if (additionalEnvironmentVariables != null)
             {
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                          .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementACLDockerPort)
-                                                                          .UseNetwork(networkServices.ToArray());
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                voucherManagementAclContainer = voucherManagementAclContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
-            }
-
-            if (dockerCredentials.HasValue)
-            {
-                voucherManagementAclContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
+            ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(this.VoucherManagementACLContainerName)
+                                                                          .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                          .ExposePort(DockerHelper.VoucherManagementACLDockerPort).UseNetwork(networkServices.ToArray());
+            voucherManagementAclContainer = MountHostFolder(voucherManagementAclContainer);
+            voucherManagementAclContainer = SetDockerCredentials(voucherManagementAclContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = voucherManagementAclContainer.Build().Start().WaitForPort($"{DockerHelper.VoucherManagementACLDockerPort}/tcp", 30000);
 
-            logger.LogInformation("Voucher Management ACL Container Started");
+            Trace("Voucher Management ACL Container Started");
 
             return builtContainer;
         }
@@ -601,73 +554,47 @@
         /// <summary>
         /// Setups the voucher management container.
         /// </summary>
-        /// <param name="containerName">Name of the container.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="imageName">Name of the image.</param>
         /// <param name="networkServices">The network services.</param>
-        /// <param name="hostFolder">The host folder.</param>
-        /// <param name="dockerCredentials">The docker credentials.</param>
-        /// <param name="securityServiceContainerName">Name of the security service container.</param>
-        /// <param name="estateManagementContainerName">Name of the estate management container.</param>
-        /// <param name="eventStoreConnectionString">The event store connection string.</param>
-        /// <param name="sqlServerDetails">The SQL server details.</param>
-        /// <param name="clientDetails">The client details.</param>
         /// <param name="forceLatestImage">if set to <c>true</c> [force latest image].</param>
         /// <param name="securityServicePort">The security service port.</param>
         /// <param name="additionalEnvironmentVariables">The additional environment variables.</param>
         /// <returns></returns>
-        public static IContainerService SetupVoucherManagementContainer(String containerName,
-                                                                        ILogger logger,
-                                                                        String imageName,
-                                                                        List<INetworkService> networkServices,
-                                                                        String hostFolder,
-                                                                        (String URL, String UserName, String Password)? dockerCredentials,
-                                                                        String securityServiceContainerName,
-                                                                        String estateManagementContainerName,
-                                                                        String eventStoreConnectionString,
-                                                                        (String sqlServerContainerName, String sqlServerUserName, String sqlServerPassword)
-                                                                            sqlServerDetails,
-                                                                        (String clientId, String clientSecret) clientDetails,
-                                                                        Boolean forceLatestImage = false,
-                                                                        Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
-                                                                        List<String> additionalEnvironmentVariables = null)
+        public virtual IContainerService SetupVoucherManagementContainer(String imageName,
+                                                                         List<INetworkService> networkServices,
+                                                                         Boolean forceLatestImage = false,
+                                                                         Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
+                                                                         List<String> additionalEnvironmentVariables = null)
         {
-            logger.LogInformation("About to Start Voucher Management Container");
+            Trace("About to Start Voucher Management Container");
 
             List<String> environmentVariables = new List<String>();
-            environmentVariables.Add($"EventStoreSettings:ConnectionString={eventStoreConnectionString}");
-            environmentVariables.Add($"AppSettings:SecurityService=https://{securityServiceContainerName}:{securityServicePort}");
-            environmentVariables.Add($"AppSettings:EstateManagementApi=http://{estateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
-            environmentVariables.Add($"SecurityConfiguration:Authority=https://{securityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
+            environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
+            environmentVariables.Add($"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerHelper.EstateManagementDockerPort}");
+            environmentVariables.Add($"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}");
             environmentVariables.Add($"urls=http://*:{DockerHelper.VoucherManagementDockerPort}");
-            environmentVariables.Add($"AppSettings:ClientId={clientDetails.clientId}");
-            environmentVariables.Add($"AppSettings:ClientSecret={clientDetails.clientSecret}");
+            environmentVariables.Add($"AppSettings:ClientId={this.ClientDetails.clientId}");
+            environmentVariables.Add($"AppSettings:ClientSecret={this.ClientDetails.clientSecret}");
             environmentVariables
-                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={sqlServerDetails.sqlServerContainerName};user id={sqlServerDetails.sqlServerUserName};password={sqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
+                .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerDetails.sqlServerContainerName};user id={this.SqlServerDetails.sqlServerUserName};password={this.SqlServerDetails.sqlServerPassword};database=EstateReportingReadModel\"");
 
             if (additionalEnvironmentVariables != null)
             {
                 environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(containerName).WithEnvironment(environmentVariables.ToArray())
-                                                                       .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.VoucherManagementDockerPort)
-                                                                       .UseNetwork(networkServices.ToArray());
+            ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(this.VoucherManagementContainerName)
+                                                                       .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                       .ExposePort(DockerHelper.VoucherManagementDockerPort).UseNetwork(networkServices.ToArray());
 
-            if (string.IsNullOrEmpty(hostFolder) == false)
-            {
-                voucherManagementContainer = voucherManagementContainer.Mount(hostFolder, "/home/txnproc/trace", MountType.ReadWrite);
-            }
-
-            if (dockerCredentials.HasValue)
-            {
-                voucherManagementContainer.WithCredential(dockerCredentials.Value.URL, dockerCredentials.Value.UserName, dockerCredentials.Value.Password);
-            }
+            voucherManagementContainer = MountHostFolder(voucherManagementContainer);
+            voucherManagementContainer = SetDockerCredentials(voucherManagementContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = voucherManagementContainer.Build().Start().WaitForPort($"{DockerHelper.VoucherManagementDockerPort}/tcp", 30000);
 
-            logger.LogInformation("Voucher Management  Container Started");
+            Trace("Voucher Management  Container Started");
 
             return builtContainer;
         }
@@ -767,6 +694,17 @@
         /// </summary>
         /// <returns></returns>
         public abstract Task StopContainersForScenarioRun();
+
+        /// <summary>
+        /// Generates the event store connection string.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual String GenerateEventStoreConnectionString()
+        {
+            String eventStoreAddress = $"esdb://admin:changeit@{this.EventStoreContainerName}:{DockerHelper.EventStoreHttpDockerPort}?tls=false";
+
+            return eventStoreAddress;
+        }
 
         #endregion
 
