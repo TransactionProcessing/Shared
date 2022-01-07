@@ -81,7 +81,7 @@ namespace Shared.Tests
         {
             Should.Throw<ArgumentOutOfRangeException>(() =>
                                                       {
-                                                          PositiveMoney money = PositiveMoney.Create(Money.Create(moneyValue));
+                                                          PositiveMoney.Create(Money.Create(moneyValue));
                                                       });
         }
     }
