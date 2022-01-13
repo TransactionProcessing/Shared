@@ -3,16 +3,20 @@
     using System;
     using System.Collections.Generic;
     using System.Data;
+    using System.IO;
+    using System.Linq;
     using System.Net;
+    using System.Net.Http;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Ductus.FluentDocker.Builders;
     using Ductus.FluentDocker.Model.Builders;
     using Ductus.FluentDocker.Services;
     using Ductus.FluentDocker.Services.Extensions;
+    using EventStore.Client;
+    using Logger;
     using Microsoft.Data.SqlClient;
-    using Microsoft.Extensions.Logging;
-    using ILogger = Logger.ILogger;
 
     /// <summary>
     /// 
@@ -20,6 +24,8 @@
     public abstract class DockerHelper
     {
         #region Fields
+
+        protected String CallbackHandlerContainerName;
 
         /// <summary>
         /// The client details
@@ -100,32 +106,34 @@
 
         #region Methods
 
-        protected void Trace(String traceMessage){
-
-            if (this.Logger.IsInitialised)
-            {
-                this.Logger.LogInformation(traceMessage);
-            }
-        }
-
-        protected ContainerBuilder MountHostFolder(ContainerBuilder containerBuilder, String containerPath= "/home/txnproc/trace")
+        public IContainerService SetupCallbackHandlerContainer(String imageName,
+                                                               List<INetworkService> networkServices,
+                                                               Boolean forceLatestImage = false,
+                                                               List<String> additionalEnvironmentVariables = null)
         {
-            if (string.IsNullOrEmpty(this.HostTraceFolder) == false)
+            this.Logger.LogInformation("About to Start Callback Handler Container");
+
+            List<String> environmentVariables = new List<String>();
+            environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
+
+            if (additionalEnvironmentVariables != null)
             {
-                containerBuilder = containerBuilder.Mount(this.HostTraceFolder, containerPath, MountType.ReadWrite);
+                environmentVariables.AddRange(additionalEnvironmentVariables);
             }
 
-            return containerBuilder;
-        }
+            ContainerBuilder callbackHandlerContainer = new Builder().UseContainer().WithName(this.CallbackHandlerContainerName)
+                                                                     .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
+                                                                     .ExposePort(DockerHelper.CallbackHandlerDockerPort).UseNetwork(networkServices.ToArray());
 
-        protected ContainerBuilder SetDockerCredentials(ContainerBuilder containerBuilder)
-        {
-            if (this.DockerCredentials.HasValue)
-            {
-                containerBuilder  = containerBuilder.WithCredential(this.DockerCredentials.Value.URL, this.DockerCredentials.Value.UserName, this.DockerCredentials.Value.Password);
-            }
+            callbackHandlerContainer = this.MountHostFolder(callbackHandlerContainer);
+            callbackHandlerContainer = this.SetDockerCredentials(callbackHandlerContainer);
 
-            return containerBuilder;
+            // Now build and return the container                
+            IContainerService builtContainer = callbackHandlerContainer.Build().Start().WaitForPort($"{DockerHelper.CallbackHandlerDockerPort}/tcp", 30000);
+
+            this.Logger.LogInformation("Callback Handler Container Started");
+
+            return builtContainer;
         }
 
         /// <summary>
@@ -145,7 +153,7 @@
                                                                         Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
                                                                         List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Estate Management Container");
+            this.Trace("About to Start Estate Management Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
@@ -163,14 +171,14 @@
             ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(this.EstateManagementContainerName)
                                                                       .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                       .ExposePort(DockerHelper.EstateManagementDockerPort).UseNetwork(networkServices.ToArray());
-            
-            estateManagementContainer = MountHostFolder(estateManagementContainer);
-            estateManagementContainer = SetDockerCredentials(estateManagementContainer);
+
+            estateManagementContainer = this.MountHostFolder(estateManagementContainer);
+            estateManagementContainer = this.SetDockerCredentials(estateManagementContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = estateManagementContainer.Build().Start().WaitForPort($"{DockerHelper.EstateManagementDockerPort}/tcp", 30000);
 
-            Trace("Estate Management Container Started");
+            this.Trace("Estate Management Container Started");
 
             return builtContainer;
         }
@@ -190,7 +198,7 @@
                                                                        Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
                                                                        List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Estate Reporting Container");
+            this.Trace("About to Start Estate Reporting Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
@@ -209,14 +217,13 @@
                                                                      .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                      .ExposePort(DockerHelper.EstateReportingDockerPort).UseNetwork(networkServices.ToArray());
 
-            estateReportingContainer = MountHostFolder(estateReportingContainer);
-            estateReportingContainer = SetDockerCredentials(estateReportingContainer);
-
+            estateReportingContainer = this.MountHostFolder(estateReportingContainer);
+            estateReportingContainer = this.SetDockerCredentials(estateReportingContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = estateReportingContainer.Build().Start().WaitForPort($"{DockerHelper.EstateReportingDockerPort}/tcp", 30000);
 
-            Trace("Estate Reporting Container Started");
+            this.Trace("Estate Reporting Container Started");
 
             return builtContainer;
         }
@@ -232,7 +239,7 @@
                                                                   INetworkService networkService,
                                                                   Boolean forceLatestImage = false)
         {
-            Trace("About to Start Event Store Container");
+            this.Trace("About to Start Event Store Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add("EVENTSTORE_RUN_PROJECTIONS=all");
@@ -244,12 +251,12 @@
             var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
                                                           .ExposePort(DockerHelper.EventStoreTcpDockerPort).WithName(this.EventStoreContainerName)
                                                           .WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService);
-            
-            eventStoreContainerBuilder = MountHostFolder(eventStoreContainerBuilder, "/var/log/eventstore");
-            
+
+            eventStoreContainerBuilder = this.MountHostFolder(eventStoreContainerBuilder, "/var/log/eventstore");
+
             IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start().WaitForPort("2113/tcp", 30000);
 
-            Trace("Event Store Container Started");
+            this.Trace("Event Store Container Started");
 
             return eventStoreContainer;
         }
@@ -269,7 +276,7 @@
                                                                         Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
                                                                         List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Messaging Service Container");
+            this.Trace("About to Start Messaging Service Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
@@ -288,13 +295,13 @@
                                                                       .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                       .ExposePort(DockerHelper.MessagingServiceDockerPort).UseNetwork(networkServices.ToArray());
 
-            messagingServiceContainer = MountHostFolder(messagingServiceContainer);
-            messagingServiceContainer = SetDockerCredentials(messagingServiceContainer);
+            messagingServiceContainer = this.MountHostFolder(messagingServiceContainer);
+            messagingServiceContainer = this.SetDockerCredentials(messagingServiceContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = messagingServiceContainer.Build().Start().WaitForPort($"{DockerHelper.MessagingServiceDockerPort}/tcp", 30000);
 
-            Trace("Messaging Service Container Started");
+            this.Trace("Messaging Service Container Started");
 
             return builtContainer;
         }
@@ -312,7 +319,7 @@
                                                                        Boolean forceLatestImage = false,
                                                                        List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Security Container");
+            this.Trace("About to Start Security Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"ServiceOptions:PublicOrigin=https://{this.SecurityServiceContainerName}:{DockerHelper.SecurityServiceDockerPort}");
@@ -331,15 +338,15 @@
                                                                          {
                                                                              networkService
                                                                          }.ToArray());
-            
-            securityServiceContainer = MountHostFolder(securityServiceContainer);
-            securityServiceContainer = SetDockerCredentials(securityServiceContainer);
+
+            securityServiceContainer = this.MountHostFolder(securityServiceContainer);
+            securityServiceContainer = this.SetDockerCredentials(securityServiceContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = securityServiceContainer.Build().Start().WaitForPort("5001/tcp", 30000);
             Thread.Sleep(20000); // This hack is in till health checks implemented :|
 
-            Trace("Security Service Container Started");
+            this.Trace("Security Service Container Started");
 
             return builtContainer;
         }
@@ -357,7 +364,7 @@
                                                                 Boolean forceLatestImage = false,
                                                                 List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Test Hosts Container");
+            this.Trace("About to Start Test Hosts Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables
@@ -373,13 +380,13 @@
                                                               .UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.TestHostPort)
                                                               .UseNetwork(networkServices.ToArray());
 
-            testHostContainer = MountHostFolder(testHostContainer);
-            testHostContainer = SetDockerCredentials(testHostContainer);
+            testHostContainer = this.MountHostFolder(testHostContainer);
+            testHostContainer = this.SetDockerCredentials(testHostContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = testHostContainer.Build().Start().WaitForPort($"{DockerHelper.TestHostPort}/tcp", 30000);
 
-            Trace("Test Hosts Container Started");
+            this.Trace("Test Hosts Container Started");
 
             return builtContainer;
         }
@@ -421,7 +428,7 @@
                                                                                Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
                                                                                List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Transaction Processor ACL Container");
+            this.Trace("About to Start Transaction Processor ACL Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
@@ -445,14 +452,14 @@
                                                                                              networkService
                                                                                          }.ToArray());
 
-            transactionProcessorACLContainer = MountHostFolder(transactionProcessorACLContainer);
-            transactionProcessorACLContainer = SetDockerCredentials(transactionProcessorACLContainer);
+            transactionProcessorACLContainer = this.MountHostFolder(transactionProcessorACLContainer);
+            transactionProcessorACLContainer = this.SetDockerCredentials(transactionProcessorACLContainer);
 
             // Now build and return the container                
             IContainerService builtContainer =
                 transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerHelper.TransactionProcessorACLDockerPort}/tcp", 30000);
 
-            Trace("Transaction Processor Container ACL Started");
+            this.Trace("Transaction Processor Container ACL Started");
 
             return builtContainer;
         }
@@ -472,7 +479,7 @@
                                                                             Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
                                                                             List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Transaction Processor Container");
+            this.Trace("About to Start Transaction Processor Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
@@ -496,13 +503,13 @@
                                                                           .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                           .ExposePort(DockerHelper.TransactionProcessorDockerPort).UseNetwork(networkServices.ToArray());
 
-            transactionProcessorContainer = MountHostFolder(transactionProcessorContainer);
-            transactionProcessorContainer = SetDockerCredentials(transactionProcessorContainer);
+            transactionProcessorContainer = this.MountHostFolder(transactionProcessorContainer);
+            transactionProcessorContainer = this.SetDockerCredentials(transactionProcessorContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = transactionProcessorContainer.Build().Start().WaitForPort($"{DockerHelper.TransactionProcessorDockerPort}/tcp", 30000);
 
-            Trace("Transaction Processor Container Started");
+            this.Trace("Transaction Processor Container Started");
 
             return builtContainer;
         }
@@ -522,7 +529,7 @@
                                                                             Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
                                                                             List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Voucher Management ACL Container");
+            this.Trace("About to Start Voucher Management ACL Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}");
@@ -540,13 +547,13 @@
             ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(this.VoucherManagementACLContainerName)
                                                                           .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                           .ExposePort(DockerHelper.VoucherManagementACLDockerPort).UseNetwork(networkServices.ToArray());
-            voucherManagementAclContainer = MountHostFolder(voucherManagementAclContainer);
-            voucherManagementAclContainer = SetDockerCredentials(voucherManagementAclContainer);
+            voucherManagementAclContainer = this.MountHostFolder(voucherManagementAclContainer);
+            voucherManagementAclContainer = this.SetDockerCredentials(voucherManagementAclContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = voucherManagementAclContainer.Build().Start().WaitForPort($"{DockerHelper.VoucherManagementACLDockerPort}/tcp", 30000);
 
-            Trace("Voucher Management ACL Container Started");
+            this.Trace("Voucher Management ACL Container Started");
 
             return builtContainer;
         }
@@ -566,7 +573,7 @@
                                                                          Int32 securityServicePort = DockerHelper.SecurityServiceDockerPort,
                                                                          List<String> additionalEnvironmentVariables = null)
         {
-            Trace("About to Start Voucher Management Container");
+            this.Trace("About to Start Voucher Management Container");
 
             List<String> environmentVariables = new List<String>();
             environmentVariables.Add($"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}");
@@ -588,13 +595,13 @@
                                                                        .WithEnvironment(environmentVariables.ToArray()).UseImage(imageName, forceLatestImage)
                                                                        .ExposePort(DockerHelper.VoucherManagementDockerPort).UseNetwork(networkServices.ToArray());
 
-            voucherManagementContainer = MountHostFolder(voucherManagementContainer);
-            voucherManagementContainer = SetDockerCredentials(voucherManagementContainer);
+            voucherManagementContainer = this.MountHostFolder(voucherManagementContainer);
+            voucherManagementContainer = this.SetDockerCredentials(voucherManagementContainer);
 
             // Now build and return the container                
             IContainerService builtContainer = voucherManagementContainer.Build().Start().WaitForPort($"{DockerHelper.VoucherManagementDockerPort}/tcp", 30000);
 
-            Trace("Voucher Management  Container Started");
+            this.Trace("Voucher Management  Container Started");
 
             return builtContainer;
         }
@@ -696,6 +703,37 @@
         public abstract Task StopContainersForScenarioRun();
 
         /// <summary>
+        /// Configures the event store settings.
+        /// </summary>
+        /// <param name="eventStoreHttpPort">The event store HTTP port.</param>
+        /// <returns></returns>
+        protected static EventStoreClientSettings ConfigureEventStoreSettings(Int32 eventStoreHttpPort)
+        {
+            String connectionString = $"esdb://admin:changeit@127.0.0.1:{eventStoreHttpPort}?tls=false&tlsVerifyCert=false";
+
+            EventStoreClientSettings settings = new EventStoreClientSettings();
+            settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
+                                                      {
+                                                          SslOptions =
+                                                          {
+                                                              RemoteCertificateValidationCallback = (sender,
+                                                                                                     certificate,
+                                                                                                     chain,
+                                                                                                     errors) => true,
+                                                          }
+                                                      };
+            settings.ConnectionName = "Specflow";
+            settings.ConnectivitySettings = new EventStoreClientConnectivitySettings
+                                            {
+                                                Address = new Uri(connectionString),
+                                                Insecure = true
+                                            };
+
+            settings.DefaultCredentials = new UserCredentials("admin", "changeit");
+            return settings;
+        }
+
+        /// <summary>
         /// Generates the event store connection string.
         /// </summary>
         /// <returns></returns>
@@ -706,9 +744,141 @@
             return eventStoreAddress;
         }
 
+        /// <summary>
+        /// Loads the event store projections.
+        /// </summary>
+        protected async Task LoadEventStoreProjections(Int32 eventStoreHttpPort)
+        {
+            //Start our Continous Projections - we might decide to do this at a different stage, but now lets try here
+            String projectionsFolder = "projections/continuous";
+            IPAddress[] ipAddresses = Dns.GetHostAddresses("127.0.0.1");
+
+            if (!string.IsNullOrWhiteSpace(projectionsFolder))
+            {
+                DirectoryInfo di = new DirectoryInfo(projectionsFolder);
+
+                if (di.Exists)
+                {
+                    FileInfo[] files = di.GetFiles();
+
+                    EventStoreProjectionManagementClient projectionClient =
+                        new EventStoreProjectionManagementClient(DockerHelper.ConfigureEventStoreSettings(eventStoreHttpPort));
+                    List<String> projectionNames = new List<String>();
+                    
+                    foreach (FileInfo file in files)
+                    {
+                        String projection = await DockerHelper.RemoveProjectionTestSetup(file);
+                        String projectionName = file.Name.Replace(".js", string.Empty);
+
+                        try
+                        {
+                            this.Logger.LogInformation($"Creating projection [{projectionName}] from file [{file.FullName}]");
+                            await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
+
+                            projectionNames.Add(projectionName);
+                        }
+                        catch(Exception e)
+                        {
+                            this.Logger.LogError(new Exception($"Projection [{projectionName}] error", e));
+                        }
+                    }
+
+                    // Now check the create status of each
+                    foreach (String projectionName in projectionNames)
+                    {
+                        try
+                        {
+                            ProjectionDetails projectionDetails = await projectionClient.GetStatusAsync(projectionName);
+
+                            if (projectionDetails.Status == "Running")
+                            {
+                                this.Logger.LogInformation($"Projection [{projectionName}] is Running");
+                            }
+                            else
+                            {
+                                this.Logger.LogWarning($"Projection [{projectionName}] is {projectionDetails.Status}");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            this.Logger.LogError(new Exception($"Error getting Projection [{projectionName}] status", e));
+                        }
+                    }
+                }
+            }
+
+            this.Logger.LogInformation("Loaded projections");
+        }
+
+        private static async Task<String> RemoveProjectionTestSetup(FileInfo file)
+        {
+            // Read the file
+            String[] projectionLines = await File.ReadAllLinesAsync(file.FullName);
+            
+            // Find the end of the test setup code
+            Int32 index = Array.IndexOf(projectionLines, "//endtestsetup");
+            List<String> projectionLinesList = projectionLines.ToList();
+            
+            // Remove the test setup code
+            projectionLinesList.RemoveRange(0, index + 1);
+            // Rebuild the string from the lines
+            String projection = String.Join(Environment.NewLine, projectionLinesList);
+
+            return projection;
+        }
+
+        protected ContainerBuilder MountHostFolder(ContainerBuilder containerBuilder,
+                                                   String containerPath = "/home/txnproc/trace")
+        {
+            if (string.IsNullOrEmpty(this.HostTraceFolder) == false)
+            {
+                containerBuilder = containerBuilder.Mount(this.HostTraceFolder, containerPath, MountType.ReadWrite);
+            }
+
+            return containerBuilder;
+        }
+
+        protected async Task PopulateSubscriptionServiceConfiguration(Int32 eventStoreHttpPort,
+                                                                      List<(String streamName, String groupName)> subscriptions)
+        {
+            EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(DockerHelper.ConfigureEventStoreSettings(eventStoreHttpPort));
+
+            PersistentSubscriptionSettings settings = new PersistentSubscriptionSettings(resolveLinkTos:true, StreamPosition.Start);
+
+            foreach ((String streamName, String groupName) subscription in subscriptions)
+            {
+                await client.CreateAsync(subscription.streamName, subscription.groupName, settings);
+            }
+        }
+
+        protected ContainerBuilder SetDockerCredentials(ContainerBuilder containerBuilder)
+        {
+            if (this.DockerCredentials.HasValue)
+            {
+                containerBuilder = containerBuilder.WithCredential(this.DockerCredentials.Value.URL,
+                                                                   this.DockerCredentials.Value.UserName,
+                                                                   this.DockerCredentials.Value.Password);
+            }
+
+            return containerBuilder;
+        }
+
+        protected void Trace(String traceMessage)
+        {
+            if (this.Logger.IsInitialised)
+            {
+                this.Logger.LogInformation(traceMessage);
+            }
+        }
+
         #endregion
 
         #region Others
+
+        /// <summary>
+        /// The callback handler docker port
+        /// </summary>
+        public const Int32 CallbackHandlerDockerPort = 5010;
 
         /// <summary>
         /// The estate management docker port
