@@ -3,13 +3,18 @@
     using System;
     using System.Collections.Generic;
     using System.Data;
+    using System.IO;
+    using System.Linq;
     using System.Net;
+    using System.Net.Http;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Ductus.FluentDocker.Builders;
     using Ductus.FluentDocker.Model.Builders;
     using Ductus.FluentDocker.Services;
     using Ductus.FluentDocker.Services.Extensions;
+    using EventStore.Client;
     using Logger;
     using Microsoft.Data.SqlClient;
 
@@ -698,6 +703,37 @@
         public abstract Task StopContainersForScenarioRun();
 
         /// <summary>
+        /// Configures the event store settings.
+        /// </summary>
+        /// <param name="eventStoreHttpPort">The event store HTTP port.</param>
+        /// <returns></returns>
+        protected static EventStoreClientSettings ConfigureEventStoreSettings(Int32 eventStoreHttpPort)
+        {
+            String connectionString = $"esdb://admin:changeit@127.0.0.1:{eventStoreHttpPort}?tls=false&tlsVerifyCert=false";
+
+            EventStoreClientSettings settings = new EventStoreClientSettings();
+            settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
+                                                      {
+                                                          SslOptions =
+                                                          {
+                                                              RemoteCertificateValidationCallback = (sender,
+                                                                                                     certificate,
+                                                                                                     chain,
+                                                                                                     errors) => true,
+                                                          }
+                                                      };
+            settings.ConnectionName = "Specflow";
+            settings.ConnectivitySettings = new EventStoreClientConnectivitySettings
+                                            {
+                                                Address = new Uri(connectionString),
+                                                Insecure = true
+                                            };
+
+            settings.DefaultCredentials = new UserCredentials("admin", "changeit");
+            return settings;
+        }
+
+        /// <summary>
         /// Generates the event store connection string.
         /// </summary>
         /// <returns></returns>
@@ -706,6 +742,89 @@
             String eventStoreAddress = $"esdb://admin:changeit@{this.EventStoreContainerName}:{DockerHelper.EventStoreHttpDockerPort}?tls=false";
 
             return eventStoreAddress;
+        }
+
+        /// <summary>
+        /// Loads the event store projections.
+        /// </summary>
+        protected async Task LoadEventStoreProjections(Int32 eventStoreHttpPort)
+        {
+            //Start our Continous Projections - we might decide to do this at a different stage, but now lets try here
+            String projectionsFolder = "projections/continuous";
+            IPAddress[] ipAddresses = Dns.GetHostAddresses("127.0.0.1");
+
+            if (!string.IsNullOrWhiteSpace(projectionsFolder))
+            {
+                DirectoryInfo di = new DirectoryInfo(projectionsFolder);
+
+                if (di.Exists)
+                {
+                    FileInfo[] files = di.GetFiles();
+
+                    EventStoreProjectionManagementClient projectionClient =
+                        new EventStoreProjectionManagementClient(DockerHelper.ConfigureEventStoreSettings(eventStoreHttpPort));
+                    List<String> projectionNames = new List<String>();
+                    
+                    foreach (FileInfo file in files)
+                    {
+                        String projection = await DockerHelper.RemoveProjectionTestSetup(file);
+                        String projectionName = file.Name.Replace(".js", string.Empty);
+
+                        try
+                        {
+                            this.Logger.LogInformation($"Creating projection [{projectionName}] from file [{file.FullName}]");
+                            await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
+
+                            projectionNames.Add(projectionName);
+                        }
+                        catch(Exception e)
+                        {
+                            this.Logger.LogError(new Exception($"Projection [{projectionName}] error", e));
+                        }
+                    }
+
+                    // Now check the create status of each
+                    foreach (String projectionName in projectionNames)
+                    {
+                        try
+                        {
+                            ProjectionDetails projectionDetails = await projectionClient.GetStatusAsync(projectionName);
+
+                            if (projectionDetails.Status == "Running")
+                            {
+                                this.Logger.LogInformation($"Projection [{projectionName}] is Running");
+                            }
+                            else
+                            {
+                                this.Logger.LogWarning($"Projection [{projectionName}] is {projectionDetails.Status}");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            this.Logger.LogError(new Exception($"Error getting Projection [{projectionName}] status", e));
+                        }
+                    }
+                }
+            }
+
+            this.Logger.LogInformation("Loaded projections");
+        }
+
+        private static async Task<String> RemoveProjectionTestSetup(FileInfo file)
+        {
+            // Read the file
+            String[] projectionLines = await File.ReadAllLinesAsync(file.FullName);
+            
+            // Find the end of the test setup code
+            Int32 index = Array.IndexOf(projectionLines, "//endtestsetup");
+            List<String> projectionLinesList = projectionLines.ToList();
+            
+            // Remove the test setup code
+            projectionLinesList.RemoveRange(0, index + 1);
+            // Rebuild the string from the lines
+            String projection = String.Join(Environment.NewLine, projectionLinesList);
+
+            return projection;
         }
 
         protected ContainerBuilder MountHostFolder(ContainerBuilder containerBuilder,
@@ -717,6 +836,19 @@
             }
 
             return containerBuilder;
+        }
+
+        protected async Task PopulateSubscriptionServiceConfiguration(Int32 eventStoreHttpPort,
+                                                                      List<(String streamName, String groupName)> subscriptions)
+        {
+            EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(DockerHelper.ConfigureEventStoreSettings(eventStoreHttpPort));
+
+            PersistentSubscriptionSettings settings = new PersistentSubscriptionSettings(resolveLinkTos:true, StreamPosition.Start);
+
+            foreach ((String streamName, String groupName) subscription in subscriptions)
+            {
+                await client.CreateAsync(subscription.streamName, subscription.groupName, settings);
+            }
         }
 
         protected ContainerBuilder SetDockerCredentials(ContainerBuilder containerBuilder)
