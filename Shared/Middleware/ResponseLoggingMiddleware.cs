@@ -7,6 +7,8 @@ using Shared.General;
 
 namespace Shared.Middleware
 {
+    using Microsoft.AspNetCore.Http.Extensions;
+
     public class ResponseLoggingMiddleware
     {
         #region Fields
@@ -39,6 +41,7 @@ namespace Shared.Middleware
         /// <returns></returns>
         public async Task Invoke(HttpContext context)
         {
+            var url = UriHelper.GetDisplayUrl(context.Request);
             var bodyStream = context.Response.Body;
 
             var responseBodyStream = new MemoryStream();
@@ -55,8 +58,8 @@ namespace Shared.Middleware
                 logMessage.Append(" ");
                 logMessage.Append($"Body: {responseBody}");
             }
-            Logger.Logger.LogInformation(logMessage.ToString());
-            
+            Helpers.LogMessage(url, logMessage);
+
             responseBodyStream.Seek(0, SeekOrigin.Begin);
             await responseBodyStream.CopyToAsync(bodyStream);
         }
