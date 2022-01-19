@@ -56,7 +56,8 @@ namespace Shared.Middleware
                 logMessage.Append(" ");
                 logMessage.Append($"Body: {requestBodyText}");
             }
-            Logger.Logger.LogInformation(logMessage.ToString());
+            Helpers.LogMessage(url, logMessage);
+
             requestBodyStream.Seek(0, SeekOrigin.Begin);
             context.Request.Body = requestBodyStream;
 
@@ -66,5 +67,24 @@ namespace Shared.Middleware
         #endregion
 
         #endregion
+    }
+
+    internal static class Helpers
+    {
+        internal static Boolean IsHealthCheckRequest(String url) => url.EndsWith("/health");
+
+        internal static void LogMessage(String url,
+                                        StringBuilder message)
+        {
+            if (IsHealthCheckRequest(url))
+            {
+                // TODO: new logger method??
+                Logger.Logger.LogInformation($"HEALTH_CHECK | {message}");
+            }
+            else
+            {
+                Logger.Logger.LogInformation($"{message}");
+            }
+        }
     }
 }
