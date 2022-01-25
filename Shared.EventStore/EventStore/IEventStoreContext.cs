@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using DomainDrivenDesign.EventSourcing;
     using global::EventStore.Client;
 
     public interface IEventStoreContext
@@ -19,6 +18,17 @@
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Gets the events backwards asynchronous.
+        /// </summary>
+        /// <param name="streamName">Name of the stream.</param>
+        /// <param name="maxNumberOfEventsToRetrieve">The maximum number of events to retrieve.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        Task<IList<ResolvedEvent>> GetEventsBackwardAsync(String streamName,
+                                                          Int32 maxNumberOfEventsToRetrieve,
+                                                          CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the partition result from projection.
@@ -96,8 +106,8 @@
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         Task<List<ResolvedEvent>> ReadEvents(String streamName,
-                                           Int64 fromVersion,
-                                           CancellationToken cancellationToken);
+                                             Int64 fromVersion,
+                                             CancellationToken cancellationToken);
 
         #endregion
     }
