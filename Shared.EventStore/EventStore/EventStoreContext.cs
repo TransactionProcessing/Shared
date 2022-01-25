@@ -81,6 +81,38 @@
         }
 
         /// <summary>
+        /// Gets the events backwards asynchronous.
+        /// </summary>
+        /// <param name="streamName">Name of the stream.</param>
+        /// <param name="maxNumberOfEventsToRetrieve">The maximum number of events to retrieve.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        public async Task<IList<ResolvedEvent>> GetEventsBackwardAsync(String streamName,
+                                                                       Int32 maxNumberOfEventsToRetrieve,
+                                                                       CancellationToken cancellationToken)
+        {
+            List<ResolvedEvent> resolvedEvents = new();
+
+            EventStoreClient.ReadStreamResult response = this.EventStoreClient.ReadStreamAsync(Direction.Backwards,
+                                                                                              streamName,
+                                                                                              StreamPosition.End,
+                                                                                              maxNumberOfEventsToRetrieve,
+                                                                                              resolveLinkTos: true,
+                                                                                              cancellationToken: cancellationToken);
+
+            if (await response.ReadState == ReadState.StreamNotFound)
+            {
+                return resolvedEvents;
+            }
+
+            List<ResolvedEvent> events = await response.ToListAsync(cancellationToken);
+
+            resolvedEvents.AddRange(events);
+
+            return resolvedEvents;
+        }
+
+        /// <summary>
         /// Gets the partition state from projection.
         /// </summary>
         /// <param name="projectionName">Name of the projection.</param>
@@ -162,7 +194,7 @@
             this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
             await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion), aggregateEvents.AsEnumerable(), cancellationToken: cancellationToken);
         }
-
+        
         /// <summary>
         /// Reads the events.
         /// </summary>

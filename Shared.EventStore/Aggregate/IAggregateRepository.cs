@@ -28,6 +28,13 @@
         Task SaveChanges(TAggregate aggregate,
                          CancellationToken cancellationToken);
 
+        /// <summary>
+        /// Gets the latest version from last event.
+        /// </summary>
+        /// <param name="aggregateId">The aggregate identifier.</param>
+        /// <returns></returns>
+        Task<TAggregate> GetLatestVersionFromLastEvent(Guid aggregateId, CancellationToken cancellationToken);
+
         #endregion
     }
 }
