@@ -98,6 +98,13 @@
         /// <param name="domainEvent">The domain event.</param>
         public abstract void PlayEvent(IDomainEvent domainEvent);
 
+        /// <summary>
+        /// Gets the number of historical events.
+        /// </summary>
+        /// <value>
+        /// The number of historical events.
+        /// </value>
+        protected Int64 NumberOfHistoricalEvents => EventHistory.Count;
 
         #endregion
     }
