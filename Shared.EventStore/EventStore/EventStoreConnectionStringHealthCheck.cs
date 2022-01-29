@@ -60,7 +60,7 @@
             {
                 EventStoreClient client = new EventStoreClient(this.EventStoreClientSettings);
                 EventStoreClient.ReadStreamResult readResult = client.ReadStreamAsync(Direction.Forwards,
-                                                                                      "$users",
+                                                                                      "$all",
                                                                                       StreamPosition.Start,
                                                                                       userCredentials:this.UserCredentials,
                                                                                       resolveLinkTos:true,
@@ -68,7 +68,7 @@
                 ReadState readState = await readResult.ReadState;
                 if (readState == ReadState.StreamNotFound)
                 {
-                    throw new Exception("$users stream not found");
+                    throw new Exception("$all stream not found");
                 }
 
                 return HealthCheckResult.Healthy();
