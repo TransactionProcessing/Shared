@@ -65,6 +65,29 @@
         }
 
         /// <summary>
+        /// Gets the latest version from last event.
+        /// </summary>
+        /// <param name="aggregateId">The aggregate identifier.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        public async Task<TAggregate> GetLatestVersionFromLastEvent(Guid aggregateId,
+                                                                    CancellationToken cancellationToken)
+        {
+            TAggregate aggregate = new()
+                                   {
+                                       AggregateId = aggregateId
+                                   };
+
+            String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
+
+            IList<ResolvedEvent> events = await this.EventStoreContext.GetEventsBackwardAsync(streamName, 1, cancellationToken);
+
+            aggregate = this.ProcessEvents(aggregate, events);
+
+            return aggregate;
+        }
+
+        /// <summary>
         /// Gets the name of the stream.
         /// </summary>
         /// <param name="aggregateId">The aggregate identifier.</param>
