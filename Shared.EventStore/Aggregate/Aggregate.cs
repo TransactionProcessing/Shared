@@ -65,7 +65,7 @@
         /// Applies the and append.
         /// </summary>
         /// <param name="domainEvent">The domain event.</param>
-        protected internal void ApplyAndAppend(IDomainEvent domainEvent)
+        public void ApplyAndAppend(IDomainEvent domainEvent)
         {
             if (domainEvent == null) return; //Silently handled
 
