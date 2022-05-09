@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using DomainDrivenDesign.EventSourcing;
     using General;
 
@@ -31,7 +32,7 @@
         /// <param name="assemblyFilters">The assembly filters.</param>
         public static void LoadDomainEventsTypeDynamically(List<String> assemblyFilters = null)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
             if (assemblyFilters == null)
                 assemblyFilters = TypeProvider.DefaultAssemblyFilters;
@@ -42,8 +43,8 @@
                 allTypes = assemblies.Where(a => a.FullName.Contains(filter) == false).SelectMany(a => a.GetTypes());
             }
 
-            var filteredTypes = allTypes.Where(t => t.IsSubclassOf(typeof(DomainEvent)) || t.IsSubclassOf(typeof(DomainEventRecord.DomainEvent))).OrderBy(e => e.Name)
-                                        .ToList();
+            List<Type> filteredTypes = allTypes.Where(t => t.IsSubclassOf(typeof(DomainEvent))).OrderBy(e => e.Name)
+                                               .ToList();
 
             foreach (Type type in filteredTypes)
             {
