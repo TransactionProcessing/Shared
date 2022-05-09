@@ -7,7 +7,7 @@ namespace Shared.EventStore.Tests
     using DomainDrivenDesign.EventSourcing;
     using EventHandling;
 
-    public record EstateCreatedEvent : DomainEventRecord.DomainEvent
+    public record EstateCreatedEvent : DomainEvent
     {
         #region Constructors
 

@@ -13,34 +13,29 @@
     /// <summary>
     /// 
     /// </summary>
-    /// <seealso cref="Shared.EventStore.Aggregate.IDomainEventFactory&lt;Shared.DomainDrivenDesign.EventSourcing.DomainEvent&gt;" />
+    /// <seealso cref="DomainEventRecord.DomainEvent" />
     public class DomainEventFactory : IDomainEventFactory<DomainEvent>
     {
-        #region Fields
-
-        /// <summary>
-        /// The json serializer
-        /// </summary>
-        private readonly JsonSerializer JsonSerializer;
-
-        #endregion
-
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DomainEventFactory"/> class.
+        /// Initializes a new instance of the <see cref="DomainEventFactory2" /> class.
         /// </summary>
         public DomainEventFactory()
         {
             JsonIgnoreAttributeIgnorerContractResolver jsonIgnoreAttributeIgnorerContractResolver = new JsonIgnoreAttributeIgnorerContractResolver();
-            this.JsonSerializer = new JsonSerializer
-                                  {
-                                      ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                                      TypeNameHandling = TypeNameHandling.All,
-                                      Formatting = Formatting.Indented,
-                                      DateTimeZoneHandling = DateTimeZoneHandling.Utc,
-                                      ContractResolver = jsonIgnoreAttributeIgnorerContractResolver
-                                  };
+
+            JsonConvert.DefaultSettings = () =>
+                                          {
+                                              return new JsonSerializerSettings
+                                                     {
+                                                         ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                                                         TypeNameHandling = TypeNameHandling.All,
+                                                         Formatting = Formatting.Indented,
+                                                         DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+                                                         ContractResolver = jsonIgnoreAttributeIgnorerContractResolver
+                                                     };
+                                          };
         }
 
         #endregion
@@ -48,48 +43,32 @@
         #region Methods
 
         /// <summary>
-        /// Creates the domain event.
+        /// Creates the agge aggregate snapshot.
         /// </summary>
-        /// <param name="aggregateId">The aggregate identifier.</param>
+        /// <param name="aggregateId"></param>
         /// <param name="event">The event.</param>
         /// <returns></returns>
         /// <exception cref="System.Exception">Failed to find a domain event with type {@event.Event.EventType}</exception>
-        public DomainEvent CreateDomainEvent(Guid aggregateId,
-                                             ResolvedEvent @event)
+        public DomainEvent CreateDomainEvent(Guid aggregateId, ResolvedEvent @event)
         {
             String json = @event.GetResolvedEventDataAsString();
-            DomainEvent domainEvent;
-            JObject jObject = JObject.Parse(json);
 
-            try
-            {
-                if (json.Contains("$type"))
-                {
-                    //Handle $type (legacy) and new approach
-                    domainEvent = jObject.ToObject<DomainEvent>(this.JsonSerializer);
-                }
-                else
-                {
-                    var eventType = TypeMap.GetType(@event.Event.EventType);
+            Type eventType = TypeMap.GetType(@event.Event.EventType);
 
-                    if (eventType == null)
-                        throw new Exception($"Failed to find a domain event with type {@event.Event.EventType}");
+            if (eventType == null)
+                throw new Exception($"Failed to find a domain event with type {@event.Event.EventType}");
 
-                    jObject.Add("AggregateId", aggregateId);
-                    jObject.Add("AggregateVersion", @event.Event.EventNumber.ToInt64());
-                    jObject.Add("EventNumber", @event.Event.EventNumber.ToInt64());
-                    jObject.Add("EventType", @event.Event.EventType);
-                    jObject.Add("EventId", @event.Event.EventId.ToGuid());
-                    jObject.Add("EventTimestamp", @event.Event.Created);
+            DomainEvent domainEvent = (DomainEvent)JsonConvert.DeserializeObject(json, eventType);
 
-                    domainEvent = (DomainEvent)jObject.ToObject(eventType, this.JsonSerializer);
-                }
-            }
-            catch(Exception e)
-            {
-                Exception ex = new($"Failed to convert json event {json} into a domain event. EventType was {@event.Event.EventType}", e);
-                throw ex;
-            }
+            domainEvent = domainEvent with
+                          {
+                              AggregateId = aggregateId,
+                              AggregateVersion = @event.Event.EventNumber.ToInt64(),
+                              EventNumber = @event.Event.EventNumber.ToInt64(),
+                              EventType = @event.Event.EventType,
+                              EventId = @event.Event.EventId.ToGuid(),
+                              EventTimestamp = @event.Event.Created,
+                          };
 
             return domainEvent;
         }
@@ -101,24 +80,14 @@
         /// <param name="eventType">Type of the event.</param>
         /// <returns></returns>
         public DomainEvent CreateDomainEvent(String json,
-                                             Type eventType)
+                                                               Type eventType)
         {
             DomainEvent domainEvent;
             JObject jObject = JObject.Parse(json);
 
             try
             {
-                if (json.Contains("$type"))
-                {
-                    //Handle $type (legacy) and new approach
-                    domainEvent = jObject.ToObject<DomainEvent>(this.JsonSerializer);
-                }
-                else
-                {
-                    jObject.Add("EventType", eventType.Name);
-
-                    domainEvent = (DomainEvent)jObject.ToObject(eventType, this.JsonSerializer);
-                }
+                domainEvent = (DomainEvent)JsonConvert.DeserializeObject(json, eventType);
             }
             catch(Exception e)
             {
@@ -130,13 +99,12 @@
         }
 
         /// <summary>
-        /// Creates the domain event.
+        /// Creates the domain events.
         /// </summary>
-        /// <param name="aggregateId">The aggregate identifier.</param>
+        /// <param name="aggregateId"></param>
         /// <param name="event">The event.</param>
         /// <returns></returns>
-        public DomainEvent[] CreateDomainEvents(Guid aggregateId,
-                                                IList<ResolvedEvent> @event)
+        public DomainEvent[] CreateDomainEvents(Guid aggregateId, IList<ResolvedEvent> @event)
         {
             return @event.Select(e => this.CreateDomainEvent(aggregateId, e)).ToArray();
         }

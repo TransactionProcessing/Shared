@@ -13,14 +13,9 @@
         #region Fields
 
         /// <summary>
-        /// The domain event factory
-        /// </summary>
-        private static readonly DomainEventFactory domainEventFactory = new DomainEventFactory();
-
-        /// <summary>
         /// The domain event record factory
         /// </summary>
-        private static readonly DomainEventRecordFactory domainEventRecordFactory = new DomainEventRecordFactory();
+        private static readonly DomainEventFactory domainEventFactory = new DomainEventFactory();
 
         #endregion
 
@@ -42,11 +37,6 @@
             if (eventType.IsSubclassOf(typeof(DomainEvent)))
             {
                 return TypeMapConvertor.GetDomainEvent(aggregateId, @event);
-            }
-
-            if (eventType.IsSubclassOf(typeof(DomainEventRecord.DomainEvent)))
-            {
-                return TypeMapConvertor.GetDomainEventRecord(aggregateId, @event);
             }
 
             throw new Exception($"Could not find EventType {eventType.Name} in mapping list.");
@@ -71,27 +61,15 @@
         public static IDomainEvent Convertor(ResolvedEvent @event) => TypeMapConvertor.Convertor(Guid.Empty, @event);
 
         /// <summary>
-        /// Gets the domain event.
-        /// </summary>
-        /// <param name="aggregateId">The aggregate identifier.</param>
-        /// <param name="event">The event.</param>
-        /// <returns></returns>
-        private static IDomainEvent GetDomainEvent(Guid aggregateId,
-                                                   ResolvedEvent @event)
-        {
-            return TypeMapConvertor.domainEventFactory.CreateDomainEvent(aggregateId, @event);
-        }
-
-        /// <summary>
         /// Gets the domain event record.
         /// </summary>
         /// <param name="aggregateId">The aggregate identifier.</param>
         /// <param name="event">The event.</param>
         /// <returns></returns>
-        private static IDomainEvent GetDomainEventRecord(Guid aggregateId,
+        private static IDomainEvent GetDomainEvent(Guid aggregateId,
                                                          ResolvedEvent @event)
         {
-            return TypeMapConvertor.domainEventRecordFactory.CreateDomainEvent(aggregateId, @event);
+            return TypeMapConvertor.domainEventFactory.CreateDomainEvent(aggregateId, @event);
         }
 
         #endregion

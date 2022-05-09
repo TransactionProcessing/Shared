@@ -56,15 +56,10 @@ namespace Driver
         }
     }
 
-    public class AggregateNameSetEvent : DomainEvent
+    public record AggregateNameSetEvent : DomainEvent
     {
         [JsonProperty]
         public String AggregateName { get; private set; }
-
-        public AggregateNameSetEvent()
-        {
-            //We need this for serialisation, so just embrace the DDD crime
-        }
 
         private AggregateNameSetEvent(Guid aggregateId,
                                       Guid eventId,
