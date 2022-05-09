@@ -108,10 +108,10 @@ namespace Driver
             {
                 //await this.LoadEventStoreProjections(2113);
 
-                List<(String, String)> subs = new List<(String, String)>();
-                subs.Add(("TestStream", "TestGroup1"));
-                subs.Add(("TestStream", "TestGroup2"));
-                subs.Add(("TestStream1", "TestGroup3"));
+                List<(String, String, Int32)> subs = new List<(String, String, Int32)>();
+                subs.Add(("TestStream", "TestGroup1",0));
+                subs.Add(("TestStream", "TestGroup2",0));
+                subs.Add(("TestStream1", "TestGroup3",1));
                 await this.PopulateSubscriptionServiceConfiguration(2113, subs);
             }
 
