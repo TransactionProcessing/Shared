@@ -14,8 +14,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="Aggregate" /> class.
         /// </summary>
-        protected Aggregate()
-        {
+        protected Aggregate() {
             this.EventHistory = new Dictionary<Guid, IDomainEvent>();
             this.PendingEvents = new List<IDomainEvent>();
             this.Version = -1L;
@@ -42,6 +41,14 @@
         public AggregateVersion Version { get; internal set; }
 
         /// <summary>
+        /// Gets the number of historical events.
+        /// </summary>
+        /// <value>
+        /// The number of historical events.
+        /// </value>
+        protected Int64 NumberOfHistoricalEvents => this.EventHistory.Count;
+
+        /// <summary>
         /// Gets or sets the event history.
         /// </summary>
         /// <value>
@@ -65,32 +72,26 @@
         /// Applies the and append.
         /// </summary>
         /// <param name="domainEvent">The domain event.</param>
-        public void ApplyAndAppend(IDomainEvent domainEvent)
-        {
+        public void ApplyAndAppend(IDomainEvent domainEvent) {
             if (domainEvent == null) return; //Silently handled
 
-            try
-            {
+            try {
                 if (this.IsEventDuplicate(domainEvent.EventId))
                     return;
 
                 this.PlayEvent(domainEvent);
                 this.PendingEvents.Add(domainEvent);
             }
-            catch (Exception e)
-            {
+            catch(Exception e) {
                 Exception ex = new Exception($"Failed to apply event {domainEvent.EventType} to Aggregate {this.GetType().Name}", e);
 
                 throw ex;
             }
         }
 
-        public Object GetAggregateMetadata()
-        {
+        public Object GetAggregateMetadata() {
             return this.GetMetadata();
         }
-
-        protected abstract Object GetMetadata();
 
         /// <summary>
         /// Plays the event.
@@ -98,13 +99,7 @@
         /// <param name="domainEvent">The domain event.</param>
         public abstract void PlayEvent(IDomainEvent domainEvent);
 
-        /// <summary>
-        /// Gets the number of historical events.
-        /// </summary>
-        /// <value>
-        /// The number of historical events.
-        /// </value>
-        protected Int64 NumberOfHistoricalEvents => EventHistory.Count;
+        protected abstract Object GetMetadata();
 
         #endregion
     }

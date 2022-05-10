@@ -3,6 +3,9 @@
 ## Build Status
 [![Last Release Status Badge](https://github.com/StuartFerguson/Shared/workflows/Release/badge.svg)](https://github.com/StuartFerguson/Shared/workflows/Release/badge.svg)
 
+## CodeFactor Code Quality
+[![CodeFactor](https://www.codefactor.io/repository/github/transactionprocessing/shared/badge)](https://www.codefactor.io/repository/github/transactionprocessing/shared)
+
 ## Nuget Versions
 |||
 | --- | --- |
