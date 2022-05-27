@@ -45,7 +45,7 @@
         /// <param name="keyName">Name of the key.</param>
         /// <returns></returns>
         public static String GetConnectionString(String keyName) {
-            return ConfigurationReader.GetValueFromSection<String>("ConnectionStrings", keyName);
+            return ConfigurationReader.GetValueFromSection("ConnectionStrings", keyName);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@
         /// <param name="keyName">Name of the key.</param>
         /// <returns></returns>
         public static String GetValue(String keyName) {
-            return ConfigurationReader.GetValueFromSection<String>("AppSettings", keyName);
+            return ConfigurationReader.GetValueFromSection("AppSettings", keyName);
         }
 
         /// <summary>
@@ -65,12 +65,12 @@
         /// <returns></returns>
         public static String GetValue(String sectionName,
                                       String keyName) {
-            return ConfigurationReader.GetValueFromSection<String>(sectionName, keyName);
+            return ConfigurationReader.GetValueFromSection(sectionName, keyName);
         }
 
-        public static T GetValue<T>(String sectionName,
-                                      String keyName) {
-            return ConfigurationReader.GetValueFromSection<T>(sectionName, keyName);
+        public static T GetValueFromSection<T>(String sectionName,
+                                               String keyName) {
+            return ConfigurationReader.GetTypedValueFromSection<T>(sectionName, keyName);
         }
 
         /// <summary>
@@ -83,7 +83,27 @@
             ConfigurationReader.IsInitialised = true;
         }
 
-        private static T GetValueFromSection<T>(String sectionName,
+        private static String GetValueFromSection(String sectionName, String keyName)
+        {
+            if (!ConfigurationReader.IsInitialised)
+            {
+                throw new InvalidOperationException("Configuration Reader has not been initialised");
+            }
+            IConfigurationSection section = ConfigurationReader.ConfigurationRoot.GetSection(sectionName);
+            if (section == null)
+            {
+                throw new Exception($"Section [{sectionName}] not found.");
+            }
+
+            if (section[keyName] == null)
+            {
+                throw new Exception($"No configuration value was found for key [{sectionName}:{keyName}]");
+            }
+
+            return section[keyName];
+        }
+
+        private static T GetTypedValueFromSection<T>(String sectionName,
                                                 String keyName) {
             if (!ConfigurationReader.IsInitialised) {
                 throw new InvalidOperationException("Configuration Reader has not been initialised");
