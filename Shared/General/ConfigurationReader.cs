@@ -68,6 +68,11 @@
             return ConfigurationReader.GetValueFromSection(sectionName, keyName);
         }
 
+        public static T GetValue<T>(String sectionName,
+                                      String keyName) {
+            return ConfigurationReader.GetValueFromSection<T>(sectionName, keyName);
+        }
+
         /// <summary>
         /// Initialises the specified configuration root.
         /// </summary>
@@ -78,7 +83,7 @@
             ConfigurationReader.IsInitialised = true;
         }
 
-        private static String GetValueFromSection(String sectionName,
+        public static String GetValue(String sectionName, 
                                                   String keyName) {
             if (!ConfigurationReader.IsInitialised) {
                 throw new InvalidOperationException("Configuration Reader has not been initialised");
