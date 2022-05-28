@@ -116,7 +116,7 @@
 
             T value = section.Get<T>();
 
-            if (section[keyName] == null) {
+            if (value == null) {
                 throw new Exception($"No configuration value was found for key [{sectionName}:{keyName}]");
             }
 
