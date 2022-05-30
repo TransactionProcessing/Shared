@@ -15,8 +15,7 @@
 
         #region Constructors
 
-        public EventStorePersistentSubscriptionsClient(global::EventStore.Client.EventStorePersistentSubscriptionsClient subscriptionsClient)
-        {
+        public EventStorePersistentSubscriptionsClient(global::EventStore.Client.EventStorePersistentSubscriptionsClient subscriptionsClient) {
             this.SubscriptionsClient = subscriptionsClient;
         }
 
@@ -26,14 +25,14 @@
 
         public Task<global::EventStore.Client.PersistentSubscription> SubscribeAsync(String stream,
                                                                                      String group,
-                                                                                     Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared,
-                                                                                     Action<global::EventStore.Client.PersistentSubscription, SubscriptionDroppedReason, Exception?>? subscriptionDropped,
+                                                                                     Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?,
+                                                                                         CancellationToken, Task> eventAppeared,
+                                                                                     Action<global::EventStore.Client.PersistentSubscription, SubscriptionDroppedReason,
+                                                                                         Exception?>? subscriptionDropped,
                                                                                      UserCredentials? userCredentials,
                                                                                      Int32 bufferSize,
-                                                                                     Boolean autoAck,
-                                                                                     CancellationToken cancellationToken)
-        {
-            return this.SubscriptionsClient.SubscribeAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, autoAck, cancellationToken);
+                                                                                     CancellationToken cancellationToken) {
+            return this.SubscriptionsClient.SubscribeToStreamAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, cancellationToken);
         }
 
         #endregion

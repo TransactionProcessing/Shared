@@ -57,7 +57,6 @@
                                                                                 this.SubscriptionDropped,
                                                                                 userCredentials,
                                                                                 persistentSubscriptionDetails.InflightMessages,
-                                                                                false,
                                                                                 ct);
         }
 
