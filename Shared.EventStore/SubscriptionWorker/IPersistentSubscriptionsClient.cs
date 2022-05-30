@@ -11,11 +11,12 @@
 
         Task<global::EventStore.Client.PersistentSubscription> SubscribeAsync(String stream,
                                                                               String group,
-                                                                              Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared,
-                                                                              Action<global::EventStore.Client.PersistentSubscription, SubscriptionDroppedReason, Exception?> subscriptionDropped,
+                                                                              Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?,
+                                                                                  CancellationToken, Task> eventAppeared,
+                                                                              Action<global::EventStore.Client.PersistentSubscription, SubscriptionDroppedReason,
+                                                                                  Exception?> subscriptionDropped,
                                                                               UserCredentials? userCredentials,
                                                                               Int32 bufferSize,
-                                                                              Boolean autoAck,
                                                                               CancellationToken cancellationToken);
 
         #endregion

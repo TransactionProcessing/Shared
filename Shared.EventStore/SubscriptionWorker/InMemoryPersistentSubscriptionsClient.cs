@@ -22,7 +22,6 @@
                                                                                            Action<global::EventStore.Client.PersistentSubscription, SubscriptionDroppedReason, Exception?>? subscriptionDropped,
                                                                                            UserCredentials? userCredentials,
                                                                                            Int32 bufferSize,
-                                                                                           Boolean autoAck,
                                                                                            CancellationToken cancellationToken)
         {
             this.Stream = stream;
