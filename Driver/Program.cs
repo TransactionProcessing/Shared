@@ -7,59 +7,64 @@ namespace Driver
     using System.Threading;
     using System.Threading.Tasks;
     using EventStore.Client;
-    using EventStore.ClientAPI.Common.Log;
+    using Grpc.Core;
+    using Shared.DomainDrivenDesign.EventSourcing;
+    using Shared.EventStore.Aggregate;
     using Shared.EventStore.EventStore;
     using Shared.IntegrationTesting;
     using Shared.Logger;
 
     class Program
     {
-        static async Task Main(string[] args)
+        internal static EventStoreClientSettings ConfigureEventStoreSettings()
         {
-            /*
-            EventStoreClientSettings settings = new EventStoreClientSettings();
+            EventStoreClientSettings settings = EventStoreClientSettings.Create("esdb://127.0.0.1:2113?tls=false");
+
             settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
-                                                      {
-                                                          SslOptions =
+            {
+                SslOptions =
                                                           {
                                                               RemoteCertificateValidationCallback = (sender,
                                                                                                      certificate,
                                                                                                      chain,
                                                                                                      errors) => true,
                                                           }
-                                                      };
-            settings.ConnectionName = "Test Connection";
-            settings.ConnectivitySettings = new EventStoreClientConnectivitySettings
-            {
-                Address = new Uri("https://localhost:2113"),
             };
-            settings.DefaultCredentials = new UserCredentials("admin","changeit");
 
-            EventStoreClient client = new EventStoreClient(settings);
+            settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
+            settings.ConnectivitySettings.Insecure = true;
+            settings.ConnectivitySettings.Address = new Uri("esdb://127.0.0.1:2113?tls=false&tlsVerifyCert=false");
+            settings.ConnectionName = "test";
+            
+            return settings;
+        }
+
+        static async Task Main(string[] args) {
+            EventStoreClientSettings settings = Program.ConfigureEventStoreSettings();
+
+            EventStoreClient client = new(settings);
+            
+            
             EventStoreProjectionManagementClient projectionManagementClient = new EventStoreProjectionManagementClient(settings);
             
+            //var x = await projectionManagementClient.GetStatusAsync("$by_category", cancellationToken: CancellationToken.None);
+            
             IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
-            //IAggregateRepository<TestAggregate> aggregateRepository = new AggregateRepository<TestAggregate>(context);
+            IAggregateRepository<TestAggregate, DomainEvent> aggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context);
 
-            //Guid aggregateId = Guid.NewGuid();
-            //TestAggregate aggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
+            Guid aggregateId = Guid.Parse("02398284-8284-8284-8284-165402398284");
+            TestAggregate aggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
 
-            //aggregate.SetAggregateName("Test Name");
+            aggregate.SetAggregateName("Test Name");
             //aggregate.SetAggregateName("Test Name1");
             //aggregate.SetAggregateName("Test Name2");
             //aggregate.SetAggregateName("Test Name3");
             //aggregate.SetAggregateName("Test Name4");
 
-            //await aggregateRepository.SaveChanges(aggregate, CancellationToken.None);
-
-            //TestAggregate existingAggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
-            Guid merchantId = Guid.Parse("df33bc12-ec69-4393-899d-e68305794d5d");
-            var x = await context.GetPartitionStateFromProjection("MerchantBalanceCalculator", $"MerchantBalanceHistory-{merchantId:N}", CancellationToken.None);
-
-            */
-
-            TestDockerHelper t = new TestDockerHelper();
-            await t.StartContainersForScenarioRun("");
+            await aggregateRepository.SaveChanges(aggregate, CancellationToken.None);
+            
+            //TestDockerHelper t = new TestDockerHelper();
+            //await t.StartContainersForScenarioRun("");
 
         }
 

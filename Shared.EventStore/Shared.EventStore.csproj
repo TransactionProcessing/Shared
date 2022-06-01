@@ -5,11 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="EventStore.Client" Version="21.2.2" />
 	  <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="22.0.0" />
 	  <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="22.0.0" />
 	  <PackageReference Include="EventStore.Client.Grpc.Streams" Version="22.0.0" />
-	  <PackageReference Include="Grpc.Net.Client" Version="2.46.0" />
 	  <PackageReference Include="IdentityModel" Version="6.0.0" />
 	  <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="6.0.5" />
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
