@@ -688,11 +688,9 @@
                                                                                               }
                                                                              };
             settings.ConnectionName = "Specflow";
-            settings.ConnectivitySettings = new EventStoreClientConnectivitySettings {
-                                                                                         Address = new Uri(connectionString),
-                                                                                         Insecure = true
-                                                                                     };
-
+            settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
+            settings.ConnectivitySettings.Address = new Uri(connectionString);
+            settings.ConnectivitySettings.Insecure = true;
             settings.DefaultCredentials = new UserCredentials("admin", "changeit");
             return settings;
         }
@@ -710,7 +708,7 @@
         /// <summary>
         /// Loads the event store projections.
         /// </summary>
-        protected async Task LoadEventStoreProjections(Int32 eventStoreHttpPort) {
+        protected virtual async Task LoadEventStoreProjections(Int32 eventStoreHttpPort) {
             //Start our Continous Projections - we might decide to do this at a different stage, but now lets try here
             String projectionsFolder = "projections/continuous";
             IPAddress[] ipAddresses = Dns.GetHostAddresses("127.0.0.1");
@@ -771,7 +769,7 @@
             return containerBuilder;
         }
 
-        protected async Task PopulateSubscriptionServiceConfiguration(Int32 eventStoreHttpPort,
+        protected virtual async Task PopulateSubscriptionServiceConfiguration(Int32 eventStoreHttpPort,
                                                                       List<(String streamName, String groupName, Int32 maxRetryCount)> subscriptions) {
             EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(DockerHelper.ConfigureEventStoreSettings(eventStoreHttpPort));
 
