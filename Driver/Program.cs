@@ -3,6 +3,7 @@
 namespace Driver
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
@@ -10,7 +11,9 @@ namespace Driver
     using Grpc.Core;
     using Shared.DomainDrivenDesign.EventSourcing;
     using Shared.EventStore.Aggregate;
+    using Shared.EventStore.EventHandling;
     using Shared.EventStore.EventStore;
+    using Shared.EventStore.SubscriptionWorker;
     using Shared.IntegrationTesting;
     using Shared.Logger;
 
@@ -40,6 +43,9 @@ namespace Driver
         }
 
         static async Task Main(string[] args) {
+
+            await SubscriptionsTest();
+
             EventStoreClientSettings settings = Program.ConfigureEventStoreSettings();
 
             EventStoreClient client = new(settings);
@@ -66,6 +72,53 @@ namespace Driver
             //TestDockerHelper t = new TestDockerHelper();
             //await t.StartContainersForScenarioRun("");
 
+        }
+
+        static async Task SubscriptionsTest() {
+            String eventStoreConnectionString = "esdb://127.0.0.1:2113?tls=false";
+            Int32 inflightMessages = 1;
+            Int32 persistentSubscriptionPollingInSeconds = 10;
+            String filter = String.Empty;
+            String ignore = String.Empty;
+            String streamName = String.Empty;
+            Int32 cacheDuration = 0;
+
+            ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, cacheDuration);
+
+            //((SubscriptionRepository)subscriptionRepository).Trace += (sender, s) => Extensions.log(TraceEventType.Information, "REPOSITORY", s);
+
+            // init our SubscriptionRepository
+            subscriptionRepository.PreWarm(CancellationToken.None).Wait();
+
+            IDomainEventHandlerResolver eventHandlerResolver = new DomainEventHandlerResolver(new Dictionary<String, String[]>(),
+                                                                                              null);
+
+            SubscriptionWorker concurrentSubscriptions = SubscriptionWorker.CreateConcurrentSubscriptionWorker(Program.ConfigureEventStoreSettings(), eventHandlerResolver, subscriptionRepository, inflightMessages, persistentSubscriptionPollingInSeconds);
+
+            //concurrentSubscriptions.Trace += (_, args) => Extensions.concurrentLog(TraceEventType.Information, args.Message);
+            //concurrentSubscriptions.Warning += (_, args) => Extensions.concurrentLog(TraceEventType.Warning, args.Message);
+            //concurrentSubscriptions.Error += (_, args) => Extensions.concurrentLog(TraceEventType.Error, args.Message);
+
+            if (!String.IsNullOrEmpty(ignore))
+            {
+                concurrentSubscriptions = concurrentSubscriptions.IgnoreSubscriptions(ignore);
+            }
+
+            if (!String.IsNullOrEmpty(filter))
+            {
+                //NOTE: Not overly happy with this design, but
+                //the idea is if we supply a filter, this overrides ignore
+                concurrentSubscriptions = concurrentSubscriptions.FilterSubscriptions(filter)
+                                                                 .IgnoreSubscriptions(null);
+
+            }
+
+            if (!String.IsNullOrEmpty(streamName))
+            {
+                concurrentSubscriptions = concurrentSubscriptions.FilterByStreamName(streamName);
+            }
+
+            concurrentSubscriptions.StartAsync(CancellationToken.None).Wait();
         }
 
         public class ConsoleLogger : ILogger
