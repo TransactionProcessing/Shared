@@ -129,7 +129,7 @@ namespace Shared.EventStore.Tests
 
         [Theory]
         [InlineData(true)]
-        //[InlineData(false)]
+        [InlineData(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore) {
             
             this.StartContainers(secureEventStore);
@@ -180,7 +180,7 @@ namespace Shared.EventStore.Tests
 
         }
 
-        [Theory(Skip = "Test")]
+        [Theory]
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore)
