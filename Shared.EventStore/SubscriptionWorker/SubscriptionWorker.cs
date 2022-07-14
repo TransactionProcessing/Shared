@@ -66,6 +66,35 @@
             this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
         }
 
+        private SubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
+                                   IDomainEventHandlerResolver domainEventHandlerResolver,
+                                   ISubscriptionRepository subscriptionRepository,
+                                   Int32 persistentSubscriptionPollingInSeconds = 60)
+        {
+            this.DomainEventHandlerResolver = domainEventHandlerResolver;
+            this.SubscriptionRepository = subscriptionRepository;
+            this.EventStorePersistentSubscriptionsClient = new(eventStoreConnectionSettings);
+
+            this.PersistentSubscriptionPollingInSeconds = persistentSubscriptionPollingInSeconds;
+
+            EventStoreClientSettings settings = eventStoreConnectionSettings;
+            this.HttpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
+
+            this.IgnoreSubscriptions = "local-"; //Default behaviour
+
+            this.GetNewSubscriptions = (all, current)
+                                           => SubscriptionWorkerHelper.GetNewSubscriptions(all,
+                                                                                           current,
+                                                                                           this.IsOrdered,
+                                                                                           this.IgnoreSubscriptions,
+                                                                                           this.FilterSubscriptions,
+                                                                                           this.StreamNameFilter);
+
+            this.WriteTrace = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Trace, this, message);
+            this.WriteWarning = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Warning, this, message);
+            this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
+        }
+
         #endregion
 
         #region Properties
@@ -104,12 +133,24 @@
                    };
         }
 
-        public static SubscriptionWorker CreateOrderedSubscriptionWorker(String eventStoreConnectionString,
+        public static SubscriptionWorker CreateConcurrentSubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
+                                                                            IDomainEventHandlerResolver domainEventHandlerResolver,
+                                                                            ISubscriptionRepository subscriptionRepository,
+                                                                            Int32 inflightMessages = 200,
+                                                                            Int32 persistentSubscriptionPollingInSeconds = 60)
+        {
+            return new(eventStoreConnectionSettings, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
+                   {
+                       InflightMessages = inflightMessages
+                   };
+        }
+
+        public static SubscriptionWorker CreateOrderedSubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
                                                                          IDomainEventHandlerResolver domainEventHandlerResolver,
                                                                          ISubscriptionRepository subscriptionRepository,
                                                                          Int32 persistentSubscriptionPollingInSeconds = 60)
         {
-            return new(eventStoreConnectionString, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
+            return new(eventStoreConnectionSettings, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
                    {
                        InflightMessages = 1,
                        IsOrdered = true
