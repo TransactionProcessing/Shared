@@ -185,7 +185,6 @@ namespace Shared.EventStore.Tests
         [InlineData(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore)
         {
-
             this.StartContainers(secureEventStore);
 
             await Task.Delay(TimeSpan.FromSeconds(30));
