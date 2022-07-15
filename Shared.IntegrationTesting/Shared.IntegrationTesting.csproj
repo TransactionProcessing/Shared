@@ -20,6 +20,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="certs\ca\ca.crt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="certs\ca\ca.key">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="certs\node1\node.crt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="certs\node1\node.key">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="projections\continuous\CallbackHandlerEnricher.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
