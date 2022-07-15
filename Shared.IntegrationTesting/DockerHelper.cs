@@ -230,26 +230,45 @@
         /// <returns></returns>
         public virtual IContainerService SetupEventStoreContainer(String imageName,
                                                                   INetworkService networkService,
-                                                                  Boolean forceLatestImage = false) {
+                                                                  Boolean forceLatestImage = false,
+                                                                  Boolean isSecure = false) {
             this.Trace("About to Start Event Store Container");
 
-            List<String> environmentVariables = new List<String>();
-            environmentVariables.Add("EVENTSTORE_RUN_PROJECTIONS=all");
-            environmentVariables.Add("EVENTSTORE_START_STANDARD_PROJECTIONS=true");
-            environmentVariables.Add("EVENTSTORE_INSECURE=true");
-            environmentVariables.Add("EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true");
-            environmentVariables.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true");
+            List<String> environmentVariables = new() {
+                                                          "EVENTSTORE_RUN_PROJECTIONS=all",
+                                                          "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
+                                                          "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
+                                                          "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
+                                                      };
 
             var eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage).ExposePort(DockerHelper.EventStoreHttpDockerPort)
                                                           .ExposePort(DockerHelper.EventStoreTcpDockerPort).WithName(this.EventStoreContainerName)
-                                                          .WithEnvironment(environmentVariables.ToArray()).UseNetwork(networkService);
+                                                          .UseNetwork(networkService);
 
             eventStoreContainerBuilder = this.MountHostFolder(eventStoreContainerBuilder, "/var/log/eventstore");
+
+            if (isSecure == false)
+            {
+                environmentVariables.Add("EVENTSTORE_INSECURE=true");
+            }
+            else
+            {
+                // Copy these to the container
+                string path = Path.Combine(Directory.GetCurrentDirectory(), "certs");
+
+                eventStoreContainerBuilder = eventStoreContainerBuilder.Mount(path, "/etc/eventstore/certs", MountType.ReadWrite);
+
+                // Certificates configuration
+                environmentVariables.Add("EVENTSTORE_CertificateFile=/etc/eventstore/certs/node1/node.crt");
+                environmentVariables.Add("EVENTSTORE_CertificatePrivateKeyFile=/etc/eventstore/certs/node1/node.key");
+                environmentVariables.Add("EVENTSTORE_TrustedRootCertificatesPath=/etc/eventstore/certs/ca");
+            }
+
+            eventStoreContainerBuilder = eventStoreContainerBuilder.WithEnvironment(environmentVariables.ToArray());
 
             IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start().WaitForPort("2113/tcp", 30000);
 
             this.Trace("Event Store Container Started");
-
             return eventStoreContainer;
         }
 
@@ -669,29 +688,26 @@
         /// </summary>
         /// <returns></returns>
         public abstract Task StopContainersForScenarioRun();
+        
+        protected virtual EventStoreClientSettings ConfigureEventStoreSettings(Int32 eventStoreHttpPort, Boolean isSecureEventStore = false) {
 
-        /// <summary>
-        /// Configures the event store settings.
-        /// </summary>
-        /// <param name="eventStoreHttpPort">The event store HTTP port.</param>
-        /// <returns></returns>
-        protected static EventStoreClientSettings ConfigureEventStoreSettings(Int32 eventStoreHttpPort) {
-            String connectionString = $"esdb://admin:changeit@127.0.0.1:{eventStoreHttpPort}?tls=false&tlsVerifyCert=false";
 
             EventStoreClientSettings settings = new EventStoreClientSettings();
-            settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
-                                                                                 SslOptions = {
-                                                                                                  RemoteCertificateValidationCallback = (sender,
-                                                                                                      certificate,
-                                                                                                      chain,
-                                                                                                      errors) => true,
-                                                                                              }
-                                                                             };
-            settings.ConnectionName = "Specflow";
             settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
+
+            String connectionString = $"esdb://admin:changeit@127.0.0.1:{eventStoreHttpPort}";
+
+            if (isSecureEventStore) {
+                connectionString = $"{connectionString}?tls=true&tlsVerifyCert=false";
+                settings.ConnectivitySettings.Insecure = false;
+                settings.DefaultCredentials = new UserCredentials("admin", "changeit");
+            }
+            else {
+                connectionString = $"{connectionString}?tls=false&tlsVerifyCert=false";
+                settings.ConnectivitySettings.Insecure = true;
+            }
             settings.ConnectivitySettings.Address = new Uri(connectionString);
-            settings.ConnectivitySettings.Insecure = true;
-            settings.DefaultCredentials = new UserCredentials("admin", "changeit");
+            
             return settings;
         }
 
@@ -720,7 +736,7 @@
                     FileInfo[] files = di.GetFiles();
 
                     EventStoreProjectionManagementClient projectionClient =
-                        new EventStoreProjectionManagementClient(DockerHelper.ConfigureEventStoreSettings(eventStoreHttpPort));
+                        new EventStoreProjectionManagementClient(this.ConfigureEventStoreSettings(eventStoreHttpPort));
                     List<String> projectionNames = new List<String>();
 
                     foreach (FileInfo file in files) {
@@ -771,7 +787,7 @@
 
         protected virtual async Task PopulateSubscriptionServiceConfiguration(Int32 eventStoreHttpPort,
                                                                       List<(String streamName, String groupName, Int32 maxRetryCount)> subscriptions) {
-            EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(DockerHelper.ConfigureEventStoreSettings(eventStoreHttpPort));
+            EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(this.ConfigureEventStoreSettings(eventStoreHttpPort));
 
             foreach ((String streamName, String groupName, Int32 maxRetryCount) subscription in subscriptions) {
                 PersistentSubscriptionSettings settings =
