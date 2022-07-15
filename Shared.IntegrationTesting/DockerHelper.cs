@@ -724,7 +724,7 @@
         /// <summary>
         /// Loads the event store projections.
         /// </summary>
-        protected virtual async Task LoadEventStoreProjections(Int32 eventStoreHttpPort) {
+        protected virtual async Task LoadEventStoreProjections(Int32 eventStoreHttpPort, Boolean isSecureEventStore=false) {
             //Start our Continous Projections - we might decide to do this at a different stage, but now lets try here
             String projectionsFolder = "projections/continuous";
             IPAddress[] ipAddresses = Dns.GetHostAddresses("127.0.0.1");
@@ -736,7 +736,7 @@
                     FileInfo[] files = di.GetFiles();
 
                     EventStoreProjectionManagementClient projectionClient =
-                        new EventStoreProjectionManagementClient(this.ConfigureEventStoreSettings(eventStoreHttpPort));
+                        new EventStoreProjectionManagementClient(this.ConfigureEventStoreSettings(eventStoreHttpPort, isSecureEventStore));
                     List<String> projectionNames = new List<String>();
 
                     foreach (FileInfo file in files) {
@@ -786,8 +786,9 @@
         }
 
         protected virtual async Task PopulateSubscriptionServiceConfiguration(Int32 eventStoreHttpPort,
-                                                                      List<(String streamName, String groupName, Int32 maxRetryCount)> subscriptions) {
-            EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(this.ConfigureEventStoreSettings(eventStoreHttpPort));
+                                                                      List<(String streamName, String groupName, Int32 maxRetryCount)> subscriptions,
+                                                                      Boolean isSecureEventStore = false) {
+            EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(this.ConfigureEventStoreSettings(eventStoreHttpPort, isSecureEventStore));
 
             foreach ((String streamName, String groupName, Int32 maxRetryCount) subscription in subscriptions) {
                 PersistentSubscriptionSettings settings =
