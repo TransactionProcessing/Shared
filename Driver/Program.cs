@@ -19,7 +19,7 @@
         #region Methods
 
         internal static EventStoreClientSettings ConfigureEventStoreSettings() {
-            EventStoreClientSettings settings = EventStoreClientSettings.Create("esdb://127.0.0.1:2113?tls=false");
+            EventStoreClientSettings settings = new(); //EventStoreClientSettings.Create("esdb://127.0.0.1:2113?tls=trur");
 
             settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
                                                                                  SslOptions = {
@@ -31,23 +31,23 @@
                                                                              };
 
             settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
-            settings.ConnectivitySettings.Insecure = true;
-            settings.ConnectivitySettings.Address = new Uri("esdb://127.0.0.1:2113?tls=false&tlsVerifyCert=false");
-            settings.ConnectionName = "test";
+            settings.ConnectivitySettings.Insecure = false;
+            settings.DefaultCredentials = new UserCredentials("admin", "changeit");
+            settings.ConnectivitySettings.Address = new Uri("esdb://127.0.0.1:2113?tls=true&tlsVerifyCert=false");
 
             return settings;
         }
 
         private static async Task Main(String[] args) {
-            await Program.SubscriptionsTest();
+            //await Program.SubscriptionsTest();
 
             EventStoreClientSettings settings = Program.ConfigureEventStoreSettings();
 
             EventStoreClient client = new(settings);
 
             EventStoreProjectionManagementClient projectionManagementClient = new EventStoreProjectionManagementClient(settings);
-
-            //var x = await projectionManagementClient.GetStatusAsync("$by_category", cancellationToken: CancellationToken.None);
+            
+            var x = await projectionManagementClient.GetStatusAsync("$by_category", cancellationToken: CancellationToken.None);
 
             IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
             IAggregateRepository<TestAggregate, DomainEvent> aggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context);
