@@ -1,6 +1,8 @@
 ﻿namespace Shared.EventStore.EventStore
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
@@ -58,15 +60,12 @@
         {
             try
             {
-                EventStoreClient client = new EventStoreClient(this.EventStoreClientSettings);
-                EventStoreClient.ReadStreamResult readResult = client.ReadStreamAsync(Direction.Forwards,
-                                                                                      "$all",
-                                                                                      StreamPosition.Start,
-                                                                                      userCredentials:this.UserCredentials,
-                                                                                      resolveLinkTos:true,
-                                                                                      cancellationToken:cancellationToken);
-                ReadState readState = await readResult.ReadState;
-                if (readState == ReadState.StreamNotFound)
+                EventStoreClient client = new(this.EventStoreClientSettings);
+                IAsyncEnumerable<ResolvedEvent> readResult = client.ReadAllAsync(Direction.Forwards, Position.Start,
+                                                                                 userCredentials: this.UserCredentials,
+                                                                                 resolveLinkTos: true,
+                                                                                 cancellationToken: cancellationToken);
+                if (await readResult.AnyAsync(cancellationToken) == false)
                 {
                     throw new Exception("$all stream not found");
                 }
@@ -78,15 +77,6 @@
                 return new HealthCheckResult(context.Registration.FailureStatus, exception:ex);
             }
         }
-
-        #endregion
-
-        #region Others
-
-        /// <summary>
-        /// The connection name
-        /// </summary>
-        private const String CONNECTION_NAME = "AspNetCore ConnectionString HealthCheck Connection";
 
         #endregion
     }
