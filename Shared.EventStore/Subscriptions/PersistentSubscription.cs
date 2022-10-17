@@ -159,9 +159,8 @@ namespace Shared.EventStore.Subscriptions
                     await subscription.Ack(resolvedEvent);
                     return;
                 }
-
-                Console.WriteLine($"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId}");
-                Logger.LogInformation($"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId}");
+                
+                Logger.LogInformation($"|{resolvedEvent.Event.EventId}|EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId}");
 
                 IDomainEvent domainEvent = TypeMapConvertor.Convertor(Guid.Empty, resolvedEvent);
 
@@ -171,7 +170,7 @@ namespace Shared.EventStore.Subscriptions
                 if (domainEventHandlers == null || domainEventHandlers.Any() == false)
                 {
                     // Log a warning out 
-                    Logger.LogWarning($"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
+                    Logger.LogWarning($"|{resolvedEvent.Event.EventId}|No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
                     await subscription.Ack(resolvedEvent);
                     return;
                 }
@@ -194,10 +193,11 @@ namespace Shared.EventStore.Subscriptions
                 }
 
                 await subscription.Ack(resolvedEvent);
+                Logger.LogInformation($"|{resolvedEvent.Event.EventId}|Event acknowledged with Event Id {resolvedEvent.Event.EventId}");
             }
             catch (Exception e)
             {
-                Exception ex = new Exception($"Failed to process the event {resolvedEvent.GetResolvedEventDataAsString()}", e);
+                Exception ex = new Exception($"|{resolvedEvent.Event.EventId}|Failed to process the event {resolvedEvent.GetResolvedEventDataAsString()}", e);
 
                 Logger.LogError(ex);
             }
