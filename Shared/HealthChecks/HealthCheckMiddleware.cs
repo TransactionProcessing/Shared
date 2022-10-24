@@ -1,17 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-
-namespace Shared.Middleware
+﻿namespace Shared.HealthChecks
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Diagnostics.HealthChecks;
+
     public class HealthCheckMiddleware
     {
+        #region Methods
+
         public static Task WriteResponse(HttpContext context,
                                          HealthReport healthReport) {
             context.Response.ContentType = "application/json; charset=utf-8";
@@ -47,5 +48,7 @@ namespace Shared.Middleware
 
             return context.Response.WriteAsync(Encoding.UTF8.GetString(memoryStream.ToArray()));
         }
+
+        #endregion
     }
 }
