@@ -9,12 +9,18 @@ using Newtonsoft.Json;
 
 public class HealthCheckClient : ClientProxyBase, IHealthCheckClient
 {
-    public HealthCheckClient(HttpClient client) : base(client)
-    {
+    #region Constructors
 
+    public HealthCheckClient(HttpClient client) : base(client) {
     }
-    public async Task<HealthCheckResult> PerformHealthCheck(String uri, Int32 port, CancellationToken cancellationToken)
-    {
+
+    #endregion
+
+    #region Methods
+
+    public async Task<HealthCheckResult> PerformHealthCheck(String uri,
+                                                            Int32 port,
+                                                            CancellationToken cancellationToken) {
         String requestUri = this.BuildRequestUri(uri, port);
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -27,8 +33,9 @@ public class HealthCheckClient : ClientProxyBase, IHealthCheckClient
     }
 
     private String BuildRequestUri(String uri,
-                                   Int32 port)
-    {
+                                   Int32 port) {
         return $"http://{uri}:{port}/health";
     }
+
+    #endregion
 }

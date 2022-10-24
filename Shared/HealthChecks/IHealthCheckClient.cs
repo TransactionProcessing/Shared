@@ -1,13 +1,17 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Shared.HealthChecks
+﻿namespace Shared.HealthChecks
 {
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+
     public interface IHealthCheckClient
     {
-        Task<HealthCheckResult> PerformHealthCheck(String uri, Int32 port, CancellationToken cancellationToken);
+        #region Methods
+
+        Task<HealthCheckResult> PerformHealthCheck(String uri,
+                                                   Int32 port,
+                                                   CancellationToken cancellationToken);
+
+        #endregion
     }
 }

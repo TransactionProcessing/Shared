@@ -1,44 +1,40 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-
-namespace Shared.HealthChecks
+﻿namespace Shared.HealthChecks
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Diagnostics.HealthChecks;
+
     public class HealthCheckMiddleware
     {
+        #region Methods
+
         public static Task WriteResponse(HttpContext context,
-                                         HealthReport healthReport)
-        {
+                                         HealthReport healthReport) {
             context.Response.ContentType = "application/json; charset=utf-8";
 
-            JsonWriterOptions options = new JsonWriterOptions
-            {
-                Indented = true
-            };
+            JsonWriterOptions options = new JsonWriterOptions {
+                                                                  Indented = true
+                                                              };
             using MemoryStream memoryStream = new MemoryStream();
-            using (Utf8JsonWriter jsonWriter = new Utf8JsonWriter(memoryStream, options))
-            {
+            using(Utf8JsonWriter jsonWriter = new Utf8JsonWriter(memoryStream, options)) {
                 jsonWriter.WriteStartObject();
                 jsonWriter.WriteString("status", healthReport.Status.ToString());
                 jsonWriter.WriteString("totalDuration", healthReport.TotalDuration.ToString());
                 jsonWriter.WriteStartArray("results");
 
-                foreach (KeyValuePair<string, HealthReportEntry> healthReportEntry in healthReport.Entries)
-                {
+                foreach (KeyValuePair<String, HealthReportEntry> healthReportEntry in healthReport.Entries) {
                     jsonWriter.WriteStartObject();
                     jsonWriter.WriteString("name", healthReportEntry.Key);
                     jsonWriter.WriteString("status", healthReportEntry.Value.Status.ToString());
                     jsonWriter.WriteString("duration", healthReportEntry.Value.Duration.ToString());
                     jsonWriter.WriteString("description", healthReportEntry.Value.Description);
                     jsonWriter.WriteStartArray("tags");
-                    foreach (string valueTag in healthReportEntry.Value.Tags)
-                    {
+                    foreach (String valueTag in healthReportEntry.Value.Tags) {
                         jsonWriter.WriteStringValue(valueTag);
                     }
 
@@ -52,5 +48,7 @@ namespace Shared.HealthChecks
 
             return context.Response.WriteAsync(Encoding.UTF8.GetString(memoryStream.ToArray()));
         }
+
+        #endregion
     }
 }

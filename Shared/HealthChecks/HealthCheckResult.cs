@@ -5,7 +5,13 @@ using System.Collections.Generic;
 
 public class HealthCheckResult
 {
-    public HealthCheckStatus status { get; set; }
-    public TimeSpan totalDuration { get; set; }
-    public List<DependencyServiceResult> results { get; set; }
+    #region Properties
+
+    public List<DependencyServiceResult> Results { get; set; }
+
+    public HealthCheckStatus Status { get; set; }
+
+    public TimeSpan TotalDuration { get; set; }
+
+    #endregion
 }
