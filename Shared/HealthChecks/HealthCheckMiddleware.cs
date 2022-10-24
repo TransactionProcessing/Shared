@@ -8,32 +8,37 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Shared.Middleware
+namespace Shared.HealthChecks
 {
     public class HealthCheckMiddleware
     {
         public static Task WriteResponse(HttpContext context,
-                                         HealthReport healthReport) {
+                                         HealthReport healthReport)
+        {
             context.Response.ContentType = "application/json; charset=utf-8";
 
-            JsonWriterOptions options = new JsonWriterOptions {
-                                                                  Indented = true
-                                                              };
+            JsonWriterOptions options = new JsonWriterOptions
+            {
+                Indented = true
+            };
             using MemoryStream memoryStream = new MemoryStream();
-            using(Utf8JsonWriter jsonWriter = new Utf8JsonWriter(memoryStream, options)) {
+            using (Utf8JsonWriter jsonWriter = new Utf8JsonWriter(memoryStream, options))
+            {
                 jsonWriter.WriteStartObject();
                 jsonWriter.WriteString("status", healthReport.Status.ToString());
                 jsonWriter.WriteString("totalDuration", healthReport.TotalDuration.ToString());
                 jsonWriter.WriteStartArray("results");
 
-                foreach (KeyValuePair<String, HealthReportEntry> healthReportEntry in healthReport.Entries) {
+                foreach (KeyValuePair<string, HealthReportEntry> healthReportEntry in healthReport.Entries)
+                {
                     jsonWriter.WriteStartObject();
                     jsonWriter.WriteString("name", healthReportEntry.Key);
                     jsonWriter.WriteString("status", healthReportEntry.Value.Status.ToString());
                     jsonWriter.WriteString("duration", healthReportEntry.Value.Duration.ToString());
                     jsonWriter.WriteString("description", healthReportEntry.Value.Description);
                     jsonWriter.WriteStartArray("tags");
-                    foreach (String valueTag in healthReportEntry.Value.Tags) {
+                    foreach (string valueTag in healthReportEntry.Value.Tags)
+                    {
                         jsonWriter.WriteStringValue(valueTag);
                     }
 
