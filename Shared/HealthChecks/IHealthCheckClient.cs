@@ -8,7 +8,8 @@
     {
         #region Methods
 
-        Task<HealthCheckResult> PerformHealthCheck(String uri,
+        Task<HealthCheckResult> PerformHealthCheck(String scheme, 
+                                                   String uri,
                                                    Int32 port,
                                                    CancellationToken cancellationToken);
 

@@ -18,10 +18,11 @@ public class HealthCheckClient : ClientProxyBase, IHealthCheckClient
 
     #region Methods
 
-    public async Task<HealthCheckResult> PerformHealthCheck(String uri,
+    public async Task<HealthCheckResult> PerformHealthCheck(String scheme, 
+                                                            String uri,
                                                             Int32 port,
                                                             CancellationToken cancellationToken) {
-        String requestUri = this.BuildRequestUri(uri, port);
+        String requestUri = this.BuildRequestUri(scheme, uri, port);
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
@@ -32,9 +33,10 @@ public class HealthCheckClient : ClientProxyBase, IHealthCheckClient
         return JsonConvert.DeserializeObject<HealthCheckResult>(responseData);
     }
 
-    private String BuildRequestUri(String uri,
+    private String BuildRequestUri(String scheme, 
+                                   String uri,
                                    Int32 port) {
-        return $"http://{uri}:{port}/health";
+        return $"{scheme}://{uri}:{port}/health";
     }
 
     #endregion
