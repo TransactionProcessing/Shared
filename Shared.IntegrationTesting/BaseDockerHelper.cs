@@ -553,7 +553,7 @@ public abstract class BaseDockerHelper
         this.Containers.Add(builtContainer);
 
         //  Do a health check here
-        //this.TestHostServicePort = builtContainer.ToHostExposedEndpoint($"{9000}/tcp").Port;
+        this.TestHostServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.TestHostPort}/tcp").Port;
         //await Retry.For(async () => {
         //                    HealthCheckResult healthCheck =
         //                        await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.TestHostServicePort, CancellationToken.None);
