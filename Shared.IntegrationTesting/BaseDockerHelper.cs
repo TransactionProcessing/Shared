@@ -767,7 +767,7 @@ public abstract class BaseDockerHelper
                                       $"AppSettings:TransactionProcessorApi=http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}",
                                       $"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerPorts.EstateManagementDockerPort}",
                                       $"AppSettings:VoucherManagementApi=http://{this.VoucherManagementContainerName}:{DockerPorts.VoucherManagementDockerPort}",
-                                      $"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\"
+                                      $"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\""
                                   };
     
 
