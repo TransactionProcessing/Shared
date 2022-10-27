@@ -153,33 +153,33 @@
             #endregion
         }
 
-        public class TestDockerHelper : DockerHelper
-        {
-            #region Constructors
+        //public class TestDockerHelper : DockerHelper
+        //{
+        //    #region Constructors
 
-            public TestDockerHelper() {
-                this.Logger = new ConsoleLogger();
-            }
+        //    public TestDockerHelper() {
+        //        this.Logger = new ConsoleLogger();
+        //    }
 
-            #endregion
+        //    #endregion
 
-            #region Methods
+        //    #region Methods
 
-            public override async Task StartContainersForScenarioRun(String scenarioName) {
-                //await this.LoadEventStoreProjections(2113);
+        //    public override async Task StartContainersForScenarioRun(String scenarioName) {
+        //        //await this.LoadEventStoreProjections(2113);
 
-                List<(String, String, Int32)> subs = new List<(String, String, Int32)>();
-                subs.Add(("TestStream", "TestGroup1", 0));
-                subs.Add(("TestStream", "TestGroup2", 0));
-                subs.Add(("TestStream1", "TestGroup3", 1));
-                await this.PopulateSubscriptionServiceConfiguration(2113, subs);
-            }
+        //        List<(String, String, Int32)> subs = new List<(String, String, Int32)>();
+        //        subs.Add(("TestStream", "TestGroup1", 0));
+        //        subs.Add(("TestStream", "TestGroup2", 0));
+        //        subs.Add(("TestStream1", "TestGroup3", 1));
+        //        await this.PopulateSubscriptionServiceConfiguration(2113, subs);
+        //    }
 
-            public override async Task StopContainersForScenarioRun() {
-            }
+        //    public override async Task StopContainersForScenarioRun() {
+        //    }
 
-            #endregion
-        }
+        //    #endregion
+        //}
 
         #endregion
     }

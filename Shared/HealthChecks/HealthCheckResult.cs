@@ -7,11 +7,11 @@ public class HealthCheckResult
 {
     #region Properties
 
-    public List<DependencyServiceResult> Results { get; set; }
+    //public List<DependencyServiceResult> Results { get; set; }
 
-    public HealthCheckStatus Status { get; set; }
+    //public HealthCheckStatus Status { get; set; }
 
-    public TimeSpan TotalDuration { get; set; }
-
+    //public TimeSpan TotalDuration { get; set; }
+    public String Status { get; set; }
     #endregion
 }
