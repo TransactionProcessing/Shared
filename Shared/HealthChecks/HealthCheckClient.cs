@@ -18,7 +18,7 @@ public class HealthCheckClient : ClientProxyBase, IHealthCheckClient
 
     #region Methods
 
-    public async Task<HealthCheckResult> PerformHealthCheck(String scheme, 
+    public async Task<String> PerformHealthCheck(String scheme, 
                                                             String uri,
                                                             Int32 port,
                                                             CancellationToken cancellationToken) {
@@ -30,7 +30,7 @@ public class HealthCheckClient : ClientProxyBase, IHealthCheckClient
 
         String responseData = await this.HandleResponse(responseMessage, cancellationToken);
 
-        return JsonConvert.DeserializeObject<HealthCheckResult>(responseData);
+        return responseData;
     }
 
     private String BuildRequestUri(String scheme, 

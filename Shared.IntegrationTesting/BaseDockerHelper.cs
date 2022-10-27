@@ -19,6 +19,7 @@ using EventStore.Client;
 using HealthChecks;
 using Logger;
 using Microsoft.Data.SqlClient;
+using Newtonsoft.Json;
 using Shouldly;
 
 public abstract class BaseDockerHelper
@@ -192,12 +193,39 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.CallbackHandlerPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.CallbackHandlerDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.CallbackHandlerPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+
+        await this.DoHealthCheck(ContainerType.CallbackHandler);
         return builtContainer;
+    }
+
+    protected async Task DoHealthCheck(ContainerType containerType) {
+
+        (String, Int32) containerDetails = containerType switch
+        {
+            ContainerType.CallbackHandler => ("http", this.CallbackHandlerPort),
+            ContainerType.EstateManagement => ("http", this.EstateManagementPort),
+            ContainerType.EstateReporting => ("http", this.EstateReportingPort),
+            ContainerType.FileProcessor => ("http", this.FileProcessorPort),
+            ContainerType.MessagingService => ("http", this.MessagingServicePort),
+            ContainerType.TestHost => ("http", this.TestHostServicePort),
+            ContainerType.TransactionProcessor => ("http", this.FileProcessorPort),
+            ContainerType.SecurityService => ("https", this.SecurityServicePort),
+            ContainerType.VoucherManagement => ("http", this.VoucherManagementPort),
+            ContainerType.VoucherManagementAcl => ("http", this.VoucherManagementAclPort),
+            ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
+            _ => (null,0)
+        };
+
+        if(containerDetails.Item1 == null)
+            return;
+
+        await Retry.For(async () => {
+                            String healthCheck =
+                                await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
+                            
+                            var result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
+                            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(),healthCheck);
+                        });
     }
 
     public virtual void SetupContainerNames() {
@@ -245,11 +273,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.EstateManagementPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EstateManagementDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.EstateManagementPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.EstateManagement);
         return builtContainer;
     }
 
@@ -284,11 +308,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.EstateReportingPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EstateReportingDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.EstateReportingPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.EstateReporting);
         return builtContainer;
     }
 
@@ -378,11 +398,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.FileProcessorPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.FileProcessorDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.FileProcessorPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.FileProcessor);
         return builtContainer;
     }
 
@@ -414,11 +430,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.MessagingServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.MessagingServiceDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.MessagingServicePort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.MessagingService);
         return builtContainer;
     }
 
@@ -452,11 +464,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.SecurityServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.SecurityServiceDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("https", "127.0.0.1", this.SecurityServicePort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.SecurityService);
 
         return builtContainer;
     }
@@ -601,11 +609,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.TransactionProcessorAclPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.TransactionProcessorAclPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.TransactionProcessorAcl);
 
         return builtContainer;
     }
@@ -643,11 +647,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.TransactionProcessorPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.TransactionProcessorPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.TransactionProcessor);
         return builtContainer;
     }
 
@@ -677,11 +677,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.VoucherManagementAclPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.VoucherManagementAclDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.VoucherManagementAclPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.VoucherManagementAcl);
 
         return builtContainer;
     }
@@ -714,11 +710,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.VoucherManagementPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.VoucherManagementDockerPort}/tcp").Port;
-        await Retry.For(async () => {
-                            HealthCheckResult healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.VoucherManagementPort, CancellationToken.None);
-                            healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-                        });
+        await this.DoHealthCheck(ContainerType.VoucherManagement);
 
         return builtContainer;
     }
