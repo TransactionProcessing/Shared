@@ -254,7 +254,8 @@ public abstract class BaseDockerHelper
         environmentVariables.Add($"urls=http://*:{DockerPorts.EstateManagementDockerPort}");
         environmentVariables
             .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
-
+        environmentVariables
+            .Add($"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\"");
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
