@@ -208,7 +208,7 @@ public abstract class BaseDockerHelper
             ContainerType.FileProcessor => ("http", this.FileProcessorPort),
             ContainerType.MessagingService => ("http", this.MessagingServicePort),
             ContainerType.TestHost => ("http", this.TestHostServicePort),
-            ContainerType.TransactionProcessor => ("http", this.FileProcessorPort),
+            ContainerType.TransactionProcessor => ("http", this.TransactionProcessorPort),
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
             ContainerType.VoucherManagement => ("http", this.VoucherManagementPort),
             ContainerType.VoucherManagementAcl => ("http", this.VoucherManagementAclPort),
