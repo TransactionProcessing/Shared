@@ -254,8 +254,6 @@ public abstract class BaseDockerHelper
         environmentVariables.Add($"urls=http://*:{DockerPorts.EstateManagementDockerPort}");
         environmentVariables
             .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
-        environmentVariables
-            .Add($"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\"");
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
@@ -288,8 +286,6 @@ public abstract class BaseDockerHelper
         environmentVariables.Add($"urls=http://*:{DockerPorts.EstateReportingDockerPort}");
         environmentVariables
             .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
-        environmentVariables
-            .Add($"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\"");
 
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
@@ -770,7 +766,8 @@ public abstract class BaseDockerHelper
                                       $"AppSettings:MessagingServiceApi=http://{this.MessagingServiceContainerName}:{DockerPorts.MessagingServiceDockerPort}",
                                       $"AppSettings:TransactionProcessorApi=http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}",
                                       $"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerPorts.EstateManagementDockerPort}",
-                                      $"AppSettings:VoucherManagementApi=http://{this.VoucherManagementContainerName}:{DockerPorts.VoucherManagementDockerPort}"
+                                      $"AppSettings:VoucherManagementApi=http://{this.VoucherManagementContainerName}:{DockerPorts.VoucherManagementDockerPort}",
+                                      $"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\"
                                   };
     
 
