@@ -7,7 +7,7 @@ on:
 
 jobs:
   buildlinux:
-    name: "Build and Test Pull Requests"
+    name: "Build and Test Pull Requests - Linux"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
 
@@ -35,7 +35,7 @@ jobs:
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
   buildwindows:
-    name: "Build and Test Pull Requests"
+    name: "Build and Test Pull Requests - Windows"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
 
