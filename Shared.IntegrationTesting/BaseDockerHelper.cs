@@ -563,7 +563,7 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public INetworkService SetupTestNetwork(String networkName = null,
+    public virtual INetworkService SetupTestNetwork(String networkName = null,
                                             Boolean reuseIfExists = false) {
         networkName = String.IsNullOrEmpty(networkName) ? $"testnetwork{Guid.NewGuid()}" : networkName;
 
