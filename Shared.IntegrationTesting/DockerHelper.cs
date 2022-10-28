@@ -40,6 +40,8 @@ public class DockerHelper : BaseDockerHelper
 
         this.SetupContainerNames();
 
+        this.ClientDetails = ("serviceClient", "Secret1");
+
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
