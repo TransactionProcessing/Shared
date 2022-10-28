@@ -580,7 +580,8 @@ public abstract class BaseDockerHelper
 
     public virtual INetworkService SetupTestNetwork(String networkName = null,
                                                     Boolean reuseIfExists = false) {
-        
+
+        networkName = String.IsNullOrEmpty(networkName) ? $"testnetwork{Guid.NewGuid()}" : networkName;
         DockerEnginePlatform engineType = BaseDockerHelper.GetDockerEnginePlatform();
 
         if (engineType == DockerEnginePlatform.Windows) {
