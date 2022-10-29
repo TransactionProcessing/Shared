@@ -39,7 +39,7 @@ namespace Shared.IntegrationTesting.Tests
             DockerEnginePlatform enginePlatform = DockerHelper.GetDockerEnginePlatform();
             if (enginePlatform == DockerEnginePlatform.Windows)
             {
-                dockerHelper.SetImageDetails(Shared.IntegrationTesting.ContainerType.SqlServer, ("stuartferguson/sqlserverwindows:2019-cu18", false));
+                dockerHelper.SetImageDetails(Shared.IntegrationTesting.ContainerType.SqlServer, ("stuartferguson/sqlserverwindows:2019-CU18", true));
             }
             Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
         }
