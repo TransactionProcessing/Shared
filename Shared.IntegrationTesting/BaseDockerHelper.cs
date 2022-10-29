@@ -489,8 +489,10 @@ public abstract class BaseDockerHelper
         IContainerService databaseServerContainer = new Builder().UseContainer().WithName(this.SqlServerContainerName)
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
                                                                  .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={this.SqlCredentials.Value.password}").ExposePort(1433)
-                                                                 .UseNetwork(networkService).KeepContainer().KeepRunning().ReuseIfExists().Build().Start()
-                                                                 .WaitForPort("1433/tcp", 30000);
+                                                                 .UseNetwork(networkService).KeepContainer().KeepRunning().ReuseIfExists()
+                                                                 .SetDockerCredentials(this.DockerCredentials)
+                                                                 .Build().Start()
+                                                                 .WaitForPort("1433/tcp", 30000); 
 
         this.Trace("SQL Server Container Started");
 
