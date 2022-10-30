@@ -133,19 +133,24 @@ public class DockerHelper : BaseDockerHelper
     }
 
     public virtual async Task CreateGenericSubscriptions() {
-        List<(String streamName, String groupName, Int32 maxRetries)> subscriptions = new List<(String streamName, String groupName, Int32 maxRetries)>();
-        subscriptions.Add(($"$ce-MerchantBalanceArchive", "Transaction Processor - Ordered", 0));
-        subscriptions.Add(($"$et-EstateCreatedEvent", "Transaction Processor - Ordered", 2));
+        List<(String streamName, String groupName, Int32 maxRetries)> subscriptions = new List<(String streamName, String groupName, Int32 maxRetries)>
+        {
+            ($"$ce-MerchantBalanceArchive", "Transaction Processor - Ordered", 0),
+            ($"$et-EstateCreatedEvent", "Transaction Processor - Ordered", 2)
+        };
         foreach ((String streamName, String groupName, Int32 maxRetries) subscription in subscriptions) {
             await this.CreatePersistentSubscription(subscription);
         }
     }
 
     public virtual async Task CreateEstateSubscriptions(String estateName) {
-        List<(String streamName, String groupName, Int32 maxRetries)> subscriptions = new List<(String streamName, String groupName, Int32 maxRetries)>();
-        subscriptions.Add((estateName.Replace(" ", ""), "Reporting", 2));
-        subscriptions.Add(($"EstateManagementSubscriptionStream_{estateName.Replace(" ", "")}", "Estate Management", 0));
-        subscriptions.Add(($"TransactionProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "Transaction Processor", 0));
+        List<(String streamName, String groupName, Int32 maxRetries)> subscriptions = new List<(String streamName, String groupName, Int32 maxRetries)>
+        {
+            (estateName.Replace(" ", ""), "Reporting", 2),
+            ($"EstateManagementSubscriptionStream_{estateName.Replace(" ", "")}", "Estate Management", 0),
+            ($"TransactionProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "Transaction Processor", 0)
+            ($"FileProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "File Processor", 0)
+        };
         foreach ((String streamName, String groupName, Int32 maxRetries) subscription in subscriptions)
         {
             await this.CreatePersistentSubscription(subscription);
