@@ -148,7 +148,7 @@ public class DockerHelper : BaseDockerHelper
         {
             (estateName.Replace(" ", ""), "Reporting", 2),
             ($"EstateManagementSubscriptionStream_{estateName.Replace(" ", "")}", "Estate Management", 0),
-            ($"TransactionProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "Transaction Processor", 0)
+            ($"TransactionProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "Transaction Processor", 0),
             ($"FileProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "File Processor", 0)
         };
         foreach ((String streamName, String groupName, Int32 maxRetries) subscription in subscriptions)
