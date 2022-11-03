@@ -128,19 +128,38 @@ public abstract class BaseDockerHelper
                                                                                              }));
 
         // Setup the default image details
-        this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2019-latest", true));
-        this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:21.10.0-buster-slim", true));
-        this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
-        this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
-        this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:latest", true));
-        this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
-        this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
-        this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereporting:master", true));
-        this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagement:master", true));
-        this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
-        this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
-        this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementacl:master", true));
-        this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
+        DockerEnginePlatform engineType = BaseDockerHelper.GetDockerEnginePlatform();
+        if (engineType == DockerEnginePlatform.Windows)
+        {
+            this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2019", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/eventstore", true));
+            this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservicewindows:master", true));
+            this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservicewindows:master", true));
+            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandlerwindows:master", true));
+            this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhostswindows:master", true));
+            this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagementwindows:master", true));
+            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingwindows:master", true));
+            this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagementwindows:master", true));
+            this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
+            this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
+            this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementaclwindows:master", true));
+            this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
+        }
+        else {
+            this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2019-latest", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:21.10.0-buster-slim", true));
+            this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
+            this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
+            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:latest", true));
+            this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
+            this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
+            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereporting:master", true));
+            this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagement:master", true));
+            this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
+            this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
+            this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementacl:master", true));
+            this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
+        }
     }
 
     #endregion
@@ -228,11 +247,16 @@ public abstract class BaseDockerHelper
         ContainerBuilder callbackHandlerContainer = new Builder().UseContainer().WithName(this.CallbackHandlerContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.CallbackHandler))
-                                                                 .ExposePort(DockerPorts.CallbackHandlerDockerPort).UseNetwork(networkServices.ToArray())
-                                                                 .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
+                                                                 .ExposePort(DockerPorts.CallbackHandlerDockerPort)
+                                                                 .MountHostFolder(this.HostTraceFolder)
+                                                                 .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = callbackHandlerContainer.Build().Start().WaitForPort($"{DockerPorts.CallbackHandlerDockerPort}/tcp", 30000);
+
+        foreach (INetworkService networkService in networkServices) {
+            networkService.Attach(builtContainer, false);
+        }
 
         this.Trace("Callback Handler Container Started");
         this.Containers.Add(builtContainer);
@@ -261,7 +285,6 @@ public abstract class BaseDockerHelper
     }
 
     public virtual async Task<IContainerService> SetupEstateManagementContainer(List<INetworkService> networkServices,
-                                                                                (Int32 pollingInterval, Int32 cacheDuration) persistentSubscriptionSettings,
                                                                                 Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                                 List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start Estate Management Container");
@@ -277,11 +300,17 @@ public abstract class BaseDockerHelper
         ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(this.EstateManagementContainerName)
                                                                   .WithEnvironment(environmentVariables.ToArray())
                                                                   .UseImageDetails(this.GetImageDetails(ContainerType.EstateManagement))
-                                                                  .ExposePort(DockerPorts.EstateManagementDockerPort).UseNetwork(networkServices.ToArray())
-                                                                  .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
+                                                                  .ExposePort(DockerPorts.EstateManagementDockerPort)
+                                                                  .MountHostFolder(this.HostTraceFolder)
+                                                                  .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = estateManagementContainer.Build().Start().WaitForPort($"{DockerPorts.EstateManagementDockerPort}/tcp", 30000);
+
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
 
         this.Trace("Estate Management Container Started");
         this.Containers.Add(builtContainer);
@@ -293,7 +322,6 @@ public abstract class BaseDockerHelper
     }
 
     public virtual async Task<IContainerService> SetupEstateReportingContainer(List<INetworkService> networkServices,
-                                                                               (Int32 pollingInterval, Int32 cacheDuration) persistentSubscriptionSettings,
                                                                                Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                                List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start Estate Reporting Container");
@@ -310,12 +338,16 @@ public abstract class BaseDockerHelper
         ContainerBuilder estateReportingContainer = new Builder().UseContainer().WithName(this.EstateReportingContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.EstateReporting))
-                                                                 .ExposePort(DockerPorts.EstateReportingDockerPort).UseNetwork(networkServices.ToArray())
-                                                                 .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
+                                                                 .ExposePort(DockerPorts.EstateReportingDockerPort)
+                                                                 .MountHostFolder(this.HostTraceFolder)
+                                                                 .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = estateReportingContainer.Build().Start().WaitForPort($"{DockerPorts.EstateReportingDockerPort}/tcp", 30000);
-
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
         this.Trace("Estate Reporting Container Started");
         this.Containers.Add(builtContainer);
 
@@ -336,10 +368,17 @@ public abstract class BaseDockerHelper
                                                       "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
                                                   };
 
+
+        String containerPath = BaseDockerHelper.GetDockerEnginePlatform() switch {
+            DockerEnginePlatform.Windows => "C:\\Logs",
+            _ => "/var/log/eventstore"
+        };
+
         ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
-                                                                   .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
-                                                                   .WithName(this.EventStoreContainerName).UseNetwork(networkService)
-                                                                   .MountHostFolder(this.HostTraceFolder, "/var/log/eventstore");
+                                                                   .ExposePort(DockerPorts.EventStoreHttpDockerPort)
+                                                                   .ExposePort(DockerPorts.EventStoreTcpDockerPort)
+                                                                   .WithName(this.EventStoreContainerName)
+                                                                   .MountHostFolder(this.HostTraceFolder, containerPath);
 
         if (isSecure == false) {
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
@@ -359,6 +398,8 @@ public abstract class BaseDockerHelper
         eventStoreContainerBuilder = eventStoreContainerBuilder.WithEnvironment(environmentVariables.ToArray());
 
         IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start();
+        networkService.Attach(eventStoreContainer,false);
+
         await Retry.For(async () => { eventStoreContainer = eventStoreContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
 
         this.EventStoreHttpPort = eventStoreContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
@@ -370,8 +411,7 @@ public abstract class BaseDockerHelper
         return eventStoreContainer;
     }
 
-    public virtual async Task<IContainerService> SetupFileProcessorContainer(List<INetworkService> networkService,
-                                                                             (Int32 pollingInterval, Int32 cacheDuration) persistentSubscriptionSettings,
+    public virtual async Task<IContainerService> SetupFileProcessorContainer(List<INetworkService> networkServices,
                                                                              Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                              List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start File Processor Container");
@@ -380,30 +420,66 @@ public abstract class BaseDockerHelper
         environmentVariables.Add($"urls=http://*:{DockerPorts.FileProcessorDockerPort}");
         environmentVariables
             .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
+
+        DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        if ((String.IsNullOrEmpty(ciEnvVar) == false) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0) {
-            // we are running in CI 
+        Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
+
+        if (enginePlatform == DockerEnginePlatform.Linux) {
+            // we are running in CI Linux
             environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
 
             environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/home/runner/bulkfiles/safaricom"}");
             environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/home/runner/bulkfiles/voucher"}");
         }
+        else {
+            // We know this is now windows
+            if (isCi) {
+                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
+                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
+                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
 
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
+            }
+            else {
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\home\\txnproc\\bulkfiles\\temporary\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\safaricom\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\voucher\"");
+            }
+        }
+        
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
         ContainerBuilder fileProcessorContainer = new Builder().UseContainer().WithName(this.FileProcessorContainerName).WithEnvironment(environmentVariables.ToArray())
                                                                .UseImageDetails(this.GetImageDetails(ContainerType.FileProcessor))
-                                                               .ExposePort(DockerPorts.FileProcessorDockerPort).UseNetwork(networkService.ToArray())
+                                                               .ExposePort(DockerPorts.FileProcessorDockerPort)
                                                                .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
 
         // Mount the folder to upload files
-        String uploadFolder = FdOs.IsWindows() ? "C:\\home\\txnproc\\specflow" : "//home//txnproc//specflow";
-        fileProcessorContainer.Mount(uploadFolder, "/home/txnproc/bulkfiles", MountType.ReadWrite);
+        String uploadFolder = (enginePlatform, isCi) switch {
+            (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\specflow",
+            (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\specflow",
+            _ => "/home/txnproc/specflow"
+        };
+            
+                              //== DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\specflow" : "/home/txnproc/specflow";
+        if (enginePlatform == DockerEnginePlatform.Windows && isCi) {
+            Directory.CreateDirectory(uploadFolder);
+        }
+
+        String containerFolder = enginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
+        fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
 
         // Now build and return the container                
         IContainerService builtContainer = fileProcessorContainer.Build().Start().WaitForPort($"{DockerPorts.FileProcessorDockerPort}/tcp", 30000);
+
+        foreach (INetworkService networkService in networkServices) {
+            networkService.Attach(builtContainer, false);
+        }
 
         this.Trace("File Processor Container Started");
         this.Containers.Add(builtContainer);
@@ -423,6 +499,7 @@ public abstract class BaseDockerHelper
         environmentVariables.Add($"urls=http://*:{DockerPorts.MessagingServiceDockerPort}");
         environmentVariables.Add("AppSettings:EmailProxy=Integration");
         environmentVariables.Add("AppSettings:SMSProxy=Integration");
+        environmentVariables.Add("AppSettings:InternalSubscriptionService=false");
 
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
@@ -431,11 +508,15 @@ public abstract class BaseDockerHelper
         ContainerBuilder messagingServiceContainer = new Builder().UseContainer().WithName(this.MessagingServiceContainerName)
                                                                   .WithEnvironment(environmentVariables.ToArray())
                                                                   .UseImageDetails(this.GetImageDetails(ContainerType.MessagingService))
-                                                                  .ExposePort(DockerPorts.MessagingServiceDockerPort).UseNetwork(networkServices.ToArray())
+                                                                  .ExposePort(DockerPorts.MessagingServiceDockerPort)
                                                                   .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
-        IContainerService builtContainer = messagingServiceContainer.Build().Start().WaitForPort($"{DockerPorts.MessagingServiceDockerPort}/tcp", 30000);
+        IContainerService builtContainer = messagingServiceContainer.Build().Start();
+
+        foreach (INetworkService networkService in networkServices) {
+            networkService.Attach(builtContainer, false);
+        }
 
         this.Trace("Messaging Service Container Started");
         this.Containers.Add(builtContainer);
@@ -463,14 +544,15 @@ public abstract class BaseDockerHelper
         ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(this.SecurityServiceContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.SecurityService))
-                                                                 .ExposePort(DockerPorts.SecurityServiceDockerPort).UseNetwork(new List<INetworkService> {
-                                                                     networkService
-                                                                 }.ToArray()).MountHostFolder(this.HostTraceFolder)
+                                                                 .ExposePort(DockerPorts.SecurityServiceDockerPort)
+                                                                 .MountHostFolder(this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = securityServiceContainer.Build().Start().WaitForPort($"{DockerPorts.SecurityServiceDockerPort}/tcp", 30000);
-
+        
+        networkService.Attach(builtContainer, false);
+        
         this.Trace("Security Service Container Started");
         this.Containers.Add(builtContainer);
 
@@ -486,59 +568,65 @@ public abstract class BaseDockerHelper
             throw new Exception("Sql Credentials have not been set");
 
         this.Trace("About to start SQL Server Container");
-        IContainerService databaseServerContainer = new Builder().UseContainer().WithName(this.SqlServerContainerName)
-                                                                 .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
-                                                                 .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={this.SqlCredentials.Value.password}").ExposePort(1433)
-                                                                 .UseNetwork(networkService).KeepContainer().KeepRunning().ReuseIfExists()
-                                                                 .SetDockerCredentials(this.DockerCredentials)
-                                                                 .Build().Start()
-                                                                 .WaitForPort("1433/tcp", 30000); 
+        ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
+                                                         .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
+                                                         .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={this.SqlCredentials.Value.password}")
+                                                         .ExposePort(1433)
+                                                         .KeepContainer().KeepRunning().ReuseIfExists()
+                                                         .SetDockerCredentials(this.DockerCredentials);
+
+        IContainerService databaseServerContainer = containerService.Build().Start()
+                                                                    .WaitForPort("1433/tcp", 30000);
+
+        networkService.Attach(databaseServerContainer, false);
 
         this.Trace("SQL Server Container Started");
 
-        this.Trace("About to SQL Server Container is running");
-        IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
+        if (networkService != null) {
+            this.Trace("About to SQL Server Container is running");
+            IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
 
-        // Try opening a connection
-        Int32 maxRetries = 10;
-        Int32 counter = 1;
+            // Try opening a connection
+            Int32 maxRetries = 10;
+            Int32 counter = 1;
 
-        String server = "127.0.0.1";
-        String database = "master";
-        String user = this.SqlCredentials.Value.usename;
-        String password = this.SqlCredentials.Value.password;
-        String port = sqlServerEndpoint.Port.ToString();
+            String server = "127.0.0.1";
+            String database = "master";
+            String user = this.SqlCredentials.Value.usename;
+            String password = this.SqlCredentials.Value.password;
+            String port = sqlServerEndpoint.Port.ToString();
 
-        String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};";
-        this.Trace($"Connection String {connectionString}");
-        SqlConnection connection = new SqlConnection(connectionString);
+            String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};";
+            this.Trace($"Connection String {connectionString}");
+            SqlConnection connection = new SqlConnection(connectionString);
 
-        while (counter <= maxRetries) {
-            try {
-                this.Trace($"Database Connection Attempt {counter}");
+            while (counter <= maxRetries) {
+                try {
+                    this.Trace($"Database Connection Attempt {counter}");
 
-                connection.Open();
+                    connection.Open();
 
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = "SELECT * FROM sys.databases";
-                command.ExecuteNonQuery();
+                    SqlCommand command = connection.CreateCommand();
+                    command.CommandText = "SELECT * FROM sys.databases";
+                    command.ExecuteNonQuery();
 
-                this.Trace("Connection Opened");
+                    this.Trace("Connection Opened");
 
-                connection.Close();
-                this.Trace("SQL Server Container Running");
-                break;
-            }
-            catch(SqlException ex) {
-                if (connection.State == ConnectionState.Open) {
                     connection.Close();
+                    this.Trace("SQL Server Container Running");
+                    break;
                 }
+                catch(SqlException ex) {
+                    if (connection.State == ConnectionState.Open) {
+                        connection.Close();
+                    }
 
-                this.Logger.LogError(ex);
-                Thread.Sleep(20000);
-            }
-            finally {
-                counter++;
+                    this.Logger.LogError(ex);
+                    Thread.Sleep(20000);
+                }
+                finally {
+                    counter++;
+                }
             }
         }
 
@@ -561,10 +649,14 @@ public abstract class BaseDockerHelper
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TestHost);
         ContainerBuilder testHostContainer = new Builder().UseContainer().WithName(this.TestHostContainerName).WithEnvironment(environmentVariables.ToArray())
                                                           .UseImageDetails(this.GetImageDetails(ContainerType.TestHost)).ExposePort(DockerPorts.TestHostPort)
-                                                          .UseNetwork(networkServices.ToArray()).MountHostFolder(this.HostTraceFolder)
+                                                          .MountHostFolder(this.HostTraceFolder)
                                                           .SetDockerCredentials(this.DockerCredentials);
         // Now build and return the container                
         IContainerService builtContainer = testHostContainer.Build().Start().WaitForPort($"{DockerPorts.TestHostPort}/tcp", 30000);
+
+        foreach (INetworkService networkService in networkServices) {
+            networkService.Attach(builtContainer,false);
+        }
 
         this.Trace("Test Hosts Container Started");
         this.Containers.Add(builtContainer);
@@ -583,16 +675,21 @@ public abstract class BaseDockerHelper
     public virtual INetworkService SetupTestNetwork(String networkName = null,
                                                     Boolean reuseIfExists = false) {
 
-        networkName = String.IsNullOrEmpty(networkName) ? $"testnetwork{Guid.NewGuid()}" : networkName;
+        networkName = String.IsNullOrEmpty(networkName) ? $"testnw{this.TestId:N}" : networkName;
         DockerEnginePlatform engineType = BaseDockerHelper.GetDockerEnginePlatform();
 
         if (engineType == DockerEnginePlatform.Windows) {
             var docker = BaseDockerHelper.GetDockerHost();
             var network = docker.GetNetworks().Where(nw => nw.Name == networkName).SingleOrDefault();
             if (network == null) {
+                Dictionary<String, String> driverOptions = new Dictionary<String, String>();
+                driverOptions.Add("com.docker.network.windowsshim.networkname", networkName);
+
                 network = docker.CreateNetwork(networkName,
                                                new NetworkCreateParams {
                                                                            Driver = "nat",
+                                                                           DriverOptions = driverOptions,
+                                                                           Attachable = true,
                                                                        });
             }
 
@@ -624,14 +721,13 @@ public abstract class BaseDockerHelper
         ContainerBuilder transactionProcessorACLContainer = new Builder().UseContainer().WithName(this.TransactionProcessorAclContainerName)
                                                                          .WithEnvironment(environmentVariables.ToArray())
                                                                          .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessorAcl))
-                                                                         .ExposePort(DockerPorts.TransactionProcessorAclDockerPort).UseNetwork(new List<INetworkService> {
-                                                                             networkService
-                                                                         }.ToArray()).MountHostFolder(this.HostTraceFolder)
+                                                                         .ExposePort(DockerPorts.TransactionProcessorAclDockerPort)
+                                                                         .MountHostFolder(this.HostTraceFolder)
                                                                          .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp", 30000);
-
+        networkService.Attach(builtContainer,false);
         this.Trace("Transaction Processor Container ACL Started");
 
         this.Containers.Add(builtContainer);
@@ -644,7 +740,6 @@ public abstract class BaseDockerHelper
     }
 
     public virtual async Task<IContainerService> SetupTransactionProcessorContainer(List<INetworkService> networkServices,
-                                                                                    (Int32 pollingInterval, Int32 cacheDuration) persistentSubscriptionSettings,
                                                                                     Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                                     List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start Transaction Processor Container");
@@ -665,12 +760,16 @@ public abstract class BaseDockerHelper
         ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(this.TransactionProcessorContainerName)
                                                                       .WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessor))
-                                                                      .ExposePort(DockerPorts.TransactionProcessorDockerPort).UseNetwork(networkServices.ToArray())
-                                                                      .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
+                                                                      .ExposePort(DockerPorts.TransactionProcessorDockerPort)
+                                                                      .MountHostFolder(this.HostTraceFolder)
+                                                                      .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = transactionProcessorContainer.Build().Start().WaitForPort($"{DockerPorts.TransactionProcessorDockerPort}/tcp", 30000);
-
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
         this.Trace("Transaction Processor Container Started");
         this.Containers.Add(builtContainer);
 
@@ -695,12 +794,16 @@ public abstract class BaseDockerHelper
         ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(this.VoucherManagementAclContainerName)
                                                                       .WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImageDetails(this.GetImageDetails(ContainerType.VoucherManagementAcl))
-                                                                      .ExposePort(DockerPorts.VoucherManagementAclDockerPort).UseNetwork(networkServices.ToArray())
-                                                                      .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
+                                                                      .ExposePort(DockerPorts.VoucherManagementAclDockerPort)
+                                                                      .MountHostFolder(this.HostTraceFolder)
+                                                                      .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = voucherManagementAclContainer.Build().Start().WaitForPort($"{DockerPorts.VoucherManagementAclDockerPort}/tcp", 30000);
-
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
         this.Trace("Voucher Management ACL Container Started");
         this.Containers.Add(builtContainer);
 
@@ -728,12 +831,16 @@ public abstract class BaseDockerHelper
         ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(this.VoucherManagementContainerName)
                                                                    .WithEnvironment(environmentVariables.ToArray())
                                                                    .UseImageDetails(this.GetImageDetails(ContainerType.VoucherManagement))
-                                                                   .ExposePort(DockerPorts.VoucherManagementDockerPort).UseNetwork(networkServices.ToArray())
-                                                                   .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
+                                                                   .ExposePort(DockerPorts.VoucherManagementDockerPort)
+                                                                   .MountHostFolder(this.HostTraceFolder)
+                                                                   .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
         IContainerService builtContainer = voucherManagementContainer.Build().Start().WaitForPort($"{DockerPorts.VoucherManagementDockerPort}/tcp", 30000);
-
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
         this.Trace("Voucher Management Container Started");
         this.Containers.Add(builtContainer);
 

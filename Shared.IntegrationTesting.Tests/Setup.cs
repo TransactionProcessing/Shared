@@ -34,13 +34,8 @@ namespace Shared.IntegrationTesting.Tests
             dockerHelper.SqlCredentials = Setup.SqlCredentials;
             dockerHelper.DockerCredentials = Setup.DockerCredentials;
             dockerHelper.SqlServerContainerName = "sharedsqlserver";
-            
+
             Setup.DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork");
-            DockerEnginePlatform enginePlatform = DockerHelper.GetDockerEnginePlatform();
-            if (enginePlatform == DockerEnginePlatform.Windows)
-            {
-                dockerHelper.SetImageDetails(Shared.IntegrationTesting.ContainerType.SqlServer, ("stuartferguson/sqlserverwindows:2019-CU18", true));
-            }
             Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
         }
 

@@ -2,7 +2,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Services;
@@ -13,6 +15,37 @@ public class DockerHelper : BaseDockerHelper
     public DockerHelper() :base(){
         
     }
+
+    private void SetHostTraceFolder(String scenarioName) {
+        String ciEnvVar = Environment.GetEnvironmentVariable("CI");
+        DockerEnginePlatform engineType = DockerHelper.GetDockerEnginePlatform();
+
+        // We are running on linux (CI or local ok)
+        // We are running windows local (can use "C:\\home\\txnproc\\trace\\{scenarioName}")
+        // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
+
+        Boolean isCI = (String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
+        
+        this.HostTraceFolder = (engineType,isCI) switch {
+            (DockerEnginePlatform.Windows, false) => $"C:\\home\\txnproc\\trace\\{scenarioName}",
+            (DockerEnginePlatform.Windows, true) => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
+            _ => $"//home//txnproc//trace//{scenarioName}"
+        };
+
+        if (engineType == DockerEnginePlatform.Windows && isCI) {
+            if (Directory.Exists(this.HostTraceFolder) == false) {
+                this.Trace($"[{this.HostTraceFolder}] does not exist");
+                Directory.CreateDirectory(this.HostTraceFolder);
+                this.Trace($"[{this.HostTraceFolder}] created");
+            }
+            else {
+                this.Trace($"[{this.HostTraceFolder}] already exists");
+            }
+        }
+
+        this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
+    }
+
     public override async Task StartContainersForScenarioRun(String scenarioName) {
 
         this.DockerCredentials.ShouldNotBeNull();
@@ -26,12 +59,8 @@ public class DockerHelper : BaseDockerHelper
             "false" => false,
             _ => true
         };
-
-        this.HostTraceFolder = FdOs.IsWindows() switch {
-            true => $"C:\\home\\txnproc\\trace\\{scenarioName}",
-            _ => $"//home//txnproc//trace//{scenarioName}"
-        };
-
+        this.SetHostTraceFolder(scenarioName);
+        
         Logging.Enabled();
 
         this.TestId = Guid.NewGuid();
@@ -46,7 +75,7 @@ public class DockerHelper : BaseDockerHelper
         this.TestNetworks.Add(testNetwork);
 
         await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
-        
+
         await this.SetupMessagingServiceContainer(
                                                   new List<INetworkService> {
                                                                                 testNetwork,
@@ -58,6 +87,7 @@ public class DockerHelper : BaseDockerHelper
         await this.SetupCallbackHandlerContainer(new List<INetworkService> {
                                                                                testNetwork
                                                                            });
+
         await this.SetupTestHostContainer(
                                           new List<INetworkService> {
                                                                         testNetwork,
@@ -67,14 +97,12 @@ public class DockerHelper : BaseDockerHelper
         await this.SetupEstateManagementContainer(new List<INetworkService> {
                                                                                 testNetwork,
                                                                                 this.SqlServerNetwork
-                                                                            },
-                                                  this.PersistentSubscriptionSettings);
+                                                                            });
 
         await this.SetupEstateReportingContainer(new List<INetworkService> {
                                                                                testNetwork,
                                                                                this.SqlServerNetwork
-                                                                           },
-                                                 this.PersistentSubscriptionSettings);
+                                                                           });
 
         await this.SetupVoucherManagementContainer(new List<INetworkService> {
                                                                                  testNetwork,
@@ -84,14 +112,12 @@ public class DockerHelper : BaseDockerHelper
         await this.SetupTransactionProcessorContainer(new List<INetworkService> {
                                                                                     testNetwork,
                                                                                     this.SqlServerNetwork
-                                                                                },
-                                                      this.PersistentSubscriptionSettings);
+                                                                                });
 
         await this.SetupFileProcessorContainer(new List<INetworkService> {
                                                                              testNetwork,
                                                                              this.SqlServerNetwork
-                                                                         },
-                                               this.PersistentSubscriptionSettings);
+                                                                         });
 
         await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
                                                                                     testNetwork,
@@ -102,14 +128,10 @@ public class DockerHelper : BaseDockerHelper
         await this.LoadEventStoreProjections();
 
         await this.CreateGenericSubscriptions();
-
-
     }
 
     public override async Task StopContainersForScenarioRun()
     {
-        //await this.RemoveEstateReadModel().ConfigureAwait(false);
-
         if (this.Containers.Any())
         {
             foreach (IContainerService containerService in this.Containers)
