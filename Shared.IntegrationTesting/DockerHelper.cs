@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -30,6 +31,16 @@ public class DockerHelper : BaseDockerHelper
             (DockerEnginePlatform.Windows, true) => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
             _ => $"//home//txnproc//trace//{scenarioName}"
         };
+
+        if (Directory.Exists(this.HostTraceFolder) == false) {
+            this.Trace($"[{this.HostTraceFolder}] does not exist");
+            Directory.CreateDirectory(this.HostTraceFolder);
+            this.Trace($"[{this.HostTraceFolder}] created");
+        }
+        else {
+            this.Trace($"[{this.HostTraceFolder}] already exists");
+        }
+
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
 
