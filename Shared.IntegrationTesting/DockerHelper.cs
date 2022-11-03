@@ -46,7 +46,7 @@ public class DockerHelper : BaseDockerHelper
         this.TestNetworks.Add(testNetwork);
 
         await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
-        
+
         await this.SetupMessagingServiceContainer(
                                                   new List<INetworkService> {
                                                                                 testNetwork,
@@ -58,6 +58,7 @@ public class DockerHelper : BaseDockerHelper
         await this.SetupCallbackHandlerContainer(new List<INetworkService> {
                                                                                testNetwork
                                                                            });
+
         await this.SetupTestHostContainer(
                                           new List<INetworkService> {
                                                                         testNetwork,
@@ -67,14 +68,12 @@ public class DockerHelper : BaseDockerHelper
         await this.SetupEstateManagementContainer(new List<INetworkService> {
                                                                                 testNetwork,
                                                                                 this.SqlServerNetwork
-                                                                            },
-                                                  this.PersistentSubscriptionSettings);
+                                                                            });
 
         await this.SetupEstateReportingContainer(new List<INetworkService> {
                                                                                testNetwork,
                                                                                this.SqlServerNetwork
-                                                                           },
-                                                 this.PersistentSubscriptionSettings);
+                                                                           });
 
         await this.SetupVoucherManagementContainer(new List<INetworkService> {
                                                                                  testNetwork,
@@ -84,14 +83,12 @@ public class DockerHelper : BaseDockerHelper
         await this.SetupTransactionProcessorContainer(new List<INetworkService> {
                                                                                     testNetwork,
                                                                                     this.SqlServerNetwork
-                                                                                },
-                                                      this.PersistentSubscriptionSettings);
+                                                                                });
 
         await this.SetupFileProcessorContainer(new List<INetworkService> {
                                                                              testNetwork,
                                                                              this.SqlServerNetwork
-                                                                         },
-                                               this.PersistentSubscriptionSettings);
+                                                                         });
 
         await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
                                                                                     testNetwork,
@@ -102,14 +99,10 @@ public class DockerHelper : BaseDockerHelper
         await this.LoadEventStoreProjections();
 
         await this.CreateGenericSubscriptions();
-
-
     }
 
     public override async Task StopContainersForScenarioRun()
     {
-        //await this.RemoveEstateReadModel().ConfigureAwait(false);
-
         if (this.Containers.Any())
         {
             foreach (IContainerService containerService in this.Containers)
