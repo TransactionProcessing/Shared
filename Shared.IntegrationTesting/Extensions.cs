@@ -10,7 +10,7 @@ public static class Extensions
                                                    String hostTraceFolder, 
                                                    String containerPath = null)
     {
-        if (containerBuilder == null) {
+        if (containerPath == null) {
             if (DockerHelper.GetDockerEnginePlatform() == DockerEnginePlatform.Windows) {
                 containerPath = "C:\\home\\txnproc\\trace";
             }
