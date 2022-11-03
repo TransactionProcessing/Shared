@@ -34,35 +34,28 @@ jobs:
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
-  #buildwindows:
-  #  name: "Build and Test Pull Requests - Windows"
-  #  env:
-  #      ASPNETCORE_ENVIRONMENT: "Production"
+  buildwindows:
+    name: "Build and Test Pull Requests - Windows"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
 
-  #  runs-on: windows-2019
+    runs-on: windows-2019
 
-  #  steps:
-  #  - uses: actions/checkout@v1
+    steps:
+    - uses: actions/checkout@v1
 
-  #  - name: Install NET 6
-  #    uses: actions/setup-dotnet@v2
-  #    with:
-  #      dotnet-version: '6.0.x'
+    - name: Install NET 6
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.0.x'
 
-  #  - name: Restore Nuget Packages
-  #    run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
 
-  #  - name: Build Code
-  #    run: dotnet build Shared.sln --configuration Release
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
 
-  #  #- name: Trust root certificate
-  #  #  run: |
-  #  #    sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
-  #  #    sudo update-ca-certificates
-
-  #  - name: Run Unit Tests
-  #    run: |
-  #      echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #      #dotnet test "Shared.Tests\Shared.Tests.csproj"
-  #      #dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
-  #      dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
