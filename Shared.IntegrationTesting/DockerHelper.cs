@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Services;
@@ -13,6 +14,25 @@ public class DockerHelper : BaseDockerHelper
     public DockerHelper() :base(){
         
     }
+
+    private void SetHostTraceFolder(String scenarioName) {
+        String ciEnvVar = Environment.GetEnvironmentVariable("CI");
+        DockerEnginePlatform engineType = DockerHelper.GetDockerEnginePlatform();
+
+        String homeFolder = "txnproc";
+
+        if ((String.IsNullOrEmpty(ciEnvVar) == false) 
+            && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0) {
+            homeFolder = "runner";
+        }
+
+        this.HostTraceFolder = engineType switch {
+            DockerEnginePlatform.Windows => $"C:\\home\\{homeFolder}\\trace\\{scenarioName}",
+            _ => $"//home//{homeFolder}//trace//{scenarioName}"
+        };
+        this.Trace("HostTraceFolder is [{this.HostTraceFolder}]");
+    }
+
     public override async Task StartContainersForScenarioRun(String scenarioName) {
 
         this.DockerCredentials.ShouldNotBeNull();
@@ -26,12 +46,8 @@ public class DockerHelper : BaseDockerHelper
             "false" => false,
             _ => true
         };
-
-        this.HostTraceFolder = FdOs.IsWindows() switch {
-            true => $"C:\\home\\txnproc\\trace\\{scenarioName}",
-            _ => $"//home//txnproc//trace//{scenarioName}"
-        };
-
+        this.SetHostTraceFolder(scenarioName);
+        
         Logging.Enabled();
 
         this.TestId = Guid.NewGuid();
