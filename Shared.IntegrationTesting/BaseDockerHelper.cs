@@ -415,33 +415,26 @@ public abstract class BaseDockerHelper
                                                                              Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                              List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start File Processor Container");
-        DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
         environmentVariables.Add($"urls=http://*:{DockerPorts.FileProcessorDockerPort}");
         environmentVariables
             .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
-        String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        if ((String.IsNullOrEmpty(ciEnvVar) == false) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0) {
-            if (enginePlatform == DockerEnginePlatform.Linux) {
-                // we are running in CI Linux
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
 
-                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/home/runner/bulkfiles/safaricom"}");
-                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/home/runner/bulkfiles/voucher"}");
-            }
-            else {
-                // we are running in CI Windows
-                //String folderBase = "C:\\Users\\runneradmin\\txnproc";
-                //if (Directory.Exists(folderBase) == false) {
-                //    this.Trace($"[{folderBase}] does not exist");
-                //    Directory.CreateDirectory(this.HostTraceFolder);
-                //    this.Trace($"[{folderBase}] created");
-                //}
-                //else {
-                //    this.Trace($"[{folderBase}] already exists");
-                //}
-                
+        DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
+        String ciEnvVar = Environment.GetEnvironmentVariable("CI");
+        Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
+
+        if (enginePlatform == DockerEnginePlatform.Linux) {
+            // we are running in CI Linux
+            environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
+
+            environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/home/runner/bulkfiles/safaricom"}");
+            environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/home/runner/bulkfiles/voucher"}");
+        }
+        else {
+            // We know this is now windows
+            if (isCi) {
                 Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
                 Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
                 Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
@@ -449,11 +442,14 @@ public abstract class BaseDockerHelper
                 environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary\"");
                 environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
                 environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
-
+            }
+            else {
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\home\\txnproc\\bulkfiles\\temporary\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\safaricom\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\voucher\"");
             }
         }
-    
-
+        
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
@@ -464,7 +460,17 @@ public abstract class BaseDockerHelper
                                                                .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
 
         // Mount the folder to upload files
-        String uploadFolder = enginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\specflow" : "/home/txnproc/specflow";
+        String uploadFolder = (enginePlatform, isCi) switch {
+            (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\specflow",
+            (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\specflow",
+            _ => "/home/txnproc/specflow"
+        };
+            
+                              //== DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\specflow" : "/home/txnproc/specflow";
+        if (enginePlatform == DockerEnginePlatform.Windows && isCi) {
+            Directory.CreateDirectory(uploadFolder);
+        }
+
         String containerFolder = enginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
         fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
 
