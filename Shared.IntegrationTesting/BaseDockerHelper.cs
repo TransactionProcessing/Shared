@@ -432,19 +432,24 @@ public abstract class BaseDockerHelper
             }
             else {
                 // we are running in CI Windows
-                String folderBase = "C:\\Users\\runneradmin\\txnproc";
-                if (Directory.Exists(folderBase) == false) {
-                    this.Trace($"[{folderBase}] does not exist");
-                    Directory.CreateDirectory(this.HostTraceFolder);
-                    this.Trace($"[{folderBase}] created");
-                }
-                else {
-                    this.Trace($"[{folderBase}] already exists");
-                }
+                //String folderBase = "C:\\Users\\runneradmin\\txnproc";
+                //if (Directory.Exists(folderBase) == false) {
+                //    this.Trace($"[{folderBase}] does not exist");
+                //    Directory.CreateDirectory(this.HostTraceFolder);
+                //    this.Trace($"[{folderBase}] created");
+                //}
+                //else {
+                //    this.Trace($"[{folderBase}] already exists");
+                //}
                 
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"{folderBase}\\bulkfiles\\temporary\"");
-                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"{folderBase}\\bulkfiles\\safaricom\"");
-                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"{folderBase}\\bulkfiles\\voucher\"");
+                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
+                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
+                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
+
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
+
             }
         }
     
