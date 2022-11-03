@@ -8,10 +8,15 @@ public static class Extensions
 {
     public static ContainerBuilder MountHostFolder(this ContainerBuilder containerBuilder,
                                                    String hostTraceFolder, 
-                                                   String containerPath = "/home/txnproc/trace")
+                                                   String containerPath = null)
     {
-        if (DockerHelper.GetDockerEnginePlatform() == DockerEnginePlatform.Windows) {
-            containerPath = "C:\\home\\txnproc\\trace";
+        if (containerBuilder == null) {
+            if (DockerHelper.GetDockerEnginePlatform() == DockerEnginePlatform.Windows) {
+                containerPath = "C:\\home\\txnproc\\trace";
+            }
+            else {
+                containerPath = "/home/txnproc/trace";
+            }
         }
 
         if (String.IsNullOrEmpty(hostTraceFolder) == false)
