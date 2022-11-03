@@ -32,13 +32,15 @@ public class DockerHelper : BaseDockerHelper
             _ => $"//home//txnproc//trace//{scenarioName}"
         };
 
-        if (Directory.Exists(this.HostTraceFolder) == false) {
-            this.Trace($"[{this.HostTraceFolder}] does not exist");
-            Directory.CreateDirectory(this.HostTraceFolder);
-            this.Trace($"[{this.HostTraceFolder}] created");
-        }
-        else {
-            this.Trace($"[{this.HostTraceFolder}] already exists");
+        if (engineType == DockerEnginePlatform.Windows && isCI) {
+            if (Directory.Exists(this.HostTraceFolder) == false) {
+                this.Trace($"[{this.HostTraceFolder}] does not exist");
+                Directory.CreateDirectory(this.HostTraceFolder);
+                this.Trace($"[{this.HostTraceFolder}] created");
+            }
+            else {
+                this.Trace($"[{this.HostTraceFolder}] already exists");
+            }
         }
 
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");

@@ -422,8 +422,7 @@ public abstract class BaseDockerHelper
         environmentVariables
             .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        if ((String.IsNullOrEmpty(ciEnvVar) == false) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0)
-        {
+        if ((String.IsNullOrEmpty(ciEnvVar) == false) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0) {
             if (enginePlatform == DockerEnginePlatform.Linux) {
                 // we are running in CI Linux
                 environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
@@ -433,12 +432,22 @@ public abstract class BaseDockerHelper
             }
             else {
                 // we are running in CI Windows
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation={"C:\\home\\runner\\bulkfiles\\temporary"}");
-
-                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"C:\\home\\runner\\bulkfiles\\safaricom"}");
-                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"C:\\home\\runner\\bulkfiles\\voucher"}");
+                String folderBase = "C:\\Users\\runneradmin\\txnproc";
+                if (Directory.Exists(folderBase) == false) {
+                    this.Trace($"[{folderBase}] does not exist");
+                    Directory.CreateDirectory(this.HostTraceFolder);
+                    this.Trace($"[{folderBase}] created");
+                }
+                else {
+                    this.Trace($"[{folderBase}] already exists");
+                }
+                
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"{folderBase}\\bulkfiles\\temporary\"");
+                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"{folderBase}\\bulkfiles\\safaricom\"");
+                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"{folderBase}\\bulkfiles\\voucher\"");
             }
         }
+    
 
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
