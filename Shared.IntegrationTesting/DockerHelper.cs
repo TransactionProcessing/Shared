@@ -19,18 +19,18 @@ public class DockerHelper : BaseDockerHelper
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
         DockerEnginePlatform engineType = DockerHelper.GetDockerEnginePlatform();
 
-        String homeFolder = "txnproc";
+        // We are running on linux (CI or local ok)
+        // We are running windows local (can use "C:\\home\\txnproc\\trace\\{scenarioName}")
+        // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
-        if ((String.IsNullOrEmpty(ciEnvVar) == false) 
-            && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0) {
-            homeFolder = "runner";
-        }
-
-        this.HostTraceFolder = engineType switch {
-            DockerEnginePlatform.Windows => $"C:\\home\\{homeFolder}\\trace\\{scenarioName}",
-            _ => $"//home//{homeFolder}//trace//{scenarioName}"
+        Boolean isCI = (String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
+        
+        this.HostTraceFolder = (engineType,isCI) switch {
+            (DockerEnginePlatform.Windows, false) => $"C:\\home\\txnproc\\trace\\{scenarioName}",
+            (DockerEnginePlatform.Windows, true) => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
+            _ => $"//home//txnproc//trace//{scenarioName}"
         };
-        this.Trace("HostTraceFolder is [{this.HostTraceFolder}]");
+        this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
 
     public override async Task StartContainersForScenarioRun(String scenarioName) {
