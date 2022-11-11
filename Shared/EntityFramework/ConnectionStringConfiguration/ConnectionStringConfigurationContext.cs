@@ -102,7 +102,7 @@ namespace Shared.EntityFramework.ConnectionStringConfiguration
             modelBuilder.Entity<ConnectionStringConfiguration>().HasIndex(c => new
                                                                                {
                                                                                    c.ExternalIdentifier,
-                                                                                   c.ConnectionStringTypeId
+                                                                                   c.ConnectionStringIdentifier
                                                                                }).IsUnique();
         }
     }

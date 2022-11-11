@@ -78,13 +78,8 @@
         #endregion
 
         #region Methods
-
-        /// <summary>
-        /// Gets the event store context.
-        /// </summary>
-        /// <param name="connectionIdentifier">The connection identifier.</param>
-        /// <returns></returns>
-        public IEventStoreContext GetEventStoreContext(String connectionIdentifier)
+        
+        public IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier="EventStoreConnectionString")
         {
             if (this.Context != null)
             {
@@ -106,7 +101,7 @@
                 {
                     // This will need to now look up the ES Connection string from persistence
                     String connectionString = this.ConnectionStringConfigurationRepository
-                                                  .GetConnectionString(connectionIdentifier, ConnectionStringType.EventStore, CancellationToken.None).Result;
+                                                  .GetConnectionString(connectionIdentifier, connectionStringIdentifier, CancellationToken.None).Result;
 
                     this.WriteTrace($"Connection String is {connectionString}");
 
@@ -118,12 +113,7 @@
                 return this.EventStoreContexts[connectionIdentifier];
             }
         }
-
-        /// <summary>
-        /// Guards the against no connection identifier.
-        /// </summary>
-        /// <param name="connectionIdentifier">The connection identifier.</param>
-        /// <exception cref="ArgumentException">Value cannot be empty. - connectionIdentifier</exception>
+        
         private void GuardAgainstNoConnectionIdentifier(String connectionIdentifier)
         {
             //Check if the connectionStringIdentifier is present
@@ -133,10 +123,6 @@
             }
         }
 
-        /// <summary>
-        /// Writes the trace.
-        /// </summary>
-        /// <param name="trace">The trace.</param>
         private void WriteTrace(String trace)
         {
             if (this.TraceGenerated != null)

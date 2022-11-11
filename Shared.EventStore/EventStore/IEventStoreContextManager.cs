@@ -7,6 +7,6 @@ namespace Shared.EventStore.EventStore
 
     public interface IEventStoreContextManager
     {
-        IEventStoreContext GetEventStoreContext(String connectionIdentifier);
+        IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier = "EventStoreConnectionString");
     }
 }
