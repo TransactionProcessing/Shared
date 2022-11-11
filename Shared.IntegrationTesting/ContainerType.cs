@@ -10,7 +10,7 @@ public enum ContainerType
     TestHost,
     EstateManagement,
     EstateReporting,
-    VoucherManagement,
+    //VoucherManagement,
     TransactionProcessor,
     FileProcessor,
     VoucherManagementAcl,
