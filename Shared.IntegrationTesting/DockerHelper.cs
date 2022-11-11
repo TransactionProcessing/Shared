@@ -119,9 +119,9 @@ public class DockerHelper : BaseDockerHelper
                                                                              this.SqlServerNetwork
                                                                          });
 
-        await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
-                                                                                    testNetwork,
-                                                                                });
+        //await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
+        //                                                                            testNetwork,
+        //                                                                        });
 
         await this.SetupTransactionProcessorAclContainer(testNetwork);
 
