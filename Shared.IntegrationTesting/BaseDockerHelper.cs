@@ -752,6 +752,8 @@ public abstract class BaseDockerHelper
             .Add($"OperatorConfiguration:PataPawaPostPay:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/PataPawaPostPayService/basichttp");
         environmentVariables
             .Add($"ConnectionStrings:TransactionProcessorReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=TransactionProcessorReadModel\"");
+        environmentVariables
+            .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
 
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
