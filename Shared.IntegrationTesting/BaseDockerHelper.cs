@@ -139,7 +139,7 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhostswindows:master", true));
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagementwindows:master", true));
             this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingwindows:master", true));
-            this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagementwindows:master", true));
+            //this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagementwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementaclwindows:master", true));
@@ -154,7 +154,7 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
             this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereporting:master", true));
-            this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagement:master", true));
+            //this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagement:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
             this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementacl:master", true));
@@ -814,42 +814,42 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupVoucherManagementContainer(List<INetworkService> networkServices,
-                                                                                 Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                                 List<String> additionalEnvironmentVariables = null) {
-        this.Trace("About to Start Voucher Management Container");
+    //public virtual async Task<IContainerService> SetupVoucherManagementContainer(List<INetworkService> networkServices,
+    //                                                                             Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
+    //                                                                             List<String> additionalEnvironmentVariables = null) {
+    //    this.Trace("About to Start Voucher Management Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
-        environmentVariables.Add($"urls=http://*:{DockerPorts.VoucherManagementDockerPort}");
-        environmentVariables
-            .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
+    //    List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
+    //    environmentVariables.Add($"urls=http://*:{DockerPorts.VoucherManagementDockerPort}");
+    //    environmentVariables
+    //        .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
 
-        if (additionalEnvironmentVariables != null) {
-            environmentVariables.AddRange(additionalEnvironmentVariables);
-        }
+    //    if (additionalEnvironmentVariables != null) {
+    //        environmentVariables.AddRange(additionalEnvironmentVariables);
+    //    }
 
-        ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(this.VoucherManagementContainerName)
-                                                                   .WithEnvironment(environmentVariables.ToArray())
-                                                                   .UseImageDetails(this.GetImageDetails(ContainerType.VoucherManagement))
-                                                                   .ExposePort(DockerPorts.VoucherManagementDockerPort)
-                                                                   .MountHostFolder(this.HostTraceFolder)
-                                                                   .SetDockerCredentials(this.DockerCredentials);
+    //    ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(this.VoucherManagementContainerName)
+    //                                                               .WithEnvironment(environmentVariables.ToArray())
+    //                                                               .UseImageDetails(this.GetImageDetails(ContainerType.VoucherManagement))
+    //                                                               .ExposePort(DockerPorts.VoucherManagementDockerPort)
+    //                                                               .MountHostFolder(this.HostTraceFolder)
+    //                                                               .SetDockerCredentials(this.DockerCredentials);
 
-        // Now build and return the container                
-        IContainerService builtContainer = voucherManagementContainer.Build().Start().WaitForPort($"{DockerPorts.VoucherManagementDockerPort}/tcp", 30000);
-        foreach (INetworkService networkService in networkServices)
-        {
-            networkService.Attach(builtContainer, false);
-        }
-        this.Trace("Voucher Management Container Started");
-        this.Containers.Add(builtContainer);
+    //    // Now build and return the container                
+    //    IContainerService builtContainer = voucherManagementContainer.Build().Start().WaitForPort($"{DockerPorts.VoucherManagementDockerPort}/tcp", 30000);
+    //    foreach (INetworkService networkService in networkServices)
+    //    {
+    //        networkService.Attach(builtContainer, false);
+    //    }
+    //    this.Trace("Voucher Management Container Started");
+    //    this.Containers.Add(builtContainer);
 
-        //  Do a health check here
-        this.VoucherManagementPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.VoucherManagementDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.VoucherManagement);
+    //    //  Do a health check here
+    //    this.VoucherManagementPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.VoucherManagementDockerPort}/tcp").Port;
+    //    await this.DoHealthCheck(ContainerType.VoucherManagement);
 
-        return builtContainer;
-    }
+    //    return builtContainer;
+    //}
 
     public abstract Task StartContainersForScenarioRun(String scenarioName);
 
@@ -896,7 +896,7 @@ public abstract class BaseDockerHelper
             ContainerType.TestHost => ("http", this.TestHostServicePort),
             ContainerType.TransactionProcessor => ("http", this.TransactionProcessorPort),
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
-            ContainerType.VoucherManagement => ("http", this.VoucherManagementPort),
+            //ContainerType.VoucherManagement => ("http", this.VoucherManagementPort),
             ContainerType.VoucherManagementAcl => ("http", this.VoucherManagementAclPort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
             _ => (null, 0)
