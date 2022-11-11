@@ -42,29 +42,17 @@
 
         #region Methods
 
-        /// <summary>
-        /// Gets a context for the given identifier
-        /// </summary>
-        /// <param name="identifier">The identifier.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>
-        /// DbContext.
-        /// </returns>
         public virtual async Task<T> GetContext(Guid identifier,
+                                                String connectionStringIdentifier,            
                                                 CancellationToken cancellationToken)
         {
             this.GuardIdentifier(identifier);
 
             String connectionString =
-                await this.ConnectionStringConfigurationRepository.GetConnectionString(identifier.ToString(), ConnectionStringType.ReadModel, cancellationToken);
+                await this.ConnectionStringConfigurationRepository.GetConnectionString(identifier.ToString(), connectionStringIdentifier, cancellationToken);
             return this.CreateContext(connectionString);
         }
 
-        /// <summary>
-        /// Guards the identifier.
-        /// </summary>
-        /// <param name="identifier">The identifier.</param>
-        /// <exception cref="ArgumentNullException">identifier</exception>
         private void GuardIdentifier(Guid identifier)
         {
             if (identifier == Guid.Empty)
