@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Ductus.FluentDocker;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Services;
 using Shouldly;
@@ -16,23 +17,25 @@ public class DockerHelper : BaseDockerHelper
         
     }
 
-    private void SetHostTraceFolder(String scenarioName) {
+    protected  virtual void SetHostTraceFolder(String scenarioName) {
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        DockerEnginePlatform engineType = DockerHelper.GetDockerEnginePlatform();
-
+        
         // We are running on linux (CI or local ok)
         // We are running windows local (can use "C:\\home\\txnproc\\trace\\{scenarioName}")
         // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
         Boolean isCI = (String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
+        if (FdOs.IsLinux() || FdOs.IsOsx()) {
+            this.HostTraceFolder = $"/home/txnproc/trace/{scenarioName}";
+        }
+        else {
+            this.HostTraceFolder = isCI switch {
+                false => $"C:\\home\\txnproc\\trace\\{scenarioName}",
+                _ => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
+            };
+        }
         
-        this.HostTraceFolder = (engineType,isCI) switch {
-            (DockerEnginePlatform.Windows, false) => $"C:\\home\\txnproc\\trace\\{scenarioName}",
-            (DockerEnginePlatform.Windows, true) => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
-            _ => $"/home/txnproc/trace/{scenarioName}"
-        };
-
-        if (engineType == DockerEnginePlatform.Windows && isCI) {
+        if (isCI && FdOs.IsWindows()) {
             if (Directory.Exists(this.HostTraceFolder) == false) {
                 this.Trace($"[{this.HostTraceFolder}] does not exist");
                 Directory.CreateDirectory(this.HostTraceFolder);
