@@ -29,7 +29,7 @@ public class DockerHelper : BaseDockerHelper
         this.HostTraceFolder = (engineType,isCI) switch {
             (DockerEnginePlatform.Windows, false) => $"C:\\home\\txnproc\\trace\\{scenarioName}",
             (DockerEnginePlatform.Windows, true) => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
-            _ => $"//home//txnproc//trace//{scenarioName}"
+            _ => $"/home/txnproc/trace/{scenarioName}"
         };
 
         if (engineType == DockerEnginePlatform.Windows && isCI) {
