@@ -34,9 +34,8 @@ public class DockerHelper : BaseDockerHelper
                 _ => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
             };
         }
-
-
-        if (isCI) {
+        
+        if (isCI && FdOs.IsWindows()) {
             if (Directory.Exists(this.HostTraceFolder) == false) {
                 this.Trace($"[{this.HostTraceFolder}] does not exist");
                 Directory.CreateDirectory(this.HostTraceFolder);
