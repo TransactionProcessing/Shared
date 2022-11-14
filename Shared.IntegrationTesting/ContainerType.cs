@@ -9,8 +9,6 @@ public enum ContainerType
     CallbackHandler,
     TestHost,
     EstateManagement,
-    EstateReporting,
-    //VoucherManagement,
     TransactionProcessor,
     FileProcessor,
     VoucherManagementAcl,

@@ -5,11 +5,10 @@ using System;
 public static class DockerPorts
 {
     public const Int32 FileProcessorDockerPort = 5009;
+
     public const Int32 CallbackHandlerDockerPort = 5010;
 
     public const Int32 EstateManagementDockerPort = 5000;
-
-    public const Int32 EstateReportingDockerPort = 5005;
 
     public const Int32 EventStoreHttpDockerPort = 2113;
 
@@ -26,6 +25,4 @@ public static class DockerPorts
     public const Int32 TransactionProcessorDockerPort = 5002;
 
     public const Int32 VoucherManagementAclDockerPort = 5008;
-
-    public const Int32 VoucherManagementDockerPort = 5007;
 }

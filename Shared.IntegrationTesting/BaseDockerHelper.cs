@@ -60,11 +60,7 @@ public abstract class BaseDockerHelper
     protected String EstateManagementContainerName;
 
     protected Int32 EstateManagementPort;
-
-    protected String EstateReportingContainerName;
-
-    protected Int32 EstateReportingPort;
-
+    
     protected String EventStoreContainerName;
 
     protected Int32 EventStoreHttpPort;
@@ -107,10 +103,6 @@ public abstract class BaseDockerHelper
 
     protected Int32 VoucherManagementAclPort;
 
-    protected String VoucherManagementContainerName;
-
-    protected Int32 VoucherManagementPort;
-
     #endregion
 
     #region Constructors
@@ -138,8 +130,6 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandlerwindows:master", true));
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhostswindows:master", true));
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagementwindows:master", true));
-            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingwindows:master", true));
-            //this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagementwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementaclwindows:master", true));
@@ -153,8 +143,6 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:latest", true));
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
-            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereporting:master", true));
-            //this.ImageDetails.Add(ContainerType.VoucherManagement, ("stuartferguson/vouchermanagement:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
             this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementacl:master", true));
@@ -191,7 +179,6 @@ public abstract class BaseDockerHelper
                              $"AppSettings:MessagingServiceApi=http://{this.MessagingServiceContainerName}:{DockerPorts.MessagingServiceDockerPort}",
                              $"AppSettings:TransactionProcessorApi=http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}",
                              $"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerPorts.EstateManagementDockerPort}",
-                             $"AppSettings:VoucherManagementApi=http://{this.VoucherManagementContainerName}:{DockerPorts.VoucherManagementDockerPort}",
                              $"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\""
                          };
 
@@ -273,13 +260,11 @@ public abstract class BaseDockerHelper
         this.EventStoreContainerName = $"eventstore{this.TestId:N}";
         this.SecurityServiceContainerName = $"securityservice{this.TestId:N}";
         this.EstateManagementContainerName = $"estate{this.TestId:N}";
-        this.EstateReportingContainerName = $"estatereporting{this.TestId:N}";
         this.TestHostContainerName = $"testhosts{this.TestId:N}";
         this.CallbackHandlerContainerName = $"callbackhandler{this.TestId:N}";
         this.FileProcessorContainerName = $"fileprocessor{this.TestId:N}";
         this.MessagingServiceContainerName = $"messaging{this.TestId:N}";
         this.TransactionProcessorContainerName = $"transaction{this.TestId:N}";
-        this.VoucherManagementContainerName = $"vouchermanagement{this.TestId:N}";
         this.TransactionProcessorAclContainerName = $"transactionacl{this.TestId:N}";
         this.VoucherManagementAclContainerName = $"vouchermanagementacl{this.TestId:N}";
     }
@@ -320,43 +305,7 @@ public abstract class BaseDockerHelper
         await this.DoHealthCheck(ContainerType.EstateManagement);
         return builtContainer;
     }
-
-    public virtual async Task<IContainerService> SetupEstateReportingContainer(List<INetworkService> networkServices,
-                                                                               Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                               List<String> additionalEnvironmentVariables = null) {
-        this.Trace("About to Start Estate Reporting Container");
-
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
-        environmentVariables.Add($"urls=http://*:{DockerPorts.EstateReportingDockerPort}");
-        environmentVariables
-            .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
-
-        if (additionalEnvironmentVariables != null) {
-            environmentVariables.AddRange(additionalEnvironmentVariables);
-        }
-
-        ContainerBuilder estateReportingContainer = new Builder().UseContainer().WithName(this.EstateReportingContainerName)
-                                                                 .WithEnvironment(environmentVariables.ToArray())
-                                                                 .UseImageDetails(this.GetImageDetails(ContainerType.EstateReporting))
-                                                                 .ExposePort(DockerPorts.EstateReportingDockerPort)
-                                                                 .MountHostFolder(this.HostTraceFolder)
-                                                                 .SetDockerCredentials(this.DockerCredentials);
-
-        // Now build and return the container                
-        IContainerService builtContainer = estateReportingContainer.Build().Start().WaitForPort($"{DockerPorts.EstateReportingDockerPort}/tcp", 30000);
-        foreach (INetworkService networkService in networkServices)
-        {
-            networkService.Attach(builtContainer, false);
-        }
-        this.Trace("Estate Reporting Container Started");
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.EstateReportingPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EstateReportingDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.EstateReporting);
-        return builtContainer;
-    }
-
+    
     public virtual async Task<IContainerService> SetupEventStoreContainer(INetworkService networkService,
                                                                           Boolean isSecure = false) {
         this.Trace("About to Start Event Store Container");
@@ -815,44 +764,7 @@ public abstract class BaseDockerHelper
 
         return builtContainer;
     }
-
-    //public virtual async Task<IContainerService> SetupVoucherManagementContainer(List<INetworkService> networkServices,
-    //                                                                             Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-    //                                                                             List<String> additionalEnvironmentVariables = null) {
-    //    this.Trace("About to Start Voucher Management Container");
-
-    //    List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
-    //    environmentVariables.Add($"urls=http://*:{DockerPorts.VoucherManagementDockerPort}");
-    //    environmentVariables
-    //        .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
-
-    //    if (additionalEnvironmentVariables != null) {
-    //        environmentVariables.AddRange(additionalEnvironmentVariables);
-    //    }
-
-    //    ContainerBuilder voucherManagementContainer = new Builder().UseContainer().WithName(this.VoucherManagementContainerName)
-    //                                                               .WithEnvironment(environmentVariables.ToArray())
-    //                                                               .UseImageDetails(this.GetImageDetails(ContainerType.VoucherManagement))
-    //                                                               .ExposePort(DockerPorts.VoucherManagementDockerPort)
-    //                                                               .MountHostFolder(this.HostTraceFolder)
-    //                                                               .SetDockerCredentials(this.DockerCredentials);
-
-    //    // Now build and return the container                
-    //    IContainerService builtContainer = voucherManagementContainer.Build().Start().WaitForPort($"{DockerPorts.VoucherManagementDockerPort}/tcp", 30000);
-    //    foreach (INetworkService networkService in networkServices)
-    //    {
-    //        networkService.Attach(builtContainer, false);
-    //    }
-    //    this.Trace("Voucher Management Container Started");
-    //    this.Containers.Add(builtContainer);
-
-    //    //  Do a health check here
-    //    this.VoucherManagementPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.VoucherManagementDockerPort}/tcp").Port;
-    //    await this.DoHealthCheck(ContainerType.VoucherManagement);
-
-    //    return builtContainer;
-    //}
-
+    
     public abstract Task StartContainersForScenarioRun(String scenarioName);
 
     public abstract Task StopContainersForScenarioRun();
@@ -892,13 +804,11 @@ public abstract class BaseDockerHelper
         (String, Int32) containerDetails = containerType switch {
             ContainerType.CallbackHandler => ("http", this.CallbackHandlerPort),
             ContainerType.EstateManagement => ("http", this.EstateManagementPort),
-            ContainerType.EstateReporting => ("http", this.EstateReportingPort),
             ContainerType.FileProcessor => ("http", this.FileProcessorPort),
             ContainerType.MessagingService => ("http", this.MessagingServicePort),
             ContainerType.TestHost => ("http", this.TestHostServicePort),
             ContainerType.TransactionProcessor => ("http", this.TransactionProcessorPort),
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
-            //ContainerType.VoucherManagement => ("http", this.VoucherManagementPort),
             ContainerType.VoucherManagementAcl => ("http", this.VoucherManagementAclPort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
             _ => (null, 0)

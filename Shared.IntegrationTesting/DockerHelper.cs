@@ -99,10 +99,10 @@ public class DockerHelper : BaseDockerHelper
                                                                                 this.SqlServerNetwork
                                                                             });
 
-        await this.SetupEstateReportingContainer(new List<INetworkService> {
-                                                                               testNetwork,
-                                                                               this.SqlServerNetwork
-                                                                           });
+        //await this.SetupEstateReportingContainer(new List<INetworkService> {
+        //                                                                       testNetwork,
+        //                                                                       this.SqlServerNetwork
+        //                                                                   });
 
         //await this.SetupVoucherManagementContainer(new List<INetworkService> {
         //                                                                         testNetwork,
