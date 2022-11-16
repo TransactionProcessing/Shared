@@ -14,7 +14,6 @@ using Shouldly;
 public class DockerHelper : BaseDockerHelper
 {
     public DockerHelper() :base(){
-        
     }
 
     protected  virtual void SetHostTraceFolder(String scenarioName) {
