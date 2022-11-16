@@ -32,7 +32,8 @@
                                                                                      UserCredentials? userCredentials,
                                                                                      Int32 bufferSize,
                                                                                      CancellationToken cancellationToken) {
-            return this.SubscriptionsClient.SubscribeAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, false, cancellationToken);
+            //return this.SubscriptionsClient.SubscribeAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, false, cancellationToken);
+            return this.SubscriptionsClient.SubscribeToStreamAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, cancellationToken);
         }
 
         #endregion

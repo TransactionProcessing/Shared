@@ -14,7 +14,6 @@ using Shouldly;
 public class DockerHelper : BaseDockerHelper
 {
     public DockerHelper() :base(){
-        
     }
 
     protected  virtual void SetHostTraceFolder(String scenarioName) {
@@ -101,17 +100,7 @@ public class DockerHelper : BaseDockerHelper
                                                                                 testNetwork,
                                                                                 this.SqlServerNetwork
                                                                             });
-
-        //await this.SetupEstateReportingContainer(new List<INetworkService> {
-        //                                                                       testNetwork,
-        //                                                                       this.SqlServerNetwork
-        //                                                                   });
-
-        //await this.SetupVoucherManagementContainer(new List<INetworkService> {
-        //                                                                         testNetwork,
-        //                                                                         this.SqlServerNetwork
-        //                                                                     });
-
+        
         await this.SetupTransactionProcessorContainer(new List<INetworkService> {
                                                                                     testNetwork,
                                                                                     this.SqlServerNetwork
@@ -122,9 +111,9 @@ public class DockerHelper : BaseDockerHelper
                                                                              this.SqlServerNetwork
                                                                          });
 
-        //await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
-        //                                                                            testNetwork,
-        //                                                                        });
+        await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
+                                                                                    testNetwork,
+                                                                                });
 
         await this.SetupTransactionProcessorAclContainer(testNetwork);
 
@@ -171,7 +160,7 @@ public class DockerHelper : BaseDockerHelper
     public virtual async Task CreateEstateSubscriptions(String estateName) {
         List<(String streamName, String groupName, Int32 maxRetries)> subscriptions = new List<(String streamName, String groupName, Int32 maxRetries)>
         {
-            (estateName.Replace(" ", ""), "Reporting", 2),
+            (estateName.Replace(" ", ""), "Estate Management", 2),
             ($"EstateManagementSubscriptionStream_{estateName.Replace(" ", "")}", "Estate Management", 0),
             ($"TransactionProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "Transaction Processor", 0),
             ($"FileProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "File Processor", 0)
