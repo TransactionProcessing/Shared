@@ -59,11 +59,15 @@
 
             configuration.LogConfiguration(loggerAction);
 
-            String[] loggedEntries = testLogger.GetLogEntries().Where(l => l.Contains("PSLockDownPolicy") == false &&
-                                                                           String.IsNullOrEmpty(l) == false).ToArray();
-            Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count + 5; // 5 headers
+            String[] loggedEntries = this.FilterLogEntries(testLogger);
+            Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count; // 5 headers
             loggedEntries.Length.ShouldBe(expectedCount);
             loggedEntries.Where(l => l.Contains("No Value")).Count().ShouldBe(1);
+        }
+
+        private string[] FilterLogEntries(TestLogger testLogger) {
+            return testLogger.GetLogEntries().Where(l => l.Contains("PSLockDownPolicy") == false && String.IsNullOrEmpty(l) == false)
+                             .Where(l => l.Contains("Configuration Section") == false).ToArray();
         }
 
         /// <summary>
@@ -81,8 +85,7 @@
 
             configuration.LogConfiguration(loggerAction);
 
-            String[] loggedEntries = testLogger.GetLogEntries().Where(l => l.Contains("PSLockDownPolicy") == false &&
-                                                                           String.IsNullOrEmpty(l) == false).ToArray();
+            String[] loggedEntries = this.FilterLogEntries(testLogger);
             loggedEntries.Length.ShouldBe(0);
         }
 
