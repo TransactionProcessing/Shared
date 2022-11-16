@@ -50,7 +50,7 @@
         [Fact]
         public void ConfigurationRootExtensions_LogConfiguration_ConfigurationIsLogged()
         {
-             IConfigurationBuilder builder = new ConfigurationBuilder().AddInMemoryCollection(ConfigurationRootExtensionsTests.DefaultAppSettings).AddEnvironmentVariables();
+            IConfigurationBuilder builder = new ConfigurationBuilder().AddInMemoryCollection(ConfigurationRootExtensionsTests.DefaultAppSettings).AddEnvironmentVariables();
 
             IConfigurationRoot configuration = builder.Build();
 
@@ -60,7 +60,7 @@
             configuration.LogConfiguration(loggerAction);
 
             String[] loggedEntries = testLogger.GetLogEntries();
-            Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count + 7; // 3 blank lines & 4 headers
+            Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count + 10; // 3 blank lines & 4 headers and PS Setting
             loggedEntries.Length.ShouldBe(expectedCount);
             loggedEntries.Where(l => l.Contains("No Value")).Count().ShouldBe(1);
         }

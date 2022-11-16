@@ -44,26 +44,7 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = new EventStoreClientSettings();
-            settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
-
-            if (secureEventStore) {
-                settings.ConnectivitySettings.Address = new Uri($"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=true&tlsVerifyCert=false");
-            }
-            else {
-                settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
-                                                                                     SslOptions = {
-                                                                                                      RemoteCertificateValidationCallback = (sender,
-                                                                                                          certificate,
-                                                                                                          chain,
-                                                                                                          errors) => true,
-                                                                                                  }
-                                                                                 };
-
-                settings.ConnectivitySettings.Insecure = true;
-                settings.ConnectivitySettings.Address = new Uri($"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=false");
-                settings.DefaultCredentials = new UserCredentials("admin", "changeit");
-            }
+            EventStoreClientSettings settings = this.CreateEventStoreClientSettings(secureEventStore);
 
             EventStoreClient client = new(settings);
             EventStoreProjectionManagementClient projectionManagementClient = new(settings);
@@ -89,27 +70,8 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = new EventStoreClientSettings();
-            settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
-
-            if (secureEventStore) {
-                settings.ConnectivitySettings.Address = new Uri($"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=true&tlsVerifyCert=false");
-            }
-            else {
-                settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
-                                                                                     SslOptions = {
-                                                                                                      RemoteCertificateValidationCallback = (sender,
-                                                                                                          certificate,
-                                                                                                          chain,
-                                                                                                          errors) => true,
-                                                                                                  }
-                                                                                 };
-
-                settings.ConnectivitySettings.Insecure = true;
-                settings.ConnectivitySettings.Address = new Uri($"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=false");
-                settings.DefaultCredentials = new UserCredentials("admin", "changeit");
-            }
-
+            EventStoreClientSettings settings = this.CreateEventStoreClientSettings(secureEventStore);
+            
             EventStoreClient client = new(settings);
             EventStoreProjectionManagementClient projectionManagementClient = new(settings);
             IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
@@ -134,6 +96,32 @@
                             });
         }
 
+        private EventStoreClientSettings CreateEventStoreClientSettings(Boolean secureEventStore) {
+            String connectionString = secureEventStore switch {
+                true => $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=true&tlsVerifyCert=false",
+                _ => $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=false"
+            };
+
+            EventStoreClientSettings settings = EventStoreClientSettings.Create(connectionString);
+            settings.ConnectivitySettings.Insecure = secureEventStore switch {
+                true => false,
+                _ => true
+            };
+
+            if (secureEventStore == false) {
+                settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
+                                                                                     SslOptions = {
+                                                                                                      RemoteCertificateValidationCallback = (sender,
+                                                                                                          certificate,
+                                                                                                          chain,
+                                                                                                          errors) => true,
+                                                                                                  }
+                                                                                 };
+            }
+
+            return settings;
+        }
+
         private INetworkService SetupTestNetwork(String networkName = null,
                                                  Boolean reuseIfExists = false) {
             networkName = String.IsNullOrEmpty(networkName) ? $"testnetwork{Guid.NewGuid()}" : networkName;
@@ -152,7 +140,7 @@
             INetworkService networkService = this.SetupTestNetwork($"testNetwork-{Guid.NewGuid():N}", true);
             this.TestNetworks.Add(networkService);
 
-            IContainerService containerService = this.StartEventStoreContainer("eventstore/eventstore:21.10.5-bionic",
+            IContainerService containerService = this.StartEventStoreContainer("eventstore/eventstore:22.6.0-bionic",
                                                                                $"eventStore-{Guid.NewGuid():N}",
                                                                                isSecureEventStore,
                                                                                networkService);
