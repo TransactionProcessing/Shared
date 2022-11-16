@@ -59,8 +59,9 @@
 
             configuration.LogConfiguration(loggerAction);
 
-            String[] loggedEntries = testLogger.GetLogEntries();
-            Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count + 10; // 3 blank lines & 4 headers and PS Setting
+            String[] loggedEntries = testLogger.GetLogEntries().Where(l => l.Contains("PSLockDownPolicy") == false &&
+                                                                           String.IsNullOrEmpty(l) == false).ToArray();
+            Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count + 5; // 5 headers
             loggedEntries.Length.ShouldBe(expectedCount);
             loggedEntries.Where(l => l.Contains("No Value")).Count().ShouldBe(1);
         }
@@ -80,7 +81,8 @@
 
             configuration.LogConfiguration(loggerAction);
 
-            String[] loggedEntries = testLogger.GetLogEntries();
+            String[] loggedEntries = testLogger.GetLogEntries().Where(l => l.Contains("PSLockDownPolicy") == false &&
+                                                                           String.IsNullOrEmpty(l) == false).ToArray();
             loggedEntries.Length.ShouldBe(0);
         }
 
