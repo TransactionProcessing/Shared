@@ -51,15 +51,13 @@
             EventStoreClientSettings settings = EventStoreClientSettings.Create(eventStoreConnectionString);
             this.HttpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
 
-            this.IgnoreSubscriptions = "local-"; //Default behaviour
-
             this.GetNewSubscriptions = (all, current)
                                            => SubscriptionWorkerHelper.GetNewSubscriptions(all,
                                                                                            current,
-                                                                                           this.IsOrdered,
-                                                                                           this.IgnoreSubscriptions,
-                                                                                           this.FilterSubscriptions,
-                                                                                           this.StreamNameFilter);
+                                                                                           this.IncludeGroups,
+                                                                                           this.IgnoreGroups,
+                                                                                           this.IncludeStreams,
+                                                                                           this.IgnoreStreams);
 
             this.WriteTrace = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Trace, this, message);
             this.WriteWarning = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Warning, this, message);
@@ -80,15 +78,13 @@
             EventStoreClientSettings settings = eventStoreConnectionSettings;
             this.HttpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
 
-            this.IgnoreSubscriptions = "local-"; //Default behaviour
-
             this.GetNewSubscriptions = (all, current)
                                            => SubscriptionWorkerHelper.GetNewSubscriptions(all,
                                                                                            current,
-                                                                                           this.IsOrdered,
-                                                                                           this.IgnoreSubscriptions,
-                                                                                           this.FilterSubscriptions,
-                                                                                           this.StreamNameFilter);
+                                                                                           this.IncludeGroups,
+                                                                                           this.IgnoreGroups,
+                                                                                           this.IncludeStreams,
+                                                                                           this.IgnoreStreams);
 
             this.WriteTrace = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Trace, this, message);
             this.WriteWarning = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Warning, this, message);
@@ -99,16 +95,17 @@
 
         #region Properties
 
-        public String FilterSubscriptions { get; internal set; }
+        public String IncludeGroups { get; internal set; }
+        public String IgnoreGroups { get; internal set; }
+        public String IncludeStreams { get; internal set; }
+        public String IgnoreStreams { get; internal set; }
         public HttpClient HttpClient { get; internal set; }
         public String IgnoreSubscriptions { get; internal set; }
         public Int32 InflightMessages { get; internal set; }
         public Boolean InMemory { get; internal set; }
-        public Boolean IsOrdered { get; internal set; }
         public Boolean IsRunning { get; private set; }
         public Int32 PersistentSubscriptionPollingInSeconds { get; }
-        public String StreamNameFilter { get; internal set; }
-
+        
         #endregion
 
         #region Events
@@ -121,7 +118,7 @@
 
         #region Methods
 
-        public static SubscriptionWorker CreateConcurrentSubscriptionWorker(String eventStoreConnectionString,
+        public static SubscriptionWorker CreateSubscriptionWorker(String eventStoreConnectionString,
                                                                             IDomainEventHandlerResolver domainEventHandlerResolver,
                                                                             ISubscriptionRepository subscriptionRepository,
                                                                             Int32 inflightMessages = 200,
@@ -133,7 +130,7 @@
                    };
         }
 
-        public static SubscriptionWorker CreateConcurrentSubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
+        public static SubscriptionWorker CreateSubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
                                                                             IDomainEventHandlerResolver domainEventHandlerResolver,
                                                                             ISubscriptionRepository subscriptionRepository,
                                                                             Int32 inflightMessages = 200,
@@ -152,8 +149,7 @@
         {
             return new(eventStoreConnectionSettings, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
                    {
-                       InflightMessages = 1,
-                       IsOrdered = true
+                       InflightMessages = 1
                    };
         }
 
@@ -203,13 +199,13 @@
                 {
                     PersistentSubscriptions all = await this.SubscriptionRepository.GetSubscriptions(false, stoppingToken);
 
-                    var current = this.CurrentSubscriptions.Select(x => new PersistentSubscriptionInfo
-                                                                        {
-                                                                            GroupName = x.PersistentSubscriptionDetails.GroupName,
-                                                                            StreamName = x.PersistentSubscriptionDetails.StreamName
-                                                                        }).ToList();
+                    List<PersistentSubscriptionInfo> current = this.CurrentSubscriptions.Select(x => new PersistentSubscriptionInfo
+                                                                                                     {
+                                                                                                         GroupName = x.PersistentSubscriptionDetails.GroupName,
+                                                                                                         StreamName = x.PersistentSubscriptionDetails.StreamName
+                                                                                                     }).ToList();
 
-                    var result = this.GetNewSubscriptions(all.PersistentSubscriptionInfo, current);
+                    List<PersistentSubscriptionInfo> result = this.GetNewSubscriptions(all.PersistentSubscriptionInfo, current);
 
                     this.WriteWarning($"Picked up {result.Count} subscriptions");
 
