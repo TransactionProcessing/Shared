@@ -103,6 +103,8 @@ public abstract class BaseDockerHelper
 
     protected Int32 VoucherManagementAclPort;
 
+    protected Boolean UseSecureSqlServerDatabase;
+
     #endregion
 
     #region Constructors
@@ -166,21 +168,25 @@ public abstract class BaseDockerHelper
 
     #region Methods
 
-    public List<String> GetCommonEnvironmentVariables(Int32 securityServicePort) =>
-        new List<String> {
-                             $"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}",
-                             this.InsecureEventStoreEnvironmentVariable,
-                             $"AppSettings:PersistentSubscriptionPollingInSeconds={this.PersistentSubscriptionSettings.pollingInterval}",
-                             $"AppSettings:InternalSubscriptionServiceCacheDuration={this.PersistentSubscriptionSettings.cacheDuration}",
-                             $"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}",
-                             $"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}",
-                             $"AppSettings:ClientId={this.ClientDetails.clientId}",
-                             $"AppSettings:ClientSecret={this.ClientDetails.clientSecret}",
-                             $"AppSettings:MessagingServiceApi=http://{this.MessagingServiceContainerName}:{DockerPorts.MessagingServiceDockerPort}",
-                             $"AppSettings:TransactionProcessorApi=http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}",
-                             $"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerPorts.EstateManagementDockerPort}",
-                             $"ConnectionStrings:HealthCheck=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=master\""
-                         };
+    public List<String> GetCommonEnvironmentVariables(Int32 securityServicePort) {
+        var healthCheckConnString = SetConnectionString("ConnectionStrings:HealthCheck", "master", UseSecureSqlServerDatabase);
+
+
+        return new List<String> {
+                                    $"EventStoreSettings:ConnectionString={this.GenerateEventStoreConnectionString()}",
+                                    this.InsecureEventStoreEnvironmentVariable,
+                                    $"AppSettings:PersistentSubscriptionPollingInSeconds={this.PersistentSubscriptionSettings.pollingInterval}",
+                                    $"AppSettings:InternalSubscriptionServiceCacheDuration={this.PersistentSubscriptionSettings.cacheDuration}",
+                                    $"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}",
+                                    $"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}",
+                                    $"AppSettings:ClientId={this.ClientDetails.clientId}",
+                                    $"AppSettings:ClientSecret={this.ClientDetails.clientSecret}",
+                                    $"AppSettings:MessagingServiceApi=http://{this.MessagingServiceContainerName}:{DockerPorts.MessagingServiceDockerPort}",
+                                    $"AppSettings:TransactionProcessorApi=http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}",
+                                    $"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerPorts.EstateManagementDockerPort}",
+                                    healthCheckConnString
+                                };
+    }
 
     public static DockerEnginePlatform GetDockerEnginePlatform() {
         IHostService docker = BaseDockerHelper.GetDockerHost();
@@ -269,6 +275,20 @@ public abstract class BaseDockerHelper
         this.VoucherManagementAclContainerName = $"vouchermanagementacl{this.TestId:N}";
     }
 
+    protected virtual String SetConnectionString(String settingName,
+                                                 String databaseName,
+                                                 Boolean isSecure = false) {
+        String encryptValue = String.Empty;
+        if (isSecure == false) {
+            encryptValue = ";Encrypt=False";
+        }
+
+        String connectionString =
+            $"{settingName}=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}\"";
+
+        return connectionString;
+    }
+
     public virtual async Task<IContainerService> SetupEstateManagementContainer(List<INetworkService> networkServices,
                                                                                 Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                                 List<String> additionalEnvironmentVariables = null) {
@@ -276,8 +296,7 @@ public abstract class BaseDockerHelper
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
         environmentVariables.Add($"urls=http://*:{DockerPorts.EstateManagementDockerPort}");
-        environmentVariables
-            .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
+        environmentVariables.Add(SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", UseSecureSqlServerDatabase));
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
@@ -367,8 +386,7 @@ public abstract class BaseDockerHelper
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
         environmentVariables.Add($"urls=http://*:{DockerPorts.FileProcessorDockerPort}");
-        environmentVariables
-            .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
+        environmentVariables.Add(SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", UseSecureSqlServerDatabase));
 
         DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
@@ -530,22 +548,21 @@ public abstract class BaseDockerHelper
         networkService.Attach(databaseServerContainer, false);
 
         this.Trace("SQL Server Container Started");
+        // Try opening a connection
+        Int32 maxRetries = 10;
+        Int32 counter = 1;
 
         if (networkService != null) {
             this.Trace("About to SQL Server Container is running");
             IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
-
-            // Try opening a connection
-            Int32 maxRetries = 10;
-            Int32 counter = 1;
-
+            
             String server = "127.0.0.1";
             String database = "master";
             String user = this.SqlCredentials.Value.usename;
             String password = this.SqlCredentials.Value.password;
             String port = sqlServerEndpoint.Port.ToString();
 
-            String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};";
+            String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
             this.Trace($"Connection String {connectionString}");
             SqlConnection connection = new SqlConnection(connectionString);
 
@@ -579,6 +596,11 @@ public abstract class BaseDockerHelper
             }
         }
 
+        if (counter >= maxRetries) {
+            // We have got to the end and still not opened the connection
+            throw new Exception($"Database container not started in {maxRetries} retries");
+        }
+
         return databaseServerContainer;
     }
 
@@ -587,8 +609,8 @@ public abstract class BaseDockerHelper
         this.Trace("About to Start Test Hosts Container");
 
         List<String> environmentVariables = new List<String>();
-        environmentVariables
-            .Add($"ConnectionStrings:TestBankReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=TestBankReadModel\"");
+        environmentVariables.Add(SetConnectionString("ConnectionStrings:TestBankReadModel", "TestBankReadModel", UseSecureSqlServerDatabase));
+        environmentVariables.Add(SetConnectionString("ConnectionStrings:PataPawaReadModel", "PataPawaReadModel", UseSecureSqlServerDatabase));
         environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
 
         if (additionalEnvironmentVariables != null) {
@@ -699,10 +721,8 @@ public abstract class BaseDockerHelper
         environmentVariables.Add($"OperatorConfiguration:Safaricom:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/api/safaricom");
         environmentVariables
             .Add($"OperatorConfiguration:PataPawaPostPay:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/PataPawaPostPayService/basichttp");
-        environmentVariables
-            .Add($"ConnectionStrings:TransactionProcessorReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=TransactionProcessorReadModel\"");
-        environmentVariables
-            .Add($"ConnectionStrings:EstateReportingReadModel=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database=EstateReportingReadModel\"");
+        environmentVariables.Add(SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "TransactionProcessorReadModel", UseSecureSqlServerDatabase));
+        environmentVariables.Add(SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", UseSecureSqlServerDatabase));
 
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
@@ -822,7 +842,7 @@ public abstract class BaseDockerHelper
                                 await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
                             var result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
-                            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), healthCheck);
+                            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
                         });
     }
 

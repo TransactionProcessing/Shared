@@ -23,7 +23,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Driver", "Driver\Driver.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.EventStore.Tests", "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj", "{81AF1FCA-837F-4CEA-9E8E-AD38F510930A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.IntegrationTesting.Tests", "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj", "{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.IntegrationTesting.Tests", "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj", "{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2F43E6CC-A4C5-4C18-8674-FF5E2E6C1604}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\createrelease.yml = .github\workflows\createrelease.yml
+		.github\workflows\pullrequest.yml = .github\workflows\pullrequest.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
