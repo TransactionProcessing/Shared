@@ -9,12 +9,12 @@ namespace Shared.EventStore.Tests
 
         public static List<PersistentSubscriptionInfo> GetPersistentSubscriptions_DemoEstate()
         {
-            var list = new List<PersistentSubscriptionInfo>();
+            List<PersistentSubscriptionInfo> list = new List<PersistentSubscriptionInfo>();
 
             list.Add(new PersistentSubscriptionInfo
                      {
                          StreamName = "DemoEstate",
-                         GroupName = "Reporting"
+                         GroupName = "Estate Management"
                      });
             list.Add(new PersistentSubscriptionInfo
                      {
@@ -34,20 +34,48 @@ namespace Shared.EventStore.Tests
 
             list.Add(new PersistentSubscriptionInfo
                      {
-                         StreamName = "$projections_ExternalProjections_result_TestMerchant1",
+                         StreamName = "$ce-MerchantBalanceArchive",
+                         GroupName = "Ordered"
+                     });
+
+            return list;
+        }
+
+        public static List<PersistentSubscriptionInfo> GetPersistentSubscriptions_DemoEstate_Updated()
+        {
+            List<PersistentSubscriptionInfo> list = new List<PersistentSubscriptionInfo>();
+
+            list.Add(new PersistentSubscriptionInfo
+                     {
+                         StreamName = "DemoEstate",
+                         GroupName = "Estate Management"
+                     });
+            list.Add(new PersistentSubscriptionInfo
+                     {
+                         StreamName = "$et-EstateCreatedEvent",
+                         GroupName = "Migrations"
+                     });
+            list.Add(new PersistentSubscriptionInfo
+                     {
+                         StreamName = "FileProcessorSubscriptionStream_DemoEstate",
+                         GroupName = "File Processor"
+                     });
+            list.Add(new PersistentSubscriptionInfo
+                     {
+                         StreamName = "TransactionProcessorSubscriptionStream_DemoEstate",
+                         GroupName = "Transaction Processor"
+                     });
+
+            list.Add(new PersistentSubscriptionInfo
+                     {
+                         StreamName = "$ce-MerchantBalanceArchive",
                          GroupName = "Ordered"
                      });
 
             list.Add(new PersistentSubscriptionInfo
                      {
-                         StreamName = "$projections_ExternalProjections_result_TestMerchant2",
-                         GroupName = "Ordered"
-                     });
-
-            list.Add(new PersistentSubscriptionInfo
-                     {
-                         StreamName = "$projections_ExternalProjections_result_TestMerchant3",
-                         GroupName = "Ordered"
+                         StreamName = "DemoEstate2",
+                         GroupName = "Estate Management"
                      });
 
             return list;

@@ -39,77 +39,42 @@
         }
 
         private static async Task Main(String[] args) {
-            //await Program.SubscriptionsTest();
-
-            EventStoreClientSettings settings = Program.ConfigureEventStoreSettings();
-
-            EventStoreClient client = new(settings);
-
-            EventStoreProjectionManagementClient projectionManagementClient = new EventStoreProjectionManagementClient(settings);
+            await Program.SubscriptionsTest();
             
-            var x = await projectionManagementClient.GetStatusAsync("$by_category", cancellationToken: CancellationToken.None);
-
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
-            IAggregateRepository<TestAggregate, DomainEvent> aggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context);
-
-            Guid aggregateId = Guid.Parse("02398284-8284-8284-8284-165402398284");
-            TestAggregate aggregate = await aggregateRepository.GetLatestVersion(aggregateId, CancellationToken.None);
-
-            aggregate.SetAggregateName("Test Name");
-            //aggregate.SetAggregateName("Test Name1");
-            //aggregate.SetAggregateName("Test Name2");
-            //aggregate.SetAggregateName("Test Name3");
-            //aggregate.SetAggregateName("Test Name4");
-
-            await aggregateRepository.SaveChanges(aggregate, CancellationToken.None);
-
             //TestDockerHelper t = new TestDockerHelper();
             //await t.StartContainersForScenarioRun("");
         }
 
         private static async Task SubscriptionsTest() {
             String eventStoreConnectionString = "esdb://127.0.0.1:2113?tls=false";
-            Int32 inflightMessages = 1;
-            Int32 persistentSubscriptionPollingInSeconds = 10;
-            String filter = String.Empty;
-            String ignore = String.Empty;
-            String streamName = String.Empty;
-            Int32 cacheDuration = 0;
+            //Int32 inflightMessages = 50;
+            //Int32 persistentSubscriptionPollingInSeconds = 10;
+            //Int32 cacheDuration = 0;
 
-            ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, cacheDuration);
+            //String 
 
-            //((SubscriptionRepository)subscriptionRepository).Trace += (sender, s) => Extensions.log(TraceEventType.Information, "REPOSITORY", s);
+            //ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, cacheDuration);
 
-            // init our SubscriptionRepository
-            subscriptionRepository.PreWarm(CancellationToken.None).Wait();
+            ////((SubscriptionRepository)subscriptionRepository).Trace += (sender, s) => Extensions.log(TraceEventType.Information, "REPOSITORY", s);
 
-            IDomainEventHandlerResolver eventHandlerResolver = new DomainEventHandlerResolver(new Dictionary<String, String[]>(), null);
+            //// init our SubscriptionRepository
+            //subscriptionRepository.PreWarm(CancellationToken.None).Wait();
 
-            SubscriptionWorker concurrentSubscriptions = SubscriptionWorker.CreateConcurrentSubscriptionWorker(Program.ConfigureEventStoreSettings(),
-                                                                                                               eventHandlerResolver,
-                                                                                                               subscriptionRepository,
-                                                                                                               inflightMessages,
-                                                                                                               persistentSubscriptionPollingInSeconds);
+            //IDomainEventHandlerResolver eventHandlerResolver = new DomainEventHandlerResolver(new Dictionary<String, String[]>(), null);
+
+            //SubscriptionWorker concurrentSubscriptions = SubscriptionWorker.CreateSubscriptionWorker(Program.ConfigureEventStoreSettings(),
+            //                                                                                                   eventHandlerResolver,
+            //                                                                                                   subscriptionRepository,
+            //                                                                                                   inflightMessages,
+            //                                                                                                   persistentSubscriptionPollingInSeconds);
 
             //concurrentSubscriptions.Trace += (_, args) => Extensions.concurrentLog(TraceEventType.Information, args.Message);
             //concurrentSubscriptions.Warning += (_, args) => Extensions.concurrentLog(TraceEventType.Warning, args.Message);
             //concurrentSubscriptions.Error += (_, args) => Extensions.concurrentLog(TraceEventType.Error, args.Message);
 
-            if (!String.IsNullOrEmpty(ignore)) {
-                concurrentSubscriptions = concurrentSubscriptions.IgnoreSubscriptions(ignore);
-            }
+            
 
-            if (!String.IsNullOrEmpty(filter)) {
-                //NOTE: Not overly happy with this design, but
-                //the idea is if we supply a filter, this overrides ignore
-                concurrentSubscriptions = concurrentSubscriptions.FilterSubscriptions(filter).IgnoreSubscriptions(null);
-            }
-
-            if (!String.IsNullOrEmpty(streamName)) {
-                concurrentSubscriptions = concurrentSubscriptions.FilterByStreamName(streamName);
-            }
-
-            concurrentSubscriptions.StartAsync(CancellationToken.None).Wait();
+            //concurrentSubscriptions.StartAsync(CancellationToken.None).Wait();
         }
 
         #endregion

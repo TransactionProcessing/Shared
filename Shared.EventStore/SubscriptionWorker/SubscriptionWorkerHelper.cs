@@ -48,46 +48,22 @@
 
             return client;
         }
-
-        public static SubscriptionWorker FilterSubscriptions(this SubscriptionWorker subscriptionWorker, String filterSubscriptions)
-        {
-            subscriptionWorker.FilterSubscriptions = filterSubscriptions;
-
-            return subscriptionWorker;
-        }
-
-        public static SubscriptionWorker FilterByStreamName(this SubscriptionWorker subscriptionWorker, String streamName)
-        {
-            subscriptionWorker.StreamNameFilter = streamName;
-
-            return subscriptionWorker;
-        }
-
-        public static List<PersistentSubscription> GetPersistentSubscription(this SubscriptionWorker subscriptionWorker)
-        {
-            return subscriptionWorker.CurrentSubscriptions;
-        }
         
         public static List<PersistentSubscriptionInfo> GetNewSubscriptions(List<PersistentSubscriptionInfo> all,
                                                                            List<PersistentSubscriptionInfo> currentSubscriptions,
-                                                                           Boolean isOrdered,
-                                                                           String ignoreSubscriptionsWithGroupName = null,
-                                                                           String filterSubscriptionsWithGroupName = null,
-                                                                           String streamName = null)
+                                                                           String groupsToInclude = null,
+                                                                           String groupsToIgnore = null,
+                                                                           String streamsToInclude = null,
+                                                                           String streamsToIgnore = null)
         {
-            var result = all
-                         .Where(p => currentSubscriptions.All(p2 => $"{p2.StreamName}-{p2.GroupName}" != $"{p.StreamName}-{p.GroupName}"))
-                         .Where(p => {
-                                    if (isOrdered && p.GroupName.Contains("Ordered", StringComparison.CurrentCultureIgnoreCase)) return true;
-                                    if (isOrdered == false && !p.GroupName.Contains("Ordered")) return true;
-
-                                    return false;
-                                })
-                         .Where(p => SubscriptionWorkerHelper.IgnoreSubscription(p, ignoreSubscriptionsWithGroupName))
-                         .Where(p => SubscriptionWorkerHelper.FilterSubscription(p, filterSubscriptionsWithGroupName))
-                         .Where(p => SubscriptionWorkerHelper.ContainsStream(p, streamName))
-                         .ToList();
-
+            List<PersistentSubscriptionInfo> result = all
+                                                      .Where(p => currentSubscriptions.All(p2 => $"{p2.StreamName}-{p2.GroupName}" != $"{p.StreamName}-{p.GroupName}"))
+                                                      .Where(p => SubscriptionWorkerHelper.IgnoreSubscriptionGroup(p, groupsToIgnore))
+                                                      .Where(p => SubscriptionWorkerHelper.IncludeSubscriptionGroup(p, groupsToInclude))
+                                                      .Where(p => SubscriptionWorkerHelper.IgnoreSubscriptionStream(p, streamsToIgnore))
+                                                      .Where(p => SubscriptionWorkerHelper.IncludeSubscriptionStream(p, streamsToInclude))
+                                                      .ToList();
+            
             return result;
         }
 
@@ -97,51 +73,68 @@
 
             return subscriptionWorker;
         }
-
-        internal static Boolean FilterSubscription(PersistentSubscriptionInfo subscription, String filter)
+        
+        internal static Boolean IncludeSubscriptionGroup(PersistentSubscriptionInfo subscription, String include)
         {
-            List<string> filterList = new List<String>();
-            if (!String.IsNullOrEmpty(filter))
+            if (!String.IsNullOrEmpty(include))
             {
-                if (filter.Contains(",") == false)
-                {
-                    filterList.Add(filter);
-                }
-                else
-                {
-                    filterList = filter.Split(",").ToList();
-                }
+                List<String> checkList = include.Split(',').Select(s => s.Trim()).ToList();
 
-                foreach (String filterItem in filterList)
-                {
-                    // Handle the fact that spaces could bne in the filter
-                    var trimmedFilterItem = filterItem.Trim();
-                    if (subscription.GroupName.Contains(trimmedFilterItem, StringComparison.CurrentCultureIgnoreCase))
+                foreach (String chk in checkList) {
+                    if (subscription.GroupName.Contains(chk, StringComparison.CurrentCultureIgnoreCase)) {
                         return true;
+                    }
                 }
-
                 return false;
             }
-
             return true;
         }
 
-        internal static Boolean IgnoreSubscription(PersistentSubscriptionInfo subscription, String ignore)
-        {
-            if (!String.IsNullOrEmpty(ignore))
-            {
-                if (subscription.GroupName.Contains(ignore, StringComparison.CurrentCultureIgnoreCase))
-                    return false;
+        internal static Boolean IgnoreSubscriptionGroup(PersistentSubscriptionInfo subscription,
+                                                        String ignore) {
+            if (!String.IsNullOrEmpty(ignore)) {
+
+                List<String> checkList = ignore.Split(',').Select(s => s.Trim()).ToList();
+
+                foreach (String chk in checkList) {
+                    if (subscription.GroupName.Contains(chk, StringComparison.CurrentCultureIgnoreCase))
+                        return false;
+                }
             }
 
             return true;
         }
 
-        internal static Boolean ContainsStream(PersistentSubscriptionInfo subscription, String stream)
+        internal static Boolean IncludeSubscriptionStream(PersistentSubscriptionInfo subscription, String include)
         {
-            if (String.IsNullOrEmpty(stream)) return true;
+            if (!String.IsNullOrEmpty(include))
+            {
+                List<String> checkList = include.Split(',').Select(s => s.Trim()).ToList();
 
-            return subscription.StreamName.Contains(stream, StringComparison.CurrentCultureIgnoreCase);
+                foreach (String chk in checkList)
+                {
+                    if (subscription.StreamName.Contains(chk, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return true;
+        }
+
+        internal static Boolean IgnoreSubscriptionStream(PersistentSubscriptionInfo subscription,
+                                                         String ignore) {
+            if (!String.IsNullOrEmpty(ignore)) {
+                List<String> checkList = ignore.Split(',').Select(s => s.Trim()).ToList();
+
+                foreach (String chk in checkList) {
+                    if (subscription.StreamName.Contains(chk, StringComparison.CurrentCultureIgnoreCase))
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         public static SubscriptionWorker UseInMemory(this SubscriptionWorker subscriptionWorker)
