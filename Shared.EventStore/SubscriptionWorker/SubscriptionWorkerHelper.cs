@@ -67,14 +67,35 @@
             return result;
         }
 
-        public static SubscriptionWorker IgnoreSubscriptions(this SubscriptionWorker subscriptionWorker, String ignoreSubscriptions)
+        public static SubscriptionWorker SetIgnoreGroups(this SubscriptionWorker subscriptionWorker, String ignoreGroups)
         {
-            subscriptionWorker.IgnoreSubscriptions = ignoreSubscriptions;
+            subscriptionWorker.IgnoreGroups = ignoreGroups;
 
             return subscriptionWorker;
         }
-        
-        internal static Boolean IncludeSubscriptionGroup(PersistentSubscriptionInfo subscription, String include)
+
+        public static SubscriptionWorker SetIncludeGroups(this SubscriptionWorker subscriptionWorker, String includeGroups)
+        {
+            subscriptionWorker.IncludeGroups = includeGroups;
+
+            return subscriptionWorker;
+        }
+
+        public static SubscriptionWorker SetIgnoreStreams(this SubscriptionWorker subscriptionWorker, String ignoreStreams)
+        {
+            subscriptionWorker.IgnoreStreams = ignoreStreams;
+
+            return subscriptionWorker;
+        }
+
+        public static SubscriptionWorker SetIncludeStreams(this SubscriptionWorker subscriptionWorker, String includeStreams)
+        {
+            subscriptionWorker.IncludeStreams = includeStreams;
+
+            return subscriptionWorker;
+        }
+
+        private static Boolean IncludeSubscriptionGroup(PersistentSubscriptionInfo subscription, String include)
         {
             if (!String.IsNullOrEmpty(include))
             {
@@ -90,8 +111,8 @@
             return true;
         }
 
-        internal static Boolean IgnoreSubscriptionGroup(PersistentSubscriptionInfo subscription,
-                                                        String ignore) {
+        private static Boolean IgnoreSubscriptionGroup(PersistentSubscriptionInfo subscription,
+                                                       String ignore) {
             if (!String.IsNullOrEmpty(ignore)) {
 
                 List<String> checkList = ignore.Split(',').Select(s => s.Trim()).ToList();
@@ -105,7 +126,7 @@
             return true;
         }
 
-        internal static Boolean IncludeSubscriptionStream(PersistentSubscriptionInfo subscription, String include)
+        private static Boolean IncludeSubscriptionStream(PersistentSubscriptionInfo subscription, String include)
         {
             if (!String.IsNullOrEmpty(include))
             {
@@ -123,8 +144,8 @@
             return true;
         }
 
-        internal static Boolean IgnoreSubscriptionStream(PersistentSubscriptionInfo subscription,
-                                                         String ignore) {
+        private static Boolean IgnoreSubscriptionStream(PersistentSubscriptionInfo subscription,
+                                                        String ignore) {
             if (!String.IsNullOrEmpty(ignore)) {
                 List<String> checkList = ignore.Split(',').Select(s => s.Trim()).ToList();
 
