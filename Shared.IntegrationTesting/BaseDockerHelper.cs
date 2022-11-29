@@ -177,6 +177,8 @@ public abstract class BaseDockerHelper
                                     this.InsecureEventStoreEnvironmentVariable,
                                     $"AppSettings:PersistentSubscriptionPollingInSeconds={this.PersistentSubscriptionSettings.pollingInterval}",
                                     $"AppSettings:InternalSubscriptionServiceCacheDuration={this.PersistentSubscriptionSettings.cacheDuration}",
+                                    $"AppSettings:SubscriptionConfiguration:PersistentSubscriptionPollingInSeconds={this.PersistentSubscriptionSettings.pollingInterval}",
+                                    $"AppSettings:SubscriptionConfiguration:InternalSubscriptionServiceCacheDuration={this.PersistentSubscriptionSettings.cacheDuration}",
                                     $"AppSettings:SecurityService=https://{this.SecurityServiceContainerName}:{securityServicePort}",
                                     $"SecurityConfiguration:Authority=https://{this.SecurityServiceContainerName}:{securityServicePort}",
                                     $"AppSettings:ClientId={this.ClientDetails.clientId}",
