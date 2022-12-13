@@ -41,7 +41,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: tracelogs
+        name: tracelogslinux
         path: /home/txnproc/trace/   
 
 
@@ -73,7 +73,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: tracelogs
+        name: tracelogswindows
         path: c:\\home\\txnproc\\trace\\
 
   buildmacos:
@@ -109,5 +109,5 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: tracelogs
-        path: /home/txnproc/trace/   
+        name: tracelogsios
+        path: /Users/runner/txnproc/trace/
