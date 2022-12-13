@@ -24,8 +24,11 @@ public class DockerHelper : BaseDockerHelper
         // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
         Boolean isCI = (String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
-        if (FdOs.IsLinux() || FdOs.IsOsx()) {
+        if (FdOs.IsLinux()) {
             this.HostTraceFolder = $"/home/txnproc/trace/{scenarioName}";
+        }
+        else if (FdOs.IsOsx()) {
+            this.HostTraceFolder = $"/Users/runner/txnproc/trace/{scenarioName}";
         }
         else {
             this.HostTraceFolder = isCI switch {
@@ -46,14 +49,12 @@ public class DockerHelper : BaseDockerHelper
         }
 
         if (isCI && FdOs.IsOsx()) {
-            if (Directory.Exists(this.HostTraceFolder) == false)
-            {
+            if (Directory.Exists(this.HostTraceFolder) == false) {
                 this.Trace($"[{this.HostTraceFolder}] does not exist");
                 Directory.CreateDirectory(this.HostTraceFolder);
                 this.Trace($"[{this.HostTraceFolder}] created");
             }
-            else
-            {
+            else {
                 this.Trace($"[{this.HostTraceFolder}] already exists");
             }
         }
