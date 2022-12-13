@@ -40,6 +40,7 @@ jobs:
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
       with:
         name: tracelogslinux
         path: /home/txnproc/trace/   
@@ -72,6 +73,7 @@ jobs:
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
       with:
         name: tracelogswindows
         path: c:\\home\\txnproc\\trace\\
@@ -108,6 +110,7 @@ jobs:
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
       with:
         name: tracelogsios
         path: /Users/runner/txnproc/trace/
