@@ -45,6 +45,19 @@ public class DockerHelper : BaseDockerHelper
             }
         }
 
+        if (isCI && FdOs.IsOsx()) {
+            if (Directory.Exists(this.HostTraceFolder) == false)
+            {
+                this.Trace($"[{this.HostTraceFolder}] does not exist");
+                Directory.CreateDirectory(this.HostTraceFolder);
+                this.Trace($"[{this.HostTraceFolder}] created");
+            }
+            else
+            {
+                this.Trace($"[{this.HostTraceFolder}] already exists");
+            }
+        }
+
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
 
