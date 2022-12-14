@@ -138,8 +138,9 @@ public class DockerHelper : BaseDockerHelper
 
     public override async Task StopContainersForScenarioRun()
     {
-        if (this.Containers.Any())
-        {
+        if (this.Containers.Any()) {
+            this.Containers.Reverse();
+
             foreach (IContainerService containerService in this.Containers)
             {
                 this.Trace($"Stopping container [{containerService.Name}]");
