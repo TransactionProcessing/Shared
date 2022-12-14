@@ -849,9 +849,9 @@ public abstract class BaseDockerHelper
 
                             this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
 
-            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
+                            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
                             this.Trace($"health check complete for {containerType}");
-        });
+        }, TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(20));
     }
 
     protected virtual String GenerateEventStoreConnectionString() {
