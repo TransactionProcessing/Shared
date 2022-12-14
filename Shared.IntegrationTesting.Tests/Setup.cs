@@ -39,16 +39,16 @@ namespace Shared.IntegrationTesting.Tests
             Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
         }
 
-        public static String GetConnectionString(String databaseName)
-        {
-            return $"server={Setup.DatabaseServerContainer.Name};database={databaseName};user id={Setup.SqlCredentials.usename};password={Setup.SqlCredentials.password}";
-        }
+        //public static String GetConnectionString(String databaseName)
+        //{
+        //    return $"server={Setup.DatabaseServerContainer.Name};database={databaseName};user id={Setup.SqlCredentials.usename};password={Setup.SqlCredentials.password}";
+        //}
 
-        public static String GetLocalConnectionString(String databaseName)
-        {
-            Int32 databaseHostPort = Setup.DatabaseServerContainer.ToHostExposedEndpoint("1433/tcp").Port;
+        //public static String GetLocalConnectionString(String databaseName)
+        //{
+        //    Int32 databaseHostPort = Setup.DatabaseServerContainer.ToHostExposedEndpoint("1433/tcp").Port;
 
-            return $"server=localhost,{databaseHostPort};database={databaseName};user id={Setup.SqlCredentials.usename};password={Setup.SqlCredentials.password}";
-        }
+        //    return $"server=localhost,{databaseHostPort};database={databaseName};user id={Setup.SqlCredentials.usename};password={Setup.SqlCredentials.password}";
+        //}
     }
 }

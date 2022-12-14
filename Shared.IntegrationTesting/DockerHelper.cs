@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Ductus.FluentDocker;
+using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Services;
 using Shouldly;
@@ -14,6 +15,10 @@ using Shouldly;
 public class DockerHelper : BaseDockerHelper
 {
     public DockerHelper() :base(){
+
+        IHostService docker = BaseDockerHelper.GetDockerHost();
+        var test = docker.Host.Version(null);
+        this.Trace(test.Data.ServerOs);
     }
 
     protected  virtual void SetHostTraceFolder(String scenarioName) {

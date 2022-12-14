@@ -192,7 +192,7 @@ public abstract class BaseDockerHelper
 
     public static DockerEnginePlatform GetDockerEnginePlatform() {
         IHostService docker = BaseDockerHelper.GetDockerHost();
-
+        
         if (docker.Host.IsLinuxEngine()) {
             return DockerEnginePlatform.Linux;
         }
