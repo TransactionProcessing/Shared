@@ -547,6 +547,9 @@ public abstract class BaseDockerHelper
         IContainerService databaseServerContainer = containerService.Build().Start()
                                                                     .WaitForPort("1433/tcp", 30000);
 
+        var networkConfig = networkService.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
         networkService.Attach(databaseServerContainer, false);
 
         this.Trace("SQL Server Container Started");

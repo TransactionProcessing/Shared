@@ -10,6 +10,7 @@ using Ductus.FluentDocker;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Services;
+using Newtonsoft.Json;
 using Shouldly;
 
 public class DockerHelper : BaseDockerHelper
@@ -90,6 +91,9 @@ public class DockerHelper : BaseDockerHelper
 
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
+
+        var networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
 
         await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
 
