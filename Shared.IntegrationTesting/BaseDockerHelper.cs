@@ -142,7 +142,7 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:21.10.0-buster-slim", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
-            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:latest", true));
+            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
@@ -840,12 +840,15 @@ public abstract class BaseDockerHelper
             return;
 
         await Retry.For(async () => {
+                            this.Trace($"About to do health check for {containerType}");
+
                             String healthCheck =
                                 await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
-                            var result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
+                            HealthCheckResult result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
                             result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
-                        });
+                            this.Trace($"health check complete for {containerType}");
+        });
     }
 
     protected virtual String GenerateEventStoreConnectionString() {
