@@ -15,10 +15,6 @@ using Shouldly;
 public class DockerHelper : BaseDockerHelper
 {
     public DockerHelper() :base(){
-
-        IHostService docker = BaseDockerHelper.GetDockerHost();
-        var test = docker.Host.Version(null);
-        this.Trace(test.Data.ServerOs);
     }
 
     protected  virtual void SetHostTraceFolder(String scenarioName) {

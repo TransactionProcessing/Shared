@@ -323,7 +323,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.EstateManagementPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EstateManagementDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.EstateManagement);
+        //await this.DoHealthCheck(ContainerType.EstateManagement);
         return builtContainer;
     }
     
