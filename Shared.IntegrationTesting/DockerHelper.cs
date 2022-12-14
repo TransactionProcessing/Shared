@@ -91,14 +91,12 @@ public class DockerHelper : BaseDockerHelper
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
-        testNetwork.Attach(this.SqlServerContainer, false);
-
         await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
 
         await this.SetupMessagingServiceContainer(
                                                   new List<INetworkService> {
                                                                                 testNetwork,
-                                                                                //this.SqlServerNetwork
+                                                                                this.SqlServerNetwork
                                                                             });
 
         await this.SetupSecurityServiceContainer(testNetwork);
@@ -110,22 +108,22 @@ public class DockerHelper : BaseDockerHelper
         await this.SetupTestHostContainer(
                                           new List<INetworkService> {
                                                                         testNetwork,
-                                                                        //this.SqlServerNetwork
+                                                                        this.SqlServerNetwork
                                                                     });
 
         await this.SetupEstateManagementContainer(new List<INetworkService> {
                                                                                 testNetwork,
-                                                                                //this.SqlServerNetwork
+                                                                                this.SqlServerNetwork
                                                                             });
         
         await this.SetupTransactionProcessorContainer(new List<INetworkService> {
                                                                                     testNetwork,
-                                                                                    //this.SqlServerNetwork
+                                                                                    this.SqlServerNetwork
                                                                                 });
 
         await this.SetupFileProcessorContainer(new List<INetworkService> {
                                                                              testNetwork,
-                                                                             //this.SqlServerNetwork
+                                                                             this.SqlServerNetwork
                                                                          });
 
         await this.SetupVoucherManagementAclContainer(new List<INetworkService> {

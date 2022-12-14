@@ -575,7 +575,8 @@ public abstract class BaseDockerHelper
                     connection.Open();
 
                     SqlCommand command = connection.CreateCommand();
-                    command.CommandText = "SELECT * FROM sys.databases";
+                    //command.CommandText = "SELECT * FROM sys.databases";
+                    command.CommandText = "SELECT 1;";
                     command.ExecuteNonQuery();
 
                     this.Trace("Connection Opened");
