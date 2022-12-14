@@ -846,7 +846,10 @@ public abstract class BaseDockerHelper
                                 await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
                             HealthCheckResult result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
-                            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
+
+                            this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
+
+            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
                             this.Trace($"health check complete for {containerType}");
         });
     }
