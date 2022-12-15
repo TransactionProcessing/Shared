@@ -31,6 +31,12 @@ public class GenericSteps
 
         this.TestingContext.DockerHelper = new DockerHelper();
         this.TestingContext.DockerHelper.Logger = logger;
+        this.TestingContext.DockerHelper.SqlServerContainer = Setup.DatabaseServerContainer;
+        this.TestingContext.DockerHelper.SqlServerNetwork = Setup.DatabaseServerNetwork;
+        this.TestingContext.DockerHelper.DockerCredentials = Setup.DockerCredentials;
+        this.TestingContext.DockerHelper.SqlCredentials = Setup.SqlCredentials;
+        this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
+
         this.TestingContext.Logger = logger;
         this.TestingContext.Logger.LogInformation("About to Start Containers for Scenario Run");
         await this.TestingContext.DockerHelper.StartContainersForScenarioRun(scenarioName).ConfigureAwait(false);
