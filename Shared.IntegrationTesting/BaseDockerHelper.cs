@@ -576,22 +576,27 @@ public abstract class BaseDockerHelper
         return databaseServerContainer;
     }
 
+    private String sqlTestConnString;
+
     protected Int32 CheckSqlConnection(IContainerService databaseServerContainer) {
         // Try opening a connection
         Int32 maxRetries = 10;
         Int32 counter = 1;
         this.Trace("About to SQL Server Container is running");
-        IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
+        if (String.IsNullOrEmpty(sqlTestConnString)) {
+            IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
 
-        String server = "127.0.0.1";
-        String database = "master";
-        String user = this.SqlCredentials.Value.usename;
-        String password = this.SqlCredentials.Value.password;
-        String port = sqlServerEndpoint.Port.ToString();
+            String server = "127.0.0.1";
+            String database = "master";
+            String user = this.SqlCredentials.Value.usename;
+            String password = this.SqlCredentials.Value.password;
+            String port = sqlServerEndpoint.Port.ToString();
 
-        String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
-        this.Trace($"Connection String {connectionString}");
-        SqlConnection connection = new SqlConnection(connectionString);
+            sqlTestConnString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
+            this.Trace($"Connection String {sqlTestConnString}");
+        }
+
+        SqlConnection connection = new SqlConnection(sqlTestConnString);
 
         while (counter <= maxRetries) {
             try {
