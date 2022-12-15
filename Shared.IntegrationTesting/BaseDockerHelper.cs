@@ -138,11 +138,17 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
         }
         else {
-            this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2019-latest", true));
+            if (FdOs.IsLinux()) {
+                this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2019-latest", true));
+            }
+            else {
+                this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/azure-sql-edge", true));
+            }
+
             this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:21.10.0-buster-slim", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
-            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:latest", true));
+            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
@@ -192,7 +198,7 @@ public abstract class BaseDockerHelper
 
     public static DockerEnginePlatform GetDockerEnginePlatform() {
         IHostService docker = BaseDockerHelper.GetDockerHost();
-
+        
         if (docker.Host.IsLinuxEngine()) {
             return DockerEnginePlatform.Linux;
         }
@@ -286,7 +292,9 @@ public abstract class BaseDockerHelper
         }
 
         String connectionString =
-            $"{settingName}=\"server={this.SqlServerContainerName};user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}\"";
+            $"{settingName}=\"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}\"";
+
+        //this.Trace(connectionString);
 
         return connectionString;
     }
@@ -316,8 +324,10 @@ public abstract class BaseDockerHelper
         foreach (INetworkService networkService in networkServices)
         {
             networkService.Attach(builtContainer, false);
+            var networkConfig = networkService.GetConfiguration(true);
+            this.Trace(JsonConvert.SerializeObject(networkConfig));
         }
-
+        
         this.Trace("Estate Management Container Started");
         this.Containers.Add(builtContainer);
 
@@ -393,32 +403,42 @@ public abstract class BaseDockerHelper
         DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
         Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
-
-        if (enginePlatform == DockerEnginePlatform.Linux) {
+        
+        if (FdOs.IsLinux()) {
             // we are running in CI Linux
             environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
 
             environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/home/runner/bulkfiles/safaricom"}");
             environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/home/runner/bulkfiles/voucher"}");
         }
+        else if (FdOs.IsOsx()) {
+            // we are running in CI Mac OS
+            environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/Users/runner/bulkfiles/temporary"}");
+
+            environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/Users/runner/bulkfiles/safaricom"}");
+            environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/Users/runner/bulkfiles/voucher"}");
+        }
         else {
             // We know this is now windows
-            if (isCi) {
+            if (isCi)
+            {
                 Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
                 Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
                 Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
 
                 environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
+                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
+                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
             }
-            else {
+            else
+            {
                 environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\home\\txnproc\\bulkfiles\\temporary\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\safaricom\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\voucher\"");
+                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"C:\\Users\\txnproc\\bulkfiles\\safaricom\"");
+                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"C:\\Users\\txnproc\\bulkfiles\\voucher\"");
             }
         }
-        
+
+
         if (additionalEnvironmentVariables != null) {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
@@ -496,7 +516,7 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupSecurityServiceContainer(INetworkService networkService,
+    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices,
                                                                                List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start Security Container");
 
@@ -519,9 +539,12 @@ public abstract class BaseDockerHelper
 
         // Now build and return the container                
         IContainerService builtContainer = securityServiceContainer.Build().Start().WaitForPort($"{DockerPorts.SecurityServiceDockerPort}/tcp", 30000);
-        
-        networkService.Attach(builtContainer, false);
-        
+
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
+
         this.Trace("Security Service Container Started");
         this.Containers.Add(builtContainer);
 
@@ -549,53 +572,16 @@ public abstract class BaseDockerHelper
 
         networkService.Attach(databaseServerContainer, false);
 
+        var networkConfig = networkService.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
         this.Trace("SQL Server Container Started");
         // Try opening a connection
         Int32 maxRetries = 10;
         Int32 counter = 1;
 
         if (networkService != null) {
-            this.Trace("About to SQL Server Container is running");
-            IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
-            
-            String server = "127.0.0.1";
-            String database = "master";
-            String user = this.SqlCredentials.Value.usename;
-            String password = this.SqlCredentials.Value.password;
-            String port = sqlServerEndpoint.Port.ToString();
-
-            String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
-            this.Trace($"Connection String {connectionString}");
-            SqlConnection connection = new SqlConnection(connectionString);
-
-            while (counter <= maxRetries) {
-                try {
-                    this.Trace($"Database Connection Attempt {counter}");
-
-                    connection.Open();
-
-                    SqlCommand command = connection.CreateCommand();
-                    command.CommandText = "SELECT * FROM sys.databases";
-                    command.ExecuteNonQuery();
-
-                    this.Trace("Connection Opened");
-
-                    connection.Close();
-                    this.Trace("SQL Server Container Running");
-                    break;
-                }
-                catch(SqlException ex) {
-                    if (connection.State == ConnectionState.Open) {
-                        connection.Close();
-                    }
-
-                    this.Logger.LogError(ex);
-                    Thread.Sleep(20000);
-                }
-                finally {
-                    counter++;
-                }
-            }
+            counter = this.CheckSqlConnection(databaseServerContainer);
         }
 
         if (counter >= maxRetries) {
@@ -604,6 +590,61 @@ public abstract class BaseDockerHelper
         }
 
         return databaseServerContainer;
+    }
+
+    private String sqlTestConnString;
+
+    protected Int32 CheckSqlConnection(IContainerService databaseServerContainer) {
+        // Try opening a connection
+        Int32 maxRetries = 10;
+        Int32 counter = 1;
+        this.Trace("About to SQL Server Container is running");
+        if (String.IsNullOrEmpty(sqlTestConnString)) {
+            IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
+
+            String server = "127.0.0.1";
+            String database = "master";
+            String user = this.SqlCredentials.Value.usename;
+            String password = this.SqlCredentials.Value.password;
+            String port = sqlServerEndpoint.Port.ToString();
+
+            sqlTestConnString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
+            this.Trace($"Connection String {sqlTestConnString}");
+        }
+
+        SqlConnection connection = new SqlConnection(sqlTestConnString);
+
+        while (counter <= maxRetries) {
+            try {
+                this.Trace($"Database Connection Attempt {counter}");
+
+                connection.Open();
+
+                SqlCommand command = connection.CreateCommand();
+                //command.CommandText = "SELECT * FROM sys.databases";
+                command.CommandText = "SELECT 1;";
+                command.ExecuteNonQuery();
+
+                this.Trace("Connection Opened");
+
+                connection.Close();
+                this.Trace("SQL Server Container Running");
+                break;
+            }
+            catch(SqlException ex) {
+                if (connection.State == ConnectionState.Open) {
+                    connection.Close();
+                }
+
+                this.Logger.LogError(ex);
+                Thread.Sleep(20000);
+            }
+            finally {
+                counter++;
+            }
+        }
+
+        return counter;
     }
 
     public virtual async Task<IContainerService> SetupTestHostContainer(List<INetworkService> networkServices,
@@ -679,7 +720,7 @@ public abstract class BaseDockerHelper
         return null;
     }
 
-    public virtual async Task<IContainerService> SetupTransactionProcessorAclContainer(INetworkService networkService,
+    public virtual async Task<IContainerService> SetupTransactionProcessorAclContainer(List<INetworkService> networkServices,
                                                                                        Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                                        List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start Transaction Processor ACL Container");
@@ -700,7 +741,12 @@ public abstract class BaseDockerHelper
 
         // Now build and return the container                
         IContainerService builtContainer = transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp", 30000);
-        networkService.Attach(builtContainer,false);
+
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
+
         this.Trace("Transaction Processor Container ACL Started");
 
         this.Containers.Add(builtContainer);
@@ -840,12 +886,18 @@ public abstract class BaseDockerHelper
             return;
 
         await Retry.For(async () => {
+                            this.Trace($"About to do health check for {containerType}");
+
                             String healthCheck =
                                 await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
-                            var result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
+                            HealthCheckResult result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
+
+                            this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
+
                             result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
-                        });
+                            this.Trace($"health check complete for {containerType}");
+        }, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
     }
 
     protected virtual String GenerateEventStoreConnectionString() {

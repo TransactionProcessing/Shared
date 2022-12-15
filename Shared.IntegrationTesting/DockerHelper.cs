@@ -2,13 +2,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Ductus.FluentDocker;
+using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Services;
+using Newtonsoft.Json;
 using Shouldly;
 
 public class DockerHelper : BaseDockerHelper
@@ -24,8 +27,11 @@ public class DockerHelper : BaseDockerHelper
         // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
         Boolean isCI = (String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
-        if (FdOs.IsLinux() || FdOs.IsOsx()) {
+        if (FdOs.IsLinux()) {
             this.HostTraceFolder = $"/home/txnproc/trace/{scenarioName}";
+        }
+        else if (FdOs.IsOsx()) {
+            this.HostTraceFolder = $"/Users/runner/txnproc/trace/{scenarioName}";
         }
         else {
             this.HostTraceFolder = isCI switch {
@@ -45,11 +51,21 @@ public class DockerHelper : BaseDockerHelper
             }
         }
 
+        if (isCI && FdOs.IsOsx()) {
+            if (Directory.Exists(this.HostTraceFolder) == false) {
+                this.Trace($"[{this.HostTraceFolder}] does not exist");
+                Directory.CreateDirectory(this.HostTraceFolder);
+                this.Trace($"[{this.HostTraceFolder}] created");
+            }
+            else {
+                this.Trace($"[{this.HostTraceFolder}] already exists");
+            }
+        }
+
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
 
     public override async Task StartContainersForScenarioRun(String scenarioName) {
-
         this.DockerCredentials.ShouldNotBeNull();
         this.SqlCredentials.ShouldNotBeNull();
         this.SqlServerContainer.ShouldNotBeNull();
@@ -72,50 +88,35 @@ public class DockerHelper : BaseDockerHelper
         this.SetupContainerNames();
 
         this.ClientDetails = ("serviceClient", "Secret1");
-
+        
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
-        await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
-
-        await this.SetupMessagingServiceContainer(
-                                                  new List<INetworkService> {
-                                                                                testNetwork,
-                                                                                this.SqlServerNetwork
-                                                                            });
-
-        await this.SetupSecurityServiceContainer(testNetwork);
-
-        await this.SetupCallbackHandlerContainer(new List<INetworkService> {
-                                                                               testNetwork
-                                                                           });
-
-        await this.SetupTestHostContainer(
-                                          new List<INetworkService> {
-                                                                        testNetwork,
-                                                                        this.SqlServerNetwork
-                                                                    });
-
-        await this.SetupEstateManagementContainer(new List<INetworkService> {
-                                                                                testNetwork,
-                                                                                this.SqlServerNetwork
-                                                                            });
+        var networks = new List<INetworkService>();
+        networks.Add(this.SqlServerNetwork);
+        networks.Add(testNetwork);
         
-        await this.SetupTransactionProcessorContainer(new List<INetworkService> {
-                                                                                    testNetwork,
-                                                                                    this.SqlServerNetwork
-                                                                                });
+        await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
+        
+        await this.SetupMessagingServiceContainer(networks);
+        
+        await this.SetupSecurityServiceContainer(networks);
+        
+        await this.SetupCallbackHandlerContainer(networks);
+        
+        await this.SetupTestHostContainer(networks);
+        
+        //var counter = this.CheckSqlConnection(this.SqlServerContainer);
+        
+        await this.SetupEstateManagementContainer(networks);
+        
+        await this.SetupTransactionProcessorContainer(networks);
 
-        await this.SetupFileProcessorContainer(new List<INetworkService> {
-                                                                             testNetwork,
-                                                                             this.SqlServerNetwork
-                                                                         });
+        await this.SetupFileProcessorContainer(networks);
 
-        await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
-                                                                                    testNetwork,
-                                                                                });
+        await this.SetupVoucherManagementAclContainer(networks);
 
-        await this.SetupTransactionProcessorAclContainer(testNetwork);
+        await this.SetupTransactionProcessorAclContainer(networks);
 
         await this.LoadEventStoreProjections();
 
@@ -124,8 +125,9 @@ public class DockerHelper : BaseDockerHelper
 
     public override async Task StopContainersForScenarioRun()
     {
-        if (this.Containers.Any())
-        {
+        if (this.Containers.Any()) {
+            this.Containers.Reverse();
+
             foreach (IContainerService containerService in this.Containers)
             {
                 this.Trace($"Stopping container [{containerService.Name}]");
