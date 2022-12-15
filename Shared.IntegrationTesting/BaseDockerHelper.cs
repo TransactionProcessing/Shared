@@ -316,8 +316,10 @@ public abstract class BaseDockerHelper
         foreach (INetworkService networkService in networkServices)
         {
             networkService.Attach(builtContainer, false);
+            var networkConfig = networkService.GetConfiguration(true);
+            this.Trace(JsonConvert.SerializeObject(networkConfig));
         }
-
+        
         this.Trace("Estate Management Container Started");
         this.Containers.Add(builtContainer);
 
@@ -546,9 +548,6 @@ public abstract class BaseDockerHelper
 
         IContainerService databaseServerContainer = containerService.Build().Start()
                                                                     .WaitForPort("1433/tcp", 30000);
-
-        var networkConfig = networkService.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
 
         networkService.Attach(databaseServerContainer, false);
 
