@@ -403,32 +403,7 @@ public abstract class BaseDockerHelper
         DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
         Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
-        /*
-        if (enginePlatform == DockerEnginePlatform.Linux) {
-            // we are running in CI Linux
-            environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
-
-            environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/home/runner/bulkfiles/safaricom"}");
-            environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/home/runner/bulkfiles/voucher"}");
-        }
-        else {
-            // We know this is now windows
-            if (isCi) {
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
-
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
-            }
-            else {
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\home\\txnproc\\bulkfiles\\temporary\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\safaricom\"");
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\txnproc\\bulkfiles\\voucher\"");
-            }
-        }*/
-
+        
         if (FdOs.IsLinux()) {
             // we are running in CI Linux
             environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
@@ -922,7 +897,7 @@ public abstract class BaseDockerHelper
 
                             result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
                             this.Trace($"health check complete for {containerType}");
-        }, TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(20));
+        }, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
     }
 
     protected virtual String GenerateEventStoreConnectionString() {
