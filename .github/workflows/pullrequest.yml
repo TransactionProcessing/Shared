@@ -91,7 +91,8 @@ jobs:
     - name: Setup Docker
       run: |
         brew install docker
-        colima start
+        #colima start
+        colima start --cpu 2 --memory 8 --disk 100
 
     - name: Install NET 7
       uses: actions/setup-dotnet@v2
