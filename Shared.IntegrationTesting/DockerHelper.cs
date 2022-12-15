@@ -66,10 +66,12 @@ public class DockerHelper : BaseDockerHelper
 
     public override async Task StartContainersForScenarioRun(String scenarioName) {
 
-        this.DockerCredentials.ShouldNotBeNull();
-        this.SqlCredentials.ShouldNotBeNull();
-        this.SqlServerContainer.ShouldNotBeNull();
-        this.SqlServerNetwork.ShouldNotBeNull();
+        if (FdOs.IsOsx() == false) {
+            this.DockerCredentials.ShouldNotBeNull();
+            this.SqlCredentials.ShouldNotBeNull();
+            this.SqlServerContainer.ShouldNotBeNull();
+            this.SqlServerNetwork.ShouldNotBeNull();
+        }
 
         this.IsSecureEventStore = Environment.GetEnvironmentVariable("IsSecureEventStore") switch {
             null => false,
@@ -88,53 +90,47 @@ public class DockerHelper : BaseDockerHelper
         this.SetupContainerNames();
 
         this.ClientDetails = ("serviceClient", "Secret1");
-
+        
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
-        var networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
+        var networks = new List<INetworkService>();
+        if (FdOs.IsOsx())
+        {
+            // Setup SQL Server here
+            this.SqlServerContainerName = $"sqlServer{this.TestId:N}";
+            IContainerService sqlContainer = SetupSqlServerContainer(testNetwork);
+            this.Containers.Add(sqlContainer);
+            networks.Add(testNetwork);
+        }
+        else {
+            networks.Add(this.SqlServerNetwork);
+            networks.Add(testNetwork);
+        }
+        
+
+        //var networkConfig = testNetwork.GetConfiguration(true);
+        //this.Trace(JsonConvert.SerializeObject(networkConfig));
 
         await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
 
-        await this.SetupMessagingServiceContainer(
-                                                  new List<INetworkService> {
-                                                                                testNetwork,
-                                                                                this.SqlServerNetwork
-                                                                            });
+        await this.SetupMessagingServiceContainer(networks);
 
-        await this.SetupSecurityServiceContainer(testNetwork);
+        await this.SetupSecurityServiceContainer(networks);
 
-        await this.SetupCallbackHandlerContainer(new List<INetworkService> {
-                                                                               testNetwork
-                                                                           });
+        await this.SetupCallbackHandlerContainer(networks);
 
-        await this.SetupTestHostContainer(
-                                          new List<INetworkService> {
-                                                                        testNetwork,
-                                                                        this.SqlServerNetwork
-                                                                    });
+        await this.SetupTestHostContainer(networks);
 
-        await this.SetupEstateManagementContainer(new List<INetworkService> {
-                                                                                testNetwork,
-                                                                                this.SqlServerNetwork
-                                                                            });
+        await this.SetupEstateManagementContainer(networks);
         
-        await this.SetupTransactionProcessorContainer(new List<INetworkService> {
-                                                                                    testNetwork,
-                                                                                    this.SqlServerNetwork
-                                                                                });
+        await this.SetupTransactionProcessorContainer(networks);
 
-        await this.SetupFileProcessorContainer(new List<INetworkService> {
-                                                                             testNetwork,
-                                                                             this.SqlServerNetwork
-                                                                         });
+        await this.SetupFileProcessorContainer(networks);
 
-        await this.SetupVoucherManagementAclContainer(new List<INetworkService> {
-                                                                                    testNetwork,
-                                                                                });
+        await this.SetupVoucherManagementAclContainer(networks);
 
-        await this.SetupTransactionProcessorAclContainer(testNetwork);
+        await this.SetupTransactionProcessorAclContainer(networks);
 
         await this.LoadEventStoreProjections();
 

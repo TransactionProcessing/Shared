@@ -498,7 +498,7 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupSecurityServiceContainer(INetworkService networkService,
+    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices,
                                                                                List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start Security Container");
 
@@ -521,9 +521,12 @@ public abstract class BaseDockerHelper
 
         // Now build and return the container                
         IContainerService builtContainer = securityServiceContainer.Build().Start().WaitForPort($"{DockerPorts.SecurityServiceDockerPort}/tcp", 30000);
-        
-        networkService.Attach(builtContainer, false);
-        
+
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
+
         this.Trace("Security Service Container Started");
         this.Containers.Add(builtContainer);
 
@@ -685,7 +688,7 @@ public abstract class BaseDockerHelper
         return null;
     }
 
-    public virtual async Task<IContainerService> SetupTransactionProcessorAclContainer(INetworkService networkService,
+    public virtual async Task<IContainerService> SetupTransactionProcessorAclContainer(List<INetworkService> networkServices,
                                                                                        Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
                                                                                        List<String> additionalEnvironmentVariables = null) {
         this.Trace("About to Start Transaction Processor ACL Container");
@@ -706,7 +709,12 @@ public abstract class BaseDockerHelper
 
         // Now build and return the container                
         IContainerService builtContainer = transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp", 30000);
-        networkService.Attach(builtContainer,false);
+
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+        }
+
         this.Trace("Transaction Processor Container ACL Started");
 
         this.Containers.Add(builtContainer);

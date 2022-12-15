@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace Shared.IntegrationTesting.Tests
 {
     using System.Runtime.CompilerServices;
+    using Ductus.FluentDocker.Common;
     using Ductus.FluentDocker.Services;
     using Ductus.FluentDocker.Services.Extensions;
     using NLog;
@@ -25,18 +26,20 @@ namespace Shared.IntegrationTesting.Tests
         protected static void GlobalSetup() {
             ShouldlyConfiguration.DefaultTaskTimeout = TimeSpan.FromMinutes(1);
 
-            DockerHelper dockerHelper = new DockerHelper();
+            if (FdOs.IsOsx() == false) {
+                DockerHelper dockerHelper = new DockerHelper();
 
-            NlogLogger logger = new NlogLogger();
-            logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
-            LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
-            dockerHelper.Logger = logger;
-            dockerHelper.SqlCredentials = Setup.SqlCredentials;
-            dockerHelper.DockerCredentials = Setup.DockerCredentials;
-            dockerHelper.SqlServerContainerName = "sharedsqlserver";
+                NlogLogger logger = new NlogLogger();
+                logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
+                LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
+                dockerHelper.Logger = logger;
+                dockerHelper.SqlCredentials = Setup.SqlCredentials;
+                dockerHelper.DockerCredentials = Setup.DockerCredentials;
+                dockerHelper.SqlServerContainerName = "sharedsqlserver";
 
-            Setup.DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork");
-            Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
+                Setup.DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork");
+                Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
+            }
         }
 
         //public static String GetConnectionString(String databaseName)
