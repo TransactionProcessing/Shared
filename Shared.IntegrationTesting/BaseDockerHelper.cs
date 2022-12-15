@@ -288,6 +288,8 @@ public abstract class BaseDockerHelper
         String connectionString =
             $"{settingName}=\"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}\"";
 
+        this.Trace(connectionString);
+
         return connectionString;
     }
 
