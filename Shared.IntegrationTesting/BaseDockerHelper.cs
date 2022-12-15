@@ -294,7 +294,7 @@ public abstract class BaseDockerHelper
         String connectionString =
             $"{settingName}=\"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}\"";
 
-        this.Trace(connectionString);
+        //this.Trace(connectionString);
 
         return connectionString;
     }
@@ -893,7 +893,7 @@ public abstract class BaseDockerHelper
 
                             HealthCheckResult result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
 
-                            //this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
+                            this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
 
                             result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
                             this.Trace($"health check complete for {containerType}");
