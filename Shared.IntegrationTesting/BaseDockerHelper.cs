@@ -551,6 +551,9 @@ public abstract class BaseDockerHelper
 
         networkService.Attach(databaseServerContainer, false);
 
+        var networkConfig = networkService.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
         this.Trace("SQL Server Container Started");
         // Try opening a connection
         Int32 maxRetries = 10;
