@@ -100,6 +100,7 @@ public class DockerHelper : BaseDockerHelper
             // Setup SQL Server here
             this.SqlServerContainerName = $"sqlServer{this.TestId:N}";
             IContainerService sqlContainer = SetupSqlServerContainer(testNetwork);
+            testNetwork.Attach(sqlContainer, false);
             this.Containers.Add(sqlContainer);
             networks.Add(testNetwork);
         }
