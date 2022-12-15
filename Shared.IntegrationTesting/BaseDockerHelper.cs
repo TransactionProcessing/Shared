@@ -863,7 +863,7 @@ public abstract class BaseDockerHelper
 
                             HealthCheckResult result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
 
-                            this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
+                            //this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
 
                             result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
                             this.Trace($"health check complete for {containerType}");

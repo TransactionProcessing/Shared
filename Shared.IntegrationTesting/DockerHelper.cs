@@ -100,7 +100,6 @@ public class DockerHelper : BaseDockerHelper
             // Setup SQL Server here
             this.SqlServerContainerName = $"sqlServer{this.TestId:N}";
             IContainerService sqlContainer = SetupSqlServerContainer(testNetwork);
-            testNetwork.Attach(sqlContainer, false);
             this.Containers.Add(sqlContainer);
             networks.Add(testNetwork);
         }
@@ -110,21 +109,39 @@ public class DockerHelper : BaseDockerHelper
         }
         
 
-        //var networkConfig = testNetwork.GetConfiguration(true);
-        //this.Trace(JsonConvert.SerializeObject(networkConfig));
+        var networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
 
         await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
 
+        networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
         await this.SetupMessagingServiceContainer(networks);
+
+        networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
 
         await this.SetupSecurityServiceContainer(networks);
 
+        networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
         await this.SetupCallbackHandlerContainer(networks);
+
+        networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
 
         await this.SetupTestHostContainer(networks);
 
+        networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
         await this.SetupEstateManagementContainer(networks);
-        
+
+        networkConfig = testNetwork.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
         await this.SetupTransactionProcessorContainer(networks);
 
         await this.SetupFileProcessorContainer(networks);
