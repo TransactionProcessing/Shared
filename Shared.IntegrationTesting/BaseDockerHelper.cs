@@ -565,48 +565,7 @@ public abstract class BaseDockerHelper
         Int32 counter = 1;
 
         if (networkService != null) {
-            this.Trace("About to SQL Server Container is running");
-            IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
-            
-            String server = "127.0.0.1";
-            String database = "master";
-            String user = this.SqlCredentials.Value.usename;
-            String password = this.SqlCredentials.Value.password;
-            String port = sqlServerEndpoint.Port.ToString();
-
-            String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
-            this.Trace($"Connection String {connectionString}");
-            SqlConnection connection = new SqlConnection(connectionString);
-
-            while (counter <= maxRetries) {
-                try {
-                    this.Trace($"Database Connection Attempt {counter}");
-
-                    connection.Open();
-
-                    SqlCommand command = connection.CreateCommand();
-                    //command.CommandText = "SELECT * FROM sys.databases";
-                    command.CommandText = "SELECT 1;";
-                    command.ExecuteNonQuery();
-
-                    this.Trace("Connection Opened");
-
-                    connection.Close();
-                    this.Trace("SQL Server Container Running");
-                    break;
-                }
-                catch(SqlException ex) {
-                    if (connection.State == ConnectionState.Open) {
-                        connection.Close();
-                    }
-
-                    this.Logger.LogError(ex);
-                    Thread.Sleep(20000);
-                }
-                finally {
-                    counter++;
-                }
-            }
+            counter = this.CheckSqlConnection(databaseServerContainer);
         }
 
         if (counter >= maxRetries) {
@@ -615,6 +574,56 @@ public abstract class BaseDockerHelper
         }
 
         return databaseServerContainer;
+    }
+
+    protected Int32 CheckSqlConnection(IContainerService databaseServerContainer) {
+        // Try opening a connection
+        Int32 maxRetries = 10;
+        Int32 counter = 1;
+        this.Trace("About to SQL Server Container is running");
+        IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
+
+        String server = "127.0.0.1";
+        String database = "master";
+        String user = this.SqlCredentials.Value.usename;
+        String password = this.SqlCredentials.Value.password;
+        String port = sqlServerEndpoint.Port.ToString();
+
+        String connectionString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
+        this.Trace($"Connection String {connectionString}");
+        SqlConnection connection = new SqlConnection(connectionString);
+
+        while (counter <= maxRetries) {
+            try {
+                this.Trace($"Database Connection Attempt {counter}");
+
+                connection.Open();
+
+                SqlCommand command = connection.CreateCommand();
+                //command.CommandText = "SELECT * FROM sys.databases";
+                command.CommandText = "SELECT 1;";
+                command.ExecuteNonQuery();
+
+                this.Trace("Connection Opened");
+
+                connection.Close();
+                this.Trace("SQL Server Container Running");
+                break;
+            }
+            catch(SqlException ex) {
+                if (connection.State == ConnectionState.Open) {
+                    connection.Close();
+                }
+
+                this.Logger.LogError(ex);
+                Thread.Sleep(20000);
+            }
+            finally {
+                counter++;
+            }
+        }
+
+        return counter;
     }
 
     public virtual async Task<IContainerService> SetupTestHostContainer(List<INetworkService> networkServices,

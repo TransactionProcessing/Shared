@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -137,6 +138,8 @@ public class DockerHelper : BaseDockerHelper
         networkConfig = testNetwork.GetConfiguration(true);
         this.Trace(JsonConvert.SerializeObject(networkConfig));
 
+        var counter = this.CheckSqlConnection(this.SqlServerContainer);
+        
         await this.SetupEstateManagementContainer(networks);
 
         networkConfig = testNetwork.GetConfiguration(true);
