@@ -66,13 +66,10 @@ public class DockerHelper : BaseDockerHelper
     }
 
     public override async Task StartContainersForScenarioRun(String scenarioName) {
-
-        if (FdOs.IsOsx() == false) {
-            this.DockerCredentials.ShouldNotBeNull();
-            this.SqlCredentials.ShouldNotBeNull();
-            this.SqlServerContainer.ShouldNotBeNull();
-            this.SqlServerNetwork.ShouldNotBeNull();
-        }
+        this.DockerCredentials.ShouldNotBeNull();
+        this.SqlCredentials.ShouldNotBeNull();
+        this.SqlServerContainer.ShouldNotBeNull();
+        this.SqlServerNetwork.ShouldNotBeNull();
 
         this.IsSecureEventStore = Environment.GetEnvironmentVariable("IsSecureEventStore") switch {
             null => false,
@@ -96,55 +93,23 @@ public class DockerHelper : BaseDockerHelper
         this.TestNetworks.Add(testNetwork);
 
         var networks = new List<INetworkService>();
-        if (FdOs.IsOsx())
-        {
-            // Setup SQL Server here
-            this.SqlServerContainerName = $"sqlServer{this.TestId:N}";
-            IContainerService sqlContainer = SetupSqlServerContainer(testNetwork);
-            this.Containers.Add(sqlContainer);
-            networks.Add(testNetwork);
-        }
-        else {
-            networks.Add(this.SqlServerNetwork);
-            networks.Add(testNetwork);
-        }
+        networks.Add(this.SqlServerNetwork);
+        networks.Add(testNetwork);
         
-
-        var networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
         await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
-
-        networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
+        
         await this.SetupMessagingServiceContainer(networks);
-
-        networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
+        
         await this.SetupSecurityServiceContainer(networks);
-
-        networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
+        
         await this.SetupCallbackHandlerContainer(networks);
-
-        networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
+        
         await this.SetupTestHostContainer(networks);
-
-        networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
-        var counter = this.CheckSqlConnection(this.SqlServerContainer);
+        
+        //var counter = this.CheckSqlConnection(this.SqlServerContainer);
         
         await this.SetupEstateManagementContainer(networks);
-
-        networkConfig = testNetwork.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
+        
         await this.SetupTransactionProcessorContainer(networks);
 
         await this.SetupFileProcessorContainer(networks);
