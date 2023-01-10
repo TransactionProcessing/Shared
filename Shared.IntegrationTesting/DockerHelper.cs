@@ -88,63 +88,71 @@ public class DockerHelper : BaseDockerHelper
         this.SetupContainerNames();
 
         this.ClientDetails = ("serviceClient", "Secret1");
-        
-        INetworkService testNetwork = this.SetupTestNetwork();
-        this.TestNetworks.Add(testNetwork);
 
-        var networks = new List<INetworkService>();
-        networks.Add(this.SqlServerNetwork);
-        networks.Add(testNetwork);
-        
-        await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
-        
-        await this.SetupMessagingServiceContainer(networks);
-        
-        await this.SetupSecurityServiceContainer(networks);
-        
-        await this.SetupCallbackHandlerContainer(networks);
-        
-        await this.SetupTestHostContainer(networks);
-        
-        //var counter = this.CheckSqlConnection(this.SqlServerContainer);
-        
-        await this.SetupEstateManagementContainer(networks);
-        
-        await this.SetupTransactionProcessorContainer(networks);
+        try {
 
-        await this.SetupFileProcessorContainer(networks);
 
-        await this.SetupVoucherManagementAclContainer(networks);
+            INetworkService testNetwork = this.SetupTestNetwork();
+            this.TestNetworks.Add(testNetwork);
 
-        await this.SetupTransactionProcessorAclContainer(networks);
+            var networks = new List<INetworkService>();
+            networks.Add(this.SqlServerNetwork);
+            networks.Add(testNetwork);
+            
+            await this.SetupEventStoreContainer(testNetwork, isSecure:this.IsSecureEventStore);
 
-        await this.LoadEventStoreProjections();
+            await this.SetupMessagingServiceContainer(networks);
 
-        await this.CreateGenericSubscriptions();
+            await this.SetupSecurityServiceContainer(networks);
+
+            await this.SetupCallbackHandlerContainer(networks);
+
+            await this.SetupTestHostContainer(networks);
+
+            await this.SetupEstateManagementContainer(networks);
+
+            await this.SetupTransactionProcessorContainer(networks);
+
+            await this.SetupFileProcessorContainer(networks);
+
+            await this.SetupVoucherManagementAclContainer(networks);
+
+            await this.SetupTransactionProcessorAclContainer(networks);
+
+            await this.LoadEventStoreProjections();
+
+            await this.CreateGenericSubscriptions();
+        }
+        catch(Exception e) {
+            this.Trace(e.Message);
+        }
     }
 
     public override async Task StopContainersForScenarioRun()
     {
-        if (this.Containers.Any()) {
-            this.Containers.Reverse();
+        try {
 
-            foreach (IContainerService containerService in this.Containers)
-            {
-                this.Trace($"Stopping container [{containerService.Name}]");
-                containerService.StopOnDispose = true;
-                containerService.RemoveOnDispose = true;
-                containerService.Dispose();
-                this.Trace($"Container [{containerService.Name}] stopped");
+            if (this.Containers.Any()) {
+                this.Containers.Reverse();
+
+                foreach (IContainerService containerService in this.Containers) {
+                    this.Trace($"Stopping container [{containerService.Name}]");
+                    containerService.StopOnDispose = true;
+                    containerService.RemoveOnDispose = true;
+                    containerService.Dispose();
+                    this.Trace($"Container [{containerService.Name}] stopped");
+                }
+            }
+
+            if (this.TestNetworks.Any()) {
+                foreach (INetworkService networkService in this.TestNetworks) {
+                    networkService.Stop();
+                    networkService.Remove(true);
+                }
             }
         }
-
-        if (this.TestNetworks.Any())
-        {
-            foreach (INetworkService networkService in this.TestNetworks)
-            {
-                networkService.Stop();
-                networkService.Remove(true);
-            }
+        catch(Exception e) {
+            this.Trace(e.Message);
         }
     }
 
