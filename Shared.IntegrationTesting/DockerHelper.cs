@@ -78,7 +78,7 @@ public class DockerHelper : BaseDockerHelper
             _ => true
         };
         this.SetHostTraceFolder(scenarioName);
-        
+
         Logging.Enabled();
 
         this.TestId = Guid.NewGuid();
@@ -88,28 +88,26 @@ public class DockerHelper : BaseDockerHelper
         this.SetupContainerNames();
 
         this.ClientDetails = ("serviceClient", "Secret1");
-        
+
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
         var networks = new List<INetworkService>();
         networks.Add(this.SqlServerNetwork);
         networks.Add(testNetwork);
-        
-        await this.SetupEventStoreContainer( testNetwork, isSecure:this.IsSecureEventStore);
-        
+
+        await this.SetupEventStoreContainer(testNetwork, isSecure:this.IsSecureEventStore);
+
         await this.SetupMessagingServiceContainer(networks);
-        
+
         await this.SetupSecurityServiceContainer(networks);
-        
+
         await this.SetupCallbackHandlerContainer(networks);
-        
+
         await this.SetupTestHostContainer(networks);
-        
-        //var counter = this.CheckSqlConnection(this.SqlServerContainer);
-        
+
         await this.SetupEstateManagementContainer(networks);
-        
+
         await this.SetupTransactionProcessorContainer(networks);
 
         await this.SetupFileProcessorContainer(networks);
@@ -123,13 +121,11 @@ public class DockerHelper : BaseDockerHelper
         await this.CreateGenericSubscriptions();
     }
 
-    public override async Task StopContainersForScenarioRun()
-    {
+    public override async Task StopContainersForScenarioRun() {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
 
-            foreach (IContainerService containerService in this.Containers)
-            {
+            foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
                 containerService.StopOnDispose = true;
                 containerService.RemoveOnDispose = true;
@@ -138,10 +134,8 @@ public class DockerHelper : BaseDockerHelper
             }
         }
 
-        if (this.TestNetworks.Any())
-        {
-            foreach (INetworkService networkService in this.TestNetworks)
-            {
+        if (this.TestNetworks.Any()) {
+            foreach (INetworkService networkService in this.TestNetworks) {
                 networkService.Stop();
                 networkService.Remove(true);
             }
