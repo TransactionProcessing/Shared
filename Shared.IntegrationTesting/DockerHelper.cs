@@ -89,7 +89,7 @@ public class DockerHelper : BaseDockerHelper
 
         this.ClientDetails = ("serviceClient", "Secret1");
 
-        try {
+        //try {
 
 
             INetworkService testNetwork = this.SetupTestNetwork();
@@ -122,15 +122,15 @@ public class DockerHelper : BaseDockerHelper
             await this.LoadEventStoreProjections();
 
             await this.CreateGenericSubscriptions();
-        }
-        catch(Exception e) {
-            this.Trace(e.Message);
-        }
+        //}
+        //catch(Exception e) {
+        //    this.Trace(e.Message);
+        //}
     }
 
     public override async Task StopContainersForScenarioRun()
     {
-        try {
+        //try {
 
             if (this.Containers.Any()) {
                 this.Containers.Reverse();
@@ -150,10 +150,10 @@ public class DockerHelper : BaseDockerHelper
                     networkService.Remove(true);
                 }
             }
-        }
-        catch(Exception e) {
-            this.Trace(e.Message);
-        }
+        //}
+        //catch(Exception e) {
+        //    this.Trace(e.Message);
+        //}
     }
 
     public virtual async Task CreateGenericSubscriptions() {
