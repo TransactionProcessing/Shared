@@ -26,30 +26,23 @@
 
         #region Methods
 
-        /// <summary>
-        /// Loads the domain events type dynamically.
-        /// </summary>
-        /// <param name="assemblyFilters">The assembly filters.</param>
-        public static void LoadDomainEventsTypeDynamically(List<String> assemblyFilters = null)
+        public static void LoadDomainEventsTypeDynamically(List<string> assemblyFilters = null)
         {
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            List<Assembly> assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
 
-            if (assemblyFilters == null)
-                assemblyFilters = TypeProvider.DefaultAssemblyFilters;
-
-            IEnumerable<Type> allTypes = null;
-            foreach (String filter in assemblyFilters)
+            List<Type> source = new List<Type>();
+            foreach (string assemblyFilter in assemblyFilters)
             {
-                allTypes = assemblies.Where(a => a.FullName.Contains(filter) == false).SelectMany(a => a.GetTypes());
+                List<Assembly> filteredAssemblies = assemblies.Where(a => a.FullName.Contains(assemblyFilter) == true).ToList();
+                foreach (Assembly a in filteredAssemblies)
+                {
+                    assemblies.Remove(a);
+                }
             }
+            source.AddRange(assemblies.SelectMany((Func<Assembly, IEnumerable<Type>>)(a => (IEnumerable<Type>)a.GetTypes())));
 
-            List<Type> filteredTypes = allTypes.Where(t => t.IsSubclassOf(typeof(DomainEvent))).OrderBy(e => e.Name)
-                                               .ToList();
-
-            foreach (Type type in filteredTypes)
-            {
+            foreach (Type type in source.Where((Func<Type, bool>)(t => t.IsSubclassOf(typeof(DomainEvent)))).OrderBy((Func<Type, string>)(e => e.Name)).ToList())
                 TypeMap.AddType(type, type.Name);
-            }
         }
 
         #endregion
