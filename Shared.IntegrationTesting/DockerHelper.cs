@@ -92,29 +92,30 @@ public class DockerHelper : BaseDockerHelper
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
-        var networks = new List<INetworkService>();
-        networks.Add(this.SqlServerNetwork);
-        networks.Add(testNetwork);
+        List<INetworkService> networks = new List<INetworkService> {
+                                                                       this.SqlServerNetwork,
+                                                                       testNetwork
+                                                                   };
 
-        await this.SetupEventStoreContainer(testNetwork, isSecure:this.IsSecureEventStore);
+        await StartContainer(this.SetupEventStoreContainer, networks);
 
-        await this.SetupMessagingServiceContainer(networks);
+        await StartContainer(this.SetupMessagingServiceContainer, networks);
 
-        await this.SetupSecurityServiceContainer(networks);
+        await StartContainer(this.SetupSecurityServiceContainer, networks);
 
-        await this.SetupCallbackHandlerContainer(networks);
+        await StartContainer(this.SetupCallbackHandlerContainer, networks);
 
-        await this.SetupTestHostContainer(networks);
+        await StartContainer(this.SetupTestHostContainer, networks);
 
-        await this.SetupEstateManagementContainer(networks);
+        await StartContainer(this.SetupEstateManagementContainer, networks);
 
-        await this.SetupTransactionProcessorContainer(networks);
+        await StartContainer(this.SetupTransactionProcessorContainer, networks);
 
-        await this.SetupFileProcessorContainer(networks);
+        await StartContainer(this.SetupFileProcessorContainer, networks);
 
-        await this.SetupVoucherManagementAclContainer(networks);
+        await StartContainer(this.SetupVoucherManagementAclContainer, networks);
 
-        await this.SetupTransactionProcessorAclContainer(networks);
+        await StartContainer(this.SetupTransactionProcessorAclContainer, networks);
 
         await this.LoadEventStoreProjections();
 

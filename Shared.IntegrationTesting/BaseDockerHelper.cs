@@ -174,8 +174,11 @@ public abstract class BaseDockerHelper
 
     #region Methods
 
-    public List<String> GetCommonEnvironmentVariables(Int32 securityServicePort) {
-        var healthCheckConnString = SetConnectionString("ConnectionStrings:HealthCheck", "master", UseSecureSqlServerDatabase);
+    public List<String> GetCommonEnvironmentVariables() {
+
+        Int32 securityServicePort = this.GetSecurityServicePort();
+
+        String healthCheckConnString = SetConnectionString("ConnectionStrings:HealthCheck", "master", UseSecureSqlServerDatabase);
 
 
         return new List<String> {
@@ -235,16 +238,18 @@ public abstract class BaseDockerHelper
         }
     }
 
-    public async Task<IContainerService> SetupCallbackHandlerContainer(List<INetworkService> networkServices,
-                                                                       List<String> additionalEnvironmentVariables = null) {
+    public async Task<IContainerService> SetupCallbackHandlerContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Callback Handler Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(DockerPorts.SecurityServiceDockerPort);
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
 
-        if (additionalEnvironmentVariables != null) {
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.CallbackHandler);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
-
+    
         ContainerBuilder callbackHandlerContainer = new Builder().UseContainer().WithName(this.CallbackHandlerContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.CallbackHandler))
@@ -299,18 +304,20 @@ public abstract class BaseDockerHelper
         return connectionString;
     }
 
-    public virtual async Task<IContainerService> SetupEstateManagementContainer(List<INetworkService> networkServices,
-                                                                                Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                                List<String> additionalEnvironmentVariables = null) {
+    public virtual async Task<IContainerService> SetupEstateManagementContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Estate Management Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add($"urls=http://*:{DockerPorts.EstateManagementDockerPort}");
         environmentVariables.Add(SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", UseSecureSqlServerDatabase));
-        if (additionalEnvironmentVariables != null) {
+
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.EstateManagement);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
-
+    
         ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(this.EstateManagementContainerName)
                                                                   .WithEnvironment(environmentVariables.ToArray())
                                                                   .UseImageDetails(this.GetImageDetails(ContainerType.EstateManagement))
@@ -336,9 +343,9 @@ public abstract class BaseDockerHelper
         await this.DoHealthCheck(ContainerType.EstateManagement);
         return builtContainer;
     }
-    
-    public virtual async Task<IContainerService> SetupEventStoreContainer(INetworkService networkService,
-                                                                          Boolean isSecure = false) {
+
+    public virtual async Task<IContainerService> SetupEventStoreContainer(List<INetworkService> networkServices) {
+
         this.Trace("About to Start Event Store Container");
 
         List<String> environmentVariables = new() {
@@ -355,12 +362,10 @@ public abstract class BaseDockerHelper
         };
 
         ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
-                                                                   .ExposePort(DockerPorts.EventStoreHttpDockerPort)
-                                                                   .ExposePort(DockerPorts.EventStoreTcpDockerPort)
-                                                                   .WithName(this.EventStoreContainerName)
-                                                                   .MountHostFolder(this.HostTraceFolder, containerPath);
+                                                                   .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
+                                                                   .WithName(this.EventStoreContainerName).MountHostFolder(this.HostTraceFolder, containerPath);
 
-        if (isSecure == false) {
+        if (this.IsSecureEventStore == false) {
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
         }
         else {
@@ -377,120 +382,140 @@ public abstract class BaseDockerHelper
 
         eventStoreContainerBuilder = eventStoreContainerBuilder.WithEnvironment(environmentVariables.ToArray());
 
-        IContainerService eventStoreContainer = eventStoreContainerBuilder.Build().Start();
-        networkService.Attach(eventStoreContainer,false);
+        IContainerService builtContainer = eventStoreContainerBuilder.Build().Start();
 
-        await Retry.For(async () => { eventStoreContainer = eventStoreContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
+        foreach (INetworkService networkService in networkServices)
+        {
+            networkService.Attach(builtContainer, false);
+            var networkConfig = networkService.GetConfiguration(true);
+            this.Trace(JsonConvert.SerializeObject(networkConfig));
+        }
 
-        this.EventStoreHttpPort = eventStoreContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
+        await Retry.For(async () => { builtContainer = builtContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
+
+        this.EventStoreHttpPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
         this.Trace($"EventStore Http Port: [{this.EventStoreHttpPort}]");
 
         this.Trace("Event Store Container Started");
 
-        this.Containers.Add(eventStoreContainer);
-        return eventStoreContainer;
-    }
-
-    public virtual async Task<IContainerService> SetupFileProcessorContainer(List<INetworkService> networkServices,
-                                                                             Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                             List<String> additionalEnvironmentVariables = null) {
-        this.Trace("About to Start File Processor Container");
-
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
-        environmentVariables.Add($"urls=http://*:{DockerPorts.FileProcessorDockerPort}");
-        environmentVariables.Add(SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", UseSecureSqlServerDatabase));
-
-        DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
-        String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
-        
-        if (FdOs.IsLinux()) {
-            // we are running in CI Linux
-            environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
-
-            environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/home/runner/bulkfiles/safaricom"}");
-            environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/home/runner/bulkfiles/voucher"}");
-        }
-        else if (FdOs.IsOsx()) {
-            // we are running in CI Mac OS
-            environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/Users/runner/bulkfiles/temporary"}");
-
-            environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/Users/runner/bulkfiles/safaricom"}");
-            environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/Users/runner/bulkfiles/voucher"}");
-        }
-        else {
-            // We know this is now windows
-            if (isCi)
-            {
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
-
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary\"");
-                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
-                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
-            }
-            else
-            {
-                environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\home\\txnproc\\bulkfiles\\temporary\"");
-                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"C:\\Users\\txnproc\\bulkfiles\\safaricom\"");
-                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"C:\\Users\\txnproc\\bulkfiles\\voucher\"");
-            }
-        }
-
-
-        if (additionalEnvironmentVariables != null) {
-            environmentVariables.AddRange(additionalEnvironmentVariables);
-        }
-
-        ContainerBuilder fileProcessorContainer = new Builder().UseContainer().WithName(this.FileProcessorContainerName).WithEnvironment(environmentVariables.ToArray())
-                                                               .UseImageDetails(this.GetImageDetails(ContainerType.FileProcessor))
-                                                               .ExposePort(DockerPorts.FileProcessorDockerPort)
-                                                               .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
-
-        // Mount the folder to upload files
-        String uploadFolder = (enginePlatform, isCi) switch {
-            (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\specflow",
-            (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\specflow",
-            _ => "/home/txnproc/specflow"
-        };
-            
-                              //== DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\specflow" : "/home/txnproc/specflow";
-        if (enginePlatform == DockerEnginePlatform.Windows && isCi) {
-            Directory.CreateDirectory(uploadFolder);
-        }
-
-        String containerFolder = enginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
-        fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
-
-        // Now build and return the container                
-        IContainerService builtContainer = fileProcessorContainer.Build().Start().WaitForPort($"{DockerPorts.FileProcessorDockerPort}/tcp", 30000);
-
-        foreach (INetworkService networkService in networkServices) {
-            networkService.Attach(builtContainer, false);
-        }
-
-        this.Trace("File Processor Container Started");
         this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.FileProcessorPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.FileProcessorDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.FileProcessor);
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupMessagingServiceContainer(List<INetworkService> networkServices,
-                                                                                Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                                List<String> additionalEnvironmentVariables = null) {
+    public Dictionary<ContainerType, List<String>> AdditionalVariables = new Dictionary<ContainerType, List<String>>();
+
+    protected virtual void SetAdditionalVariables(ContainerType containerType, List<String> variableList)
+    {
+        this.AdditionalVariables.SingleOrDefault(a => a.Key == containerType).Value.AddRange(variableList);
+    }
+
+    public virtual List<String> GetAdditionalVariables(ContainerType containerType) {
+        return this.AdditionalVariables.SingleOrDefault(a => a.Key == containerType).Value;
+    }
+
+    protected virtual Int32 GetSecurityServicePort() {
+        return DockerPorts.SecurityServiceDockerPort;
+    }
+
+    public virtual async Task<IContainerService> SetupFileProcessorContainer(List<INetworkService> networkServices) {
+            this.Trace("About to Start File Processor Container");
+
+            List<String> environmentVariables = this.GetCommonEnvironmentVariables();
+            environmentVariables.Add($"urls=http://*:{DockerPorts.FileProcessorDockerPort}");
+            environmentVariables.Add(SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", UseSecureSqlServerDatabase));
+
+            DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
+            String ciEnvVar = Environment.GetEnvironmentVariable("CI");
+            Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
+
+            if (FdOs.IsLinux()) {
+                // we are running in CI Linux
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/home/runner/bulkfiles/temporary"}");
+
+                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/home/runner/bulkfiles/safaricom"}");
+                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/home/runner/bulkfiles/voucher"}");
+            }
+            else if (FdOs.IsOsx()) {
+                // we are running in CI Mac OS
+                environmentVariables.Add($"AppSettings:TemporaryFileLocation={"/Users/runner/bulkfiles/temporary"}");
+
+                environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory={"/Users/runner/bulkfiles/safaricom"}");
+                environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory={"/Users/runner/bulkfiles/voucher"}");
+            }
+            else {
+                // We know this is now windows
+                if (isCi) {
+                    Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
+                    Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
+                    Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
+
+                    environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary\"");
+                    environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom\"");
+                    environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher\"");
+                }
+                else {
+                    environmentVariables.Add($"AppSettings:TemporaryFileLocation=\"C:\\home\\txnproc\\bulkfiles\\temporary\"");
+                    environmentVariables.Add($"AppSettings:FileProfiles:0:ListeningDirectory=\"C:\\Users\\txnproc\\bulkfiles\\safaricom\"");
+                    environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory=\"C:\\Users\\txnproc\\bulkfiles\\voucher\"");
+                }
+            }
+
+            List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.FileProcessor);
+
+            if (additionalEnvironmentVariables != null) {
+                environmentVariables.AddRange(additionalEnvironmentVariables);
+            }
+
+            ContainerBuilder fileProcessorContainer = new Builder().UseContainer().WithName(this.FileProcessorContainerName)
+                                                                   .WithEnvironment(environmentVariables.ToArray())
+                                                                   .UseImageDetails(this.GetImageDetails(ContainerType.FileProcessor))
+                                                                   .ExposePort(DockerPorts.FileProcessorDockerPort).MountHostFolder(this.HostTraceFolder)
+                                                                   .SetDockerCredentials(this.DockerCredentials);
+
+            // Mount the folder to upload files
+            String uploadFolder = (enginePlatform, isCi) switch {
+                (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\specflow",
+                (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\specflow",
+                _ => "/home/txnproc/specflow"
+            };
+
+            //== DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\specflow" : "/home/txnproc/specflow";
+            if (enginePlatform == DockerEnginePlatform.Windows && isCi) {
+                Directory.CreateDirectory(uploadFolder);
+            }
+
+            String containerFolder = enginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
+            fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
+
+            // Now build and return the container                
+            IContainerService builtContainer = fileProcessorContainer.Build().Start().WaitForPort($"{DockerPorts.FileProcessorDockerPort}/tcp", 30000);
+
+            foreach (INetworkService networkService in networkServices) {
+                networkService.Attach(builtContainer, false);
+            }
+
+            this.Trace("File Processor Container Started");
+            this.Containers.Add(builtContainer);
+
+            //  Do a health check here
+            this.FileProcessorPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.FileProcessorDockerPort}/tcp").Port;
+            await this.DoHealthCheck(ContainerType.FileProcessor);
+            return builtContainer;
+    }
+
+    public virtual async Task<IContainerService> SetupMessagingServiceContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Messaging Service Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add($"urls=http://*:{DockerPorts.MessagingServiceDockerPort}");
         environmentVariables.Add("AppSettings:EmailProxy=Integration");
         environmentVariables.Add("AppSettings:SMSProxy=Integration");
         environmentVariables.Add("AppSettings:InternalSubscriptionService=false");
 
-        if (additionalEnvironmentVariables != null) {
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.MessagingService);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
@@ -516,17 +541,26 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices,
-                                                                               List<String> additionalEnvironmentVariables = null) {
+    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Security Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(DockerPorts.SecurityServiceDockerPort);
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add($"ServiceOptions:PublicOrigin=https://{this.SecurityServiceContainerName}:{DockerPorts.SecurityServiceDockerPort}");
         environmentVariables.Add($"ServiceOptions:IssuerUrl=https://{this.SecurityServiceContainerName}:{DockerPorts.SecurityServiceDockerPort}");
         environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
         environmentVariables.Add($"urls=https://*:{DockerPorts.SecurityServiceDockerPort}");
 
-        if (additionalEnvironmentVariables != null) {
+        environmentVariables.Add($"ServiceOptions:PasswordOptions:RequiredLength=6");
+        environmentVariables.Add($"ServiceOptions:PasswordOptions:RequireDigit=false");
+        environmentVariables.Add($"ServiceOptions:PasswordOptions:RequireUpperCase=false");
+        environmentVariables.Add($"ServiceOptions:UserOptions:RequireUniqueEmail=false");
+        environmentVariables.Add($"ServiceOptions:SignInOptions:RequireConfirmedEmail=false");
+
+
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.SecurityService);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
@@ -647,16 +681,18 @@ public abstract class BaseDockerHelper
         return counter;
     }
 
-    public virtual async Task<IContainerService> SetupTestHostContainer(List<INetworkService> networkServices,
-                                                                        List<String> additionalEnvironmentVariables = null) {
+    public virtual async Task<IContainerService> SetupTestHostContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Test Hosts Container");
 
-        List<String> environmentVariables = new List<String>();
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add(SetConnectionString("ConnectionStrings:TestBankReadModel", "TestBankReadModel", UseSecureSqlServerDatabase));
         environmentVariables.Add(SetConnectionString("ConnectionStrings:PataPawaReadModel", "PataPawaReadModel", UseSecureSqlServerDatabase));
         environmentVariables.Add("ASPNETCORE_ENVIRONMENT=IntegrationTest");
 
-        if (additionalEnvironmentVariables != null) {
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.TestHost);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
@@ -677,11 +713,7 @@ public abstract class BaseDockerHelper
 
         //  Do a health check here
         this.TestHostServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.TestHostPort}/tcp").Port;
-        //await Retry.For(async () => {
-        //                    HealthCheckResult healthCheck =
-        //                        await this.HealthCheckClient.PerformHealthCheck("http", "127.0.0.1", this.TestHostServicePort, CancellationToken.None);
-        //                    healthCheck.Status.ShouldBe(HealthCheckStatus.Healthy.ToString());
-        //                });
+        await this.DoHealthCheck(ContainerType.TestHost);
 
         return builtContainer;
     }
@@ -720,15 +752,16 @@ public abstract class BaseDockerHelper
         return null;
     }
 
-    public virtual async Task<IContainerService> SetupTransactionProcessorAclContainer(List<INetworkService> networkServices,
-                                                                                       Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                                       List<String> additionalEnvironmentVariables = null) {
+    public virtual async Task<IContainerService> SetupTransactionProcessorAclContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Transaction Processor ACL Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add($"urls=http://*:{DockerPorts.TransactionProcessorAclDockerPort}");
 
-        if (additionalEnvironmentVariables != null) {
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.TransactionProcessorAcl);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
@@ -758,12 +791,10 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupTransactionProcessorContainer(List<INetworkService> networkServices,
-                                                                                    Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                                    List<String> additionalEnvironmentVariables = null) {
+    public virtual async Task<IContainerService> SetupTransactionProcessorContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Transaction Processor Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add($"urls=http://*:{DockerPorts.TransactionProcessorDockerPort}");
         environmentVariables.Add("AppSettings:SubscriptionFilter=TransactionProcessor");
         environmentVariables.Add($"OperatorConfiguration:Safaricom:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/api/safaricom");
@@ -772,7 +803,10 @@ public abstract class BaseDockerHelper
         environmentVariables.Add(SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "TransactionProcessorReadModel", UseSecureSqlServerDatabase));
         environmentVariables.Add(SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", UseSecureSqlServerDatabase));
 
-        if (additionalEnvironmentVariables != null) {
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.FileProcessor);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
@@ -798,15 +832,16 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupVoucherManagementAclContainer(List<INetworkService> networkServices,
-                                                                                    Int32 securityServicePort = DockerPorts.SecurityServiceDockerPort,
-                                                                                    List<String> additionalEnvironmentVariables = null) {
+    public virtual async Task<IContainerService> SetupVoucherManagementAclContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Voucher Management ACL Container");
 
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables(securityServicePort);
+        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add($"urls=http://*:{DockerPorts.VoucherManagementAclDockerPort}");
 
-        if (additionalEnvironmentVariables != null) {
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.FileProcessor);
+
+        if (additionalEnvironmentVariables != null)
+        {
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
@@ -957,6 +992,14 @@ public abstract class BaseDockerHelper
         }
     }
 
+    protected void Error(String message, Exception ex)
+    {
+        if (this.Logger.IsInitialised)
+        {
+            this.Logger.LogError($"{this.TestId}|{message}",ex);
+        }
+    }
+
     private static async Task<String> RemoveProjectionTestSetup(FileInfo file) {
         // Read the file
         String[] projectionLines = await File.ReadAllLinesAsync(file.FullName);
@@ -971,6 +1014,17 @@ public abstract class BaseDockerHelper
         String projection = String.Join(Environment.NewLine, projectionLinesList);
 
         return projection;
+    }
+
+    protected async Task<IContainerService> StartContainer(Func<List<INetworkService>, Task<IContainerService>> startContainerFunc, List<INetworkService> networkServices) {
+
+        try {
+            return await startContainerFunc(networkServices);
+        }
+        catch(Exception ex) {
+            this.Error($"Error starting container [{startContainerFunc.Method.Name}]", ex);
+            throw;
+        }
     }
 
     #endregion

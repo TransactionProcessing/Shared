@@ -80,72 +80,7 @@
         #endregion
 
         #region Others
-
-        public class ConsoleLogger : ILogger
-        {
-            #region Properties
-
-            public Boolean IsInitialised { get; set; }
-
-            #endregion
-
-            #region Methods
-
-            public void LogCritical(Exception exception) {
-                Console.WriteLine(exception);
-            }
-
-            public void LogDebug(String message) {
-                Console.WriteLine(message);
-            }
-
-            public void LogError(Exception exception) {
-                Console.WriteLine(exception);
-            }
-
-            public void LogInformation(String message) {
-                Console.WriteLine(message);
-            }
-
-            public void LogTrace(String message) {
-                Console.WriteLine(message);
-            }
-
-            public void LogWarning(String message) {
-                Console.WriteLine(message);
-            }
-
-            #endregion
-        }
-
-        //public class TestDockerHelper : DockerHelper
-        //{
-        //    #region Constructors
-
-        //    public TestDockerHelper() {
-        //        this.Logger = new ConsoleLogger();
-        //    }
-
-        //    #endregion
-
-        //    #region Methods
-
-        //    public override async Task StartContainersForScenarioRun(String scenarioName) {
-        //        //await this.LoadEventStoreProjections(2113);
-
-        //        List<(String, String, Int32)> subs = new List<(String, String, Int32)>();
-        //        subs.Add(("TestStream", "TestGroup1", 0));
-        //        subs.Add(("TestStream", "TestGroup2", 0));
-        //        subs.Add(("TestStream1", "TestGroup3", 1));
-        //        await this.PopulateSubscriptionServiceConfiguration(2113, subs);
-        //    }
-
-        //    public override async Task StopContainersForScenarioRun() {
-        //    }
-
-        //    #endregion
-        //}
-
+        
         #endregion
     }
 }

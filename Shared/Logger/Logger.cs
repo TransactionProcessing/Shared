@@ -95,6 +95,13 @@
             Logger.LoggerObject.LogError(exception);
         }
 
+        public static void LogError(String message, Exception exception)
+        {
+            Logger.ValidateLoggerObject();
+
+            Logger.LoggerObject.LogError(message, exception);
+        }
+
         /// <summary>
         /// Logs the information.
         /// </summary>

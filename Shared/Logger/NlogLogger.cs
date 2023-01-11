@@ -1,7 +1,6 @@
 ﻿namespace Shared.Logger
 {
     using System;
-    using System.Data;
     using NLog;
 
     /// <summary>
@@ -10,112 +9,78 @@
     /// <seealso cref="Shared.Logger.ILogger" />
     public class NlogLogger : ILogger
     {
-        /// <summary>
-        /// The scenario name
-        /// </summary>
+        #region Fields
+
         private String FileName;
 
-        /// <summary>
-        /// The logger object
-        /// </summary>
         private NLog.Logger LoggerObject;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Shared.Logger" /> class.
-        /// </summary>
-        /// <param name="loggerObject">The logger object.</param>
-        /// <param name="fileName">Name of the scenario.</param>
+        #endregion
+
+        #region Properties
+
+        public Boolean IsInitialised { get; set; }
+
+        #endregion
+
+        #region Methods
+
         public void Initialise(NLog.Logger loggerObject,
-                               String fileName)
-        {
+                               String fileName) {
             this.LoggerObject = loggerObject;
             this.FileName = fileName;
             this.IsInitialised = true;
         }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this instance is initialised.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if this instance is initialised; otherwise, <c>false</c>.
-        /// </value>
-        public Boolean IsInitialised { get; set; }
-
-        /// <summary>
-        /// Logs the critical.
-        /// </summary>
-        /// <param name="exception">The exception.</param>
-        public void LogCritical(Exception exception)
-        {
-            this.LogMessage(NLog.LogLevel.Fatal, exception.Message, exception);
+        public void LogCritical(Exception exception) {
+            this.LogMessage(LogLevel.Fatal, exception.Message, exception);
         }
 
-        /// <summary>
-        /// Logs the debug.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public void LogDebug(String message)
-        {
-            this.LogMessage(NLog.LogLevel.Debug, message);
+        public void LogCritical(String message,
+                                Exception exception) {
+            this.LogMessage(LogLevel.Fatal, message, exception);
         }
 
-        /// <summary>
-        /// Logs the error.
-        /// </summary>
-        /// <param name="exception">The exception.</param>
-        public void LogError(Exception exception)
-        {
-            this.LogMessage(NLog.LogLevel.Error, exception.Message, exception);
+        public void LogDebug(String message) {
+            this.LogMessage(LogLevel.Debug, message);
         }
 
-        /// <summary>
-        /// Logs the information.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public void LogInformation(String message)
-        {
-            this.LogMessage(NLog.LogLevel.Info, message);
+        public void LogError(Exception exception) {
+            this.LogMessage(LogLevel.Error, exception.Message, exception);
         }
 
-        /// <summary>
-        /// Logs the trace.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public void LogTrace(String message)
-        {
-            this.LogMessage(NLog.LogLevel.Trace, message);
+        public void LogError(String message,
+                             Exception exception) {
+            this.LogMessage(LogLevel.Error, message, exception);
         }
 
-        /// <summary>
-        /// Logs the warning.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public void LogWarning(String message)
-        {
-            this.LogMessage(NLog.LogLevel.Warn, message);
+        public void LogInformation(String message) {
+            this.LogMessage(LogLevel.Info, message);
         }
 
-        /// <summary>
-        /// Logs the message.
-        /// </summary>
-        /// <param name="logLevel">The log level.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="exception">The exception.</param>
-        /// <exception cref="InvalidOperationException">LoggerObject has not been set</exception>
-        private void LogMessage(NLog.LogLevel logLevel, String message, Exception exception = null)
-        {
-            if (this.LoggerObject != null)
-            {
+        public void LogTrace(String message) {
+            this.LogMessage(LogLevel.Trace, message);
+        }
+
+        public void LogWarning(String message) {
+            this.LogMessage(LogLevel.Warn, message);
+        }
+
+        private void LogMessage(LogLevel logLevel,
+                                String message,
+                                Exception exception = null) {
+            if (this.LoggerObject != null) {
                 LogEventInfo eventInfo = new LogEventInfo(logLevel, "Logger", message);
                 eventInfo.Exception = exception;
                 eventInfo.Properties["FileName"] = this.FileName;
 
                 this.LoggerObject.Log(eventInfo);
             }
-            else
-            {
+            else {
                 throw new InvalidOperationException("LoggerObject has not been set");
             }
         }
+
+        #endregion
     }
 }
