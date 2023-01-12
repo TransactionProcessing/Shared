@@ -42,7 +42,7 @@
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore) {
-            this.StartContainers(secureEventStore);
+            await this.StartContainers(secureEventStore);
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -68,7 +68,7 @@
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore) {
-            this.StartContainers(secureEventStore);
+            await this.StartContainers(secureEventStore);
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -194,38 +194,53 @@
             return null;
         }
 
-        private void StartContainers(Boolean isSecureEventStore) {
+        private async Task StartContainers(Boolean isSecureEventStore) {
             INetworkService networkService = this.SetupTestNetwork($"testNetwork-{Guid.NewGuid():N}", true);
             this.TestNetworks.Add(networkService);
+            DockerEnginePlatform engineType = GetDockerEnginePlatform();
+            String imageName = "eventstore/eventstore:21.10.0-buster-slim";
+            if (engineType == DockerEnginePlatform.Windows) {
+                imageName = "stuartferguson/eventstore";
+            }
 
-            IContainerService containerService = this.StartEventStoreContainer("eventstore/eventstore:22.6.0-bionic",
+
+            IContainerService containerService = await this.StartEventStoreContainer(imageName,
                                                                                $"eventStore-{Guid.NewGuid():N}",
                                                                                isSecureEventStore,
                                                                                networkService);
             this.Containers.Add(containerService);
             this.EventStoreHttpPort = containerService.ToHostExposedEndpoint($"{EventStoreContextTests.EventStoreHttpDockerPort}/tcp").Port;
+
         }
 
-        private IContainerService StartEventStoreContainer(String imageName,
+        private async Task<IContainerService> StartEventStoreContainer(String imageName,
                                                            String containerName,
                                                            Boolean isSecureContainer,
                                                            INetworkService networkService,
                                                            Boolean forceLatestImage = false) {
-            List<String> environmentVariables = new List<String>();
-            environmentVariables.Add("EVENTSTORE_RUN_PROJECTIONS=all");
-            environmentVariables.Add("EVENTSTORE_START_STANDARD_PROJECTIONS=true");
-            environmentVariables.Add("EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true");
-            environmentVariables.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true");
+            List<String> environmentVariables = new() {
+                                                          "EVENTSTORE_RUN_PROJECTIONS=all",
+                                                          "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
+                                                          "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
+                                                          "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
+                                                      };
 
-            ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName, forceLatestImage)
-                                                                       .ExposePort(EventStoreContextTests.EventStoreHttpDockerPort)
-                                                                       .ExposePort(EventStoreContextTests.EventStoreTcpDockerPort).WithName(containerName)
-                                                                       .UseNetwork(networkService);
+            String containerPath = GetDockerEnginePlatform() switch
+            {
+                DockerEnginePlatform.Windows => "C:\\Logs",
+                _ => "/var/log/eventstore"
+            };
 
-            if (isSecureContainer == false) {
+            ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImage(imageName,true)
+                                                                       .ExposePort(EventStoreContextTests.EventStoreHttpDockerPort).ExposePort(EventStoreContextTests.EventStoreTcpDockerPort)
+                                                                       .WithName(containerName);//.MountHostFolder(this.HostTraceFolder, containerPath);
+
+            if (isSecureContainer == false)
+            {
                 environmentVariables.Add("EVENTSTORE_INSECURE=true");
             }
-            else {
+            else
+            {
                 // Copy these to the container
                 String path = Path.Combine(Directory.GetCurrentDirectory(), "certs");
 
@@ -237,10 +252,15 @@
                 environmentVariables.Add("EVENTSTORE_TrustedRootCertificatesPath=/etc/eventstore/certs/ca");
             }
 
-            IContainerService eventStoreContainer = eventStoreContainerBuilder
-                                                    .WithEnvironment(environmentVariables.ToArray()).Build().Start().WaitForPort("2113/tcp", 30000);
 
-            return eventStoreContainer;
+            eventStoreContainerBuilder = eventStoreContainerBuilder.WithEnvironment(environmentVariables.ToArray());
+
+            IContainerService builtContainer = eventStoreContainerBuilder.Build().Start();
+            networkService.Attach(builtContainer, false);
+
+            await Retry.For(async () => { builtContainer = builtContainer.WaitForPort($"{EventStoreContextTests.EventStoreHttpDockerPort}/tcp"); });
+
+            return builtContainer;
         }
 
         private void StopContainers() {
@@ -267,6 +287,69 @@
         private const Int32 EventStoreHttpDockerPort = 2113;
 
         private const Int32 EventStoreTcpDockerPort = 1113;
+
+        #endregion
+    }
+
+    public static class Retry
+    {
+        #region Fields
+
+        /// <summary>
+        /// The default retry for
+        /// </summary>
+        private static readonly TimeSpan DefaultRetryFor = TimeSpan.FromSeconds(60);
+
+        /// <summary>
+        /// The default retry interval
+        /// </summary>
+        private static readonly TimeSpan DefaultRetryInterval = TimeSpan.FromSeconds(5);
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Fors the specified action.
+        /// </summary>
+        /// <param name="action">The action.</param>
+        /// <param name="retryFor">The retry for.</param>
+        /// <param name="retryInterval">The retry interval.</param>
+        /// <returns></returns>
+        public static async Task For(Func<Task> action,
+                                     TimeSpan? retryFor = null,
+                                     TimeSpan? retryInterval = null)
+        {
+            DateTime startTime = DateTime.Now;
+            Exception lastException = null;
+
+            if (retryFor == null)
+            {
+                retryFor = Retry.DefaultRetryFor;
+            }
+
+            while (DateTime.Now.Subtract(startTime).TotalMilliseconds < retryFor.Value.TotalMilliseconds)
+            {
+                try
+                {
+                    await action().ConfigureAwait(false);
+                    lastException = null;
+                    break;
+                }
+                catch (Exception e)
+                {
+                    lastException = e;
+
+                    // wait before retrying
+                    Thread.Sleep(retryInterval ?? Retry.DefaultRetryInterval);
+                }
+            }
+
+            if (lastException != null)
+            {
+                throw lastException;
+            }
+        }
 
         #endregion
     }
