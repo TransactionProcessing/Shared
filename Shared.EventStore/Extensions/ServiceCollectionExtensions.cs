@@ -9,10 +9,11 @@
 
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddEventStoreProjectionManagerClient(this IServiceCollection services, Action<EventStoreClientSettings>? configureSettings = null)
-        {
-            if (services == null)
-            {
+        #region Methods
+
+        public static IServiceCollection AddEventStoreProjectionManagerClient(this IServiceCollection services,
+                                                                              Action<EventStoreClientSettings>? configureSettings = null) {
+            if (services == null) {
                 throw new ArgumentNullException(nameof(services));
             }
 
@@ -28,5 +29,7 @@
 
             return services;
         }
+
+        #endregion
     }
 }

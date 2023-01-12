@@ -5,6 +5,8 @@ namespace Shared.Extensions
 {
     using Microsoft.AspNetCore.Builder;
     using Microsoft.Extensions.Logging;
+    using System.Collections.Generic;
+    using System;
 
     public static class IApplicationBuilderExtenstions
     {
