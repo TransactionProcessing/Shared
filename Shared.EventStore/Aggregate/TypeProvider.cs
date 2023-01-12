@@ -30,6 +30,10 @@
         {
             List<Assembly> assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
 
+            if (assemblyFilters == null) {
+                assemblyFilters = TypeProvider.DefaultAssemblyFilters;
+            }
+
             List<Type> source = new List<Type>();
             foreach (string assemblyFilter in assemblyFilters)
             {
