@@ -12,6 +12,7 @@
     using Newtonsoft.Json;
     using Shouldly;
     using Xunit;
+    using static Azure.Core.HttpHeader;
 
     /// <summary>
     /// 
@@ -61,7 +62,7 @@
 
             String[] loggedEntries = this.FilterLogEntries(testLogger);
             Int32 expectedCount = ConfigurationRootExtensionsTests.DefaultAppSettings.Count; // 5 headers
-            loggedEntries.Length.ShouldBe(expectedCount);
+            loggedEntries.Length.ShouldBe(expectedCount, String.Join(Environment.NewLine, loggedEntries.ToArray()));
             loggedEntries.Where(l => l.Contains("No Value")).Count().ShouldBe(1);
         }
 
