@@ -42,6 +42,5 @@ namespace Shared.Extensions
             applicationBuilder.UseMiddleware<ResponseLoggingMiddleware>();
         }
         #endregion
-        
     }
 }
