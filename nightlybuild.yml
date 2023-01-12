@@ -1,0 +1,198 @@
+name: Nightly Build
+
+
+on:
+  schedule:
+  - cron: "20 23 * * *"
+  repository_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    name: Check latest commit
+    outputs:
+      commitcount: ${{ steps.commitswithintime.outputs.number-of-commits-within-time }}
+    steps:
+      - uses: actions/checkout@v2
+        #with:
+          #fetch-depth: 0
+
+      - name: Check for commits within time 
+        #uses: AlexHolderDeveloper/CommitsWithinTime@v1.1.5
+        uses: TransactionProcessing/CommitsWithinTime@1.0.0
+        id: commitswithintime
+        with:
+          hours: 24
+          
+      - name: Get the output from CommitsWithinTime
+        run: |
+          echo "The 'has-new-commits-within-time' value is ${{ steps.commitswithintime.outputs.has-new-commits-within-time }}"
+          echo "The 'number-of-commits-within-time' value is ${{ steps.commitswithintime.outputs.number-of-commits-within-time }}"
+          echo "The 'total-commits' value is ${{ steps.commitswithintime.outputs.total-commits }}"
+
+  buildlinux:
+    name: "Nightly Build - Linux"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: ubuntu-latest
+
+    needs: check
+    if: ${{ needs.check.outputs.commitcount > 0 }}
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install NET 7
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+
+    - name: Trust root certificate
+      run: |
+        sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
+        sudo update-ca-certificates
+
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        
+    - name: Run Integration Tests
+      run: dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+    
+    - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
+      with:
+        name: tracelogslinux
+        path: /home/txnproc/trace/   
+
+  buildwindows:
+    name: "Nightly Build - Windows"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: windows-2019
+
+    needs: check
+    if: ${{ needs.check.outputs.commitcount > 0 }}
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install NET 7
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        
+    - name: Run Integration Tests
+      run: dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+
+    - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
+      with:
+        name: tracelogswindows
+        path: c:\\home\\txnproc\\trace\\
+
+  buildmacos:
+    name: "Nightly Build - Mac"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: macos-12
+
+    needs: check
+    if: ${{ needs.check.outputs.commitcount > 0 }}
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Setup Docker
+      run: |
+        brew install docker
+        #colima start
+        colima start --cpu 2 --memory 8 --disk 100
+
+    - name: Install NET 7
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+          
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        
+    - name: Run Integration Tests
+      run: dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+
+    - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
+      with:
+        name: tracelogsios
+        path: /Users/runner/txnproc/trace/
+
+  codecoverage:
+    name: "Nightly Build - Code Coverage"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: ubuntu-latest
+    
+    needs: check
+    if: ${{ needs.check.outputs.commitcount > 0 }}
+
+    steps:
+    - uses: actions/checkout@v2.3.4
+
+    - name: Install NET 7
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.101'
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov1.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
+
+    - name: Setup Node.js for use with actions
+      uses: actions/setup-node@v1.4.4
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3  
+      with:
+        files: ./lcov1.info,./lcov2.info
+
