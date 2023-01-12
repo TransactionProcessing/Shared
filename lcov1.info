@@ -1,0 +1,1880 @@
+SF:c:\Projects\TransactionProcessing\Shared\ClientProxyBase\ClientProxyBase.cs
+FN:28,System.Void ClientProxyBase.ClientProxyBase::.ctor(System.Net.Http.HttpClient)
+FNDA:0,System.Void ClientProxyBase.ClientProxyBase::.ctor(System.Net.Http.HttpClient)
+DA:29,0
+DA:30,0
+DA:31,0
+DA:32,0
+FN:56,System.Void ClientProxyBase.ClientProxyBase/<HandleResponse>d__2::MoveNext()
+FNDA:0,System.Void ClientProxyBase.ClientProxyBase/<HandleResponse>d__2::MoveNext()
+DA:57,0
+DA:58,0
+DA:61,0
+DA:64,0
+DA:65,0
+DA:67,0
+DA:70,0
+DA:73,0
+DA:75,0
+DA:77,0
+DA:79,0
+DA:84,0
+DA:86,0
+DA:87,0
+BRDA:64,174,0,0
+BRDA:67,217,0,0
+BRDA:67,217,1,0
+BRDA:67,217,2,0
+BRDA:67,217,4,0
+BRDA:67,217,5,0
+BRDA:67,251,1,0
+BRDA:67,217,3,0
+BRDA:67,251,0,0
+BRDA:64,174,1,0
+LF:18
+LH:0
+BRF:10
+BRH:0
+FNF:2
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\ValueObjects\Money.cs
+FN:31,System.Decimal Shared.ValueObjects.Money::get_Value()
+FNDA:51,System.Decimal Shared.ValueObjects.Money::get_Value()
+DA:32,51
+FN:43,Shared.ValueObjects.Money Shared.ValueObjects.Money::Create(System.Decimal)
+FNDA:34,Shared.ValueObjects.Money Shared.ValueObjects.Money::Create(System.Decimal)
+DA:44,34
+DA:45,34
+DA:46,34
+FN:57,Shared.ValueObjects.Money Shared.ValueObjects.Money::op_Addition(Shared.ValueObjects.Money,Shared.ValueObjects.Money)
+FNDA:6,Shared.ValueObjects.Money Shared.ValueObjects.Money::op_Addition(Shared.ValueObjects.Money,Shared.ValueObjects.Money)
+DA:58,6
+DA:59,6
+DA:60,6
+FN:71,Shared.ValueObjects.Money Shared.ValueObjects.Money::op_Subtraction(Shared.ValueObjects.Money,Shared.ValueObjects.Money)
+FNDA:6,Shared.ValueObjects.Money Shared.ValueObjects.Money::op_Subtraction(Shared.ValueObjects.Money,Shared.ValueObjects.Money)
+DA:72,6
+DA:73,6
+DA:74,6
+FN:16,System.Void Shared.ValueObjects.Money::.ctor(System.Decimal)
+FNDA:46,System.Void Shared.ValueObjects.Money::.ctor(System.Decimal)
+DA:17,46
+DA:18,46
+DA:19,46
+DA:20,46
+LF:14
+LH:14
+BRF:0
+BRH:0
+FNF:5
+FNH:5
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\ValueObjects\PositiveMoney.cs
+FN:35,System.Decimal Shared.ValueObjects.PositiveMoney::get_Value()
+FNDA:3,System.Decimal Shared.ValueObjects.PositiveMoney::get_Value()
+DA:36,3
+DA:37,3
+DA:38,3
+FN:46,Shared.ValueObjects.Money Shared.ValueObjects.PositiveMoney::get_Money()
+FNDA:3,Shared.ValueObjects.Money Shared.ValueObjects.PositiveMoney::get_Money()
+DA:47,3
+FN:58,Shared.ValueObjects.PositiveMoney Shared.ValueObjects.PositiveMoney::Create(Shared.ValueObjects.Money)
+FNDA:5,Shared.ValueObjects.PositiveMoney Shared.ValueObjects.PositiveMoney::Create(Shared.ValueObjects.Money)
+DA:59,5
+DA:60,5
+DA:61,3
+FN:68,System.Void Shared.ValueObjects.PositiveMoney::GuardMonetaryAmount(Shared.ValueObjects.Money)
+FNDA:5,System.Void Shared.ValueObjects.PositiveMoney::GuardMonetaryAmount(Shared.ValueObjects.Money)
+DA:69,5
+DA:70,5
+DA:71,2
+DA:72,2
+DA:74,3
+BRDA:70,19,0,2
+BRDA:70,19,1,3
+FN:16,System.Void Shared.ValueObjects.PositiveMoney::.ctor(Shared.ValueObjects.Money)
+FNDA:5,System.Void Shared.ValueObjects.PositiveMoney::.ctor(Shared.ValueObjects.Money)
+DA:17,5
+DA:18,5
+DA:19,5
+DA:20,3
+DA:21,3
+LF:17
+LH:17
+BRF:2
+BRH:2
+FNF:5
+FNH:5
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Serialisation\JsonIgnoreAttributeIgnorerContractResolver.cs
+FN:26,Newtonsoft.Json.Serialization.JsonProperty Shared.Serialisation.JsonIgnoreAttributeIgnorerContractResolver::CreateProperty(System.Reflection.MemberInfo,Newtonsoft.Json.MemberSerialization)
+FNDA:0,Newtonsoft.Json.Serialization.JsonProperty Shared.Serialisation.JsonIgnoreAttributeIgnorerContractResolver::CreateProperty(System.Reflection.MemberInfo,Newtonsoft.Json.MemberSerialization)
+DA:27,0
+DA:28,0
+DA:29,0
+DA:30,0
+DA:31,0
+LF:5
+LH:0
+BRF:0
+BRH:0
+FNF:1
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Serialisation\JsonSerialiser.cs
+FN:36,Newtonsoft.Json.JsonSerializerSettings Shared.Serialisation.JsonSerialiser::get_JsonSerializerSettings()
+FNDA:0,Newtonsoft.Json.JsonSerializerSettings Shared.Serialisation.JsonSerialiser::get_JsonSerializerSettings()
+DA:37,0
+FN:47,Shared.Serialisation.IStringSerialiser Shared.Serialisation.JsonSerialiser::Default()
+FNDA:0,Shared.Serialisation.IStringSerialiser Shared.Serialisation.JsonSerialiser::Default()
+DA:48,0
+DA:49,0
+DA:50,0
+BRDA:49,7,0,0
+BRDA:49,7,1,0
+FN:60,T Shared.Serialisation.JsonSerialiser::Deserialise(System.String)
+FNDA:0,T Shared.Serialisation.JsonSerialiser::Deserialise(System.String)
+DA:61,0
+DA:64,0
+DA:65,0
+FN:76,System.Object Shared.Serialisation.JsonSerialiser::Deserialise(System.String,System.Type)
+FNDA:0,System.Object Shared.Serialisation.JsonSerialiser::Deserialise(System.String,System.Type)
+DA:77,0
+DA:78,0
+DA:79,0
+FN:86,System.Object Shared.Serialisation.JsonSerialiser::Deserialise(System.String)
+FNDA:0,System.Object Shared.Serialisation.JsonSerialiser::Deserialise(System.String)
+DA:87,0
+DA:88,0
+DA:89,0
+FN:95,Shared.Serialisation.IStringSerialiser Shared.Serialisation.JsonSerialiser::EventStoreDefault()
+FNDA:0,Shared.Serialisation.IStringSerialiser Shared.Serialisation.JsonSerialiser::EventStoreDefault()
+DA:96,0
+DA:97,0
+DA:98,0
+BRDA:97,7,0,0
+BRDA:97,7,1,0
+FN:104,Newtonsoft.Json.JsonSerializerSettings Shared.Serialisation.JsonSerialiser::GetDefaultSettings()
+FNDA:0,Newtonsoft.Json.JsonSerializerSettings Shared.Serialisation.JsonSerialiser::GetDefaultSettings()
+DA:105,0
+DA:106,0
+DA:107,0
+DA:108,0
+DA:109,0
+DA:110,0
+DA:111,0
+DA:112,0
+DA:113,0
+DA:114,0
+FN:120,Newtonsoft.Json.JsonSerializerSettings Shared.Serialisation.JsonSerialiser::GetEventStoreDefaultSettings()
+FNDA:0,Newtonsoft.Json.JsonSerializerSettings Shared.Serialisation.JsonSerialiser::GetEventStoreDefaultSettings()
+DA:121,0
+DA:122,0
+DA:123,0
+DA:124,0
+DA:125,0
+DA:126,0
+DA:127,0
+DA:128,0
+DA:129,0
+DA:130,0
+FN:140,System.String Shared.Serialisation.JsonSerialiser::Serialise(T)
+FNDA:0,System.String Shared.Serialisation.JsonSerialiser::Serialise(T)
+DA:141,0
+DA:142,0
+DA:143,0
+FN:14,System.Void Shared.Serialisation.JsonSerialiser::.ctor(System.Func`1<Newtonsoft.Json.JsonSerializerSettings>)
+FNDA:0,System.Void Shared.Serialisation.JsonSerialiser::.ctor(System.Func`1<Newtonsoft.Json.JsonSerializerSettings>)
+DA:15,0
+DA:16,0
+DA:17,0
+DA:18,0
+DA:19,0
+DA:20,0
+DA:22,0
+DA:23,0
+DA:24,0
+DA:25,0
+BRDA:17,14,0,0
+BRDA:17,14,1,0
+LF:49
+LH:0
+BRF:6
+BRH:0
+FNF:10
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Repositories\ConnectionStringConfigurationRepository.cs
+FN:104,System.Void Shared.Repositories.ConnectionStringConfigurationRepository::GuardAgainstNoExternalIdentifier(System.String)
+FNDA:0,System.Void Shared.Repositories.ConnectionStringConfigurationRepository::GuardAgainstNoExternalIdentifier(System.String)
+DA:105,0
+DA:107,0
+DA:108,0
+DA:109,0
+DA:111,0
+BRDA:107,9,0,0
+BRDA:107,9,1,0
+FN:113,System.Void Shared.Repositories.ConnectionStringConfigurationRepository::GuardAgainstNoConnectionStringIdentifier(System.String)
+FNDA:0,System.Void Shared.Repositories.ConnectionStringConfigurationRepository::GuardAgainstNoConnectionStringIdentifier(System.String)
+DA:114,0
+DA:116,0
+DA:117,0
+DA:118,0
+DA:120,0
+BRDA:116,9,0,0
+BRDA:116,9,1,0
+FN:26,System.Void Shared.Repositories.ConnectionStringConfigurationRepository::.ctor(System.Func`1<Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext>)
+FNDA:0,System.Void Shared.Repositories.ConnectionStringConfigurationRepository::.ctor(System.Func`1<Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext>)
+DA:27,0
+DA:28,0
+DA:29,0
+DA:30,0
+FN:83,System.Void Shared.Repositories.ConnectionStringConfigurationRepository/<CreateConnectionString>d__4::MoveNext()
+FNDA:0,System.Void Shared.Repositories.ConnectionStringConfigurationRepository/<CreateConnectionString>d__4::MoveNext()
+DA:84,0
+DA:85,0
+DA:86,0
+DA:89,0
+DA:90,0
+DA:91,0
+DA:92,0
+DA:93,0
+DA:94,0
+DA:95,0
+DA:96,0
+DA:98,0
+DA:100,0
+DA:101,0
+DA:102,0
+FN:36,System.Void Shared.Repositories.ConnectionStringConfigurationRepository/<DeleteConnectionStringConfiguration>d__2::MoveNext()
+FNDA:0,System.Void Shared.Repositories.ConnectionStringConfigurationRepository/<DeleteConnectionStringConfiguration>d__2::MoveNext()
+DA:37,0
+DA:38,0
+DA:39,0
+DA:42,0
+DA:43,0
+DA:44,0
+DA:45,0
+DA:46,0
+DA:48,0
+DA:49,0
+DA:50,0
+DA:51,0
+DA:54,0
+DA:56,0
+DA:57,0
+DA:58,0
+BRDA:48,466,0,0
+BRDA:48,466,1,0
+FN:60,System.Void Shared.Repositories.ConnectionStringConfigurationRepository/<GetConnectionString>d__3::MoveNext()
+FNDA:0,System.Void Shared.Repositories.ConnectionStringConfigurationRepository/<GetConnectionString>d__3::MoveNext()
+DA:61,0
+DA:62,0
+DA:63,0
+DA:66,0
+DA:67,0
+DA:68,0
+DA:69,0
+DA:70,0
+DA:71,0
+DA:73,0
+DA:74,0
+DA:75,0
+DA:76,0
+DA:79,0
+DA:81,0
+BRDA:73,455,0,0
+BRDA:73,455,1,0
+LF:60
+LH:0
+BRF:8
+BRH:0
+FNF:6
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Middleware\ErrorResponse.cs
+FN:8,System.String Shared.Middleware.ErrorResponse::get_Message()
+FNDA:32,System.String Shared.Middleware.ErrorResponse::get_Message()
+DA:9,32
+FN:10,System.Void Shared.Middleware.ErrorResponse::.ctor(System.String)
+FNDA:16,System.Void Shared.Middleware.ErrorResponse::.ctor(System.String)
+DA:11,16
+DA:12,16
+DA:13,16
+DA:14,16
+LF:5
+LH:5
+BRF:0
+BRH:0
+FNF:2
+FNH:2
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Middleware\ExceptionHandlerMiddleware.cs
+FN:29,System.Void Shared.Middleware.ExceptionHandlerMiddleware::.ctor(Microsoft.AspNetCore.Http.RequestDelegate)
+FNDA:8,System.Void Shared.Middleware.ExceptionHandlerMiddleware::.ctor(Microsoft.AspNetCore.Http.RequestDelegate)
+DA:30,8
+DA:31,8
+DA:32,8
+DA:33,8
+FN:68,System.Void Shared.Middleware.ExceptionHandlerMiddleware/<HandleExceptionAsync>d__3::MoveNext()
+FNDA:8,System.Void Shared.Middleware.ExceptionHandlerMiddleware/<HandleExceptionAsync>d__3::MoveNext()
+DA:69,8
+DA:70,8
+DA:71,8
+DA:72,8
+DA:73,8
+DA:74,8
+DA:77,8
+DA:78,8
+DA:79,8
+DA:81,8
+DA:82,8
+DA:83,8
+DA:84,8
+DA:85,8
+DA:86,5
+DA:87,5
+DA:88,5
+DA:89,5
+DA:90,3
+DA:91,1
+DA:92,1
+DA:93,1
+DA:94,1
+DA:95,2
+DA:96,1
+DA:97,1
+DA:98,1
+DA:99,1
+DA:101,8
+DA:102,8
+DA:104,8
+DA:105,8
+BRDA:81,123,0,7
+BRDA:81,136,0,6
+BRDA:81,149,0,5
+BRDA:81,162,0,4
+BRDA:81,123,1,4
+BRDA:81,136,1,4
+BRDA:81,149,1,4
+BRDA:81,162,1,4
+BRDA:81,183,0,5
+BRDA:81,183,1,3
+BRDA:90,233,0,1
+BRDA:90,233,1,2
+BRDA:95,283,0,1
+BRDA:95,283,1,8
+FN:44,System.Void Shared.Middleware.ExceptionHandlerMiddleware/<Invoke>d__2::MoveNext()
+FNDA:8,System.Void Shared.Middleware.ExceptionHandlerMiddleware/<Invoke>d__2::MoveNext()
+DA:45,8
+DA:47,8
+DA:48,8
+DA:49,0
+DA:50,8
+DA:51,8
+DA:52,8
+DA:53,8
+DA:54,8
+LF:45
+LH:44
+BRF:14
+BRH:14
+FNF:3
+FNH:3
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Middleware\RequestLoggingMiddleware.cs
+FN:27,System.Void Shared.Middleware.RequestLoggingMiddleware::.ctor(Microsoft.AspNetCore.Http.RequestDelegate)
+FNDA:0,System.Void Shared.Middleware.RequestLoggingMiddleware::.ctor(Microsoft.AspNetCore.Http.RequestDelegate)
+DA:28,0
+DA:29,0
+DA:30,0
+DA:31,0
+FN:42,System.Void Shared.Middleware.RequestLoggingMiddleware/<Invoke>d__2::MoveNext()
+FNDA:0,System.Void Shared.Middleware.RequestLoggingMiddleware/<Invoke>d__2::MoveNext()
+DA:43,0
+DA:44,0
+DA:45,0
+DA:47,0
+DA:48,0
+DA:50,0
+DA:51,0
+DA:52,0
+DA:53,0
+DA:54,0
+DA:55,0
+DA:56,0
+DA:57,0
+DA:58,0
+DA:59,0
+DA:61,0
+DA:62,0
+DA:64,0
+DA:65,0
+DA:66,0
+BRDA:54,355,0,0
+BRDA:54,355,1,0
+FN:73,System.Boolean Shared.Middleware.Helpers::IsHealthCheckRequest(System.String)
+FNDA:0,System.Boolean Shared.Middleware.Helpers::IsHealthCheckRequest(System.String)
+DA:74,0
+FN:77,System.Void Shared.Middleware.Helpers::LogMessage(System.String,System.Text.StringBuilder)
+FNDA:0,System.Void Shared.Middleware.Helpers::LogMessage(System.String,System.Text.StringBuilder)
+DA:78,0
+DA:79,0
+DA:80,0
+DA:82,0
+DA:83,0
+DA:85,0
+DA:86,0
+DA:87,0
+DA:88,0
+BRDA:79,9,0,0
+BRDA:79,9,1,0
+LF:34
+LH:0
+BRF:4
+BRH:0
+FNF:4
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Middleware\ResponseLoggingMiddleware.cs
+FN:27,System.Void Shared.Middleware.ResponseLoggingMiddleware::.ctor(Microsoft.AspNetCore.Http.RequestDelegate)
+FNDA:0,System.Void Shared.Middleware.ResponseLoggingMiddleware::.ctor(Microsoft.AspNetCore.Http.RequestDelegate)
+DA:28,0
+DA:29,0
+DA:30,0
+DA:31,0
+FN:42,System.Void Shared.Middleware.ResponseLoggingMiddleware/<Invoke>d__2::MoveNext()
+FNDA:0,System.Void Shared.Middleware.ResponseLoggingMiddleware/<Invoke>d__2::MoveNext()
+DA:43,0
+DA:44,0
+DA:45,0
+DA:47,0
+DA:48,0
+DA:50,0
+DA:52,0
+DA:53,0
+DA:54,0
+DA:55,0
+DA:56,0
+DA:57,0
+DA:58,0
+DA:59,0
+DA:60,0
+DA:61,0
+DA:63,0
+DA:64,0
+DA:65,0
+BRDA:56,349,0,0
+BRDA:56,349,1,0
+LF:23
+LH:0
+BRF:2
+BRH:0
+FNF:2
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Logger\Logger.cs
+FN:26,System.Boolean Shared.Logger.Logger::get_IsInitialised()
+FNDA:16,System.Boolean Shared.Logger.Logger::get_IsInitialised()
+DA:27,16
+FN:39,System.Void Shared.Logger.Logger::Initialise(NLog.Logger,System.String)
+FNDA:0,System.Void Shared.Logger.Logger::Initialise(NLog.Logger,System.String)
+DA:40,0
+DA:41,0
+DA:42,0
+DA:43,0
+DA:44,0
+FN:46,System.Void Shared.Logger.Logger::Initialise(Microsoft.Extensions.Logging.ILogger)
+FNDA:0,System.Void Shared.Logger.Logger::Initialise(Microsoft.Extensions.Logging.ILogger)
+DA:47,0
+DA:48,0
+DA:49,0
+DA:50,0
+DA:51,0
+FN:58,System.Void Shared.Logger.Logger::Initialise(Shared.Logger.ILogger)
+FNDA:15,System.Void Shared.Logger.Logger::Initialise(Shared.Logger.ILogger)
+DA:59,15
+DA:60,15
+DA:62,15
+DA:63,15
+BRDA:60,3,0,0
+BRDA:60,3,1,15
+FN:69,System.Void Shared.Logger.Logger::LogCritical(System.Exception)
+FNDA:1,System.Void Shared.Logger.Logger::LogCritical(System.Exception)
+DA:70,1
+DA:71,1
+DA:73,1
+DA:74,1
+FN:80,System.Void Shared.Logger.Logger::LogDebug(System.String)
+FNDA:1,System.Void Shared.Logger.Logger::LogDebug(System.String)
+DA:81,1
+DA:82,1
+DA:84,1
+DA:85,1
+FN:91,System.Void Shared.Logger.Logger::LogError(System.Exception)
+FNDA:9,System.Void Shared.Logger.Logger::LogError(System.Exception)
+DA:92,9
+DA:93,9
+DA:95,9
+DA:96,9
+FN:98,System.Void Shared.Logger.Logger::LogError(System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.Logger::LogError(System.String,System.Exception)
+DA:99,0
+DA:100,0
+DA:102,0
+DA:103,0
+FN:109,System.Void Shared.Logger.Logger::LogInformation(System.String)
+FNDA:1,System.Void Shared.Logger.Logger::LogInformation(System.String)
+DA:110,1
+DA:111,1
+DA:113,1
+DA:114,1
+FN:120,System.Void Shared.Logger.Logger::LogTrace(System.String)
+FNDA:1,System.Void Shared.Logger.Logger::LogTrace(System.String)
+DA:121,1
+DA:122,1
+DA:124,1
+DA:125,1
+FN:131,System.Void Shared.Logger.Logger::LogWarning(System.String)
+FNDA:1,System.Void Shared.Logger.Logger::LogWarning(System.String)
+DA:132,1
+DA:133,1
+DA:135,1
+DA:136,1
+FN:142,System.Void Shared.Logger.Logger::ValidateLoggerObject()
+FNDA:14,System.Void Shared.Logger.Logger::ValidateLoggerObject()
+DA:143,14
+DA:144,14
+DA:145,0
+DA:146,0
+DA:148,14
+BRDA:144,11,0,0
+BRDA:144,11,1,14
+LF:48
+LH:32
+BRF:4
+BRH:2
+FNF:12
+FNH:9
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Logger\MicrosoftLogger.cs
+FN:15,System.Boolean Shared.Logger.MicrosoftLogger::get_IsInitialised()
+FNDA:0,System.Boolean Shared.Logger.MicrosoftLogger::get_IsInitialised()
+DA:16,0
+FN:21,System.Void Shared.Logger.MicrosoftLogger::Initialise(Microsoft.Extensions.Logging.ILogger)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::Initialise(Microsoft.Extensions.Logging.ILogger)
+DA:22,0
+DA:23,0
+DA:24,0
+DA:25,0
+FN:26,System.Void Shared.Logger.MicrosoftLogger::LogCritical(System.Exception)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogCritical(System.Exception)
+DA:27,0
+DA:28,0
+DA:29,0
+FN:31,System.Void Shared.Logger.MicrosoftLogger::LogCritical(System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogCritical(System.String,System.Exception)
+DA:32,0
+DA:33,0
+DA:34,0
+FN:35,System.Void Shared.Logger.MicrosoftLogger::LogDebug(System.String)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogDebug(System.String)
+DA:36,0
+DA:37,0
+DA:38,0
+FN:39,System.Void Shared.Logger.MicrosoftLogger::LogError(System.Exception)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogError(System.Exception)
+DA:40,0
+DA:41,0
+DA:42,0
+FN:44,System.Void Shared.Logger.MicrosoftLogger::LogError(System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogError(System.String,System.Exception)
+DA:45,0
+DA:46,0
+DA:47,0
+FN:48,System.Void Shared.Logger.MicrosoftLogger::LogInformation(System.String)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogInformation(System.String)
+DA:49,0
+DA:50,0
+DA:51,0
+FN:52,System.Void Shared.Logger.MicrosoftLogger::LogTrace(System.String)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogTrace(System.String)
+DA:53,0
+DA:54,0
+DA:55,0
+FN:56,System.Void Shared.Logger.MicrosoftLogger::LogWarning(System.String)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogWarning(System.String)
+DA:57,0
+DA:58,0
+DA:59,0
+FN:62,System.Void Shared.Logger.MicrosoftLogger::LogMessage(Microsoft.Extensions.Logging.LogLevel,System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.MicrosoftLogger::LogMessage(Microsoft.Extensions.Logging.LogLevel,System.String,System.Exception)
+DA:63,0
+DA:64,0
+DA:65,0
+DA:66,0
+DA:67,0
+DA:68,0
+DA:69,0
+DA:70,0
+DA:71,0
+DA:72,0
+DA:73,0
+DA:75,0
+BRDA:64,25,0,0
+BRDA:64,25,1,0
+LF:41
+LH:0
+BRF:2
+BRH:0
+FNF:11
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Logger\NlogLogger.cs
+FN:21,System.Boolean Shared.Logger.NlogLogger::get_IsInitialised()
+FNDA:0,System.Boolean Shared.Logger.NlogLogger::get_IsInitialised()
+DA:22,0
+FN:28,System.Void Shared.Logger.NlogLogger::Initialise(NLog.Logger,System.String)
+FNDA:0,System.Void Shared.Logger.NlogLogger::Initialise(NLog.Logger,System.String)
+DA:29,0
+DA:30,0
+DA:31,0
+DA:32,0
+DA:33,0
+FN:34,System.Void Shared.Logger.NlogLogger::LogCritical(System.Exception)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogCritical(System.Exception)
+DA:35,0
+DA:36,0
+DA:37,0
+FN:39,System.Void Shared.Logger.NlogLogger::LogCritical(System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogCritical(System.String,System.Exception)
+DA:40,0
+DA:41,0
+DA:42,0
+FN:43,System.Void Shared.Logger.NlogLogger::LogDebug(System.String)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogDebug(System.String)
+DA:44,0
+DA:45,0
+DA:46,0
+FN:47,System.Void Shared.Logger.NlogLogger::LogError(System.Exception)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogError(System.Exception)
+DA:48,0
+DA:49,0
+DA:50,0
+FN:52,System.Void Shared.Logger.NlogLogger::LogError(System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogError(System.String,System.Exception)
+DA:53,0
+DA:54,0
+DA:55,0
+FN:56,System.Void Shared.Logger.NlogLogger::LogInformation(System.String)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogInformation(System.String)
+DA:57,0
+DA:58,0
+DA:59,0
+FN:60,System.Void Shared.Logger.NlogLogger::LogTrace(System.String)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogTrace(System.String)
+DA:61,0
+DA:62,0
+DA:63,0
+FN:64,System.Void Shared.Logger.NlogLogger::LogWarning(System.String)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogWarning(System.String)
+DA:65,0
+DA:66,0
+DA:67,0
+FN:70,System.Void Shared.Logger.NlogLogger::LogMessage(NLog.LogLevel,System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.NlogLogger::LogMessage(NLog.LogLevel,System.String,System.Exception)
+DA:71,0
+DA:72,0
+DA:73,0
+DA:74,0
+DA:75,0
+DA:77,0
+DA:78,0
+DA:79,0
+DA:80,0
+DA:82,0
+BRDA:72,12,0,0
+BRDA:72,12,1,0
+LF:40
+LH:0
+BRF:2
+BRH:0
+FNF:11
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Logger\NullLogger.cs
+FN:12,Shared.Logger.NullLogger Shared.Logger.NullLogger::get_Instance()
+FNDA:15,Shared.Logger.NullLogger Shared.Logger.NullLogger::get_Instance()
+DA:13,15
+FN:14,System.Boolean Shared.Logger.NullLogger::get_IsInitialised()
+FNDA:0,System.Boolean Shared.Logger.NullLogger::get_IsInitialised()
+DA:15,0
+FN:20,System.Void Shared.Logger.NullLogger::Initialise()
+FNDA:0,System.Void Shared.Logger.NullLogger::Initialise()
+DA:21,0
+DA:22,0
+DA:23,0
+FN:24,System.Void Shared.Logger.NullLogger::LogCritical(System.Exception)
+FNDA:1,System.Void Shared.Logger.NullLogger::LogCritical(System.Exception)
+DA:25,1
+DA:26,1
+FN:28,System.Void Shared.Logger.NullLogger::LogCritical(System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.NullLogger::LogCritical(System.String,System.Exception)
+DA:29,0
+DA:30,0
+FN:31,System.Void Shared.Logger.NullLogger::LogDebug(System.String)
+FNDA:1,System.Void Shared.Logger.NullLogger::LogDebug(System.String)
+DA:32,1
+DA:33,1
+FN:34,System.Void Shared.Logger.NullLogger::LogError(System.Exception)
+FNDA:9,System.Void Shared.Logger.NullLogger::LogError(System.Exception)
+DA:35,9
+DA:36,9
+FN:38,System.Void Shared.Logger.NullLogger::LogError(System.String,System.Exception)
+FNDA:0,System.Void Shared.Logger.NullLogger::LogError(System.String,System.Exception)
+DA:39,0
+DA:40,0
+FN:41,System.Void Shared.Logger.NullLogger::LogInformation(System.String)
+FNDA:1,System.Void Shared.Logger.NullLogger::LogInformation(System.String)
+DA:42,1
+DA:43,1
+FN:44,System.Void Shared.Logger.NullLogger::LogTrace(System.String)
+FNDA:1,System.Void Shared.Logger.NullLogger::LogTrace(System.String)
+DA:45,1
+DA:46,1
+FN:47,System.Void Shared.Logger.NullLogger::LogWarning(System.String)
+FNDA:1,System.Void Shared.Logger.NullLogger::LogWarning(System.String)
+DA:48,1
+DA:49,1
+LF:21
+LH:13
+BRF:0
+BRH:0
+FNF:11
+FNH:7
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\HealthChecks\DependencyServiceResult.cs
+FN:9,System.TimeSpan Shared.HealthChecks.DependencyServiceResult::get_Duration()
+FNDA:0,System.TimeSpan Shared.HealthChecks.DependencyServiceResult::get_Duration()
+DA:10,0
+FN:11,System.String Shared.HealthChecks.DependencyServiceResult::get_Name()
+FNDA:0,System.String Shared.HealthChecks.DependencyServiceResult::get_Name()
+DA:12,0
+FN:13,Shared.HealthChecks.HealthCheckStatus Shared.HealthChecks.DependencyServiceResult::get_Status()
+FNDA:0,Shared.HealthChecks.HealthCheckStatus Shared.HealthChecks.DependencyServiceResult::get_Status()
+DA:14,0
+FN:15,System.Collections.Generic.List`1<System.String> Shared.HealthChecks.DependencyServiceResult::get_Tags()
+FNDA:0,System.Collections.Generic.List`1<System.String> Shared.HealthChecks.DependencyServiceResult::get_Tags()
+DA:16,0
+LF:4
+LH:0
+BRF:0
+BRH:0
+FNF:4
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\HealthChecks\HealthCheckClient.cs
+FN:37,System.String Shared.HealthChecks.HealthCheckClient::BuildRequestUri(System.String,System.String,System.Int32)
+FNDA:0,System.String Shared.HealthChecks.HealthCheckClient::BuildRequestUri(System.String,System.String,System.Int32)
+DA:38,0
+DA:39,0
+DA:40,0
+FN:13,System.Void Shared.HealthChecks.HealthCheckClient::.ctor(System.Net.Http.HttpClient)
+FNDA:0,System.Void Shared.HealthChecks.HealthCheckClient::.ctor(System.Net.Http.HttpClient)
+DA:14,0
+DA:15,0
+FN:23,System.Void Shared.HealthChecks.HealthCheckClient/<PerformHealthCheck>d__1::MoveNext()
+FNDA:0,System.Void Shared.HealthChecks.HealthCheckClient/<PerformHealthCheck>d__1::MoveNext()
+DA:24,0
+DA:25,0
+DA:27,0
+DA:29,0
+DA:31,0
+DA:33,0
+DA:34,0
+LF:12
+LH:0
+BRF:0
+BRH:0
+FNF:3
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\HealthChecks\HealthCheckMiddleware.cs
+FN:16,System.Threading.Tasks.Task Shared.HealthChecks.HealthCheckMiddleware::WriteResponse(Microsoft.AspNetCore.Http.HttpContext,Microsoft.Extensions.Diagnostics.HealthChecks.HealthReport)
+FNDA:0,System.Threading.Tasks.Task Shared.HealthChecks.HealthCheckMiddleware::WriteResponse(Microsoft.AspNetCore.Http.HttpContext,Microsoft.Extensions.Diagnostics.HealthChecks.HealthReport)
+DA:17,0
+DA:18,0
+DA:20,0
+DA:21,0
+DA:22,0
+DA:23,0
+DA:24,0
+DA:25,0
+DA:26,0
+DA:27,0
+DA:28,0
+DA:30,0
+DA:31,0
+DA:32,0
+DA:33,0
+DA:34,0
+DA:35,0
+DA:36,0
+DA:37,0
+DA:38,0
+DA:39,0
+DA:41,0
+DA:42,0
+DA:43,0
+DA:45,0
+DA:46,0
+DA:47,0
+DA:49,0
+DA:50,0
+BRDA:30,410,1,0
+BRDA:37,371,1,0
+BRDA:37,371,0,0
+BRDA:30,410,0,0
+LF:29
+LH:0
+BRF:4
+BRH:0
+FNF:1
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\HealthChecks\HealthCheckResult.cs
+FN:14,System.String Shared.HealthChecks.HealthCheckResult::get_Status()
+FNDA:0,System.String Shared.HealthChecks.HealthCheckResult::get_Status()
+DA:15,0
+LF:1
+LH:0
+BRF:0
+BRH:0
+FNF:1
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\General\AggregateIdGenerator.cs
+FN:9,System.Guid Shared.General.AggregateIdGenerator::CalculateSettlementAggregateId(System.DateTime,System.Guid)
+FNDA:0,System.Guid Shared.General.AggregateIdGenerator::CalculateSettlementAggregateId(System.DateTime,System.Guid)
+DA:10,0
+DA:11,0
+DA:12,0
+DA:13,0
+LF:4
+LH:0
+BRF:0
+BRH:0
+FNF:1
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\General\ConfigurationReader.cs
+FN:24,System.Boolean Shared.General.ConfigurationReader::get_IsInitialised()
+FNDA:0,System.Boolean Shared.General.ConfigurationReader::get_IsInitialised()
+DA:25,0
+FN:35,System.Uri Shared.General.ConfigurationReader::GetBaseServerUri(System.String)
+FNDA:0,System.Uri Shared.General.ConfigurationReader::GetBaseServerUri(System.String)
+DA:36,0
+DA:37,0
+DA:39,0
+DA:40,0
+FN:46,System.String Shared.General.ConfigurationReader::GetConnectionString(System.String)
+FNDA:0,System.String Shared.General.ConfigurationReader::GetConnectionString(System.String)
+DA:47,0
+DA:48,0
+DA:49,0
+FN:55,System.String Shared.General.ConfigurationReader::GetValue(System.String)
+FNDA:0,System.String Shared.General.ConfigurationReader::GetValue(System.String)
+DA:56,0
+DA:57,0
+DA:58,0
+FN:66,System.String Shared.General.ConfigurationReader::GetValue(System.String,System.String)
+FNDA:0,System.String Shared.General.ConfigurationReader::GetValue(System.String,System.String)
+DA:67,0
+DA:68,0
+DA:69,0
+FN:71,T Shared.General.ConfigurationReader::GetValueFromSection(System.String,System.String)
+FNDA:0,T Shared.General.ConfigurationReader::GetValueFromSection(System.String,System.String)
+DA:72,0
+DA:73,0
+DA:74,0
+FN:80,System.Void Shared.General.ConfigurationReader::Initialise(Microsoft.Extensions.Configuration.IConfigurationRoot)
+FNDA:0,System.Void Shared.General.ConfigurationReader::Initialise(Microsoft.Extensions.Configuration.IConfigurationRoot)
+DA:81,0
+DA:82,0
+DA:83,0
+DA:84,0
+BRDA:82,3,0,0
+BRDA:82,3,1,0
+FN:86,System.String Shared.General.ConfigurationReader::GetValueFromSection(System.String,System.String)
+FNDA:0,System.String Shared.General.ConfigurationReader::GetValueFromSection(System.String,System.String)
+DA:87,0
+DA:88,0
+DA:89,0
+DA:90,0
+DA:92,0
+DA:93,0
+DA:94,0
+DA:95,0
+DA:98,0
+DA:99,0
+DA:100,0
+DA:103,0
+DA:104,0
+BRDA:88,11,0,0
+BRDA:88,11,1,0
+BRDA:93,43,0,0
+BRDA:93,43,1,0
+BRDA:98,80,0,0
+BRDA:98,80,1,0
+FN:106,T Shared.General.ConfigurationReader::GetTypedValueFromSection(System.String,System.String)
+FNDA:0,T Shared.General.ConfigurationReader::GetTypedValueFromSection(System.String,System.String)
+DA:107,0
+DA:108,0
+DA:109,0
+DA:112,0
+DA:113,0
+DA:114,0
+DA:117,0
+DA:119,0
+DA:120,0
+DA:123,0
+DA:124,0
+BRDA:108,11,0,0
+BRDA:108,11,1,0
+BRDA:113,43,0,0
+BRDA:113,43,1,0
+BRDA:119,88,0,0
+BRDA:119,88,1,0
+LF:45
+LH:0
+BRF:14
+BRH:0
+FNF:9
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\General\Guard.cs
+FN:19,System.Void Shared.General.Guard::ThrowIfNull(System.Object,System.String)
+FNDA:5,System.Void Shared.General.Guard::ThrowIfNull(System.Object,System.String)
+DA:20,5
+DA:22,5
+DA:23,2
+DA:25,2
+DA:27,3
+BRDA:22,7,0,2
+BRDA:22,7,1,3
+FN:39,System.Void Shared.General.Guard::ThrowIfNull(System.Object,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfNull(System.Object,System.Type,System.String)
+DA:40,0
+DA:41,0
+DA:43,0
+DA:44,0
+DA:45,0
+DA:46,0
+DA:48,0
+BRDA:43,19,0,0
+BRDA:43,19,1,0
+FN:60,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String,System.String)
+FNDA:8,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String,System.String)
+DA:61,8
+DA:63,8
+DA:64,4
+DA:66,4
+DA:68,4
+BRDA:63,9,0,4
+BRDA:63,9,1,4
+FN:80,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String,System.Type,System.String)
+DA:81,0
+DA:82,0
+DA:84,0
+DA:85,0
+DA:86,0
+DA:87,0
+DA:89,0
+BRDA:84,21,0,0
+BRDA:84,21,1,0
+FN:101,System.Void Shared.General.Guard::ThrowIfInvalidGuid(System.Guid,System.String)
+FNDA:2,System.Void Shared.General.Guard::ThrowIfInvalidGuid(System.Guid,System.String)
+DA:102,2
+DA:104,2
+DA:105,1
+DA:107,1
+DA:109,1
+BRDA:104,14,0,1
+BRDA:104,14,1,1
+FN:122,System.Void Shared.General.Guard::ThrowIfInvalidGuid(System.Guid,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfInvalidGuid(System.Guid,System.Type,System.String)
+DA:123,0
+DA:125,0
+DA:126,0
+DA:128,0
+DA:129,0
+DA:131,0
+BRDA:125,14,0,0
+BRDA:125,14,1,0
+FN:144,System.Void Shared.General.Guard::ThrowIfInvalidEnum(System.Type,System.Object,System.String)
+FNDA:2,System.Void Shared.General.Guard::ThrowIfInvalidEnum(System.Type,System.Object,System.String)
+DA:145,2
+DA:147,2
+DA:148,1
+DA:149,1
+DA:151,1
+BRDA:147,13,0,1
+BRDA:147,13,1,1
+FN:165,System.Void Shared.General.Guard::ThrowIfInvalidEnum(System.Type,System.Object,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfInvalidEnum(System.Type,System.Object,System.Type,System.String)
+DA:166,0
+DA:168,0
+DA:169,0
+DA:170,0
+DA:171,0
+DA:173,0
+BRDA:168,13,0,0
+BRDA:168,13,1,0
+FN:185,System.Void Shared.General.Guard::ThrowIfNegative(System.Int32,System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfNegative(System.Int32,System.String)
+DA:186,3
+DA:187,3
+DA:188,1
+DA:189,1
+DA:191,2
+BRDA:187,7,0,1
+BRDA:187,7,1,2
+FN:204,System.Void Shared.General.Guard::ThrowIfNegative(System.Int32,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfNegative(System.Int32,System.Type,System.String)
+DA:205,0
+DA:206,0
+DA:207,0
+DA:208,0
+DA:209,0
+DA:211,0
+BRDA:206,7,0,0
+BRDA:206,7,1,0
+FN:223,System.Void Shared.General.Guard::ThrowIfZero(System.Int32,System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfZero(System.Int32,System.String)
+DA:224,3
+DA:225,3
+DA:226,1
+DA:227,1
+DA:229,2
+BRDA:225,7,0,1
+BRDA:225,7,1,2
+FN:242,System.Void Shared.General.Guard::ThrowIfZero(System.Int32,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfZero(System.Int32,System.Type,System.String)
+DA:243,0
+DA:244,0
+DA:245,0
+DA:246,0
+DA:247,0
+DA:249,0
+BRDA:244,7,0,0
+BRDA:244,7,1,0
+FN:261,System.Void Shared.General.Guard::ThrowIfNegative(System.Double,System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfNegative(System.Double,System.String)
+DA:262,3
+DA:263,3
+DA:264,1
+DA:265,1
+DA:267,2
+BRDA:263,15,0,1
+BRDA:263,15,1,2
+FN:280,System.Void Shared.General.Guard::ThrowIfNegative(System.Double,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfNegative(System.Double,System.Type,System.String)
+DA:281,0
+DA:282,0
+DA:283,0
+DA:284,0
+DA:285,0
+DA:287,0
+BRDA:282,15,0,0
+BRDA:282,15,1,0
+FN:299,System.Void Shared.General.Guard::ThrowIfZero(System.Double,System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfZero(System.Double,System.String)
+DA:300,3
+DA:301,3
+DA:302,1
+DA:303,1
+DA:305,2
+BRDA:301,15,0,1
+BRDA:301,15,1,2
+FN:318,System.Void Shared.General.Guard::ThrowIfZero(System.Double,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfZero(System.Double,System.Type,System.String)
+DA:319,0
+DA:320,0
+DA:321,0
+DA:322,0
+DA:323,0
+DA:325,0
+BRDA:320,15,0,0
+BRDA:320,15,1,0
+FN:337,System.Void Shared.General.Guard::ThrowIfNegative(System.Decimal,System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfNegative(System.Decimal,System.String)
+DA:338,3
+DA:339,3
+DA:340,1
+DA:341,1
+DA:343,2
+BRDA:339,14,0,1
+BRDA:339,14,1,2
+FN:356,System.Void Shared.General.Guard::ThrowIfNegative(System.Decimal,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfNegative(System.Decimal,System.Type,System.String)
+DA:357,0
+DA:358,0
+DA:359,0
+DA:360,0
+DA:361,0
+DA:363,0
+BRDA:358,14,0,0
+BRDA:358,14,1,0
+FN:375,System.Void Shared.General.Guard::ThrowIfZero(System.Decimal,System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfZero(System.Decimal,System.String)
+DA:376,3
+DA:377,3
+DA:378,1
+DA:379,1
+DA:381,2
+BRDA:377,14,0,1
+BRDA:377,14,1,2
+FN:394,System.Void Shared.General.Guard::ThrowIfZero(System.Decimal,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfZero(System.Decimal,System.Type,System.String)
+DA:395,0
+DA:396,0
+DA:397,0
+DA:398,0
+DA:399,0
+DA:401,0
+BRDA:396,14,0,0
+BRDA:396,14,1,0
+FN:413,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String[],System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String[],System.String)
+DA:414,3
+DA:416,3
+DA:417,2
+DA:419,2
+DA:421,1
+BRDA:416,2,0,2
+BRDA:416,2,1,1
+BRDA:416,18,0,2
+BRDA:416,18,1,1
+FN:434,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String[],System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.String[],System.Type,System.String)
+DA:435,0
+DA:437,0
+DA:438,0
+DA:439,0
+DA:440,0
+DA:442,0
+BRDA:437,2,0,0
+BRDA:437,2,1,0
+BRDA:437,18,0,0
+BRDA:437,18,1,0
+FN:454,System.Void Shared.General.Guard::ThrowIfContainsNullOrEmpty(System.String[],System.String)
+FNDA:3,System.Void Shared.General.Guard::ThrowIfContainsNullOrEmpty(System.String[],System.String)
+DA:455,3
+DA:457,17
+DA:458,5
+DA:460,5
+DA:461,3
+DA:462,1
+BRDA:457,34,1,5
+BRDA:457,34,0,1
+FN:476,System.Void Shared.General.Guard::ThrowIfContainsNullOrEmpty(System.String[],System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfContainsNullOrEmpty(System.String[],System.Type,System.String)
+DA:477,0
+DA:479,0
+DA:480,0
+DA:481,0
+DA:482,0
+DA:483,0
+BRDA:479,31,1,0
+BRDA:479,31,0,0
+FN:495,System.Void Shared.General.Guard::ThrowIfInvalidDate(System.DateTime,System.String)
+FNDA:2,System.Void Shared.General.Guard::ThrowIfInvalidDate(System.DateTime,System.String)
+DA:496,2
+DA:498,2
+DA:499,1
+DA:501,1
+DA:503,1
+BRDA:498,14,0,1
+BRDA:498,14,1,1
+FN:515,System.Void Shared.General.Guard::ThrowIfInvalidDate(System.DateTime,System.Type,System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfInvalidDate(System.DateTime,System.Type,System.String)
+DA:516,0
+DA:518,0
+DA:519,0
+DA:520,0
+DA:521,0
+DA:523,0
+BRDA:518,14,0,0
+BRDA:518,14,1,0
+FN:535,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.Byte[],System.String)
+FNDA:0,System.Void Shared.General.Guard::ThrowIfNullOrEmpty(System.Byte[],System.String)
+DA:536,0
+DA:538,0
+DA:539,0
+DA:541,0
+DA:543,0
+BRDA:538,2,0,0
+BRDA:538,2,1,0
+BRDA:538,18,0,0
+BRDA:538,18,1,0
+LF:151
+LH:66
+BRF:60
+BRH:28
+FNF:27
+FNH:13
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\General\GuidCalculator.cs
+FN:10,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid,System.Byte)
+FNDA:0,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid,System.Byte)
+DA:11,0
+DA:12,0
+DA:13,0
+DA:15,0
+DA:17,0
+DA:19,0
+DA:20,0
+DA:22,0
+DA:23,0
+BRDA:17,57,1,0
+BRDA:17,57,0,0
+FN:25,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid)
+FNDA:0,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid)
+DA:26,0
+DA:27,0
+DA:28,0
+FN:32,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid,System.Guid,System.Byte)
+FNDA:0,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid,System.Guid,System.Byte)
+DA:33,0
+DA:34,0
+DA:35,0
+DA:36,0
+DA:38,0
+DA:40,0
+DA:42,0
+DA:43,0
+DA:45,0
+DA:46,0
+BRDA:40,77,1,0
+BRDA:40,77,0,0
+FN:49,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid,System.Guid)
+FNDA:0,System.Guid Shared.General.GuidCalculator::Combine(System.Guid,System.Guid,System.Guid)
+DA:50,0
+DA:51,0
+DA:52,0
+LF:25
+LH:0
+BRF:4
+BRH:0
+FNF:4
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\General\TypeMap.cs
+FN:24,System.Void Shared.General.TypeMap::AddType(System.String)
+FNDA:0,System.Void Shared.General.TypeMap::AddType(System.String)
+DA:25,0
+DA:26,0
+DA:27,0
+DA:28,0
+FN:30,System.Void Shared.General.TypeMap::AddType(System.Type,System.String)
+FNDA:0,System.Void Shared.General.TypeMap::AddType(System.Type,System.String)
+DA:31,0
+DA:32,0
+DA:33,0
+DA:34,0
+FN:35,System.Type Shared.General.TypeMap::GetType(System.String)
+FNDA:0,System.Type Shared.General.TypeMap::GetType(System.String)
+DA:36,0
+FN:37,System.String Shared.General.TypeMap::GetTypeName()
+FNDA:0,System.String Shared.General.TypeMap::GetTypeName()
+DA:38,0
+FN:39,System.String Shared.General.TypeMap::GetTypeName(System.Object)
+FNDA:0,System.String Shared.General.TypeMap::GetTypeName(System.Object)
+DA:40,0
+FN:12,System.Void Shared.General.TypeMap::.cctor()
+FNDA:0,System.Void Shared.General.TypeMap::.cctor()
+DA:13,0
+DA:18,0
+LF:13
+LH:0
+BRF:0
+BRH:0
+FNF:6
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Extensions\ConfigurationRootExtensions.cs
+FN:22,System.Void Shared.Extensions.ConfigurationRootExtensions::LogConfiguration(Microsoft.Extensions.Configuration.IConfigurationRoot,System.Action`1<System.String>)
+FNDA:3,System.Void Shared.Extensions.ConfigurationRootExtensions::LogConfiguration(Microsoft.Extensions.Configuration.IConfigurationRoot,System.Action`1<System.String>)
+DA:23,3
+DA:24,3
+DA:26,2
+DA:27,130
+DA:28,62
+DA:29,62
+DA:30,62
+DA:31,2
+BRDA:27,53,1,62
+BRDA:27,53,0,2
+FN:38,System.Void Shared.Extensions.ConfigurationRootExtensions::LogConfigurationSettings(Microsoft.Extensions.Configuration.IConfigurationSection,System.Action`1<System.String>)
+FNDA:62,System.Void Shared.Extensions.ConfigurationRootExtensions::LogConfigurationSettings(Microsoft.Extensions.Configuration.IConfigurationSection,System.Action`1<System.String>)
+DA:39,62
+DA:40,62
+DA:42,62
+DA:43,4
+DA:44,4
+DA:45,4
+DA:46,26
+DA:47,7
+DA:48,7
+DA:49,1
+DA:50,6
+DA:51,1
+DA:52,1
+DA:53,7
+DA:54,2
+DA:55,2
+DA:56,2
+DA:58,1
+DA:60,6
+DA:61,6
+DA:62,6
+DA:64,7
+DA:65,4
+DA:66,62
+BRDA:42,16,0,4
+BRDA:46,370,1,7
+BRDA:48,91,0,1
+BRDA:53,282,1,2
+BRDA:53,282,0,1
+BRDA:48,91,1,6
+BRDA:61,336,0,5
+BRDA:61,336,1,1
+BRDA:46,370,0,4
+BRDA:42,16,1,62
+LF:32
+LH:32
+BRF:12
+BRH:12
+FNF:2
+FNH:2
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Extensions\DateTimeExtensions.cs
+FN:9,System.Guid Shared.Extensions.DateTimeExtensions::ToGuid(System.DateTime)
+FNDA:2,System.Guid Shared.Extensions.DateTimeExtensions::ToGuid(System.DateTime)
+DA:10,2
+DA:11,2
+DA:13,2
+DA:15,2
+DA:16,2
+LF:5
+LH:5
+BRF:0
+BRH:0
+FNF:1
+FNH:1
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Extensions\GuidExtensions.cs
+FN:9,System.DateTime Shared.Extensions.GuidExtensions::ToDateTime(System.Guid)
+FNDA:2,System.DateTime Shared.Extensions.GuidExtensions::ToDateTime(System.Guid)
+DA:10,2
+DA:11,2
+DA:13,2
+DA:15,2
+DA:16,2
+LF:5
+LH:5
+BRF:0
+BRH:0
+FNF:1
+FNH:1
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Extensions\HealthChecksBuilderExtensions.cs
+FN:23,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddEstateManagementService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+FNDA:0,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddEstateManagementService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+DA:24,0
+DA:25,0
+DA:27,0
+DA:28,0
+DA:29,0
+DA:30,0
+DA:31,0
+DA:32,0
+DA:33,0
+FN:42,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddEstateReportingService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+FNDA:0,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddEstateReportingService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+DA:43,0
+DA:44,0
+DA:46,0
+DA:47,0
+DA:48,0
+DA:49,0
+DA:50,0
+DA:51,0
+DA:52,0
+FN:61,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddFileProcessorService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+FNDA:0,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddFileProcessorService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+DA:62,0
+DA:63,0
+DA:65,0
+DA:66,0
+DA:67,0
+DA:68,0
+DA:69,0
+DA:70,0
+DA:71,0
+FN:80,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddMessagingService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+FNDA:0,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddMessagingService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+DA:81,0
+DA:82,0
+DA:84,0
+DA:85,0
+DA:86,0
+DA:87,0
+DA:88,0
+DA:89,0
+DA:90,0
+FN:99,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddSecurityService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+FNDA:0,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddSecurityService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+DA:100,0
+DA:101,0
+DA:102,0
+DA:103,0
+DA:104,0
+DA:105,0
+DA:106,0
+DA:107,0
+DA:108,0
+FN:117,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddTransactionProcessorService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+FNDA:0,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddTransactionProcessorService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+DA:118,0
+DA:119,0
+DA:121,0
+DA:122,0
+DA:123,0
+DA:124,0
+DA:125,0
+DA:126,0
+DA:127,0
+FN:136,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddVoucherManagementService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+FNDA:0,Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder Shared.Extensions.HealthChecksBuilderExtensions::AddVoucherManagementService(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder,System.Func`2<System.IServiceProvider,System.Net.Http.HttpClientHandler>)
+DA:137,0
+DA:138,0
+DA:140,0
+DA:141,0
+DA:142,0
+DA:143,0
+DA:144,0
+DA:145,0
+DA:146,0
+LF:63
+LH:0
+BRF:0
+BRH:0
+FNF:7
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Extensions\HostEnvironmentExtensions.cs
+FN:21,System.Boolean Shared.Extensions.HostEnvironmentExtensions::IsPreProduction(Microsoft.Extensions.Hosting.IHostEnvironment)
+FNDA:4,System.Boolean Shared.Extensions.HostEnvironmentExtensions::IsPreProduction(Microsoft.Extensions.Hosting.IHostEnvironment)
+DA:22,4
+DA:23,4
+DA:24,0
+DA:25,0
+DA:28,4
+DA:29,4
+BRDA:23,7,0,0
+BRDA:23,7,1,4
+LF:6
+LH:4
+BRF:2
+BRH:1
+FNF:1
+FNH:1
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Extensions\IApplicationBuilderExtenstions.cs
+FN:18,System.Void Shared.Extensions.IApplicationBuilderExtenstions::AddExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder)
+FNDA:0,System.Void Shared.Extensions.IApplicationBuilderExtenstions::AddExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder)
+DA:19,0
+DA:20,0
+DA:21,0
+FN:29,System.Void Shared.Extensions.IApplicationBuilderExtenstions::AddRequestLogging(Microsoft.AspNetCore.Builder.IApplicationBuilder)
+FNDA:0,System.Void Shared.Extensions.IApplicationBuilderExtenstions::AddRequestLogging(Microsoft.AspNetCore.Builder.IApplicationBuilder)
+DA:30,0
+DA:31,0
+DA:32,0
+FN:40,System.Void Shared.Extensions.IApplicationBuilderExtenstions::AddResponseLogging(Microsoft.AspNetCore.Builder.IApplicationBuilder)
+FNDA:0,System.Void Shared.Extensions.IApplicationBuilderExtenstions::AddResponseLogging(Microsoft.AspNetCore.Builder.IApplicationBuilder)
+DA:41,0
+DA:42,0
+DA:43,0
+LF:9
+LH:0
+BRF:0
+BRH:0
+FNF:3
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Extensions\StringExtensions.cs
+FN:18,System.Boolean Shared.Extensions.StringExtensions::TryParseJson(System.String,T&)
+FNDA:0,System.Boolean Shared.Extensions.StringExtensions::TryParseJson(System.String,T&)
+DA:19,0
+DA:21,0
+DA:23,0
+DA:24,0
+DA:26,0
+DA:27,0
+DA:29,0
+DA:30,0
+DA:31,0
+DA:32,0
+DA:34,0
+DA:35,0
+DA:36,0
+DA:37,0
+DA:39,0
+LF:15
+LH:0
+BRF:0
+BRH:0
+FNF:1
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\Exceptions\NotFoundException.cs
+FN:9,System.Void Shared.Exceptions.NotFoundException::.ctor()
+FNDA:0,System.Void Shared.Exceptions.NotFoundException::.ctor()
+DA:10,0
+DA:11,0
+DA:12,0
+FN:17,System.Void Shared.Exceptions.NotFoundException::.ctor(System.String)
+FNDA:1,System.Void Shared.Exceptions.NotFoundException::.ctor(System.String)
+DA:18,1
+DA:19,1
+DA:20,1
+FN:26,System.Void Shared.Exceptions.NotFoundException::.ctor(System.String,System.Exception)
+FNDA:0,System.Void Shared.Exceptions.NotFoundException::.ctor(System.String,System.Exception)
+DA:27,0
+DA:28,0
+DA:29,0
+LF:9
+LH:3
+BRF:0
+BRH:0
+FNF:3
+FNH:1
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\EntityFramework\Migrations\20191119150009_InitialDatabase.cs
+FN:8,System.Void Shared.Migrations.InitialDatabase::Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)
+FNDA:0,System.Void Shared.Migrations.InitialDatabase::Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)
+DA:9,0
+DA:10,0
+DA:11,0
+DA:12,0
+DA:13,0
+DA:14,0
+DA:15,0
+DA:16,0
+DA:17,0
+DA:18,0
+DA:19,0
+DA:20,0
+DA:21,0
+DA:23,0
+DA:24,0
+DA:25,0
+DA:26,0
+DA:27,0
+DA:28,0
+DA:29,0
+DA:30,0
+DA:31,0
+DA:32,0
+DA:33,0
+DA:34,0
+DA:35,0
+DA:36,0
+DA:37,0
+DA:38,0
+DA:39,0
+DA:40,0
+DA:41,0
+DA:43,0
+DA:44,0
+DA:45,0
+DA:46,0
+DA:48,0
+DA:49,0
+DA:50,0
+DA:51,0
+DA:52,0
+DA:53,0
+FN:55,System.Void Shared.Migrations.InitialDatabase::Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)
+FNDA:0,System.Void Shared.Migrations.InitialDatabase::Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)
+DA:56,0
+DA:57,0
+DA:58,0
+DA:60,0
+DA:61,0
+DA:62,0
+LF:48
+LH:0
+BRF:0
+BRH:0
+FNF:2
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\EntityFramework\Migrations\20191119150009_InitialDatabase.Designer.cs
+FN:16,System.Void Shared.Migrations.InitialDatabase::BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)
+FNDA:0,System.Void Shared.Migrations.InitialDatabase::BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)
+DA:17,0
+DA:19,0
+DA:20,0
+DA:21,0
+DA:22,0
+DA:24,0
+DA:25,0
+DA:26,0
+DA:27,0
+DA:28,0
+DA:29,0
+DA:30,0
+DA:31,0
+DA:32,0
+DA:33,0
+DA:34,0
+DA:35,0
+DA:36,0
+DA:37,0
+DA:38,0
+DA:39,0
+DA:40,0
+DA:41,0
+DA:42,0
+DA:43,0
+DA:44,0
+DA:45,0
+DA:46,0
+DA:47,0
+DA:48,0
+DA:49,0
+DA:50,0
+DA:51,0
+DA:53,0
+DA:54,0
+DA:55,0
+DA:56,0
+DA:57,0
+DA:58,0
+DA:59,0
+DA:60,0
+DA:61,0
+DA:62,0
+DA:63,0
+DA:64,0
+DA:65,0
+DA:66,0
+DA:67,0
+DA:69,0
+DA:70,0
+DA:71,0
+DA:72,0
+DA:73,0
+DA:74,0
+DA:75,0
+DA:76,0
+DA:78,0
+LF:57
+LH:0
+BRF:0
+BRH:0
+FNF:1
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\EntityFramework\Migrations\ConnectionStringConfigurationContextModelSnapshot.cs
+FN:14,System.Void Shared.Migrations.ConnectionStringConfigurationContextModelSnapshot::BuildModel(Microsoft.EntityFrameworkCore.ModelBuilder)
+FNDA:0,System.Void Shared.Migrations.ConnectionStringConfigurationContextModelSnapshot::BuildModel(Microsoft.EntityFrameworkCore.ModelBuilder)
+DA:15,0
+DA:17,0
+DA:18,0
+DA:19,0
+DA:20,0
+DA:22,0
+DA:23,0
+DA:24,0
+DA:25,0
+DA:26,0
+DA:27,0
+DA:28,0
+DA:29,0
+DA:30,0
+DA:31,0
+DA:32,0
+DA:33,0
+DA:34,0
+DA:35,0
+DA:36,0
+DA:37,0
+DA:38,0
+DA:39,0
+DA:40,0
+DA:41,0
+DA:42,0
+DA:43,0
+DA:44,0
+DA:45,0
+DA:46,0
+DA:47,0
+DA:48,0
+DA:49,0
+DA:51,0
+DA:52,0
+DA:53,0
+DA:54,0
+DA:55,0
+DA:56,0
+DA:57,0
+DA:58,0
+DA:59,0
+DA:60,0
+DA:61,0
+DA:62,0
+DA:63,0
+DA:64,0
+DA:65,0
+DA:67,0
+DA:68,0
+DA:69,0
+DA:70,0
+DA:71,0
+DA:72,0
+DA:73,0
+DA:74,0
+DA:76,0
+LF:57
+LH:0
+BRF:0
+BRH:0
+FNF:1
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\EntityFramework\DbContextFactory.cs
+FN:38,System.Func`2<System.String,T> Shared.EntityFramework.DbContextFactory`1::get_CreateContext()
+FNDA:0,System.Func`2<System.String,T> Shared.EntityFramework.DbContextFactory`1::get_CreateContext()
+DA:39,0
+FN:56,System.Void Shared.EntityFramework.DbContextFactory`1::GuardIdentifier(System.Guid)
+FNDA:0,System.Void Shared.EntityFramework.DbContextFactory`1::GuardIdentifier(System.Guid)
+DA:57,0
+DA:58,0
+DA:59,0
+DA:60,0
+DA:62,0
+BRDA:58,14,0,0
+BRDA:58,14,1,0
+FN:23,System.Void Shared.EntityFramework.DbContextFactory`1::.ctor(Shared.Repositories.IConnectionStringConfigurationRepository,System.Func`2<System.String,T>)
+FNDA:0,System.Void Shared.EntityFramework.DbContextFactory`1::.ctor(Shared.Repositories.IConnectionStringConfigurationRepository,System.Func`2<System.String,T>)
+DA:24,0
+DA:25,0
+DA:26,0
+DA:27,0
+DA:28,0
+DA:29,0
+FN:47,System.Void Shared.EntityFramework.DbContextFactory`1/<GetContext>d__5::MoveNext()
+FNDA:0,System.Void Shared.EntityFramework.DbContextFactory`1/<GetContext>d__5::MoveNext()
+DA:48,0
+DA:49,0
+DA:51,0
+DA:52,0
+DA:53,0
+DA:54,0
+LF:18
+LH:0
+BRF:2
+BRH:0
+FNF:4
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\EntityFramework\ConnectionStringConfiguration\ConnectionStringConfiguration.cs
+FN:18,System.Guid Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_Id()
+FNDA:0,System.Guid Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_Id()
+DA:19,0
+FN:22,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_ExternalIdentifier()
+FNDA:0,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_ExternalIdentifier()
+DA:23,0
+FN:24,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_ConnectionStringIdentifier()
+FNDA:0,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_ConnectionStringIdentifier()
+DA:25,0
+FN:28,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_ConnectionString()
+FNDA:0,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration::get_ConnectionString()
+DA:29,0
+LF:4
+LH:0
+BRF:0
+BRH:0
+FNF:4
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\EntityFramework\ConnectionStringConfiguration\ConnectionStringConfigurationContext.cs
+FN:53,Microsoft.EntityFrameworkCore.DbSet`1<Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration> Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::get_ConnectionStringConfiguration()
+FNDA:0,Microsoft.EntityFrameworkCore.DbSet`1<Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration> Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::get_ConnectionStringConfiguration()
+DA:54,0
+FN:61,Microsoft.EntityFrameworkCore.DbSet`1<Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType> Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::get_ConnectionStringType()
+FNDA:0,Microsoft.EntityFrameworkCore.DbSet`1<Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType> Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::get_ConnectionStringType()
+DA:62,0
+FN:78,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)
+FNDA:0,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)
+DA:79,0
+DA:80,0
+DA:81,0
+DA:82,0
+DA:83,0
+DA:85,0
+DA:86,0
+BRDA:80,17,0,0
+BRDA:80,17,1,0
+FN:100,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder)
+FNDA:0,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder)
+DA:101,0
+DA:102,0
+DA:103,0
+DA:104,0
+DA:105,0
+DA:106,0
+DA:107,0
+FN:23,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::.ctor()
+FNDA:0,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::.ctor()
+DA:24,0
+DA:25,0
+DA:27,0
+FN:32,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::.ctor(System.String)
+FNDA:0,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::.ctor(System.String)
+DA:33,0
+DA:34,0
+DA:35,0
+DA:36,0
+FN:41,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::.ctor(Microsoft.EntityFrameworkCore.DbContextOptions)
+FNDA:0,System.Void Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfigurationContext::.ctor(Microsoft.EntityFrameworkCore.DbContextOptions)
+DA:42,0
+DA:43,0
+DA:44,0
+LF:26
+LH:0
+BRF:2
+BRH:0
+FNF:7
+FNH:0
+end_of_record
+SF:c:\Projects\TransactionProcessing\Shared\Shared\EntityFramework\ConnectionStringConfiguration\ConnectionStringType.cs
+FN:14,System.Int32 Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType::get_Id()
+FNDA:0,System.Int32 Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType::get_Id()
+DA:15,0
+FN:23,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType::get_Description()
+FNDA:0,System.String Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType::get_Description()
+DA:24,0
+LF:2
+LH:0
+BRF:0
+BRH:0
+FNF:2
+FNH:0
+end_of_record
