@@ -68,7 +68,8 @@
 
         private string[] FilterLogEntries(TestLogger testLogger) {
             return testLogger.GetLogEntries().Where(l => l.Contains("PSLockDownPolicy") == false && String.IsNullOrEmpty(l) == false)
-                             .Where(l => l.Contains("Configuration Section") == false).ToArray();
+                             .Where(l => l.Contains("Configuration Section") == false)
+                             .Where(l => l.Contains("CF_USER_TEXT_ENCODING") == false).ToArray();
         }
 
         /// <summary>
