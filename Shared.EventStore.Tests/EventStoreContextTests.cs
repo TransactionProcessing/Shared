@@ -10,7 +10,9 @@
     using Aggregate;
     using DomainDrivenDesign.EventSourcing;
     using Ductus.FluentDocker.Builders;
+    using Ductus.FluentDocker.Commands;
     using Ductus.FluentDocker.Model.Builders;
+    using Ductus.FluentDocker.Model.Containers;
     using Ductus.FluentDocker.Services;
     using Ductus.FluentDocker.Services.Extensions;
     using EventStore;
@@ -122,18 +124,74 @@
             return settings;
         }
 
-        private INetworkService SetupTestNetwork(String networkName = null,
-                                                 Boolean reuseIfExists = false) {
-            networkName = String.IsNullOrEmpty(networkName) ? $"testnetwork{Guid.NewGuid()}" : networkName;
+        public static DockerEnginePlatform GetDockerEnginePlatform()
+        {
+            IHostService docker = GetDockerHost();
 
-            // Build a network
-            NetworkBuilder networkService = new Builder().UseNetwork(networkName);
-
-            if (reuseIfExists) {
-                networkService.ReuseIfExist();
+            if (docker.Host.IsLinuxEngine())
+            {
+                return DockerEnginePlatform.Linux;
             }
 
-            return networkService.Build();
+            if (docker.Host.IsWindowsEngine())
+            {
+                return DockerEnginePlatform.Windows;
+            }
+
+            throw new Exception("Unknown Engine Type");
+        }
+
+        public enum DockerEnginePlatform
+        {
+            Linux,
+
+            Windows
+        }
+
+        public static IHostService GetDockerHost()
+        {
+            IList<IHostService> hosts = new Hosts().Discover();
+            IHostService docker = hosts.FirstOrDefault(x => x.IsNative) ?? hosts.FirstOrDefault(x => x.Name == "default");
+            return docker;
+        }
+
+        public virtual INetworkService SetupTestNetwork(String networkName = null,
+                                                        Boolean reuseIfExists = false)
+        {
+
+            networkName = String.IsNullOrEmpty(networkName) ? $"testnetwork{Guid.NewGuid()}" : networkName;
+            DockerEnginePlatform engineType = GetDockerEnginePlatform();
+
+            if (engineType == DockerEnginePlatform.Windows)
+            {
+                var docker = GetDockerHost();
+                var network = docker.GetNetworks().Where(nw => nw.Name == networkName).SingleOrDefault();
+                if (network == null)
+                {
+                    Dictionary<String, String> driverOptions = new Dictionary<String, String>();
+                    driverOptions.Add("com.docker.network.windowsshim.networkname", networkName);
+
+                    network = docker.CreateNetwork(networkName,
+                                                   new NetworkCreateParams
+                                                   {
+                                                       Driver = "nat",
+                                                       DriverOptions = driverOptions,
+                                                       Attachable = true,
+                                                   });
+                }
+
+                return network;
+            }
+
+            if (engineType == DockerEnginePlatform.Linux)
+            {
+                // Build a network
+                NetworkBuilder networkService = new Builder().UseNetwork(networkName).ReuseIfExist();
+
+                return networkService.Build();
+            }
+
+            return null;
         }
 
         private void StartContainers(Boolean isSecureEventStore) {
