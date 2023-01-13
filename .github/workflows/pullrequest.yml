@@ -124,7 +124,7 @@ jobs:
         name: tracelogsios
         path: /Users/runner/txnproc/trace/
 
-buildmacos1:
+  buildmacos1:
     name: "Build and Test Pull Requests 1 - Mac"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
