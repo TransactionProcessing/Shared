@@ -99,61 +99,31 @@ jobs:
       with:
         dotnet-version: '7.0.x'
 
+    
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+
+    - name: Run Event Store Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+        
     - name: Trust root certificate
       run: |
         sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt        
         sudo security authorizationdb write com.apple.trust-settings.admin allow 
         sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" /usr/local/share/ca-certificates/ca.crt
         sudo security authorizationdb remove com.apple.trust-settings.admin
-
-    - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
-
-    - name: Build Code
-      run: dotnet build Shared.sln --configuration Release
           
-    - name: Run Unit Tests
+    - name: Run Event Store Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
-
-    - uses: actions/upload-artifact@v2
-      if: ${{ failure() }}
-      with:
-        name: tracelogsios
-        path: /Users/runner/txnproc/trace/
-
-  buildmacos1:
-    name: "Build and Test Pull Requests 1 - Mac"
-    env:
-        ASPNETCORE_ENVIRONMENT: "Production"
-
-    runs-on: macos-12
-
-    steps:
-    - uses: actions/checkout@v1
-
-    - name: Setup Docker
-      run: |
-        brew install docker
-        colima start --cpu 2 --memory 8 --disk 100
-
-    - name: Install NET 7
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: '7.0.x'
-            
-    - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
-
-    - name: Build Code
-      run: dotnet build Shared.sln --configuration Release
-          
-    - name: Run Unit Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
       if: ${{ failure() }}
