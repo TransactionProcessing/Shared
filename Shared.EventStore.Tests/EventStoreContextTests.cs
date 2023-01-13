@@ -48,7 +48,7 @@
             await Task.Delay(TimeSpan.FromSeconds(30));
 
             EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
+            settings.DefaultDeadline = TimeSpan.FromSeconds(60);
             EventStoreClient client = new(settings);
             EventStoreProjectionManagementClient projectionManagementClient = new(settings);
             IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
