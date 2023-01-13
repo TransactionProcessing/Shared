@@ -45,7 +45,6 @@ jobs:
         name: tracelogslinux
         path: /home/txnproc/trace/   
 
-
   buildwindows:
     name: "Build and Test Pull Requests - Windows"
     env:
@@ -104,7 +103,8 @@ jobs:
     - name: Trust root certificate
       run: |
         sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
-        sudo update-ca-certificates
+        #sudo update-ca-certificates
+        sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /usr/local/share/ca-certificates/ca.crt
 
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
