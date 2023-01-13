@@ -43,8 +43,7 @@
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore) {
-            // TODO: Secure EventStore
-            await this.EventStoreDockerHelper.StartContainersForScenarioRun("");
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -70,8 +69,7 @@
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore) {
-            // TODO: Secure EventStore
-            await this.EventStoreDockerHelper.StartContainersForScenarioRun("");
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -108,6 +106,11 @@
     
     public class EventStoreDockerHelper : DockerHelper
     {
+        public async Task StartContainers(Boolean isSecureEventStore) {
+            this.IsSecureEventStore = isSecureEventStore;
+            await this.StartContainersForScenarioRun("");
+        }
+
         public override async Task StartContainersForScenarioRun(String scenarioName) {
             INetworkService networkService = this.SetupTestNetwork();
             this.SetupContainerNames();
