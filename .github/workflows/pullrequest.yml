@@ -104,7 +104,10 @@ jobs:
       run: |
         sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
         #sudo update-ca-certificates
-        sudo security add-trusted-cert -d -r trustAsRoot -k /Library/Keychains/System.keychain /usr/local/share/ca-certificates/ca.crt
+        #sudo security add-trusted-cert -d -r trustAsRoot -k /Library/Keychains/System.keychain /usr/local/share/ca-certificates/ca.crt
+        sudo security authorizationdb write com.apple.trust-settings.admin allow 
+        sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" /usr/local/share/ca-certificates/ca.crt
+        sudo security authorizationdb remove com.apple.trust-settings.admin
 
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
