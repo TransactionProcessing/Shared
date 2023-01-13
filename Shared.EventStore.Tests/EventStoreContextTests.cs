@@ -134,6 +134,7 @@
                 true => false,
                 _ => true
             };
+            settings.DefaultDeadline = TimeSpan.FromSeconds(60);
 
             if (secureEventStore == false)
             {
