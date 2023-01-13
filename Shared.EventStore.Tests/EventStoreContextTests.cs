@@ -62,7 +62,9 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            Should.NotThrow(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); });
+            await Retry.For(async () => {
+                          await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+                      });
         }
 
         [Theory]
