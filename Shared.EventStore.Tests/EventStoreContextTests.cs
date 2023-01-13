@@ -111,6 +111,7 @@
     {
         public async Task StartContainers(Boolean isSecureEventStore) {
             this.IsSecureEventStore = isSecureEventStore;
+            this.SetHostTraceFolder("");
             await this.StartContainersForScenarioRun("");
         }
 
