@@ -94,7 +94,7 @@
 
             await Retry.For(async () => {
                                 List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None));
+                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
                                 resolvedEvents.Count.ShouldBe(events.Length);
                             });
