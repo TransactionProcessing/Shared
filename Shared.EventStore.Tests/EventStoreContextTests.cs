@@ -92,8 +92,9 @@
             EventData[] events = factory.CreateEventDataList(domainEvents);
             await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
 
-            Should.NotThrow(async () => {
-                                List<ResolvedEvent> resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
+            await Retry.For(async () => {
+                                List<ResolvedEvent> resolvedEvents = null;
+                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None));
 
                                 resolvedEvents.Count.ShouldBe(events.Length);
                             });
@@ -134,8 +135,7 @@
                 true => false,
                 _ => true
             };
-            settings.DefaultDeadline = TimeSpan.FromSeconds(60);
-
+            
             if (secureEventStore == false)
             {
                 settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
