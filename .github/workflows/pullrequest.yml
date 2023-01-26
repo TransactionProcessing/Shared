@@ -154,6 +154,6 @@ jobs:
         # The name of the SonarQube project
         sonarProjectName:  Shared
         # The name of the SonarQube organization in SonarCloud. For hosted SonarQube, skip this setting.
-        sonarOrganization: TransactionProcessing
+        sonarOrganization: transactionprocessing
 
 
