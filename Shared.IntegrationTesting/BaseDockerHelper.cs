@@ -110,10 +110,6 @@ public abstract class BaseDockerHelper
     #region Constructors
 
     public BaseDockerHelper() {
-        if (this.Containers.Count == 0){
-            int i = 0;
-        }
-
         this.Containers = new List<IContainerService>();
         this.TestNetworks = new List<INetworkService>();
         this.HealthCheckClient = new HealthCheckClient(new HttpClient(new SocketsHttpHandler {
