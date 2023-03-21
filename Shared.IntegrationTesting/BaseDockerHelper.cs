@@ -19,10 +19,11 @@ using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
 using EventStore.Client;
 using HealthChecks;
-using Logger;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Shouldly;
+using ILogger = Logger.ILogger;
 
 public enum DockerEnginePlatform
 {
@@ -73,7 +74,9 @@ public abstract class BaseDockerHelper
 
     protected String HostTraceFolder;
 
-    protected Dictionary<ContainerType, (String imageName, Boolean useLatest)> ImageDetails = new Dictionary<ContainerType, (String imageName, Boolean useLatest)>();
+    protected Dictionary<ContainerType, (String imageName, Boolean useLatest)> ImageDetails = new();
+
+    protected Dictionary<ContainerType, Int32> HostPorts = new Dictionary<ContainerType, Int32>();
 
     protected String MessagingServiceContainerName;
 
@@ -156,6 +159,8 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementacl:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
         }
+
+        this.HostPorts = new Dictionary<ContainerType, Int32>();
     }
 
     #endregion
@@ -227,6 +232,30 @@ public abstract class BaseDockerHelper
         }
 
         return details.Value;
+    }
+    public Int32? GetHostPort(ContainerType key)
+    {
+        KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
+        if (details.Equals(default(KeyValuePair<ContainerType, Int32>)))
+        {
+            // No details found so return a null
+            return null;
+        }
+
+        return details.Value;
+    }
+
+    public void SetHostPort(ContainerType key, Int32 hostPort)
+    {
+        KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
+        if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>)) == false)
+        {
+            // Found so we can overwrite
+            this.HostPorts[key] = hostPort;
+        }
+        else{
+            this.HostPorts.Add(key,hostPort);
+        }
     }
 
     public void SetImageDetails(ContainerType key,
@@ -541,8 +570,7 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices,
-                                                                               Int32? hostPort=null) {
+    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices) {
         this.Trace("About to Start Security Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -568,10 +596,10 @@ public abstract class BaseDockerHelper
         ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(this.SecurityServiceContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.SecurityService))
-                                                                 //.ExposePort(DockerPorts.SecurityServiceDockerPort)
                                                                  .MountHostFolder(this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
+        Int32? hostPort = this.GetHostPort(ContainerType.SecurityService);
         if (hostPort == null){
             securityServiceContainer = securityServiceContainer.ExposePort(DockerPorts.SecurityServiceDockerPort);
         }
@@ -1034,6 +1062,20 @@ public abstract class BaseDockerHelper
             throw;
         }
     }
+
+    //protected async Task<IContainerService> StartContainer(Func<List<INetworkService>, Task<IContainerService>> startContainerFunc, List<INetworkService> networkServices)
+    //{
+
+    //    try
+    //    {
+    //        return await startContainerFunc(networkServices);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        this.Error($"Error starting container [{startContainerFunc.Method.Name}]", ex);
+    //        throw;
+    //    }
+    //}
 
     #endregion
 }
