@@ -541,7 +541,8 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices) {
+    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices,
+                                                                               Int32? hostPort=null) {
         this.Trace("About to Start Security Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -567,9 +568,16 @@ public abstract class BaseDockerHelper
         ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(this.SecurityServiceContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.SecurityService))
-                                                                 .ExposePort(DockerPorts.SecurityServiceDockerPort)
+                                                                 //.ExposePort(DockerPorts.SecurityServiceDockerPort)
                                                                  .MountHostFolder(this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
+
+        if (hostPort == null){
+            securityServiceContainer = securityServiceContainer.ExposePort(DockerPorts.SecurityServiceDockerPort);
+        }
+        else{
+            securityServiceContainer = securityServiceContainer.ExposePort(hostPort.Value, DockerPorts.SecurityServiceDockerPort);
+        }
 
         // Now build and return the container                
         IContainerService builtContainer = securityServiceContainer.Build().Start().WaitForPort($"{DockerPorts.SecurityServiceDockerPort}/tcp", 30000);
