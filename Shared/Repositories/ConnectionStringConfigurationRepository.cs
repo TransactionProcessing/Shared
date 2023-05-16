@@ -1,12 +1,14 @@
 ﻿namespace Shared.Repositories
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Threading;
     using System.Threading.Tasks;
     using EntityFramework.ConnectionStringConfiguration;
     using Exceptions;
     using Microsoft.EntityFrameworkCore;
 
+    [ExcludeFromCodeCoverage]
     public class ConnectionStringConfigurationRepository : IConnectionStringConfigurationRepository
     {
         #region Fields

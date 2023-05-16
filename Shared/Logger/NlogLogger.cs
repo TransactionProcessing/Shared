@@ -1,12 +1,14 @@
 ﻿namespace Shared.Logger
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using NLog;
 
     /// <summary>
     /// 
     /// </summary>
     /// <seealso cref="Shared.Logger.ILogger" />
+    [ExcludeFromCodeCoverage]
     public class NlogLogger : ILogger
     {
         #region Fields

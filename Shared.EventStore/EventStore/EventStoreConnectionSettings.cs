@@ -1,7 +1,9 @@
 ﻿namespace Shared.EventStore.EventStore
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
+    [ExcludeFromCodeCoverage]
     public class EventStoreConnectionSettings
     {
         #region Public Properties

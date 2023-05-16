@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace Shared.Serialisation
 {
+    using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
 
+    [ExcludeFromCodeCoverage]
     public class JsonIgnoreAttributeIgnorerContractResolver : DefaultContractResolver
     {
         #region Methods

@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Shared.EntityFramework.ConnectionStringConfiguration
 {
+    using System.Diagnostics.CodeAnalysis;
+
+    [ExcludeFromCodeCoverage]
     public class ConnectionStringConfigurationContext : DbContext
     {
         #region Fields

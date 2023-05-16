@@ -47,11 +47,11 @@ namespace Shared.Middleware
             await context.Request.Body.CopyToAsync(requestBodyStream);
             requestBodyStream.Seek(0, SeekOrigin.Begin);
 
-            var url = UriHelper.GetDisplayUrl(context.Request);
-            var requestBodyText = new StreamReader(requestBodyStream).ReadToEnd();
+            var url = context.Request.GetDisplayUrl();
+            var requestBodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
             StringBuilder logMessage = new StringBuilder();
             logMessage.Append($"Request: Method: {context.Request.Method} Url: {url}");
-            if (!String.IsNullOrEmpty(requestBodyText))
+            if (requestBodyText != String.Empty)
             {
                 logMessage.Append(" ");
                 logMessage.Append($"Body: {requestBodyText}");
@@ -67,24 +67,5 @@ namespace Shared.Middleware
         #endregion
 
         #endregion
-    }
-
-    internal static class Helpers
-    {
-        internal static Boolean IsHealthCheckRequest(String url) => url.EndsWith("/health");
-
-        internal static void LogMessage(String url,
-                                        StringBuilder message)
-        {
-            if (IsHealthCheckRequest(url))
-            {
-                // TODO: new logger method??
-                Logger.Logger.LogInformation($"HEALTH_CHECK | {message}");
-            }
-            else
-            {
-                Logger.Logger.LogInformation($"{message}");
-            }
-        }
     }
 }

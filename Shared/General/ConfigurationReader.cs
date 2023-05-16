@@ -1,7 +1,9 @@
 ﻿namespace Shared.General
 {
     using System;
+    using System.Collections.Generic;
     using Microsoft.Extensions.Configuration;
+    using Newtonsoft.Json;
 
     public static class ConfigurationReader
     {
@@ -89,15 +91,18 @@
             {
                 throw new InvalidOperationException("Configuration Reader has not been initialised");
             }
-            IConfigurationSection section = ConfigurationReader.ConfigurationRoot.GetSection(sectionName);
-            if (section == null)
-            {
-                throw new Exception($"Section [{sectionName}] not found.");
+
+            IConfigurationSection section = null;
+            try{
+                section = ConfigurationReader.ConfigurationRoot.GetRequiredSection(sectionName);
+            }
+            catch(InvalidOperationException){
+                throw new KeyNotFoundException($"Section [{sectionName}] not found.");
             }
 
             if (section[keyName] == null)
             {
-                throw new Exception($"No configuration value was found for key [{sectionName}:{keyName}]");
+                throw new KeyNotFoundException($"No configuration value was found for key [{sectionName}:{keyName}]");
             }
 
             return section[keyName];
@@ -109,18 +114,27 @@
                 throw new InvalidOperationException("Configuration Reader has not been initialised");
             }
 
-            IConfigurationSection section = ConfigurationReader.ConfigurationRoot.GetSection(sectionName);
-            if (section == null) {
-                throw new Exception($"Section [{sectionName}] not found.");
+            IConfigurationSection section = null;
+            try
+            {
+                section = ConfigurationReader.ConfigurationRoot.GetRequiredSection(sectionName);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new KeyNotFoundException($"Section [{sectionName}] not found.");
             }
 
-            T value = section.Get<T>();
+            String value = section[keyName];
 
-            if (value == null) {
-                throw new Exception($"No configuration value was found for key [{sectionName}:{keyName}]");
+            if (value == null){
+                throw new KeyNotFoundException($"No configuration value was found for key [{sectionName}:{keyName}]");
             }
+            
+            T returnValue = default(T);
 
-            return value;
+            returnValue = JsonConvert.DeserializeAnonymousType(value, returnValue);
+            
+            return returnValue;
         }
 
         #endregion

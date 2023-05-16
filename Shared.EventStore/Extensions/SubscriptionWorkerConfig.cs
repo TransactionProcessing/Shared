@@ -1,7 +1,9 @@
 ﻿namespace Shared.EventStore.Extensions;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
+[ExcludeFromCodeCoverage]
 public class SubscriptionWorkerConfig
 {
     #region Properties

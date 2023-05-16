@@ -2,6 +2,9 @@
 
 namespace Shared.Exceptions
 {
+    using System.Diagnostics.CodeAnalysis;
+
+    [ExcludeFromCodeCoverage]
     public class NotFoundException : Exception
     {
         /// <summary>

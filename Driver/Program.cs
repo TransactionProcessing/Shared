@@ -33,16 +33,27 @@
             settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
             settings.ConnectivitySettings.Insecure = false;
             settings.DefaultCredentials = new UserCredentials("admin", "changeit");
-            settings.ConnectivitySettings.Address = new Uri("esdb://127.0.0.1:2113?tls=true&tlsVerifyCert=false");
+            settings.ConnectivitySettings.Address = new Uri("esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false");
 
             return settings;
         }
 
         private static async Task Main(String[] args) {
-            await Program.SubscriptionsTest();
-            
+            //await Program.SubscriptionsTest();
+            await Program.QueryTest();
+
             //TestDockerHelper t = new TestDockerHelper();
             //await t.StartContainersForScenarioRun("");
+        }
+
+        private static async Task QueryTest(){
+            String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
+            EventStoreClient client = new EventStoreClient(Program.ConfigureEventStoreSettings());
+            EventStoreProjectionManagementClient projection = new EventStoreProjectionManagementClient(Program.ConfigureEventStoreSettings());
+            EventStoreContext context = new EventStoreContext(client, projection);
+
+            var result = await context.RunTransientQuery(query, CancellationToken.None);
+            Console.WriteLine(result);
         }
 
         private static async Task SubscriptionsTest() {

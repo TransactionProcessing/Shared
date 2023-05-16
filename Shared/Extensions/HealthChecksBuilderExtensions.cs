@@ -32,25 +32,7 @@
                                        configureHttpMessageHandler:customHttpHandler);
         }
 
-        /// <summary>
-        /// Adds the estate reporting service.
-        /// </summary>
-        /// <param name="builder">The builder.</param>
-        /// <param name="customHttpHandler">The custom HTTP handler.</param>
-        /// <returns></returns>
-        public static IHealthChecksBuilder AddEstateReportingService(this IHealthChecksBuilder builder,
-                                                                     Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
-        {
-            Uri uri = new Uri($"{ConfigurationReader.GetValue("AppSettings", "EstateReportingApi")}/health");
-
-            return builder.AddUrlGroup(uri,
-                                       HttpMethod.Get,
-                                       "Estate Reporting Service",
-                                       HealthStatus.Unhealthy,
-                                       new[] {"estatereporting"},
-                                       configureHttpMessageHandler:customHttpHandler);
-        }
-
+        
         /// <summary>
         /// Adds the file processor service.
         /// </summary>
@@ -125,26 +107,7 @@
                                        tags:new[] {"transactionprocessing"},
                                        configureHttpMessageHandler:customHttpHandler);
         }
-
-        /// <summary>
-        /// Adds the voucher management service.
-        /// </summary>
-        /// <param name="builder">The builder.</param>
-        /// <param name="customHttpHandler">The custom HTTP handler.</param>
-        /// <returns></returns>
-        public static IHealthChecksBuilder AddVoucherManagementService(this IHealthChecksBuilder builder,
-                                                                       Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
-        {
-            Uri uri = new Uri($"{ConfigurationReader.GetValue("AppSettings", "VoucherManagementApi")}/health");
-
-            return builder.AddUrlGroup(uri,
-                                       name:"Voucher Management Service",
-                                       httpMethod:HttpMethod.Get,
-                                       failureStatus:HealthStatus.Unhealthy,
-                                       tags:new[] {"voucherprocessing"},
-                                       configureHttpMessageHandler:customHttpHandler);
-        }
-
+        
         #endregion
     }
 }

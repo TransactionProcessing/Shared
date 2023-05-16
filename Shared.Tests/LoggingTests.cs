@@ -6,21 +6,22 @@ using Shared.General;
 using Shouldly;
 using Xunit;
 
-namespace Logging.Tests
-{
+namespace Shared.Tests{
+    using Microsoft.AspNetCore.Http;
+    using Shared.Middleware;
+    using Shared.Tests;
+    using System.IO;
+    using System.Threading.Tasks;
     using Shared.Logger;
 
-    public class LoggingTests
+    public partial class SharedTests
     {
         [Fact]
-        public void Logger_Initialise_IsInitialised()
-        {
-            ILogger logger = NullLogger.Instance;
-            Logger.Initialise(logger);
-
+        public void Logger_Initialise_IsInitialised(){
+            TestHelpers.InitialiseLogger();
             Logger.IsInitialised.ShouldBeTrue();
         }
-        
+
         [Theory]
         [InlineData(LogLevel.Critical)]
         [InlineData(LogLevel.Debug)]
@@ -28,15 +29,11 @@ namespace Logging.Tests
         [InlineData(LogLevel.Information)]
         [InlineData(LogLevel.Trace)]
         [InlineData(LogLevel.Warning)]
-        public void Logger_LogMethods_LogWrittenNoErrors(LogLevel loglevel)
-        {
-            ILogger logger = NullLogger.Instance;
-
+        public void Logger_LogMethods_LogWrittenNoErrors(LogLevel loglevel){
+            TestHelpers.InitialiseLogger();
             String message = "Log Message";
-            Logger.Initialise(logger);
-
-            switch (loglevel)
-            {
+            
+            switch(loglevel){
                 case LogLevel.Critical:
                     Should.NotThrow(() => Logger.LogCritical(new Exception(message)));
                     break;
@@ -56,6 +53,6 @@ namespace Logging.Tests
                     Should.NotThrow(() => Logger.LogWarning(message));
                     break;
             }
-        }        
+        }
     }
 }

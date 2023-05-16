@@ -3,6 +3,7 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using General;
     using Microsoft.EntityFrameworkCore;
     using Repositories;
 
@@ -46,21 +47,14 @@
                                                 String connectionStringIdentifier,            
                                                 CancellationToken cancellationToken)
         {
-            this.GuardIdentifier(identifier);
+            Guard.ThrowIfInvalidGuid(identifier,nameof(identifier));
+            Guard.ThrowIfNullOrEmpty(connectionStringIdentifier,nameof(connectionStringIdentifier));
 
             String connectionString =
                 await this.ConnectionStringConfigurationRepository.GetConnectionString(identifier.ToString(), connectionStringIdentifier, cancellationToken);
             return this.CreateContext(connectionString);
         }
-
-        private void GuardIdentifier(Guid identifier)
-        {
-            if (identifier == Guid.Empty)
-            {
-                throw new ArgumentNullException(nameof(identifier));
-            }
-        }
-
+        
         #endregion
     }
 }

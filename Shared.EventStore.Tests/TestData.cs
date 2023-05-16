@@ -1,11 +1,46 @@
 namespace Shared.EventStore.Tests
 {
+    using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
+    using global::EventStore.Client;
+    using Newtonsoft.Json;
+    using Shared.General;
+    using System.Text;
+    using DomainDrivenDesign.EventSourcing;
+    using NLog.LayoutRenderers.Wrappers;
     using SubscriptionWorker;
 
     public class TestData
     {
         #region Methods
+
+        public static Guid AggregateId = Guid.Parse("103B335B-540A-4985-BB80-FD9B2BABF866");
+        public static Guid EventId = Guid.Parse("C9416757-582C-4F67-A320-80FE1E937045");
+
+        public static String EstateName = "Test Estate 1";
+
+        public static EventRecord CreateEventRecord<T>(T domainEvent, String streamId) where T : DomainEvent
+        {
+            Byte[] eventData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainEvent));
+            Byte[] customEventMetaData = Encoding.UTF8.GetBytes(String.Empty);
+
+            Dictionary<String, String> metaData = new Dictionary<String, String>();
+            metaData.Add("type", domainEvent.GetType().FullName);
+            metaData.Add("created", "1000000");
+            metaData.Add("content-type", "application-json");
+
+            TypeMap.AddType(typeof(T), domainEvent.GetType().FullName);
+
+            EventRecord r = new EventRecord(streamId,
+                                            Uuid.FromGuid(domainEvent.EventId),
+                                            0,
+                                            new Position(0, 0),
+                                            metaData,
+                                            eventData,
+                                            customEventMetaData);
+            return r;
+        }
 
         public static List<PersistentSubscriptionInfo> GetPersistentSubscriptions_DemoEstate()
         {

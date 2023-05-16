@@ -80,7 +80,7 @@
 
             String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
 
-            IList<ResolvedEvent> events = await this.EventStoreContext.GetEventsBackwardAsync(streamName, 1, cancellationToken);
+            IList<ResolvedEvent> events = await this.EventStoreContext.GetEventsBackward(streamName, 1, cancellationToken);
 
             aggregate = this.ProcessEvents(aggregate, events);
 

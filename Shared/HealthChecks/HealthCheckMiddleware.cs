@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Text;
     using System.Text.Json;
@@ -9,6 +10,7 @@
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
 
+    [ExcludeFromCodeCoverage]
     public class HealthCheckMiddleware
     {
         #region Methods
