@@ -23,7 +23,7 @@ namespace Shared.Extensions
                 JsonSerializerSettings settings = new JsonSerializerSettings();
                 settings.MissingMemberHandling = MissingMemberHandling.Error;
 
-                result = JsonConvert.DeserializeObject<T>(obj);
+                result = JsonConvert.DeserializeObject<T>(obj, settings);
                 return true;
             }
             catch (JsonReaderException jrex)

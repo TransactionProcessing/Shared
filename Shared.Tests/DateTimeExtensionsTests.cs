@@ -5,7 +5,7 @@
     using Shouldly;
     using Xunit;
 
-    public class DateTimeExtensionsTests
+    public partial class SharedTests
     {
         #region Methods
 

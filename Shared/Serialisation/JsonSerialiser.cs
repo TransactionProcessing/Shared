@@ -1,9 +1,11 @@
 ﻿namespace Shared.Serialisation;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
+[ExcludeFromCodeCoverage]
 public class JsonSerialiser : IStringSerialiser
 {
     #region Constructors

@@ -1,11 +1,13 @@
 ﻿namespace Shared.Logger
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
     /// <summary>
     /// 
     /// </summary>
     /// <seealso cref="Shared.Logger.ILogger" />
+    [ExcludeFromCodeCoverage]
     public class NullLogger : ILogger
     {
         #region Properties

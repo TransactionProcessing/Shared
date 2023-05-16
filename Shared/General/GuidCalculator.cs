@@ -1,7 +1,9 @@
 ﻿namespace Shared.General
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
+    [ExcludeFromCodeCoverage]
     public static class GuidCalculator
     {
         #region Methods

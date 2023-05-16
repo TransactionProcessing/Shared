@@ -2,7 +2,9 @@
 {
     using System;
     using System.ComponentModel.DataAnnotations;
+    using System.Diagnostics.CodeAnalysis;
 
+    [ExcludeFromCodeCoverage]
     public class ConnectionStringType
     {
         /// <summary>

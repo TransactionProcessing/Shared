@@ -2,10 +2,13 @@ namespace Shared.EventStore.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Threading;
     using System.Threading.Tasks;
     using DomainDrivenDesign.EventSourcing;
     using EventHandling;
+    using Shouldly;
+    using Xunit;
 
     public record EstateCreatedEvent : DomainEvent
     {
@@ -53,6 +56,19 @@ namespace Shared.EventStore.Tests
         public async Task Handle(IDomainEvent domainEvent, CancellationToken cancellationToken)
         {
             DomainEvents.Add(domainEvent);
+        }
+    }
+
+    public class DomainEventTests{
+        [Fact]
+        public void DomainEvent_CanBeCreated_IsCreated(){
+            DomainEvent d = new DomainEvent(TestData.AggregateId, TestData.EventId);
+            d.AggregateId.ShouldBe(TestData.AggregateId);
+            d.EventId.ShouldBe(TestData.EventId);
+            d.EventType.ShouldBe("DomainEvent");
+            d.EventNumber.ShouldBe(0);
+            d.EventTimestamp.ShouldBe(DateTimeOffset.MinValue);
+            d.AggregateVersion.ShouldBe(0);
         }
     }
 }

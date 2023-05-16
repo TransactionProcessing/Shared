@@ -1,8 +1,10 @@
 ﻿namespace Shared.Logger
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using Microsoft.Extensions.Logging;
 
+    [ExcludeFromCodeCoverage]
     public class MicrosoftLogger : ILogger
     {
         #region Fields

@@ -9,21 +9,21 @@ namespace Driver
     using Shared.EventStore.Aggregate;
     using Shared.EventStore.EventStore;
 
-    public class TestAggregate : Aggregate
+    public class TestAggregate1 : Aggregate
     {
         public String AggregateName { get; private set; }
 
-        public static TestAggregate Create(Guid aggregateId)
+        public static TestAggregate1 Create(Guid aggregateId)
         {
-            return new TestAggregate(aggregateId);
+            return new TestAggregate1(aggregateId);
         }
 
-        public TestAggregate()
+        public TestAggregate1()
         {
 
         }
 
-        private TestAggregate(Guid aggregateId)
+        private TestAggregate1(Guid aggregateId)
         {
             this.AggregateId = aggregateId;
         }
@@ -38,13 +38,9 @@ namespace Driver
             this.PlayEvent((dynamic)domainEvent);
         }
         
-        public Object GetAggregateMetadata()
-        {
-            return null;
-        }
-
-        private void PlayEvent(AggregateNameSetEvent domainEvent)
-        {
+        private void PlayEvent(AggregateNameSetEvent domainEvent){
+            if (AggregateName == "Error")
+                throw new Exception("Error Aggregate");
             this.AggregateName = domainEvent.AggregateName;
         }
 

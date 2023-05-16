@@ -6,7 +6,9 @@ using System.Text;
 namespace Shared.EntityFramework.ConnectionStringConfiguration
 {
     using System.ComponentModel.DataAnnotations.Schema;
+    using System.Diagnostics.CodeAnalysis;
 
+    [ExcludeFromCodeCoverage]
     public class ConnectionStringConfiguration
     {
         /// <summary>

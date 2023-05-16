@@ -1,10 +1,12 @@
 ﻿namespace Shared.Logger
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
     /// <summary>
     /// 
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public static class Logger
     {
         #region Fields
