@@ -62,7 +62,7 @@ namespace Shared.EventStore.Tests
         }
     }
 
-    public class TestAggregate : Aggregate
+    public record TestAggregate : Aggregate
     {
         public String AggregateName { get; private set; }
 

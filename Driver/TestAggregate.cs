@@ -9,7 +9,7 @@ namespace Driver
     using Shared.EventStore.Aggregate;
     using Shared.EventStore.EventStore;
 
-    public class TestAggregate1 : Aggregate
+    public record TestAggregate1 : Aggregate
     {
         public String AggregateName { get; private set; }
 
