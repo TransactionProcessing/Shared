@@ -7,7 +7,7 @@
     /// <summary>
     /// 
     /// </summary>
-    public abstract class Aggregate
+    public abstract record Aggregate
     {
         #region Constructors
 
