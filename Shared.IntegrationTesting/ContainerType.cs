@@ -11,6 +11,5 @@ public enum ContainerType
     EstateManagement,
     TransactionProcessor,
     FileProcessor,
-    VoucherManagementAcl,
     TransactionProcessorAcl
 }

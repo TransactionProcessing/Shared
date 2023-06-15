@@ -101,11 +101,7 @@ public abstract class BaseDockerHelper
     protected String TransactionProcessorContainerName;
 
     protected Int32 TransactionProcessorPort;
-
-    protected String VoucherManagementAclContainerName;
-
-    protected Int32 VoucherManagementAclPort;
-
+    
     protected Boolean UseSecureSqlServerDatabase;
 
     #endregion
@@ -137,7 +133,6 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagementwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
-            this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementaclwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
         }
         else {
@@ -156,7 +151,6 @@ public abstract class BaseDockerHelper
             this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
-            this.ImageDetails.Add(ContainerType.VoucherManagementAcl, ("stuartferguson/vouchermanagementacl:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
         }
 
@@ -314,7 +308,6 @@ public abstract class BaseDockerHelper
         this.MessagingServiceContainerName = $"messaging{this.TestId:N}";
         this.TransactionProcessorContainerName = $"transaction{this.TestId:N}";
         this.TransactionProcessorAclContainerName = $"transactionacl{this.TestId:N}";
-        this.VoucherManagementAclContainerName = $"vouchermanagementacl{this.TestId:N}";
     }
 
     protected virtual String SetConnectionString(String settingName,
@@ -868,42 +861,6 @@ public abstract class BaseDockerHelper
         return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupVoucherManagementAclContainer(List<INetworkService> networkServices) {
-        this.Trace("About to Start Voucher Management ACL Container");
-
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
-        environmentVariables.Add($"urls=http://*:{DockerPorts.VoucherManagementAclDockerPort}");
-
-        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.FileProcessor);
-
-        if (additionalEnvironmentVariables != null)
-        {
-            environmentVariables.AddRange(additionalEnvironmentVariables);
-        }
-
-        ContainerBuilder voucherManagementAclContainer = new Builder().UseContainer().WithName(this.VoucherManagementAclContainerName)
-                                                                      .WithEnvironment(environmentVariables.ToArray())
-                                                                      .UseImageDetails(this.GetImageDetails(ContainerType.VoucherManagementAcl))
-                                                                      .ExposePort(DockerPorts.VoucherManagementAclDockerPort)
-                                                                      .MountHostFolder(this.HostTraceFolder)
-                                                                      .SetDockerCredentials(this.DockerCredentials);
-
-        // Now build and return the container                
-        IContainerService builtContainer = voucherManagementAclContainer.Build().Start().WaitForPort($"{DockerPorts.VoucherManagementAclDockerPort}/tcp", 30000);
-        foreach (INetworkService networkService in networkServices)
-        {
-            networkService.Attach(builtContainer, false);
-        }
-        this.Trace("Voucher Management ACL Container Started");
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.VoucherManagementAclPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.VoucherManagementAclDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.VoucherManagementAcl);
-
-        return builtContainer;
-    }
-    
     public abstract Task StartContainersForScenarioRun(String scenarioName);
 
     public abstract Task StopContainersForScenarioRun();
@@ -948,7 +905,6 @@ public abstract class BaseDockerHelper
             ContainerType.TestHost => ("http", this.TestHostServicePort),
             ContainerType.TransactionProcessor => ("http", this.TransactionProcessorPort),
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
-            ContainerType.VoucherManagementAcl => ("http", this.VoucherManagementAclPort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
             _ => (null, 0)
         };
@@ -1062,20 +1018,6 @@ public abstract class BaseDockerHelper
             throw;
         }
     }
-
-    //protected async Task<IContainerService> StartContainer(Func<List<INetworkService>, Task<IContainerService>> startContainerFunc, List<INetworkService> networkServices)
-    //{
-
-    //    try
-    //    {
-    //        return await startContainerFunc(networkServices);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        this.Error($"Error starting container [{startContainerFunc.Method.Name}]", ex);
-    //        throw;
-    //    }
-    //}
-
+    
     #endregion
 }
