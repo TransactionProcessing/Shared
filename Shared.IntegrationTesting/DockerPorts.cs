@@ -23,6 +23,4 @@ public static class DockerPorts
     public const Int32 TransactionProcessorAclDockerPort = 5003;
 
     public const Int32 TransactionProcessorDockerPort = 5002;
-
-    public const Int32 VoucherManagementAclDockerPort = 5008;
 }

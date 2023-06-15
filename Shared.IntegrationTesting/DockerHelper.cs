@@ -113,8 +113,6 @@ public class DockerHelper : BaseDockerHelper
 
         await StartContainer(this.SetupFileProcessorContainer, networks);
 
-        await StartContainer(this.SetupVoucherManagementAclContainer, networks);
-
         await StartContainer(this.SetupTransactionProcessorAclContainer, networks);
 
         await this.LoadEventStoreProjections();
