@@ -13,3 +13,5 @@
 | **Shared** | [![Shared MyGet Badge](https://buildstats.info/myget/transactionprocessing/Shared)](https://buildstats.info/myget/transactionprocessing/Shared) |
 | **Shared.DomainDrivenDesign**| [![Shared.DomainDrivenDesign MyGet Badge](https://buildstats.info/myget/transactionprocessing/Shared.DomainDrivenDesign)](https://buildstats.info/myget/transactionprocessing/Shared.DomainDrivenDesign) |
 | **Shared.IntegrationTesting**| [![Shared.IntegrationTesting  MyGet Badge](https://buildstats.info/myget/transactionprocessing/Shared.IntegrationTesting )](https://buildstats.info/myget/transactionprocessing/Shared.IntegrationTesting ) |
+
+![Alt](https://repobeats.axiom.co/api/embed/68c83258ba479c3295325871755c68ccaa0f4647.svg "Repobeats analytics image")
