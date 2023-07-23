@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,10 +19,13 @@ public class EventStoreDockerHelper : DockerHelper
         this.SetHostTraceFolder("");
         await this.StartContainersForScenarioRun("");
 
-        //this.EventStoreHttpPort
+        String url = isSecureEventStore switch {
+            true => $"https://127.0.0.1:{this.EventStoreHttpPort}/ping",
+            _ => $"http://127.0.0.1:{this.EventStoreHttpPort}/ping"
+        };
         await Retry.For(async () => {
                             HttpClient client = new HttpClient();
-                            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{this.EventStoreHttpPort}/ping");
+                            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                             var response = await client.SendAsync(request, CancellationToken.None);
                             var responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
 
