@@ -3,10 +3,13 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Ductus.FluentDocker.Services;
 using global::EventStore.Client;
 using IntegrationTesting;
+using Newtonsoft.Json;
+using Shouldly;
 
 public class EventStoreDockerHelper : DockerHelper
 {
@@ -14,6 +17,21 @@ public class EventStoreDockerHelper : DockerHelper
         this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder("");
         await this.StartContainersForScenarioRun("");
+
+        //this.EventStoreHttpPort
+        await Retry.For(async () => {
+                            HttpClient client = new HttpClient();
+                            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{this.EventStoreHttpPort}/ping");
+                            var response = await client.SendAsync(request, CancellationToken.None);
+                            var responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
+
+                            var responseData = new{
+                                                      text = String.Empty
+                                                  };
+
+                            var x = JsonConvert.DeserializeAnonymousType(responseContent, responseData);
+                            x.text.ShouldBe("Ping request successfully handled");
+                        });
     }
 
     public override async Task StartContainersForScenarioRun(String scenarioName) {
@@ -24,6 +42,7 @@ public class EventStoreDockerHelper : DockerHelper
                                   new List<INetworkService> {
                                                                 networkService
                                                             });
+
     }
 
     public EventStoreClientSettings CreateEventStoreClientSettings(Boolean secureEventStore)
