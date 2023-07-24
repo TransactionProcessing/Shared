@@ -45,7 +45,7 @@
 
         [Theory]
         [InlineData(true)]
-        //[InlineData(false)]
+        [InlineData(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore){
             
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}");
@@ -68,7 +68,7 @@
             await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); });
         }
 
-        /*
+        
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -347,7 +347,6 @@
             ProjectionRunningStatus result = EventStoreContext.GetStatusFrom(projectionDetails);
             result.ShouldBe(ProjectionRunningStatus.StatisticsNotFound);
         }
-        */
         #endregion
     }
 }
