@@ -73,7 +73,7 @@
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore){
-            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -108,7 +108,7 @@
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_ReadEventsBackwards_EventsAreRead(Boolean secureEventStore){
-            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore,$"EventStoreContext_ReadEventsBackwards_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -143,7 +143,7 @@
         [InlineData(false)]
         public async Task EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead(Boolean secureEventStore)
         {
-            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -167,7 +167,7 @@
         [InlineData(true)]
         [InlineData(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
-            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -219,7 +219,7 @@
         [InlineData(false)]
         public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore)
         {
-            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
@@ -264,7 +264,7 @@
         [InlineData(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore)
         {
-            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
