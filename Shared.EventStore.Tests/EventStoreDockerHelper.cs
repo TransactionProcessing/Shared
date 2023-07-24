@@ -35,6 +35,11 @@ public class EventStoreDockerHelper : DockerHelper
                             HttpClient client = new HttpClient(handler);
                             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                             var response = await client.SendAsync(request, CancellationToken.None);
+
+                            if (response.IsSuccessStatusCode == false){
+                                Console.WriteLine(response.StatusCode);
+                            }
+
                             var responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
 
                             var responseData = new{
