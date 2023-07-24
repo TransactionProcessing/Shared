@@ -21,6 +21,7 @@
     using Shared.Logger;
     using Shouldly;
     using Xunit;
+    using Logger = Logger.Logger;
     using NullLogger = Logger.NullLogger;
 
     public class EventStoreContextTests : IDisposable{
@@ -33,8 +34,13 @@
         }
 
         public EventStoreContextTests(){
+
+            NlogLogger logger = new NlogLogger();
+            logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
+            LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
+            
             this.EventStoreDockerHelper = new EventStoreDockerHelper();
-            this.EventStoreDockerHelper.Logger = NullLogger.Instance;
+            this.EventStoreDockerHelper.Logger = logger;
         }
 
         [Theory]
@@ -42,7 +48,7 @@
         //[InlineData(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore){
             
-            await this.EventStoreDockerHelper.StartContainers(secureEventStore);
+            await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}");
 
             EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
             settings.DefaultDeadline = TimeSpan.FromSeconds(60);

@@ -14,10 +14,10 @@ using Shouldly;
 
 public class EventStoreDockerHelper : DockerHelper
 {
-    public async Task StartContainers(Boolean isSecureEventStore) {
+    public async Task StartContainers(Boolean isSecureEventStore, String testName) {
         this.IsSecureEventStore = isSecureEventStore;
-        this.SetHostTraceFolder("");
-        await this.StartContainersForScenarioRun("");
+        this.SetHostTraceFolder(testName);
+        await this.StartContainersForScenarioRun(testName);
 
         String url = isSecureEventStore switch {
             true => $"https://127.0.0.1:{this.EventStoreHttpPort}/ping",
