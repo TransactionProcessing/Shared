@@ -23,8 +23,16 @@ public class EventStoreDockerHelper : DockerHelper
             true => $"https://127.0.0.1:{this.EventStoreHttpPort}/ping",
             _ => $"http://127.0.0.1:{this.EventStoreHttpPort}/ping"
         };
+
+        HttpClientHandler handler = new HttpClientHandler{
+                                                             ServerCertificateCustomValidationCallback = (sender,
+                                                                                                          certificate,
+                                                                                                          chain,
+                                                                                                          errors) => true,
+                                                         };
+
         await Retry.For(async () => {
-                            HttpClient client = new HttpClient();
+                            HttpClient client = new HttpClient(handler);
                             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                             var response = await client.SendAsync(request, CancellationToken.None);
                             var responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);

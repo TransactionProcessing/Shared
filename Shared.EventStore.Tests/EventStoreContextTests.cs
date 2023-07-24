@@ -43,8 +43,6 @@
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore);
 
-            await Task.Delay(TimeSpan.FromSeconds(30));
-
             EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
             settings.DefaultDeadline = TimeSpan.FromSeconds(60);
             EventStoreClient client = new(settings);
