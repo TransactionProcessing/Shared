@@ -32,22 +32,30 @@ public class EventStoreDockerHelper : DockerHelper
                                                          };
 
         await Retry.For(async () => {
-                            HttpClient client = new HttpClient(handler);
-                            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
-                            var response = await client.SendAsync(request, CancellationToken.None);
+                            HttpResponseMessage response = null;
+                            try{
+                                HttpClient client = new HttpClient(handler);
+                                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                                response = await client.SendAsync(request, CancellationToken.None);
 
-                            if (response.IsSuccessStatusCode == false){
-                                Console.WriteLine(response.StatusCode);
+                                var responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
+
+                                var responseData = new{
+                                                          text = String.Empty
+                                                      };
+
+                                var x = JsonConvert.DeserializeAnonymousType(responseContent, responseData);
+                                x.text.ShouldBe("Ping request successfully handled");
                             }
+                            catch(Exception e){
+                                if (response != null){
+                                    if (response.IsSuccessStatusCode == false){
+                                        Console.WriteLine(response.StatusCode);
+                                    }
+                                }
 
-                            var responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
-
-                            var responseData = new{
-                                                      text = String.Empty
-                                                  };
-
-                            var x = JsonConvert.DeserializeAnonymousType(responseContent, responseData);
-                            x.text.ShouldBe("Ping request successfully handled");
+                                throw;
+                            }
                         });
     }
 
