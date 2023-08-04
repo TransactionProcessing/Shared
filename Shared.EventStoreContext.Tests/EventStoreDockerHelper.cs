@@ -1,4 +1,4 @@
-﻿/*namespace Shared.EventStore.Tests;
+﻿namespace Shared.EventStore.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -100,4 +100,4 @@ public class EventStoreDockerHelper : DockerHelper
 
         return settings;
     }
-}*/
+}

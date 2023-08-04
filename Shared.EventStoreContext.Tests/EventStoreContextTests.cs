@@ -1,4 +1,4 @@
-﻿/*namespace Shared.EventStore.Tests
+﻿namespace Shared.EventStore.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -14,13 +14,13 @@
     using Ductus.FluentDocker.Model.Containers;
     using Ductus.FluentDocker.Services.Extensions;
     using EventStore;
+    using EventStoreContext.Tests;
     using global::EventStore.Client;
     using IntegrationTesting;
     using Newtonsoft.Json;
     using NLog;
     using Shared.Logger;
     using Shouldly;
-    using Xunit;
     using Logger = Logger.Logger;
     using NullLogger = Logger.NullLogger;
 
@@ -43,9 +43,9 @@
             this.EventStoreDockerHelper.Logger = logger;
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore){
             
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}");
@@ -69,9 +69,9 @@
         }
 
         
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
 
@@ -104,9 +104,9 @@
                             });
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_EventsAreRead(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore,$"EventStoreContext_ReadEventsBackwards_EventsAreRead{secureEventStore}");
 
@@ -138,9 +138,9 @@
                             });
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead{secureEventStore}");
@@ -163,9 +163,9 @@
                             });
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
@@ -214,9 +214,9 @@
         }
 
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
@@ -259,9 +259,9 @@
             ex.Message.ShouldBe("Faulted");
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
@@ -302,20 +302,20 @@
             queryResult.ShouldBeEmpty();
         }
 
-        [Theory]
-        [InlineData("Running", ProjectionRunningStatus.Running)]
-        [InlineData("running", ProjectionRunningStatus.Running)]
-        [InlineData("RUNNING", ProjectionRunningStatus.Running)]
-        [InlineData("Stopped", ProjectionRunningStatus.Stopped)]
-        [InlineData("stopped", ProjectionRunningStatus.Stopped)]
-        [InlineData("STOPPED", ProjectionRunningStatus.Stopped)]
-        [InlineData("Faulted", ProjectionRunningStatus.Faulted)]
-        [InlineData("faulted", ProjectionRunningStatus.Faulted)]
-        [InlineData("FAULTED", ProjectionRunningStatus.Faulted)]
-        [InlineData("Completed/Stopped/Writing results", ProjectionRunningStatus.Completed)]
-        [InlineData("completed/stopped/writing results", ProjectionRunningStatus.Completed)]
-        [InlineData("COMPLETED/STOPPED/WRITING RESULTS", ProjectionRunningStatus.Completed)]
-        [InlineData("Unknown", ProjectionRunningStatus.Unknown)]
+        [Test]
+        [TestCase("Running", ProjectionRunningStatus.Running)]
+        [TestCase("running", ProjectionRunningStatus.Running)]
+        [TestCase("RUNNING", ProjectionRunningStatus.Running)]
+        [TestCase("Stopped", ProjectionRunningStatus.Stopped)]
+        [TestCase("stopped", ProjectionRunningStatus.Stopped)]
+        [TestCase("STOPPED", ProjectionRunningStatus.Stopped)]
+        [TestCase("Faulted", ProjectionRunningStatus.Faulted)]
+        [TestCase("faulted", ProjectionRunningStatus.Faulted)]
+        [TestCase("FAULTED", ProjectionRunningStatus.Faulted)]
+        [TestCase("Completed/Stopped/Writing results", ProjectionRunningStatus.Completed)]
+        [TestCase("completed/stopped/writing results", ProjectionRunningStatus.Completed)]
+        [TestCase("COMPLETED/STOPPED/WRITING RESULTS", ProjectionRunningStatus.Completed)]
+        [TestCase("Unknown", ProjectionRunningStatus.Unknown)]
 
         public void EventStoreContext_GetStatusFrom_CorrectValueReturned(String status, ProjectionRunningStatus expected){
             ProjectionDetails projectionDetails = new ProjectionDetails(0,
@@ -341,7 +341,7 @@
             result.ShouldBe(expected);
         }
 
-        [Fact]
+        [Test]
         public void EventStoreContext_GetStatusFrom_ProjectionDetailsIsNull_CorrectValueReturned(){
             ProjectionDetails projectionDetails = null;
             ProjectionRunningStatus result = EventStoreContext.GetStatusFrom(projectionDetails);
@@ -349,4 +349,4 @@
         }
         #endregion
     }
-}*/
+}

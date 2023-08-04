@@ -109,6 +109,7 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.EventStoreContext.Tests.csproj"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
         
     - name: Trust root certificate
