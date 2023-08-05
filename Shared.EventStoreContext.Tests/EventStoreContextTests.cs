@@ -10,6 +10,7 @@
     using DomainDrivenDesign.EventSourcing;
     using Ductus.FluentDocker.Builders;
     using Ductus.FluentDocker.Commands;
+    using Ductus.FluentDocker.Common;
     using Ductus.FluentDocker.Model.Builders;
     using Ductus.FluentDocker.Model.Containers;
     using Ductus.FluentDocker.Services.Extensions;
@@ -28,7 +29,7 @@
         private readonly EventStoreDockerHelper EventStoreDockerHelper;
 
         #region Methods
-
+        TimeSpan? deadline = null;
         public void Dispose(){
             this.EventStoreDockerHelper.StopContainersForScenarioRun().Wait();
         }
@@ -41,6 +42,11 @@
             
             this.EventStoreDockerHelper = new EventStoreDockerHelper();
             this.EventStoreDockerHelper.Logger = logger;
+            
+            if (FdOs.IsOsx())
+            {
+                deadline = new TimeSpan(0, 0, 2, 0, 0);
+            }
         }
 
         [Test]
@@ -50,11 +56,7 @@
             
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}");
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-            settings.DefaultDeadline = TimeSpan.FromSeconds(60);
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -77,11 +79,7 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -104,6 +102,15 @@
                             });
         }
 
+        private IEventStoreContext CreateContext(Boolean secureEventStore){
+            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, this.deadline);
+
+            EventStoreClient client = new(settings);
+            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
+            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            return context;
+        }
+
         [Test]
         [TestCase(true)]
         [TestCase(false)]
@@ -112,11 +119,7 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -147,11 +150,7 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream1-{aggreggateId:N}";
@@ -171,11 +170,7 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -223,11 +218,7 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -268,11 +259,7 @@
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
