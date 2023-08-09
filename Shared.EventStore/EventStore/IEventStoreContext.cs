@@ -51,7 +51,7 @@
                                              CancellationToken cancellationToken);
 
         Task<String> RunTransientQuery(String query, CancellationToken cancellationToken);
-
+        
         #endregion
     }
 }

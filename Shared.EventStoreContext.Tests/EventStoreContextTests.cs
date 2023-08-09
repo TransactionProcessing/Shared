@@ -45,7 +45,11 @@
             
             if (FdOs.IsOsx())
             {
+                Console.WriteLine("Is MacOS overriding deadline");
                 deadline = new TimeSpan(0, 0, 2, 0, 0);
+            }
+            else{
+                Console.WriteLine("use standard deadline");
             }
         }
 
@@ -219,7 +223,7 @@
             await Task.Delay(TimeSpan.FromSeconds(30));
 
             IEventStoreContext context = this.CreateContext(secureEventStore);
-
+            
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
 
@@ -231,14 +235,15 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
+          
             await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
-
+      
             await Retry.For(async () => {
-                List<ResolvedEvent> resolvedEvents = null;
-                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
+                                List<ResolvedEvent> resolvedEvents = null;
+                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
-                resolvedEvents.Count.ShouldBe(events.Length);
-            });
+                                resolvedEvents.Count.ShouldBe(events.Length);
+                            });
 
             await Task.Delay(TimeSpan.FromSeconds(15));
 
