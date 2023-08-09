@@ -37,6 +37,7 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests\Shared.Tests.csproj"
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
@@ -71,6 +72,7 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests\Shared.Tests.csproj"
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
@@ -108,7 +110,7 @@ jobs:
     - name: Run Unit Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"        
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
         
     - name: Trust root certificate
@@ -122,6 +124,7 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
       if: ${{ failure() }}

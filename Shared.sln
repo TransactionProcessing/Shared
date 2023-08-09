@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\sonarcloud.yml = .github\workflows\sonarcloud.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.EventStoreContext.Tests", "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj", "{A7909DC1-12F9-42F8-B665-E8A2C63B1481}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7909DC1-12F9-42F8-B665-E8A2C63B1481}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7909DC1-12F9-42F8-B665-E8A2C63B1481}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7909DC1-12F9-42F8-B665-E8A2C63B1481}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7909DC1-12F9-42F8-B665-E8A2C63B1481}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,6 +95,7 @@ Global
 		{C2B49FB2-DC66-44B5-B5C4-8C12C63C22EF} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
 		{81AF1FCA-837F-4CEA-9E8E-AD38F510930A} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
 		{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
+		{A7909DC1-12F9-42F8-B665-E8A2C63B1481} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {34032CEC-68CD-41EA-8707-D450689AEA46}

@@ -1,4 +1,4 @@
-﻿/*namespace Shared.EventStore.Tests
+﻿namespace Shared.EventStore.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -10,17 +10,18 @@
     using DomainDrivenDesign.EventSourcing;
     using Ductus.FluentDocker.Builders;
     using Ductus.FluentDocker.Commands;
+    using Ductus.FluentDocker.Common;
     using Ductus.FluentDocker.Model.Builders;
     using Ductus.FluentDocker.Model.Containers;
     using Ductus.FluentDocker.Services.Extensions;
     using EventStore;
+    using EventStoreContext.Tests;
     using global::EventStore.Client;
     using IntegrationTesting;
     using Newtonsoft.Json;
     using NLog;
     using Shared.Logger;
     using Shouldly;
-    using Xunit;
     using Logger = Logger.Logger;
     using NullLogger = Logger.NullLogger;
 
@@ -28,7 +29,7 @@
         private readonly EventStoreDockerHelper EventStoreDockerHelper;
 
         #region Methods
-
+        TimeSpan? deadline = null;
         public void Dispose(){
             this.EventStoreDockerHelper.StopContainersForScenarioRun().Wait();
         }
@@ -41,20 +42,25 @@
             
             this.EventStoreDockerHelper = new EventStoreDockerHelper();
             this.EventStoreDockerHelper.Logger = logger;
+            
+            if (FdOs.IsOsx())
+            {
+                Console.WriteLine("Is MacOS overriding deadline");
+                deadline = new TimeSpan(0, 0, 2, 0, 0);
+            }
+            else{
+                Console.WriteLine("use standard deadline");
+            }
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore){
             
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}");
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-            settings.DefaultDeadline = TimeSpan.FromSeconds(60);
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -69,19 +75,15 @@
         }
 
         
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -104,19 +106,24 @@
                             });
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        private IEventStoreContext CreateContext(Boolean secureEventStore){
+            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, this.deadline);
+
+            EventStoreClient client = new(settings);
+            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
+            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            return context;
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_EventsAreRead(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore,$"EventStoreContext_ReadEventsBackwards_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -138,20 +145,16 @@
                             });
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream1-{aggreggateId:N}";
@@ -163,19 +166,15 @@
                             });
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -214,21 +213,17 @@
         }
 
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
-
+            IEventStoreContext context = this.CreateContext(secureEventStore);
+            
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
 
@@ -240,14 +235,15 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
+          
             await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
-
+      
             await Retry.For(async () => {
-                List<ResolvedEvent> resolvedEvents = null;
-                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
+                                List<ResolvedEvent> resolvedEvents = null;
+                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
-                resolvedEvents.Count.ShouldBe(events.Length);
-            });
+                                resolvedEvents.Count.ShouldBe(events.Length);
+                            });
 
             await Task.Delay(TimeSpan.FromSeconds(15));
 
@@ -259,20 +255,16 @@
             ex.Message.ShouldBe("Faulted");
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
-
-            EventStoreClient client = new(settings);
-            EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = this.CreateContext(secureEventStore);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -302,20 +294,20 @@
             queryResult.ShouldBeEmpty();
         }
 
-        [Theory]
-        [InlineData("Running", ProjectionRunningStatus.Running)]
-        [InlineData("running", ProjectionRunningStatus.Running)]
-        [InlineData("RUNNING", ProjectionRunningStatus.Running)]
-        [InlineData("Stopped", ProjectionRunningStatus.Stopped)]
-        [InlineData("stopped", ProjectionRunningStatus.Stopped)]
-        [InlineData("STOPPED", ProjectionRunningStatus.Stopped)]
-        [InlineData("Faulted", ProjectionRunningStatus.Faulted)]
-        [InlineData("faulted", ProjectionRunningStatus.Faulted)]
-        [InlineData("FAULTED", ProjectionRunningStatus.Faulted)]
-        [InlineData("Completed/Stopped/Writing results", ProjectionRunningStatus.Completed)]
-        [InlineData("completed/stopped/writing results", ProjectionRunningStatus.Completed)]
-        [InlineData("COMPLETED/STOPPED/WRITING RESULTS", ProjectionRunningStatus.Completed)]
-        [InlineData("Unknown", ProjectionRunningStatus.Unknown)]
+        [Test]
+        [TestCase("Running", ProjectionRunningStatus.Running)]
+        [TestCase("running", ProjectionRunningStatus.Running)]
+        [TestCase("RUNNING", ProjectionRunningStatus.Running)]
+        [TestCase("Stopped", ProjectionRunningStatus.Stopped)]
+        [TestCase("stopped", ProjectionRunningStatus.Stopped)]
+        [TestCase("STOPPED", ProjectionRunningStatus.Stopped)]
+        [TestCase("Faulted", ProjectionRunningStatus.Faulted)]
+        [TestCase("faulted", ProjectionRunningStatus.Faulted)]
+        [TestCase("FAULTED", ProjectionRunningStatus.Faulted)]
+        [TestCase("Completed/Stopped/Writing results", ProjectionRunningStatus.Completed)]
+        [TestCase("completed/stopped/writing results", ProjectionRunningStatus.Completed)]
+        [TestCase("COMPLETED/STOPPED/WRITING RESULTS", ProjectionRunningStatus.Completed)]
+        [TestCase("Unknown", ProjectionRunningStatus.Unknown)]
 
         public void EventStoreContext_GetStatusFrom_CorrectValueReturned(String status, ProjectionRunningStatus expected){
             ProjectionDetails projectionDetails = new ProjectionDetails(0,
@@ -341,7 +333,7 @@
             result.ShouldBe(expected);
         }
 
-        [Fact]
+        [Test]
         public void EventStoreContext_GetStatusFrom_ProjectionDetailsIsNull_CorrectValueReturned(){
             ProjectionDetails projectionDetails = null;
             ProjectionRunningStatus result = EventStoreContext.GetStatusFrom(projectionDetails);
@@ -349,4 +341,4 @@
         }
         #endregion
     }
-}*/
+}

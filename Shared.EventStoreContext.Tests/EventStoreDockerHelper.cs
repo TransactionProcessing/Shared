@@ -1,4 +1,4 @@
-﻿/*namespace Shared.EventStore.Tests;
+﻿namespace Shared.EventStore.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -70,7 +70,7 @@ public class EventStoreDockerHelper : DockerHelper
 
     }
 
-    public EventStoreClientSettings CreateEventStoreClientSettings(Boolean secureEventStore)
+    public EventStoreClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null)
     {
         String connectionString = secureEventStore switch
         {
@@ -84,7 +84,8 @@ public class EventStoreDockerHelper : DockerHelper
             true => false,
             _ => true
         };
-            
+        settings.DefaultDeadline = deadline;
+        
         if (secureEventStore == false)
         {
             settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
@@ -100,4 +101,4 @@ public class EventStoreDockerHelper : DockerHelper
 
         return settings;
     }
-}*/
+}
