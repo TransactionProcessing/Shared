@@ -7,38 +7,12 @@ on:
   repository_dispatch:
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    name: Check latest commit
-    outputs:
-      commitcount: ${{ steps.commitswithintime.outputs.number-of-commits-within-time }}
-    steps:
-      - uses: actions/checkout@v2
-        #with:
-          #fetch-depth: 0
-
-      - name: Check for commits within time 
-        #uses: AlexHolderDeveloper/CommitsWithinTime@v1.1.5
-        uses: TransactionProcessing/CommitsWithinTime@1.0.0
-        id: commitswithintime
-        with:
-          hours: 24
-          
-      - name: Get the output from CommitsWithinTime
-        run: |
-          echo "The 'has-new-commits-within-time' value is ${{ steps.commitswithintime.outputs.has-new-commits-within-time }}"
-          echo "The 'number-of-commits-within-time' value is ${{ steps.commitswithintime.outputs.number-of-commits-within-time }}"
-          echo "The 'total-commits' value is ${{ steps.commitswithintime.outputs.total-commits }}"
-
   buildlinux:
     name: "Nightly Build - Linux"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
 
     runs-on: ubuntu-latest
-
-    needs: check
-    if: ${{ needs.check.outputs.commitcount > 0 }}
 
     steps:
     - uses: actions/checkout@v1
@@ -78,10 +52,7 @@ jobs:
         ASPNETCORE_ENVIRONMENT: "Production"
 
     runs-on: windows-2019
-
-    needs: check
-    if: ${{ needs.check.outputs.commitcount > 0 }}
-
+    
     steps:
     - uses: actions/checkout@v1
 
@@ -115,10 +86,7 @@ jobs:
         ASPNETCORE_ENVIRONMENT: "Production"
 
     runs-on: macos-12
-
-    needs: check
-    if: ${{ needs.check.outputs.commitcount > 0 }}
-
+    
     steps:
     - uses: actions/checkout@v1
 
