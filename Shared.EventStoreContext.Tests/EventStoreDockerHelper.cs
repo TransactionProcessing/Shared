@@ -17,7 +17,7 @@ public class EventStoreDockerHelper : DockerHelper
     public async Task StartContainers(Boolean isSecureEventStore, String testName) {
         this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder(testName);
-        await this.StartContainersForScenarioRun(testName);
+        await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
 
         String url = isSecureEventStore switch {
             true => $"https://127.0.0.1:{this.EventStoreHttpPort}/ping",
@@ -59,14 +59,15 @@ public class EventStoreDockerHelper : DockerHelper
                         });
     }
 
-    public override async Task StartContainersForScenarioRun(String scenarioName) {
+    public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services) {
         this.TestId = Guid.NewGuid();
         INetworkService networkService = this.SetupTestNetwork();
         this.SetupContainerNames();
         await this.StartContainer(this.SetupEventStoreContainer,
                                   new List<INetworkService> {
                                                                 networkService
-                                                            });
+                                                            },
+                                  DockerServices.EventStore);
 
     }
 
