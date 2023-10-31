@@ -363,6 +363,12 @@ public abstract class BaseDockerHelper{
             _ => "/var/log/eventstore"
         };
 
+        String certsPath = BaseDockerHelper.GetDockerEnginePlatform() switch
+        {
+            DockerEnginePlatform.Windows => "C:\\EventStoreCerts",
+            _ => "/etc/eventstore/certs"
+        };
+
         ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
                                                                    .WithName(this.EventStoreContainerName).MountHostFolder(this.HostTraceFolder, containerPath);
@@ -374,12 +380,13 @@ public abstract class BaseDockerHelper{
             // Copy these to the container
             String path = Path.Combine(Directory.GetCurrentDirectory(), "certs");
 
-            eventStoreContainerBuilder = eventStoreContainerBuilder.Mount(path, "/etc/eventstore/certs", MountType.ReadWrite);
+            eventStoreContainerBuilder = eventStoreContainerBuilder.Mount(path, certsPath, MountType.ReadWrite);
 
             // Certificates configuration
-            environmentVariables.Add("EVENTSTORE_CertificateFile=/etc/eventstore/certs/node1/node.crt");
-            environmentVariables.Add("EVENTSTORE_CertificatePrivateKeyFile=/etc/eventstore/certs/node1/node.key");
-            environmentVariables.Add("EVENTSTORE_TrustedRootCertificatesPath=/etc/eventstore/certs/ca");
+            environmentVariables.Add($"EVENTSTORE_CertificateFile={certsPath}/node1/node.crt");
+            environmentVariables.Add($"EVENTSTORE_CertificatePrivateKeyFile={certsPath}/node1/node.key");
+            environmentVariables.Add($"EVENTSTORE_TrustedRootCertificatesPath={certsPath}/ca");
+            environmentVariables.Add("EVENTSTORE_INSECURE=false");
         }
 
         eventStoreContainerBuilder = eventStoreContainerBuilder.WithEnvironment(environmentVariables.ToArray());
