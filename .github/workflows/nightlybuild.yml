@@ -139,9 +139,6 @@ jobs:
 
     runs-on: ubuntu-latest
     
-    needs: check
-    if: ${{ needs.check.outputs.commitcount > 0 }}
-
     steps:
     - uses: actions/checkout@v2.3.4
 
