@@ -43,14 +43,14 @@
             this.EventStoreDockerHelper = new EventStoreDockerHelper();
             this.EventStoreDockerHelper.Logger = logger;
             
-            if (FdOs.IsOsx())
-            {
+            //if (FdOs.IsOsx())
+            //{
                 Console.WriteLine("Is MacOS overriding deadline");
                 deadline = new TimeSpan(0, 0, 2, 0, 0);
-            }
-            else{
-                Console.WriteLine("use standard deadline");
-            }
+            //}
+            //else{
+            //    Console.WriteLine("use standard deadline");
+            //}
         }
 
         [Test]
