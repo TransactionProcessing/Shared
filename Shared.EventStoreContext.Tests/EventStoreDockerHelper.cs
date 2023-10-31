@@ -17,6 +17,7 @@ public class EventStoreDockerHelper : DockerHelper
     public async Task StartContainers(Boolean isSecureEventStore, String testName) {
         this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder(testName);
+        
         await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
 
         String url = isSecureEventStore switch {
@@ -63,6 +64,9 @@ public class EventStoreDockerHelper : DockerHelper
         this.TestId = Guid.NewGuid();
         INetworkService networkService = this.SetupTestNetwork();
         this.SetupContainerNames();
+
+        this.RequiredDockerServices = services;
+
         await this.StartContainer(this.SetupEventStoreContainer,
                                   new List<INetworkService> {
                                                                 networkService
