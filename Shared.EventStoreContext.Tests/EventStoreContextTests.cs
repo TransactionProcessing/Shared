@@ -135,7 +135,11 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            await Retry.For(async () => {
+                                await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+                            },
+                            retryTimeout,
+                            deadline);
 
             await Retry.For(async () => {
                                 List<ResolvedEvent> resolvedEvents = null;
