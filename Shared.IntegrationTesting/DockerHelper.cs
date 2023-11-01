@@ -113,6 +113,8 @@ public class DockerHelper : BaseDockerHelper
                                                                   };
 
         await StartContainer(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
+        // TODO: permenant fix for this hack
+        await Task.Delay(TimeSpan.FromSeconds(30));
         await StartContainer(this.SetupMessagingServiceContainer, networks, DockerServices.MessagingService);
         await StartContainer(this.SetupSecurityServiceContainer, networks, DockerServices.SecurityService);
         await StartContainer(this.SetupCallbackHandlerContainer, networks, DockerServices.CallbackHandler);

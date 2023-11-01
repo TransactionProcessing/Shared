@@ -176,7 +176,18 @@ public abstract class BaseDockerHelper{
     #region Methods
 
     public virtual List<String> GetAdditionalVariables(ContainerType containerType){
-        return this.AdditionalVariables.SingleOrDefault(a => a.Key == containerType).Value;
+        List<String> result = new List<String>();
+
+        var additional = this.AdditionalVariables.SingleOrDefault(a => a.Key == containerType).Value;
+        if (additional != null){
+            result.AddRange(additional);
+        }
+
+        result.Add("Logging:LogLevel:Microsoft=None");
+        result.Add("Logging:LogLevel:Default=None");
+        result.Add("Logging:EventLog:LogLevel:Default=None");
+
+        return result;
     }
 
     public List<String> GetCommonEnvironmentVariables(){
