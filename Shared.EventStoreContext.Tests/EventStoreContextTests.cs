@@ -114,14 +114,15 @@
         [TestCase(true)]
         [TestCase(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore){
-            if (FdOs.IsOsx())
-                return;
+
+            TimeSpan deadline = TimeSpan.FromMinutes(2);
+            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            IEventStoreContext context = this.CreateContext(secureEventStore);
+            IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -141,21 +142,23 @@
                                 resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
                                 resolvedEvents.Count.ShouldBe(events.Length);
-                            });
+                            },
+                            retryTimeout,
+                            deadline);
         }
 
         [Test]
         [TestCase(true)]
         [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_EventsAreRead(Boolean secureEventStore){
-            if (FdOs.IsOsx())
-                return;
+            TimeSpan deadline = TimeSpan.FromMinutes(2);
+            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            IEventStoreContext context = this.CreateContext(secureEventStore);
+            IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -174,21 +177,23 @@
                                 IList<ResolvedEvent> resolvedEvents = await context.GetEventsBackward(streamName, events.Length, CancellationToken.None);
 
                                 resolvedEvents.Count.ShouldBe(events.Length);
-                            });
+                            },
+                            retryTimeout,
+                            deadline);
         }
 
         [Test]
         [TestCase(true)]
         [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead(Boolean secureEventStore){
-            if (FdOs.IsOsx())
-                return;
+            TimeSpan deadline = TimeSpan.FromMinutes(2);
+            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            IEventStoreContext context = this.CreateContext(secureEventStore);
+            IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream1-{aggreggateId:N}";
@@ -197,21 +202,23 @@
                                 IList<ResolvedEvent> resolvedEvents = await context.GetEventsBackward(streamName, 1, CancellationToken.None);
 
                                 resolvedEvents.ShouldBeEmpty();
-                            });
+                            },
+                            retryTimeout,
+                            deadline);
         }
 
         [Test]
         [TestCase(true)]
         [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore){
-            if (FdOs.IsOsx())
-                return;
+            TimeSpan deadline = TimeSpan.FromMinutes(2);
+            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            IEventStoreContext context = this.CreateContext(secureEventStore);
+            IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -232,7 +239,9 @@
                                 resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
                                 resolvedEvents.Count.ShouldBe(events.Length);
-                            });
+                            },
+                            retryTimeout,
+                            deadline);
 
             await Task.Delay(TimeSpan.FromSeconds(15));
 
@@ -248,14 +257,14 @@
         [TestCase(true)]
         [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
-            if (FdOs.IsOsx())
-                return;
+            TimeSpan deadline = TimeSpan.FromMinutes(2);
+            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
 
-            IEventStoreContext context = this.CreateContext(secureEventStore);
+            IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -275,7 +284,9 @@
                                 resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
                                 resolvedEvents.Count.ShouldBe(events.Length);
-                            });
+                            },
+                            retryTimeout,
+                            deadline);
 
             await Task.Delay(TimeSpan.FromSeconds(15));
 
@@ -297,14 +308,14 @@
         [TestCase(true)]
         [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore){
-            if (FdOs.IsOsx())
-                return;
+            TimeSpan deadline = TimeSpan.FromMinutes(2);
+            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
 
             await Task.Delay(TimeSpan.FromSeconds(30));
-            
-            IEventStoreContext context = this.CreateContext(secureEventStore);
+
+            IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream-{aggreggateId:N}";
@@ -324,7 +335,9 @@
                                 resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
                                 resolvedEvents.Count.ShouldBe(events.Length);
-                            });
+                            },
+                            retryTimeout,
+                            deadline);
 
             await Task.Delay(TimeSpan.FromSeconds(15));
 
