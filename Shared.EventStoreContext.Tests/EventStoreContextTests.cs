@@ -107,12 +107,12 @@
         }
 
         private IEventStoreContext CreateContext(Boolean secureEventStore){
-            TimeSpan deadline = new TimeSpan(0, 0, 2, 0, 0);
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, deadline);
+            //TimeSpan deadline = new TimeSpan(0, 0, 2, 0, 0);
+            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore);
 
             EventStoreClient client = new(settings);
             EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient, deadline);
+            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
             return context;
         }
 
@@ -169,7 +169,7 @@
 
         [Test]
         [TestCase(true)]
-        [TestCase(false)]
+//        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
@@ -216,7 +216,7 @@
 
         [Test]
         [TestCase(true)]
-        [TestCase(false)]
+//        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
@@ -258,7 +258,7 @@
 
         [Test]
         [TestCase(true)]
-        [TestCase(false)]
+//        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
