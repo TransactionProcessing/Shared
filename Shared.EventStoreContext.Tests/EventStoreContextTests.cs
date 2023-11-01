@@ -315,9 +315,9 @@
                                 result.estates.Contains(event2.EstateName).ShouldBeTrue();
                             }
 
-                                [Test]
-                                [TestCase(true)]
-                                [TestCase(false)]
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
             TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
@@ -339,9 +339,7 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            await Retry.For(async () => {
-                                await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
-                            },
+            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
                             retryTimeout,
                             deadline);
 
@@ -358,10 +356,13 @@
 
             String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                \r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s, e){\r\n          }\r\n  });";
 
-            String queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-            queryResult.ShouldBeEmpty();
+            await Retry.For(async () => {
+                                String queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+                                queryResult.ShouldBeEmpty();
+                            },
+                            retryTimeout,
+                            deadline);
         }
-
         private IEventStoreContext CreateContext(Boolean secureEventStore, TimeSpan? deadline = null){
             EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, deadline);
 
