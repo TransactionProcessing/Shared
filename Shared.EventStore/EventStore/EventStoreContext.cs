@@ -32,13 +32,16 @@
         /// </summary>
         private readonly EventStoreProjectionManagementClient ProjectionManagementClient;
 
+        private readonly TimeSpan? Deadline;
+
         #endregion
 
         #region Constructors
 
-        public EventStoreContext(EventStoreClient eventStoreClient, EventStoreProjectionManagementClient projectionManagementClient){
+        public EventStoreContext(EventStoreClient eventStoreClient, EventStoreProjectionManagementClient projectionManagementClient, TimeSpan? deadline = null){
             this.EventStoreClient = eventStoreClient;
             this.ProjectionManagementClient = projectionManagementClient;
+            this.Deadline = deadline;
         }
 
         #endregion
@@ -61,6 +64,7 @@
                                                                                                StreamPosition.End,
                                                                                                maxNumberOfEventsToRetrieve,
                                                                                                resolveLinkTos:true,
+                                                                                               deadline:this.Deadline,
                                                                                                cancellationToken:cancellationToken);
 
             if (await response.ReadState == ReadState.StreamNotFound){
@@ -77,7 +81,7 @@
         public async Task<String> GetPartitionResultFromProjection(String projectionName,
                                                                    String partitionId,
                                                                    CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, partitionId, cancellationToken:cancellationToken);
+            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, partitionId, deadline: this.Deadline, cancellationToken:cancellationToken);
 
             return jsonElement.GetRawText();
         }
@@ -85,21 +89,21 @@
         public async Task<String> GetPartitionStateFromProjection(String projectionName,
                                                                   String partitionId,
                                                                   CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, partitionId, cancellationToken:cancellationToken);
+            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, partitionId, deadline: this.Deadline, cancellationToken:cancellationToken);
 
             return jsonElement.GetRawText();
         }
 
         public async Task<String> GetResultFromProjection(String projectionName,
                                                           CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, cancellationToken:cancellationToken);
+            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, deadline: this.Deadline, cancellationToken:cancellationToken);
 
             return jsonElement.GetRawText();
         }
 
         public async Task<String> GetStateFromProjection(String projectionName,
                                                          CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, cancellationToken:cancellationToken);
+            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, deadline: this.Deadline, cancellationToken:cancellationToken);
 
             return jsonElement.GetRawText();
         }
@@ -122,7 +126,7 @@
                                                                  };
 
             this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
-            await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion), aggregateEvents.AsEnumerable(), cancellationToken:cancellationToken);
+            await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion), aggregateEvents.AsEnumerable(), deadline:this.Deadline, cancellationToken:cancellationToken);
         }
 
         public async Task<List<ResolvedEvent>> ReadEvents(String streamName,
@@ -139,6 +143,7 @@
                                                                  StreamPosition.FromInt64(fromVersion),
                                                                  2,
                                                                  resolveLinkTos:true,
+                                                                 deadline: this.Deadline,
                                                                  cancellationToken:cancellationToken);
 
                 // Check the read state
@@ -175,13 +180,13 @@
                         source.Token.ThrowIfCancellationRequested();
                     }
 
-                    ProjectionDetails projectionDetails = await this.ProjectionManagementClient.GetStatusAsync(queryName, cancellationToken:source.Token);
+                    ProjectionDetails projectionDetails = await this.ProjectionManagementClient.GetStatusAsync(queryName, deadline: this.Deadline, cancellationToken:source.Token);
 
                     ProjectionRunningStatus status = EventStoreContext.GetStatusFrom(projectionDetails);
 
                     // We need to wait until the query has been run before we continue.
                     if (status == ProjectionRunningStatus.Completed){
-                        JsonDocument jsonDocument = await this.ProjectionManagementClient.GetResultAsync(queryName, cancellationToken:source.Token);
+                        JsonDocument jsonDocument = await this.ProjectionManagementClient.GetResultAsync(queryName, deadline: this.Deadline, cancellationToken:source.Token);
 
                         if (jsonDocument.RootElement.ToString() == "{}"){
                             return String.Empty;
@@ -203,7 +208,7 @@
                 throw new Exception(ProjectionRunningStatus.Faulted.ToString(), rex);
             }
             finally{
-                await this.ProjectionManagementClient.DisableAsync(queryName, cancellationToken:cancellationToken);
+                await this.ProjectionManagementClient.DisableAsync(queryName, deadline: this.Deadline, cancellationToken:cancellationToken);
             }
 
             return null;

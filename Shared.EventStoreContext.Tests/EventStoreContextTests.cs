@@ -29,7 +29,7 @@
         private readonly EventStoreDockerHelper EventStoreDockerHelper;
 
         #region Methods
-        TimeSpan? deadline = null;
+        //TimeSpan? deadline = null;
         public void Dispose(){
             this.EventStoreDockerHelper.StopContainersForScenarioRun().Wait();
         }
@@ -45,8 +45,8 @@
             
             //if (FdOs.IsOsx())
             //{
-                Console.WriteLine("Is MacOS overriding deadline");
-                deadline = new TimeSpan(0, 0, 2, 0, 0);
+                //Console.WriteLine("Is MacOS overriding deadline");
+                //deadline = new TimeSpan(0, 0, 2, 0, 0);
             //}
             //else{
             //    Console.WriteLine("use standard deadline");
@@ -107,11 +107,12 @@
         }
 
         private IEventStoreContext CreateContext(Boolean secureEventStore){
-            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, this.deadline);
+            TimeSpan deadline = new TimeSpan(0, 0, 2, 0, 0);
+            EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, deadline);
 
             EventStoreClient client = new(settings);
             EventStoreProjectionManagementClient projectionManagementClient = new(settings);
-            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient);
+            IEventStoreContext context = new EventStoreContext(client, projectionManagementClient, deadline);
             return context;
         }
 
