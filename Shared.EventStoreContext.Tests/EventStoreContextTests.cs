@@ -171,7 +171,11 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            await Retry.For(async () => {
+                                await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+                            },
+                            retryTimeout,
+                            deadline);
 
             await Retry.For(async () => {
                                 IList<ResolvedEvent> resolvedEvents = await context.GetEventsBackward(streamName, events.Length, CancellationToken.None);
@@ -232,7 +236,9 @@
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
+                            retryTimeout,
+                            deadline);
 
             await Retry.For(async () => {
                                 List<ResolvedEvent> resolvedEvents = null;
@@ -243,19 +249,19 @@
                             retryTimeout,
                             deadline);
 
-            await Task.Delay(TimeSpan.FromSeconds(15));
+                                await Task.Delay(TimeSpan.FromSeconds(15));
 
-            String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
+                                String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
 
-            Exception ex = Should.Throw<Exception>(async () => {
-                                                       String queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-                                                   });
-            ex.Message.ShouldBe("Faulted");
-        }
+                                Exception ex = Should.Throw<Exception>(async () => {
+                                                                           String queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+                                                                       });
+                                ex.Message.ShouldBe("Faulted");
+                            }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+                                [Test]
+                                [TestCase(true)]
+                                [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
             TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
@@ -277,36 +283,41 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
 
             await Retry.For(async () => {
-                                List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
-
-                                resolvedEvents.Count.ShouldBe(events.Length);
+                                await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
                             },
                             retryTimeout,
                             deadline);
 
-            await Task.Delay(TimeSpan.FromSeconds(15));
+            await Retry.For(async () => {
+                                                    List<ResolvedEvent> resolvedEvents = null;
+                                                    resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
-            String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
+                                                    resolvedEvents.Count.ShouldBe(events.Length);
+                                                },
+                                                retryTimeout,
+                                                deadline);
 
-            String queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-            queryResult.ShouldNotBeNullOrEmpty();
+                                await Task.Delay(TimeSpan.FromSeconds(15));
 
-            var definition = new{
-                                    estates = new List<String>()
-                                };
-            var result = JsonConvert.DeserializeAnonymousType(queryResult, definition);
+                                String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
 
-            result.estates.Contains(event1.EstateName).ShouldBeTrue();
-            result.estates.Contains(event2.EstateName).ShouldBeTrue();
-        }
+                                String queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+                                queryResult.ShouldNotBeNullOrEmpty();
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+                                var definition = new{
+                                                        estates = new List<String>()
+                                                    };
+                                var result = JsonConvert.DeserializeAnonymousType(queryResult, definition);
+
+                                result.estates.Contains(event1.EstateName).ShouldBeTrue();
+                                result.estates.Contains(event2.EstateName).ShouldBeTrue();
+                            }
+
+                                [Test]
+                                [TestCase(true)]
+                                [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
             TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
@@ -328,7 +339,11 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            await Retry.For(async () => {
+                                await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+                            },
+                            retryTimeout,
+                            deadline);
 
             await Retry.For(async () => {
                                 List<ResolvedEvent> resolvedEvents = null;
