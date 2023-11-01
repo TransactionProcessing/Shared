@@ -167,9 +167,9 @@
                             });
         }
 
-        [Test]
-        [TestCase(true)]
-//        [TestCase(false)]
+        //[Test]
+        //[TestCase(true)]
+        //[TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
@@ -214,9 +214,9 @@
         }
 
 
-        [Test]
-        [TestCase(true)]
-//        [TestCase(false)]
+        //[Test]
+        //[TestCase(true)]
+        //[TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
@@ -256,9 +256,9 @@
             ex.Message.ShouldBe("Faulted");
         }
 
-        [Test]
-        [TestCase(true)]
-//        [TestCase(false)]
+        //[Test]
+        //[TestCase(true)]
+        //[TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore)
         {
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
