@@ -185,8 +185,8 @@ public abstract class BaseDockerHelper{
             result.AddRange(additional);
         }
 
-        result.Add("Logging:LogLevel:Microsoft=None");
-        result.Add("Logging:LogLevel:Default=None");
+        result.Add("Logging:LogLevel:Microsoft=Verbose");
+        result.Add("Logging:LogLevel:Default=Verbose");
         result.Add("Logging:EventLog:LogLevel:Default=None");
 
         return result;
@@ -294,15 +294,15 @@ public abstract class BaseDockerHelper{
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
-        IContainerService builtContainer = callbackHandlerContainer.Build().Start().WaitForPort($"{DockerPorts.CallbackHandlerDockerPort}/tcp", 30000);
-
+        IContainerService builtContainer = callbackHandlerContainer.Build().WaitForPort($"{DockerPorts.CallbackHandlerDockerPort}/tcp", 30000);
+        
         foreach (INetworkService networkService in networkServices){
             networkService.Attach(builtContainer, false);
         }
 
         this.Trace("Callback Handler Container Started");
         this.Containers.Add(builtContainer);
-
+        
         //  Do a health check here
         this.CallbackHandlerPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.CallbackHandlerDockerPort}/tcp").Port;
 
@@ -1033,9 +1033,7 @@ public abstract class BaseDockerHelper{
 
         String connectionString =
             $"{settingName}=\"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}\"";
-
-        //this.Trace(connectionString);
-
+        
         return connectionString;
     }
 
@@ -1044,10 +1042,15 @@ public abstract class BaseDockerHelper{
             return default;
         }
 
-        try{
+        var d = BaseDockerHelper.GetDockerHost();
+        
+
+        try
+        {
             return await startContainerFunc(networkServices);
         }
         catch(Exception ex){
+
             this.Error($"Error starting container [{startContainerFunc.Method.Name}]", ex);
             throw;
         }
