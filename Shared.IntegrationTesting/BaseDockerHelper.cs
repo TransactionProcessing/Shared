@@ -417,9 +417,13 @@ public abstract class BaseDockerHelper{
         this.EventStoreHttpPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
         this.Trace($"EventStore Http Port: [{this.EventStoreHttpPort}]");
 
+        String scheme = this.IsSecureEventStore switch{
+            true => "https",
+            _ => "http"
+        };
         this.Trace("About to do event store ping");
         await Retry.For(async () => {
-                            String url = $"http://127.0.0.1:{this.EventStoreHttpPort}/ping";
+                            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
 
                             using(HttpClientHandler httpClientHandler = new HttpClientHandler()){
                                 httpClientHandler.ServerCertificateCustomValidationCallback = (message,
@@ -444,7 +448,7 @@ public abstract class BaseDockerHelper{
         this.Trace("About to do event store info");
 
         await Retry.For(async () => {
-            String url = $"http://127.0.0.1:{this.EventStoreHttpPort}/info";
+            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
 
             using (HttpClientHandler httpClientHandler = new HttpClientHandler())
             {
