@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,6 +22,7 @@ using EventStore.Client;
 using HealthChecks;
 using Logger;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Newtonsoft.Json;
 using Shouldly;
 
@@ -411,10 +413,62 @@ public abstract class BaseDockerHelper{
         }
 
         await Retry.For(async () => { builtContainer = builtContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
-
+        
         this.EventStoreHttpPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
         this.Trace($"EventStore Http Port: [{this.EventStoreHttpPort}]");
 
+        this.Trace("About to do event store ping");
+        await Retry.For(async () => {
+                            String url = $"http://127.0.0.1:{this.EventStoreHttpPort}/ping";
+
+                            using(HttpClientHandler httpClientHandler = new HttpClientHandler()){
+                                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
+                                                                                               cert,
+                                                                                               chain,
+                                                                                               errors) => {
+                                                                                                  return true;
+                                                                                              };
+                                using(HttpClient client = new HttpClient(httpClientHandler)){
+                                    client.DefaultRequestHeaders.Authorization =
+                                        new BasicAuthenticationHeaderValue("admin", "changeit");
+
+                                    HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
+                                    pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+                                }
+                            }
+                        },
+
+                        TimeSpan.FromSeconds(300),
+                        TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+        this.Trace("About to do event store info");
+
+        await Retry.For(async () => {
+            String url = $"http://127.0.0.1:{this.EventStoreHttpPort}/info";
+
+            using (HttpClientHandler httpClientHandler = new HttpClientHandler())
+            {
+                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
+                                                                               cert,
+                                                                               chain,
+                                                                               errors) => {
+                                                                                   return true;
+                                                                               };
+                using (HttpClient client = new HttpClient(httpClientHandler))
+                {
+                    client.DefaultRequestHeaders.Authorization =
+                        new BasicAuthenticationHeaderValue("admin", "changeit");
+
+                    HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
+
+                    infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+                    String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    this.Trace(infoData);
+                }
+            }
+        });
+        
         this.Trace("Event Store Container Started");
 
         this.Containers.Add(builtContainer);
