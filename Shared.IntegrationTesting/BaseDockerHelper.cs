@@ -160,6 +160,8 @@ public abstract class BaseDockerHelper{
         }
 
         this.HostPorts = new Dictionary<ContainerType, Int32>();
+        Logging.Enabled();
+        
     }
 
     #endregion
@@ -186,8 +188,8 @@ public abstract class BaseDockerHelper{
             result.AddRange(additional);
         }
 
-        result.Add("Logging:LogLevel:Microsoft=Info");
-        result.Add("Logging:LogLevel:Default=Info");
+        result.Add("Logging:LogLevel:Microsoft=Information");
+        result.Add("Logging:LogLevel:Default=Information");
         result.Add("Logging:EventLog:LogLevel:Default=None");
 
         return result;
