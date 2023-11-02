@@ -67,7 +67,7 @@ public class EventStoreDockerHelper : DockerHelper
 
         this.RequiredDockerServices = services;
 
-        await this.StartContainer(this.SetupEventStoreContainer,
+        await this.StartContainer2(this.SetupEventStoreContainer,
                                   new List<INetworkService> {
                                                                 networkService
                                                             },

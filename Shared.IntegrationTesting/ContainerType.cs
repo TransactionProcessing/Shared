@@ -11,5 +11,6 @@ public enum ContainerType
     EstateManagement,
     TransactionProcessor,
     FileProcessor,
-    TransactionProcessorAcl
+    TransactionProcessorAcl,
+    NotSet
 }

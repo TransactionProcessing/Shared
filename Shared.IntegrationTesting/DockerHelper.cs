@@ -112,17 +112,17 @@ public class DockerHelper : BaseDockerHelper
                                                                       testNetwork
                                                                   };
 
-        await StartContainer(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
+        await StartContainer2(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
         // TODO: permenant fix for this hack
         await Task.Delay(TimeSpan.FromSeconds(30));
-        await StartContainer(this.SetupMessagingServiceContainer, networks, DockerServices.MessagingService);
-        await StartContainer(this.SetupSecurityServiceContainer, networks, DockerServices.SecurityService);
-        await StartContainer(this.SetupCallbackHandlerContainer, networks, DockerServices.CallbackHandler);
-        await StartContainer(this.SetupTestHostContainer, networks, DockerServices.TestHost);
-        await StartContainer(this.SetupEstateManagementContainer, networks, DockerServices.EstateManagement);
-        await StartContainer(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
-        await StartContainer(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
-        await StartContainer(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
+        await StartContainer2(this.SetupMessagingServiceContainer, networks, DockerServices.MessagingService);
+        await StartContainer2(this.SetupSecurityServiceContainer, networks, DockerServices.SecurityService);
+        await StartContainer2(this.SetupCallbackHandlerContainer, networks, DockerServices.CallbackHandler);
+        await StartContainer2(this.SetupTestHostContainer, networks, DockerServices.TestHost);
+        await StartContainer2(this.SetupEstateManagementContainer, networks, DockerServices.EstateManagement);
+        await StartContainer2(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
+        await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
+        await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
         
         await this.LoadEventStoreProjections();
         

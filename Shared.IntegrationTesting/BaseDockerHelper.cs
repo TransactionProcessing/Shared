@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Ductus.FluentDocker.Builders;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
+using Ductus.FluentDocker.Executors;
 using Ductus.FluentDocker.Model.Builders;
 using Ductus.FluentDocker.Model.Containers;
 using Ductus.FluentDocker.Services;
@@ -185,8 +186,8 @@ public abstract class BaseDockerHelper{
             result.AddRange(additional);
         }
 
-        result.Add("Logging:LogLevel:Microsoft=Verbose");
-        result.Add("Logging:LogLevel:Default=Verbose");
+        result.Add("Logging:LogLevel:Microsoft=Info");
+        result.Add("Logging:LogLevel:Default=Info");
         result.Add("Logging:EventLog:LogLevel:Default=None");
 
         return result;
@@ -275,7 +276,7 @@ public abstract class BaseDockerHelper{
         }
     }
 
-    public async Task<IContainerService> SetupCallbackHandlerContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupCallbackHandlerContainer(){
         this.Trace("About to Start Callback Handler Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -293,21 +294,7 @@ public abstract class BaseDockerHelper{
                                                                  .MountHostFolder(this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
-        // Now build and return the container                
-        IContainerService builtContainer = callbackHandlerContainer.Build().WaitForPort($"{DockerPorts.CallbackHandlerDockerPort}/tcp", 30000);
-        
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-        }
-
-        this.Trace("Callback Handler Container Started");
-        this.Containers.Add(builtContainer);
-        
-        //  Do a health check here
-        this.CallbackHandlerPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.CallbackHandlerDockerPort}/tcp").Port;
-
-        await this.DoHealthCheck(ContainerType.CallbackHandler);
-        return builtContainer;
+        return callbackHandlerContainer;
     }
 
     public virtual void SetupContainerNames(){
@@ -323,7 +310,7 @@ public abstract class BaseDockerHelper{
         this.TransactionProcessorAclContainerName = $"transactionacl{this.TestId:N}";
     }
 
-    public virtual async Task<IContainerService> SetupEstateManagementContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupEstateManagementContainer(){
         this.Trace("About to Start Estate Management Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -343,25 +330,10 @@ public abstract class BaseDockerHelper{
                                                                   .MountHostFolder(this.HostTraceFolder)
                                                                   .SetDockerCredentials(this.DockerCredentials);
 
-        // Now build and return the container                
-        IContainerService builtContainer = estateManagementContainer.Build().Start().WaitForPort($"{DockerPorts.EstateManagementDockerPort}/tcp", 30000);
-
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-            var networkConfig = networkService.GetConfiguration(true);
-            this.Trace(JsonConvert.SerializeObject(networkConfig));
-        }
-
-        this.Trace("Estate Management Container Started");
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.EstateManagementPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EstateManagementDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.EstateManagement);
-        return builtContainer;
+        return estateManagementContainer;
     }
 
-    public virtual async Task<IContainerService> SetupEventStoreContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupEventStoreContainer(){
         this.Trace("About to Start Event Store Container");
 
         List<String> environmentVariables = new(){
@@ -404,82 +376,29 @@ public abstract class BaseDockerHelper{
 
         eventStoreContainerBuilder = eventStoreContainerBuilder.WithEnvironment(environmentVariables.ToArray());
 
-        IContainerService builtContainer = eventStoreContainerBuilder.Build().Start();
+        return eventStoreContainerBuilder;
+        //IContainerService builtContainer = eventStoreContainerBuilder.Build().Start();
 
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-            var networkConfig = networkService.GetConfiguration(true);
-            this.Trace(JsonConvert.SerializeObject(networkConfig));
-        }
+        //foreach (INetworkService networkService in networkServices){
+        //    networkService.Attach(builtContainer, false);
+        //    var networkConfig = networkService.GetConfiguration(true);
+        //    this.Trace(JsonConvert.SerializeObject(networkConfig));
+        //}
 
-        await Retry.For(async () => { builtContainer = builtContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
+        //await Retry.For(async () => { builtContainer = builtContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
+
+        //this.EventStoreHttpPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
+        //this.Trace($"EventStore Http Port: [{this.EventStoreHttpPort}]");
+
         
-        this.EventStoreHttpPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
-        this.Trace($"EventStore Http Port: [{this.EventStoreHttpPort}]");
 
-        String scheme = this.IsSecureEventStore switch{
-            true => "https",
-            _ => "http"
-        };
-        this.Trace("About to do event store ping");
-        await Retry.For(async () => {
-                            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
+        //this.Trace("Event Store Container Started");
 
-                            using(HttpClientHandler httpClientHandler = new HttpClientHandler()){
-                                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
-                                                                                               cert,
-                                                                                               chain,
-                                                                                               errors) => {
-                                                                                                  return true;
-                                                                                              };
-                                using(HttpClient client = new HttpClient(httpClientHandler)){
-                                    client.DefaultRequestHeaders.Authorization =
-                                        new BasicAuthenticationHeaderValue("admin", "changeit");
-
-                                    HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
-                                    pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-                                }
-                            }
-                        },
-
-                        TimeSpan.FromSeconds(300),
-                        TimeSpan.FromSeconds(30)).ConfigureAwait(false);
-
-        this.Trace("About to do event store info");
-
-        await Retry.For(async () => {
-            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
-
-            using (HttpClientHandler httpClientHandler = new HttpClientHandler())
-            {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
-                                                                               cert,
-                                                                               chain,
-                                                                               errors) => {
-                                                                                   return true;
-                                                                               };
-                using (HttpClient client = new HttpClient(httpClientHandler))
-                {
-                    client.DefaultRequestHeaders.Authorization =
-                        new BasicAuthenticationHeaderValue("admin", "changeit");
-
-                    HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
-
-                    infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-                    String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                    this.Trace(infoData);
-                }
-            }
-        });
-        
-        this.Trace("Event Store Container Started");
-
-        this.Containers.Add(builtContainer);
-        return builtContainer;
+        //this.Containers.Add(builtContainer);
+        //return builtContainer;
     }
 
-    public virtual async Task<IContainerService> SetupFileProcessorContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupFileProcessorContainer(){
         this.Trace("About to Start File Processor Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -548,24 +467,10 @@ public abstract class BaseDockerHelper{
 
         String containerFolder = enginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
         fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
-
-        // Now build and return the container                
-        IContainerService builtContainer = fileProcessorContainer.Build().Start().WaitForPort($"{DockerPorts.FileProcessorDockerPort}/tcp", 30000);
-
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-        }
-
-        this.Trace("File Processor Container Started");
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.FileProcessorPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.FileProcessorDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.FileProcessor);
-        return builtContainer;
+        return fileProcessorContainer;
     }
 
-    public virtual async Task<IContainerService> SetupMessagingServiceContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupMessagingServiceContainer(){
         this.Trace("About to Start Messaging Service Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -587,22 +492,22 @@ public abstract class BaseDockerHelper{
                                                                   .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
 
         // Now build and return the container                
-        IContainerService builtContainer = messagingServiceContainer.Build().Start();
+        ////IContainerService builtContainer = messagingServiceContainer.Build().Start();
 
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-        }
+        ////foreach (INetworkService networkService in networkServices){
+        ////    networkService.Attach(builtContainer, false);
+        ////}
 
-        this.Trace("Messaging Service Container Started");
-        this.Containers.Add(builtContainer);
+        ////this.Trace("Messaging Service Container Started");
+        ////this.Containers.Add(builtContainer);
 
-        //  Do a health check here
-        this.MessagingServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.MessagingServiceDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.MessagingService);
-        return builtContainer;
+        //////  Do a health check here
+        ////this.MessagingServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.MessagingServiceDockerPort}/tcp").Port;
+        ////await this.DoHealthCheck(ContainerType.MessagingService);
+        return messagingServiceContainer;
     }
 
-    public virtual async Task<IContainerService> SetupSecurityServiceContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupSecurityServiceContainer(){
         this.Trace("About to Start Security Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -638,20 +543,7 @@ public abstract class BaseDockerHelper{
         }
 
         // Now build and return the container                
-        IContainerService builtContainer = securityServiceContainer.Build().Start().WaitForPort($"{DockerPorts.SecurityServiceDockerPort}/tcp", 30000);
-
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-        }
-
-        this.Trace("Security Service Container Started");
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.SecurityServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.SecurityServiceDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.SecurityService);
-
-        return builtContainer;
+        return securityServiceContainer;
     }
 
     public virtual IContainerService SetupSqlServerContainer(INetworkService networkService){
@@ -691,7 +583,7 @@ public abstract class BaseDockerHelper{
         return databaseServerContainer;
     }
 
-    public virtual async Task<IContainerService> SetupTestHostContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupTestHostContainer(){
         this.Trace("About to Start Test Hosts Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -710,21 +602,8 @@ public abstract class BaseDockerHelper{
                                                           .UseImageDetails(this.GetImageDetails(ContainerType.TestHost)).ExposePort(DockerPorts.TestHostPort)
                                                           .MountHostFolder(this.HostTraceFolder)
                                                           .SetDockerCredentials(this.DockerCredentials);
-        // Now build and return the container                
-        IContainerService builtContainer = testHostContainer.Build().Start().WaitForPort($"{DockerPorts.TestHostPort}/tcp", 30000);
-
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-        }
-
-        this.Trace("Test Hosts Container Started");
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.TestHostServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.TestHostPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.TestHost);
-
-        return builtContainer;
+        
+        return testHostContainer;
     }
 
     public virtual INetworkService SetupTestNetwork(String networkName = null,
@@ -760,7 +639,7 @@ public abstract class BaseDockerHelper{
         return null;
     }
 
-    public virtual async Task<IContainerService> SetupTransactionProcessorAclContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupTransactionProcessorAclContainer(){
         this.Trace("About to Start Transaction Processor ACL Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -779,25 +658,10 @@ public abstract class BaseDockerHelper{
                                                                          .MountHostFolder(this.HostTraceFolder)
                                                                          .SetDockerCredentials(this.DockerCredentials);
 
-        // Now build and return the container                
-        IContainerService builtContainer = transactionProcessorACLContainer.Build().Start().WaitForPort($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp", 30000);
-
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-        }
-
-        this.Trace("Transaction Processor Container ACL Started");
-
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.TransactionProcessorAclPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.TransactionProcessorAcl);
-
-        return builtContainer;
+        return transactionProcessorACLContainer;
     }
 
-    public virtual async Task<IContainerService> SetupTransactionProcessorContainer(List<INetworkService> networkServices){
+    public virtual ContainerBuilder SetupTransactionProcessorContainer(){
         this.Trace("About to Start Transaction Processor Container");
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
@@ -822,19 +686,8 @@ public abstract class BaseDockerHelper{
                                                                       .MountHostFolder(this.HostTraceFolder)
                                                                       .SetDockerCredentials(this.DockerCredentials);
 
-        // Now build and return the container                
-        IContainerService builtContainer = transactionProcessorContainer.Build().Start().WaitForPort($"{DockerPorts.TransactionProcessorDockerPort}/tcp", 30000);
-        foreach (INetworkService networkService in networkServices){
-            networkService.Attach(builtContainer, false);
-        }
-
-        this.Trace("Transaction Processor Container Started");
-        this.Containers.Add(builtContainer);
-
-        //  Do a health check here
-        this.TransactionProcessorPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorDockerPort}/tcp").Port;
-        await this.DoHealthCheck(ContainerType.TransactionProcessor);
-        return builtContainer;
+        
+        return transactionProcessorContainer;
     }
 
     public abstract Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices);
@@ -923,6 +776,71 @@ public abstract class BaseDockerHelper{
         await client.CreateAsync(subscription.streamName, subscription.groupName, settings);
 
         this.Trace($"Subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] created");
+    }
+
+    protected async Task DoEventStoreHealthCheck(){
+        String scheme = this.IsSecureEventStore switch
+        {
+            true => "https",
+            _ => "http"
+        };
+        this.Trace("About to do event store ping");
+        await Retry.For(async () =>
+        {
+            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
+
+            using (HttpClientHandler httpClientHandler = new HttpClientHandler())
+            {
+                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
+                                                                               cert,
+                                                                               chain,
+                                                                               errors) =>
+                {
+                    return true;
+                };
+                using (HttpClient client = new HttpClient(httpClientHandler))
+                {
+                    client.DefaultRequestHeaders.Authorization =
+                        new BasicAuthenticationHeaderValue("admin", "changeit");
+
+                    HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
+                    pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+                }
+            }
+        },
+
+                        TimeSpan.FromSeconds(300),
+                        TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+        this.Trace("About to do event store info");
+
+        await Retry.For(async () =>
+        {
+            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
+
+            using (HttpClientHandler httpClientHandler = new HttpClientHandler())
+            {
+                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
+                                                                               cert,
+                                                                               chain,
+                                                                               errors) =>
+                {
+                    return true;
+                };
+                using (HttpClient client = new HttpClient(httpClientHandler))
+                {
+                    client.DefaultRequestHeaders.Authorization =
+                        new BasicAuthenticationHeaderValue("admin", "changeit");
+
+                    HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
+
+                    infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+                    String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    this.Trace(infoData);
+                }
+            }
+        });
     }
 
     protected async Task DoHealthCheck(ContainerType containerType){
@@ -1035,6 +953,98 @@ public abstract class BaseDockerHelper{
             $"{settingName}=\"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}\"";
         
         return connectionString;
+    }
+
+    protected async Task<IContainerService> StartContainer2(Func<ContainerBuilder> buildContainerFunc, List<INetworkService> networkServices, DockerServices dockerService){
+        if ((this.RequiredDockerServices & dockerService) != dockerService)
+        {
+            return default;
+        }
+
+        ConsoleStream<String> consoleLogs = null;
+        try{
+            var containerBuilder = buildContainerFunc();
+
+            IContainerService builtContainer = containerBuilder.Build();
+            consoleLogs = builtContainer.Logs(true);
+            var startedContainer = builtContainer.Start();
+            foreach (INetworkService networkService in networkServices)
+            {
+                networkService.Attach(startedContainer, false);
+            }
+
+            this.Trace($"{dockerService} Container Started");
+            this.Containers.Add(startedContainer);
+
+            //  Do a health check here
+            //this.MessagingServicePort = 
+            ContainerType type = dockerService switch{
+                DockerServices.CallbackHandler => ContainerType.CallbackHandler,
+                DockerServices.MessagingService => ContainerType.MessagingService,
+                DockerServices.SecurityService => ContainerType.SecurityService,
+                DockerServices.EstateManagement => ContainerType.EstateManagement,
+                DockerServices.FileProcessor => ContainerType.FileProcessor,
+                DockerServices.TestHost => ContainerType.TestHost,
+                DockerServices.TransactionProcessor => ContainerType.TransactionProcessor,
+                DockerServices.TransactionProcessorAcl => ContainerType.TransactionProcessorAcl,
+                DockerServices.EventStore=> ContainerType.EventStore,
+                _ => ContainerType.NotSet
+            };
+
+            this.SetHostPortForService(type, startedContainer);
+
+            if (type == ContainerType.EventStore){
+                await DoEventStoreHealthCheck();
+            }
+            else{
+                await this.DoHealthCheck(type);
+            }
+
+            return startedContainer;
+        }
+        catch (Exception ex){
+            while (consoleLogs.IsFinished == false){
+                var s = consoleLogs.TryRead(10000);
+                this.Trace(s);
+            }
+
+            this.Error($"Error starting container [{buildContainerFunc.Method.Name}]", ex);
+            throw;
+        }
+    }
+
+    private void SetHostPortForService(ContainerType type, IContainerService startedContainer){
+        switch(type){
+            case ContainerType.EventStore:
+                this.EventStoreHttpPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
+                break;
+            case ContainerType.MessagingService:
+                this.MessagingServicePort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.MessagingServiceDockerPort}/tcp").Port;
+                break;
+            case ContainerType.SecurityService:
+                this.SecurityServicePort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.SecurityServiceDockerPort}/tcp").Port;
+                break;
+            case ContainerType.CallbackHandler:
+                this.CallbackHandlerPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.CallbackHandlerDockerPort}/tcp").Port;
+                break;
+            case ContainerType.TestHost:
+                this.TestHostServicePort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TestHostPort}/tcp").Port;
+                break;
+            case ContainerType.EstateManagement:
+                this.EstateManagementPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.EstateManagementDockerPort}/tcp").Port;
+                break;
+            case ContainerType.TransactionProcessor:
+                this.TransactionProcessorPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorDockerPort}/tcp").Port;
+                break;
+            case ContainerType.FileProcessor:
+                this.FileProcessorPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.FileProcessorDockerPort}/tcp").Port;
+                break;
+            case ContainerType.TransactionProcessorAcl:
+                this.TransactionProcessorAclPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp").Port;
+                break;
+            default:
+                break;
+        }
     }
 
     protected async Task<IContainerService> StartContainer(Func<List<INetworkService>, Task<IContainerService>> startContainerFunc, List<INetworkService> networkServices, DockerServices dockerService){
