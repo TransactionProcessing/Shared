@@ -14,6 +14,19 @@ using Ductus.FluentDocker.Services;
 using Newtonsoft.Json;
 using Shouldly;
 
+[Flags]
+public enum DockerServices{
+    SqlServer = 1,
+    EventStore = 2,
+    MessagingService = 4,
+    SecurityService = 8,
+    CallbackHandler = 16,
+    TestHost = 32,
+    EstateManagement = 64,
+    TransactionProcessor = 128,
+    FileProcessor = 256,
+    TransactionProcessorAcl = 512 }
+
 public class DockerHelper : BaseDockerHelper
 {
     public DockerHelper() :base(){
@@ -65,15 +78,17 @@ public class DockerHelper : BaseDockerHelper
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
 
-    public override async Task StartContainersForScenarioRun(String scenarioName) {
+    public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices){
         this.DockerCredentials.ShouldNotBeNull();
         this.SqlCredentials.ShouldNotBeNull();
         this.SqlServerContainer.ShouldNotBeNull();
         this.SqlServerNetwork.ShouldNotBeNull();
 
-        this.IsSecureEventStore = Environment.GetEnvironmentVariable("IsSecureEventStore") switch {
+        this.RequiredDockerServices = dockerServices;
+
+        this.IsSecureEventStore = Environment.GetEnvironmentVariable("IsSecureEventStore") switch{
             null => false,
-            {Length: 0} => false,
+            { Length: 0 } => false,
             "false" => false,
             _ => true
         };
@@ -92,31 +107,25 @@ public class DockerHelper : BaseDockerHelper
         INetworkService testNetwork = this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
-        List<INetworkService> networks = new List<INetworkService> {
-                                                                       this.SqlServerNetwork,
-                                                                       testNetwork
-                                                                   };
+        List<INetworkService> networks = new List<INetworkService>{
+                                                                      this.SqlServerNetwork,
+                                                                      testNetwork
+                                                                  };
 
-        await StartContainer(this.SetupEventStoreContainer, networks);
-
-        await StartContainer(this.SetupMessagingServiceContainer, networks);
-
-        await StartContainer(this.SetupSecurityServiceContainer, networks);
-
-        await StartContainer(this.SetupCallbackHandlerContainer, networks);
-
-        await StartContainer(this.SetupTestHostContainer, networks);
-
-        await StartContainer(this.SetupEstateManagementContainer, networks);
-
-        await StartContainer(this.SetupTransactionProcessorContainer, networks);
-
-        await StartContainer(this.SetupFileProcessorContainer, networks);
-
-        await StartContainer(this.SetupTransactionProcessorAclContainer, networks);
-
+        await StartContainer2(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
+        // TODO: permenant fix for this hack
+        await Task.Delay(TimeSpan.FromSeconds(30));
+        await StartContainer2(this.SetupMessagingServiceContainer, networks, DockerServices.MessagingService);
+        await StartContainer2(this.SetupSecurityServiceContainer, networks, DockerServices.SecurityService);
+        await StartContainer2(this.SetupCallbackHandlerContainer, networks, DockerServices.CallbackHandler);
+        await StartContainer2(this.SetupTestHostContainer, networks, DockerServices.TestHost);
+        await StartContainer2(this.SetupEstateManagementContainer, networks, DockerServices.EstateManagement);
+        await StartContainer2(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
+        await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
+        await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
+        
         await this.LoadEventStoreProjections();
-
+        
         await this.CreateGenericSubscriptions();
     }
 

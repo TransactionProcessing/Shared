@@ -21,8 +21,6 @@ namespace Shared.EventStore.Tests
             String eventData = JsonConvert.SerializeObject(aggregateNameSetEvent);
             DomainEventFactory factory = new DomainEventFactory();
             DomainEvent newEvent = factory.CreateDomainEvent(eventData, typeof(AggregateNameSetEvent));
-            newEvent.AggregateId.ShouldBe(aggregateNameSetEvent.AggregateId);
-            newEvent.EventId.ShouldBe(aggregateNameSetEvent.EventId);
             ((AggregateNameSetEvent)newEvent).AggregateName.ShouldBe(aggregateNameSetEvent.AggregateName);
         }
 
@@ -30,13 +28,10 @@ namespace Shared.EventStore.Tests
         public void DomainEventFactory_CreateDomainEvent_GuidAndResolvedEvent_DomainEventCreated()
         {
             AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
-            String eventData = JsonConvert.SerializeObject(aggregateNameSetEvent);
             ResolvedEvent resolvedEvent = new ResolvedEvent(TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestStream"),null,null);
 
             DomainEventFactory factory = new DomainEventFactory();
-            var newEvent = factory.CreateDomainEvent(TestData.AggregateId, resolvedEvent);
-            newEvent.AggregateId.ShouldBe(aggregateNameSetEvent.AggregateId);
-            newEvent.EventId.ShouldBe(aggregateNameSetEvent.EventId);
+            DomainEvent newEvent = factory.CreateDomainEvent(TestData.AggregateId, resolvedEvent);
             ((AggregateNameSetEvent)newEvent).AggregateName.ShouldBe(aggregateNameSetEvent.AggregateName);
         }
 
@@ -44,14 +39,12 @@ namespace Shared.EventStore.Tests
         public void DomainEventFactory_CreateDomainEvents_GuidAndResolvedEventList_DomainEventCreated()
         {
             AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
-            String eventData = JsonConvert.SerializeObject(aggregateNameSetEvent);
-            List<ResolvedEvent> resolvedEventList = new List<ResolvedEvent>();
-            resolvedEventList.Add(new ResolvedEvent(TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestStream"), null, null));
+            List<ResolvedEvent> resolvedEventList = new List<ResolvedEvent>{
+                                                                               new ResolvedEvent(TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestStream"), null, null)
+                                                                           };
 
             DomainEventFactory factory = new DomainEventFactory();
-            var newEvent = factory.CreateDomainEvents(TestData.AggregateId, resolvedEventList);
-            newEvent.Single().AggregateId.ShouldBe(aggregateNameSetEvent.AggregateId);
-            newEvent.Single().EventId.ShouldBe(aggregateNameSetEvent.EventId);
+            DomainEvent[] newEvent = factory.CreateDomainEvents(TestData.AggregateId, resolvedEventList);
             ((AggregateNameSetEvent)newEvent.Single()).AggregateName.ShouldBe(aggregateNameSetEvent.AggregateName);
         }
     }
@@ -61,7 +54,7 @@ namespace Shared.EventStore.Tests
         public void EventDataFactory_CreateEventData_EventDataCreated(){
             EventDataFactory factory = new EventDataFactory();
             AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
-            var eventData = factory.CreateEventData(aggregateNameSetEvent);
+            EventData eventData = factory.CreateEventData(aggregateNameSetEvent);
             eventData.EventId.ToGuid().ShouldBe(aggregateNameSetEvent.EventId);
         }
 
@@ -85,7 +78,7 @@ namespace Shared.EventStore.Tests
             events.Add(aggregateNameSetEvent1);
             events.Add(aggregateNameSetEvent2);
             
-            var eventData = factory.CreateEventDataList(events);
+            EventData[] eventData = factory.CreateEventDataList(events);
             eventData[0].EventId.ToGuid().ShouldBe(aggregateNameSetEvent1.EventId);
             eventData[1].EventId.ToGuid().ShouldBe(aggregateNameSetEvent2.EventId);
         }

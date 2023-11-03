@@ -17,56 +17,22 @@ public class EventStoreDockerHelper : DockerHelper
     public async Task StartContainers(Boolean isSecureEventStore, String testName) {
         this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder(testName);
-        await this.StartContainersForScenarioRun(testName);
-
-        String url = isSecureEventStore switch {
-            true => $"https://127.0.0.1:{this.EventStoreHttpPort}/ping",
-            _ => $"http://127.0.0.1:{this.EventStoreHttpPort}/ping"
-        };
-
-        HttpClientHandler handler = new HttpClientHandler{
-                                                             ServerCertificateCustomValidationCallback = (sender,
-                                                                                                          certificate,
-                                                                                                          chain,
-                                                                                                          errors) => true,
-                                                         };
-
-        await Retry.For(async () => {
-                            HttpResponseMessage response = null;
-                            try{
-                                HttpClient client = new HttpClient(handler);
-                                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
-                                response = await client.SendAsync(request, CancellationToken.None);
-
-                                var responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
-
-                                var responseData = new{
-                                                          text = String.Empty
-                                                      };
-
-                                var x = JsonConvert.DeserializeAnonymousType(responseContent, responseData);
-                                x.text.ShouldBe("Ping request successfully handled");
-                            }
-                            catch(Exception e){
-                                if (response != null){
-                                    if (response.IsSuccessStatusCode == false){
-                                        Console.WriteLine(response.StatusCode);
-                                    }
-                                }
-
-                                throw;
-                            }
-                        });
+        
+        await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
     }
 
-    public override async Task StartContainersForScenarioRun(String scenarioName) {
+    public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services) {
         this.TestId = Guid.NewGuid();
         INetworkService networkService = this.SetupTestNetwork();
         this.SetupContainerNames();
-        await this.StartContainer(this.SetupEventStoreContainer,
+
+        this.RequiredDockerServices = services;
+
+        await this.StartContainer2(this.SetupEventStoreContainer,
                                   new List<INetworkService> {
                                                                 networkService
-                                                            });
+                                                            },
+                                  DockerServices.EventStore);
 
     }
 

@@ -7,6 +7,33 @@ on:
   repository_dispatch:
 
 jobs:
+  buildandunittests:
+    name: "Nightly Build - Main"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install NET 7
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+
+    - name: Run Main Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+
   buildlinux:
     name: "Nightly Build - Linux"
     env:
@@ -33,11 +60,14 @@ jobs:
         sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
         sudo update-ca-certificates
 
-    - name: Run Unit Tests
+    - name: Run Event Store Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"        
+        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
+
+    - name: Run Integration Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
@@ -67,11 +97,14 @@ jobs:
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
 
-    - name: Run Unit Tests
+    - name: Run Event Store Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
+
+    - name: Run Integration Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
@@ -107,11 +140,9 @@ jobs:
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
           
-    - name: Run Unit Tests
+    - name: Run Integration Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"
-        dotnet test "Shared.EventStoreContext.Tests.csproj"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
         
     - name: Trust root certificate
@@ -124,7 +155,7 @@ jobs:
     - name: Run Event Store Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"        
 
     - uses: actions/upload-artifact@v2
       if: ${{ failure() }}

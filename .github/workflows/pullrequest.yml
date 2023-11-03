@@ -79,7 +79,7 @@ jobs:
       if: ${{ failure() }}
       with:
         name: tracelogswindows
-        path: c:\\home\\txnproc\\trace\\
+        path: C:\\Users\\runneradmin\\txnproc
 
   buildmacos:
     name: "Build and Test Pull Requests - Mac"
