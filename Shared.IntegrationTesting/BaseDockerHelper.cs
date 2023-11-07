@@ -378,6 +378,10 @@ public abstract class BaseDockerHelper{
 
         eventStoreContainerBuilder = eventStoreContainerBuilder.WithEnvironment(environmentVariables.ToArray());
 
+        if (eventStoreContainerBuilder == null){
+            this.Trace("eventStoreContainerBuilder is null");
+        }
+
         return eventStoreContainerBuilder;
         //IContainerService builtContainer = eventStoreContainerBuilder.Build().Start();
 
@@ -968,6 +972,7 @@ public abstract class BaseDockerHelper{
             var containerBuilder = buildContainerFunc();
 
             IContainerService builtContainer = containerBuilder.Build();
+            
             consoleLogs = builtContainer.Logs(true);
             var startedContainer = builtContainer.Start();
             foreach (INetworkService networkService in networkServices)
