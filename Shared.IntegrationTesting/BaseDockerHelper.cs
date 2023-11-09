@@ -51,6 +51,8 @@ public abstract class BaseDockerHelper{
     public INetworkService SqlServerNetwork;
 
     public Guid TestId;
+    
+    public String ScenarioName;
 
     protected String CallbackHandlerContainerName;
 
@@ -1010,9 +1012,11 @@ public abstract class BaseDockerHelper{
             return startedContainer;
         }
         catch (Exception ex){
-            while (consoleLogs.IsFinished == false){
-                var s = consoleLogs.TryRead(10000);
-                this.Trace(s);
+            if (consoleLogs != null){
+                while (consoleLogs.IsFinished == false){
+                    var s = consoleLogs.TryRead(10000);
+                    this.Trace(s);
+                }
             }
 
             this.Error($"Error starting container [{buildContainerFunc.Method.Name}]", ex);
@@ -1073,9 +1077,9 @@ public abstract class BaseDockerHelper{
         }
     }
 
-    protected void Trace(String traceMessage){
+    public void Trace(String traceMessage){
         if (this.Logger.IsInitialised){
-            this.Logger.LogInformation($"{this.TestId}|{traceMessage}");
+            this.Logger.LogInformation($"{this.TestId}|{this.ScenarioName}|{traceMessage}");
         }
     }
 

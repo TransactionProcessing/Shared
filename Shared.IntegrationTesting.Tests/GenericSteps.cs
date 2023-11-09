@@ -13,9 +13,8 @@ public class GenericSteps
     private readonly ScenarioContext ScenarioContext;
 
     private readonly TestingContext TestingContext;
-
-    public GenericSteps(ScenarioContext scenarioContext,
-                        TestingContext testingContext)
+    
+    public GenericSteps(ScenarioContext scenarioContext, TestingContext testingContext)
     {
         this.ScenarioContext = scenarioContext;
         this.TestingContext = testingContext;
@@ -44,6 +43,7 @@ public class GenericSteps
 
         this.TestingContext.Logger = logger;
         this.TestingContext.Logger.LogInformation("About to Start Containers for Scenario Run");
+        this.TestingContext.DockerHelper.ScenarioName = scenarioName;
         await this.TestingContext.DockerHelper.StartContainersForScenarioRun(scenarioName, services).ConfigureAwait(false);
         this.TestingContext.Logger.LogInformation("Containers for Scenario Run Started");
     }
