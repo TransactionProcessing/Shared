@@ -9,6 +9,7 @@
     using Newtonsoft.Json;
     using NLog;
     using Shouldly;
+    using static IdentityModel.OidcConstants;
 
     public class EventStoreContextTests : IDisposable{
         #region Fields
@@ -21,9 +22,11 @@
 
         public EventStoreContextTests(){
             NlogLogger logger = new NlogLogger();
-            logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
             LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
+            LogManager.LoadConfiguration("nlog.config");
 
+            logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
+           
             this.EventStoreDockerHelper = new EventStoreDockerHelper();
             this.EventStoreDockerHelper.Logger = logger;
         }
@@ -34,7 +37,12 @@
 
         //TimeSpan? deadline = null;
         public void Dispose(){
-            this.EventStoreDockerHelper.StopContainersForScenarioRun().Wait();
+            //this.EventStoreDockerHelper.StopContainersForScenarioRun().Wait();
+        }
+
+        [TearDown]
+        public async Task TearDown(){
+            await this.EventStoreDockerHelper.StopContainersForScenarioRun();
         }
 
         [Test]
@@ -47,6 +55,9 @@
         [TestCase("Faulted", ProjectionRunningStatus.Faulted)]
         [TestCase("faulted", ProjectionRunningStatus.Faulted)]
         [TestCase("FAULTED", ProjectionRunningStatus.Faulted)]
+        [TestCase("Faulted (Enabled)", ProjectionRunningStatus.Faulted)]
+        [TestCase("faulted (Enabled)", ProjectionRunningStatus.Faulted)]
+        [TestCase("FAULTED (Enabled)", ProjectionRunningStatus.Faulted)]
         [TestCase("Completed/Stopped/Writing results", ProjectionRunningStatus.Completed)]
         [TestCase("completed/stopped/writing results", ProjectionRunningStatus.Completed)]
         [TestCase("COMPLETED/STOPPED/WRITING RESULTS", ProjectionRunningStatus.Completed)]
@@ -97,15 +108,14 @@
             String streamName = $"TestStream-{aggreggateId:N}";
 
             EstateCreatedEvent event1 = new(aggreggateId, "Test Estate 1");
-            List<IDomainEvent> domainEvents = new();
-            domainEvents.Add(event1);
+            List<IDomainEvent> domainEvents = new(){
+                                                       event1
+                                                   };
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
-                            retryTimeout,
-                            deadline);
+            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
         }
 
         [Test]
@@ -116,9 +126,7 @@
             TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
-
-            await Task.Delay(TimeSpan.FromSeconds(30));
-
+            
             IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
@@ -126,25 +134,17 @@
 
             EstateCreatedEvent event1 = new(aggreggateId, "Test Estate 1");
             EstateCreatedEvent event2 = new(aggreggateId, "Test Estate 2");
-            List<IDomainEvent> domainEvents = new();
-            domainEvents.Add(event1);
-            domainEvents.Add(event2);
+            List<IDomainEvent> domainEvents = new(){
+                                                       event1,
+                                                       event2
+                                                   };
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
-                            retryTimeout,
-                            deadline);
+            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
 
-            await Retry.For(async () => {
-                                List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
-
-                                resolvedEvents.Count.ShouldBe(events.Length);
-                            },
-                            retryTimeout,
-                            deadline);
+            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
         }
 
         [Test]
@@ -169,17 +169,10 @@
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
-                            retryTimeout,
-                            deadline);
 
-            await Retry.For(async () => {
-                                IList<ResolvedEvent> resolvedEvents = await context.GetEventsBackward(streamName, events.Length, CancellationToken.None);
+            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
 
-                                resolvedEvents.Count.ShouldBe(events.Length);
-                            },
-                            retryTimeout,
-                            deadline);
+            await this.ReadEventsBackwards(context, streamName, events.Length, deadline, retryTimeout);
         }
 
         [Test]
@@ -196,13 +189,7 @@
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream1-{aggreggateId:N}";
 
-            await Retry.For(async () => {
-                                IList<ResolvedEvent> resolvedEvents = await context.GetEventsBackward(streamName, 1, CancellationToken.None);
-
-                                resolvedEvents.ShouldBeEmpty();
-                            },
-                            retryTimeout,
-                            deadline);
+            await this.ReadEventsBackwards(context, streamName, null, deadline, retryTimeout);
         }
 
         [Test]
@@ -213,9 +200,7 @@
             TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
-
-            await Task.Delay(TimeSpan.FromSeconds(30));
-
+            
             IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
@@ -223,32 +208,23 @@
 
             EstateCreatedEvent event1 = new(aggreggateId, "Test Estate 1");
             EstateCreatedEvent event2 = new(aggreggateId, "Test Estate 2");
-            List<IDomainEvent> domainEvents = new();
-            domainEvents.Add(event1);
-            domainEvents.Add(event2);
+            List<IDomainEvent> domainEvents = new(){
+                                                       event1,
+                                                       event2
+                                                   };
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
-                            retryTimeout,
-                            deadline);
+            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
+            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
 
-            await Retry.For(async () => {
-                                List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
+            //String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
+            String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estate.push(e.data.estateName);\r\n        }\r\n  });";
 
-                                resolvedEvents.Count.ShouldBe(events.Length);
-                            },
-                            retryTimeout,
-                            deadline);
-
-            await Task.Delay(TimeSpan.FromSeconds(15));
-
-            String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
-
-            Exception ex = Should.Throw<Exception>(async () => { await context.RunTransientQuery(query, CancellationToken.None); });
-            ex.Message.ShouldBe("Faulted");
+            //Exception ex = Should.Throw<Exception>(async () => { await this.RunTransientQuery(context, query, 1);});
+            //ex.Message.ShouldBe("Faulted");
+            await this.RunTransientQuery(context, query, 1);
         }
 
         [Test]
@@ -260,8 +236,6 @@
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
-            await Task.Delay(TimeSpan.FromSeconds(30));
-
             IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
@@ -269,49 +243,28 @@
 
             EstateCreatedEvent event1 = new(aggreggateId, "Test Estate 1");
             EstateCreatedEvent event2 = new(aggreggateId, "Test Estate 2");
-            List<IDomainEvent> domainEvents = new();
-            domainEvents.Add(event1);
-            domainEvents.Add(event2);
-
+            List<IDomainEvent> domainEvents = new(){
+                                                       event1,
+                                                       event2,
+                                                   };
+            
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
-                            retryTimeout,
-                            deadline);
-
-            await Retry.For(async () => {
-                                List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
-
-                                resolvedEvents.Count.ShouldBe(events.Length);
-                            },
-                            retryTimeout,
-                            deadline);
-
-            await Task.Delay(TimeSpan.FromSeconds(15));
+            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
+            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
 
             String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
 
-            String queryResult = null;
-            await Retry.For(async () => {
-                                queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-                                queryResult.ShouldNotBeNullOrEmpty();
-                            },
-                            retryTimeout,
-                            deadline);
+            String queryResult = await this.RunTransientQuery(context, query, 2, deadline, retryTimeout);
 
             var definition = new{
                                     estates = new List<String>()
                                 };
-            await Retry.For(async () => {
-                                var result = JsonConvert.DeserializeAnonymousType(queryResult, definition);
+            var result = JsonConvert.DeserializeAnonymousType(queryResult, definition);
 
-                                result.estates.Contains(event1.EstateName).ShouldBeTrue();
-                                result.estates.Contains(event2.EstateName).ShouldBeTrue();
-                            },
-                            retryTimeout,
-                            deadline);
+            result.estates.Contains(event1.EstateName).ShouldBeTrue();
+            result.estates.Contains(event2.EstateName).ShouldBeTrue();
         }
 
         [Test]
@@ -323,8 +276,6 @@
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
 
-            await Task.Delay(TimeSpan.FromSeconds(30));
-
             IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
@@ -332,35 +283,20 @@
 
             EstateCreatedEvent event1 = new(aggreggateId, "Test Estate 1");
             EstateCreatedEvent event2 = new(aggreggateId, "Test Estate 2");
-            List<IDomainEvent> domainEvents = new();
-            domainEvents.Add(event1);
-            domainEvents.Add(event2);
+            List<IDomainEvent> domainEvents = new(){
+                                                       event1,
+                                                       event2
+                                                   };
 
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
-            await Retry.For(async () => { await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None); },
-                            retryTimeout,
-                            deadline);
 
-            await Retry.For(async () => {
-                                List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
-
-                                resolvedEvents.Count.ShouldBe(events.Length);
-                            },
-                            retryTimeout,
-                            deadline);
-
-            await Task.Delay(TimeSpan.FromSeconds(15));
+            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
+            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
 
             String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                \r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s, e){\r\n          }\r\n  });";
 
-            await Retry.For(async () => {
-                                String queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-                                queryResult.ShouldBeEmpty();
-                            },
-                            retryTimeout,
-                            deadline);
+            await this.RunTransientQuery(context, query, 3, deadline, retryTimeout);
         }
 
         private IEventStoreContext CreateContext(Boolean secureEventStore, TimeSpan? deadline = null){
@@ -373,5 +309,84 @@
         }
 
         #endregion
+        
+        private async Task InsertEvents(IEventStoreContext context, String streamName, EventData[] events, TimeSpan deadline, TimeSpan retryTimeout){
+            await Retry.For(async () => {
+                                await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+                            },
+                            retryTimeout,
+                            deadline);
+
+            await Retry.For(async () => {
+                                List<ResolvedEvent> resolvedEvents = null;
+                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
+
+                                resolvedEvents.Count.ShouldBe(events.Length);
+                            },
+                            retryTimeout,
+                            deadline);
+        }
+
+        private async Task ReadEvents(IEventStoreContext context, String streamName, Int32 eventCount, TimeSpan deadline, TimeSpan retryTimeout){
+            await Retry.For(async () => {
+                                List<ResolvedEvent> resolvedEvents = null;
+                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
+
+                                resolvedEvents.Count.ShouldBe(eventCount);
+                            },
+                            retryTimeout,
+                            deadline);
+        }
+
+        private async Task ReadEventsBackwards(IEventStoreContext context, String streamName, Int32? eventCount, TimeSpan deadline, TimeSpan retryTimeout){
+            await Retry.For(async () => {
+
+                                IList<ResolvedEvent> resolvedEvents = await context.GetEventsBackward(streamName, eventCount.GetValueOrDefault(1), CancellationToken.None);
+
+                                if (eventCount == null){
+                                    resolvedEvents.ShouldBeEmpty();
+                                }
+                                else{
+                                    resolvedEvents.Count.ShouldBe(eventCount.GetValueOrDefault(0));
+                                }
+                            },
+                            retryTimeout,
+                            deadline);
+        }
+
+        private async Task<String> RunTransientQuery(IEventStoreContext context, String query, Int32 checkType, TimeSpan? deadline = null, TimeSpan? retryTimeout = null){
+            Int32 counter = 0;
+            String queryResult = null;
+            await Retry.For(async () => {
+                                counter++;
+                                this.EventStoreDockerHelper.Trace($"Inside Retry Counter [{counter}] Check Type [{checkType}]");
+
+                                if (checkType == 1){
+                                    
+                                    Exception ex = Should.Throw<Exception>(async () => {
+                                        this.EventStoreDockerHelper.Trace($"About to call RunTransientQuery");
+                                        await context.RunTransientQuery(query, CancellationToken.None);
+                                                                           });
+                                    this.EventStoreDockerHelper.Trace($"{ex.Message}");
+                                    ex.Message.ShouldBe("Faulted");
+                                }
+                                else{
+                                    queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+
+                                    switch(checkType){
+                                        case 2: // Not Null or Empty
+                                            queryResult.ShouldNotBeNullOrEmpty();
+                                            break;
+                                        case 3: // Empty
+                                            queryResult.ShouldBeEmpty();
+                                            break;
+                                    }
+                                }
+                            },
+                            retryTimeout,
+                            deadline);
+            return queryResult; 
+            
+        }
     }
 }

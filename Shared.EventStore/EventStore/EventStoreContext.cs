@@ -167,14 +167,14 @@
 
         public async Task<String> RunTransientQuery(String query, CancellationToken cancellationToken){
             CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
             String queryName = Guid.NewGuid().ToString();
 
-            await this.ProjectionManagementClient.CreateTransientAsync(queryName, query, cancellationToken:source.Token);
+            try
+            {
+                await this.ProjectionManagementClient.CreateTransientAsync(queryName, query, cancellationToken: source.Token);
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
+                Stopwatch stopwatch = Stopwatch.StartNew();
 
-            try{
                 while (true){
                     if (cancellationToken.IsCancellationRequested){
                         source.Token.ThrowIfCancellationRequested();
@@ -183,6 +183,9 @@
                     ProjectionDetails projectionDetails = await this.ProjectionManagementClient.GetStatusAsync(queryName, deadline: this.Deadline, cancellationToken:source.Token);
 
                     ProjectionRunningStatus status = EventStoreContext.GetStatusFrom(projectionDetails);
+
+                    if (status == ProjectionRunningStatus.Faulted)
+                        throw new Exception(ProjectionRunningStatus.Faulted.ToString());
 
                     // We need to wait until the query has been run before we continue.
                     if (status == ProjectionRunningStatus.Completed){
@@ -194,12 +197,7 @@
 
                         return jsonDocument.RootElement.ToString();
                     }
-
-                    if (stopwatch.ElapsedMilliseconds > TimeSpan.FromSeconds(5).TotalMilliseconds){
-                        source.Cancel(); // This will make sure the Projection is deleted.
-                        continue;
-                    }
-
+                    
                     await Task.Delay(100, source.Token);
                 }
             }
@@ -228,6 +226,11 @@
             }
 
             if (String.Compare(projectionDetails.Status, "Faulted", StringComparison.CurrentCultureIgnoreCase) == 0){
+                return ProjectionRunningStatus.Faulted;
+            }
+
+            if (String.Compare(projectionDetails.Status, "Faulted (Enabled)", StringComparison.CurrentCultureIgnoreCase) == 0)
+            {
                 return ProjectionRunningStatus.Faulted;
             }
 

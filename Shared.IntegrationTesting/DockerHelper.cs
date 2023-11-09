@@ -31,7 +31,7 @@ public class DockerHelper : BaseDockerHelper
 {
     public DockerHelper() :base(){
     }
-
+    
     protected  virtual void SetHostTraceFolder(String scenarioName) {
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
         
@@ -53,7 +53,7 @@ public class DockerHelper : BaseDockerHelper
             };
         }
         
-        if (isCI && FdOs.IsWindows()) {
+        //if (isCI && FdOs.IsWindows()) {
             if (Directory.Exists(this.HostTraceFolder) == false) {
                 this.Trace($"[{this.HostTraceFolder}] does not exist");
                 Directory.CreateDirectory(this.HostTraceFolder);
@@ -62,18 +62,18 @@ public class DockerHelper : BaseDockerHelper
             else {
                 this.Trace($"[{this.HostTraceFolder}] already exists");
             }
-        }
+        //}
 
-        if (isCI && FdOs.IsOsx()) {
-            if (Directory.Exists(this.HostTraceFolder) == false) {
-                this.Trace($"[{this.HostTraceFolder}] does not exist");
-                Directory.CreateDirectory(this.HostTraceFolder);
-                this.Trace($"[{this.HostTraceFolder}] created");
-            }
-            else {
-                this.Trace($"[{this.HostTraceFolder}] already exists");
-            }
-        }
+        //if (isCI && FdOs.IsOsx()) {
+        //    if (Directory.Exists(this.HostTraceFolder) == false) {
+        //        this.Trace($"[{this.HostTraceFolder}] does not exist");
+        //        Directory.CreateDirectory(this.HostTraceFolder);
+        //        this.Trace($"[{this.HostTraceFolder}] created");
+        //    }
+        //    else {
+        //        this.Trace($"[{this.HostTraceFolder}] already exists");
+        //    }
+        //}
 
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
@@ -135,9 +135,11 @@ public class DockerHelper : BaseDockerHelper
 
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
-                containerService.StopOnDispose = true;
-                containerService.RemoveOnDispose = true;
-                containerService.Dispose();
+                //containerService.StopOnDispose = true;
+                //containerService.RemoveOnDispose = true;
+                //containerService.Dispose();
+                containerService.Stop();
+                containerService.Remove(true);
                 this.Trace($"Container [{containerService.Name}] stopped");
             }
         }

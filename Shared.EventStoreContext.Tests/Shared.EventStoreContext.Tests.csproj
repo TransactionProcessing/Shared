@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
@@ -20,6 +20,12 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Shared.EventStore\Shared.EventStore.csproj" />
 		<ProjectReference Include="..\Shared.IntegrationTesting\Shared.IntegrationTesting.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="nlog.config">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>

@@ -17,7 +17,7 @@ public class EventStoreDockerHelper : DockerHelper
     public async Task StartContainers(Boolean isSecureEventStore, String testName) {
         this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder(testName);
-        
+        this.ScenarioName = testName;
         await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
     }
 
