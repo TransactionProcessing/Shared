@@ -53,7 +53,7 @@ public class AggregateRepositoryTests{
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object);
         Result<TestAggregate> result = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
-        result.Value.ShouldBeNull();
+        result.Value.ShouldNotBeNull();
     }
 
     [Fact]
