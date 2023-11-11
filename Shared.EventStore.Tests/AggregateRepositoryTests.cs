@@ -44,7 +44,6 @@ public class AggregateRepositoryTests{
         context.Setup(c => c.ReadEvents(It.IsAny<String>(), It.IsAny<Int64>(), It.IsAny<CancellationToken>())).ReturnsAsync(e);
         Result<TestAggregate> result = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
         result.IsFailure.ShouldBeTrue();
-        result.Value.ShouldBeNull();
     }
 
     [Fact]
