@@ -5,19 +5,13 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using CSharpFunctionalExtensions;
     using DomainDrivenDesign.EventSourcing;
     using EventStore;
     using global::EventStore.Client;
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="TAggregate">The type of the aggregate.</typeparam>
-    /// <typeparam name="TDomainEvent">The type of the domain event.</typeparam>
-    /// <seealso cref="Shared.EventStore.Aggregate.IAggregateRepository&lt;TAggregate, TDomainEvent&gt;" />
-    /// <seealso cref="Shared.EventStore.EventStore.IAggregateRepository{T}" />
-    public sealed class AggregateRepository<TAggregate, TDomainEvent> : IAggregateRepository<TAggregate, TDomainEvent> where TAggregate : Aggregate, new()
-        where TDomainEvent : IDomainEvent
+    
+    public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTraceHandler, IAggregateRepository<TAggregate, TDomainEvent> where TAggregate : Aggregate, new()
+                                                                                                                                           where TDomainEvent : IDomainEvent
     {
         #region Fields
 
@@ -30,10 +24,6 @@
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AggregateRepository{TAggregate, TDomainEvent}"/> class.
-        /// </summary>
-        /// <param name="eventStoreContext">The event store context.</param>
         public AggregateRepository(IEventStoreContext eventStoreContext)
         {
             this.EventStoreContext = eventStoreContext;
@@ -43,85 +33,81 @@
 
         #region Methods
 
-        /// <summary>
-        /// Gets the latest version.
-        /// </summary>
-        /// <param name="aggregateId">The aggregate identifier.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
-        public async Task<TAggregate> GetLatestVersion(Guid aggregateId,
-                                                       CancellationToken cancellationToken)
+        public async Task<Result<TAggregate>> GetLatestVersion(Guid aggregateId,
+                                                               CancellationToken cancellationToken)
         {
             TAggregate aggregate = new()
                                    {
                                        AggregateId = aggregateId
                                    };
-
             String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
+            try
+            {
+                List<ResolvedEvent> resolvedEvents = await this.EventStoreContext.ReadEvents(streamName, 0, cancellationToken);
 
-            var resolvedEvents = await this.EventStoreContext.ReadEvents(streamName, 0, cancellationToken);
-
-            return this.ProcessEvents(aggregate, resolvedEvents);
+                aggregate = this.ProcessEvents(aggregate, resolvedEvents);
+                return Result.Success(aggregate);
+            }
+            catch (Exception ex){
+                this.LogError(ex);
+                return Result.Failure<TAggregate>($"Failed to get latest version of aggregate stream {streamName}. Exception [{ex}]");
+            }
         }
 
-        /// <summary>
-        /// Gets the latest version from last event.
-        /// </summary>
-        /// <param name="aggregateId">The aggregate identifier.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
-        public async Task<TAggregate> GetLatestVersionFromLastEvent(Guid aggregateId,
-                                                                    CancellationToken cancellationToken)
-        {
-            TAggregate aggregate = new()
-                                   {
-                                       AggregateId = aggregateId
-                                   };
+        public async Task<Result<TAggregate>> GetLatestVersionFromLastEvent(Guid aggregateId,
+                                                                            CancellationToken cancellationToken){
+            TAggregate aggregate = new(){
+                                            AggregateId = aggregateId
+                                        };
 
             String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
+            try{
+                IList<ResolvedEvent> events = await this.EventStoreContext.GetEventsBackward(streamName, 1, cancellationToken);
 
-            IList<ResolvedEvent> events = await this.EventStoreContext.GetEventsBackward(streamName, 1, cancellationToken);
+                aggregate = this.ProcessEvents(aggregate, events);
 
-            aggregate = this.ProcessEvents(aggregate, events);
-
-            return aggregate;
+                return Result.Success(aggregate);
+            }
+            catch(Exception ex){
+                this.LogError(ex);
+                return Result.Failure<TAggregate>($"Failed to get latest version of aggregate stream {streamName} from last event. Exception [{ex}]");
+            }
         }
 
-        /// <summary>
-        /// Gets the name of the stream.
-        /// </summary>
-        /// <param name="aggregateId">The aggregate identifier.</param>
-        /// <returns></returns>
         public static String GetStreamName(Guid aggregateId)
         {
             return typeof(TAggregate).Name + "-" + aggregateId.ToString().Replace("-", string.Empty);
         }
 
-        /// <summary>
-        /// Saves the changes.
-        /// </summary>
-        /// <param name="aggregate">The aggregate.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        public async Task SaveChanges(TAggregate aggregate,
+        public async Task<Result> SaveChanges(TAggregate aggregate,
                                       CancellationToken cancellationToken)
         {
             String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
             IList<IDomainEvent> pendingEvents = aggregate.GetPendingEvents();
 
-            if (!pendingEvents.Any())
-                return;
+            try{
+                
+                if (!pendingEvents.Any())
+                    return Result.Success();
 
-            List<EventData> events = new();
+                List<EventData> events = new();
 
-            foreach (IDomainEvent domainEvent in pendingEvents)
-            {
-                EventData @event = TypeMapConvertor.Convertor(domainEvent);
+                foreach (IDomainEvent domainEvent in pendingEvents){
+                    EventData @event = TypeMapConvertor.Convertor(domainEvent);
 
-                events.Add(@event);
+                    events.Add(@event);
+                }
+
+                await this.EventStoreContext.InsertEvents(streamName, aggregate.Version, events, cancellationToken);
+                aggregate.CommitPendingEvents();
+
+                return Result.Success(aggregate);
             }
-
-            await this.EventStoreContext.InsertEvents(streamName, aggregate.Version, events, cancellationToken);
-            aggregate.CommitPendingEvents();
+            catch (Exception ex)
+            {
+                this.LogError(ex);
+                return Result.Failure<TAggregate>($"Failed to save events to aggregate stream {streamName}. Exception [{ex}]");
+            }
         }
 
         /// <summary>
