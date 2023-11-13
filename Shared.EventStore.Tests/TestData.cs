@@ -20,7 +20,7 @@ namespace Shared.EventStore.Tests
 
         public static String EstateName = "Test Estate 1";
 
-        public static EventRecord CreateEventRecord<T>(T domainEvent, String streamId) where T : DomainEvent
+        public static EventRecord CreateEventRecord<T>(T domainEvent, String streamId, Boolean addToMap = true) where T : DomainEvent
         {
             Byte[] eventData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainEvent));
             Byte[] customEventMetaData = Encoding.UTF8.GetBytes(String.Empty);
@@ -30,7 +30,8 @@ namespace Shared.EventStore.Tests
             metaData.Add("created", "1000000");
             metaData.Add("content-type", "application-json");
 
-            TypeMap.AddType(typeof(T), domainEvent.GetType().FullName);
+            if (addToMap)
+                TypeMap.AddType(typeof(T), domainEvent.GetType().FullName);
 
             EventRecord r = new EventRecord(streamId,
                                             Uuid.FromGuid(domainEvent.EventId),

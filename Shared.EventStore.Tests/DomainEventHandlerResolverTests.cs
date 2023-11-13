@@ -123,4 +123,16 @@ namespace Shared.EventStore.Tests
             this.AggregateName = aggregateName;
         }
     }
+
+    public record UnknownEvent : DomainEvent
+    {
+        public String AggregateName { get; init; }
+
+        public UnknownEvent(Guid aggregateId,
+                            Guid eventId,
+                            String aggregateName) : base(aggregateId, eventId)
+        {
+            this.AggregateName = aggregateName;
+        }
+    }
 }

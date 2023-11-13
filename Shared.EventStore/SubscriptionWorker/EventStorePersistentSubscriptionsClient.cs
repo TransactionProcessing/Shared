@@ -1,10 +1,12 @@
 ﻿namespace Shared.EventStore.SubscriptionWorker
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Threading;
     using System.Threading.Tasks;
     using global::EventStore.Client;
 
+    [ExcludeFromCodeCoverage]
     public class EventStorePersistentSubscriptionsClient : IPersistentSubscriptionsClient
     {
         #region Fields
@@ -32,7 +34,6 @@
                                                                                      UserCredentials? userCredentials,
                                                                                      Int32 bufferSize,
                                                                                      CancellationToken cancellationToken) {
-            //return this.SubscriptionsClient.SubscribeAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, false, cancellationToken);
             return this.SubscriptionsClient.SubscribeToStreamAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, cancellationToken);
         }
 

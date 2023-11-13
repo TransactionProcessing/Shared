@@ -1,8 +1,10 @@
 ﻿namespace Shared.EventStore.SubscriptionWorker
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using Newtonsoft.Json;
 
+    [ExcludeFromCodeCoverage]
     public class PersistentSubscriptionInfo
     {
         #region Properties

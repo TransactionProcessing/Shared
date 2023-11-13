@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-	  <DebugType>Full</DebugType>
+	  <DebugType>None</DebugType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -27,8 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Driver\Driver.csproj" />
     <ProjectReference Include="..\Shared.EventStore\Shared.EventStore.csproj" />
     <ProjectReference Include="..\Shared.IntegrationTesting\Shared.IntegrationTesting.csproj" />
+    <ProjectReference Include="..\Shared.Tests\Shared.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

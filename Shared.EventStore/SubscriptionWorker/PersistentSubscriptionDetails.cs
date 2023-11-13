@@ -1,7 +1,9 @@
 ﻿namespace Shared.EventStore.SubscriptionWorker
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
+    [ExcludeFromCodeCoverage]
     public record PersistentSubscriptionDetails
     {
         #region Constructors

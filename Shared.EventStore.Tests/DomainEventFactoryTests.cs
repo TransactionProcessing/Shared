@@ -25,6 +25,18 @@ namespace Shared.EventStore.Tests
         }
 
         [Fact]
+        public void DomainEventFactory_CreateDomainEvent_StringAndType_InvalidJson_ExceptionThrown()
+        {
+            AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
+            String eventData = JsonConvert.SerializeObject(aggregateNameSetEvent);
+            eventData = eventData.Replace(":", "");
+            DomainEventFactory factory = new DomainEventFactory();
+            Should.Throw<Exception>(() => {
+                                        factory.CreateDomainEvent(eventData, typeof(AggregateNameSetEvent));
+                                    });
+        }
+
+        [Fact]
         public void DomainEventFactory_CreateDomainEvent_GuidAndResolvedEvent_DomainEventCreated()
         {
             AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
@@ -33,6 +45,18 @@ namespace Shared.EventStore.Tests
             DomainEventFactory factory = new DomainEventFactory();
             DomainEvent newEvent = factory.CreateDomainEvent(TestData.AggregateId, resolvedEvent);
             ((AggregateNameSetEvent)newEvent).AggregateName.ShouldBe(aggregateNameSetEvent.AggregateName);
+        }
+
+        [Fact]
+        public void DomainEventFactory_CreateDomainEvent_GuidAndResolvedEvent_UnknownEventType_ExceptionThrown()
+        {
+            UnknownEvent unknownEvent = new UnknownEvent(TestData.AggregateId, TestData.EventId, "Test");
+            ResolvedEvent resolvedEvent = new ResolvedEvent(TestData.CreateEventRecord<UnknownEvent>(unknownEvent, "TestStream", false), null, null);
+            
+            DomainEventFactory factory = new DomainEventFactory();
+            Should.Throw<Exception>(() => {
+                                        factory.CreateDomainEvent(TestData.AggregateId, resolvedEvent);
+                                    });
         }
 
         [Fact]

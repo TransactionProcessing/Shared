@@ -348,7 +348,7 @@ namespace Shared.Tests
 
         [Fact]
         public void ApplicationBuilderExtensions_AddExceptionHandler_HandlerAdded(){
-            IApplicationBuilder builder = new ApplicationBuilder(new X());
+            IApplicationBuilder builder = new ApplicationBuilder(new TestServiceProvider());
 
             builder.AddExceptionHandler();
         }
@@ -356,7 +356,7 @@ namespace Shared.Tests
         [Fact]
         public void ApplicationBuilderExtensions_AddRequestLogging_HandlerAdded()
         {
-            IApplicationBuilder builder = new ApplicationBuilder(new X());
+            IApplicationBuilder builder = new ApplicationBuilder(new TestServiceProvider());
 
             builder.AddRequestLogging();
         }
@@ -364,13 +364,13 @@ namespace Shared.Tests
         [Fact]
         public void ApplicationBuilderExtensions_AddResponseLogging_HandlerAdded()
         {
-            IApplicationBuilder builder = new ApplicationBuilder(new X());
+            IApplicationBuilder builder = new ApplicationBuilder(new TestServiceProvider());
 
             builder.AddResponseLogging();
         }
     }
 
-    public class X : IServiceProvider{
+    public class TestServiceProvider : IServiceProvider{
         public Object GetService(Type serviceType){
             return null;
         }

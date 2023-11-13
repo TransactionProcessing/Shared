@@ -55,13 +55,13 @@ public class ProjectionHandler<TState> : IProjectionHandler where TState : State
             return;
         }
 
-        this.TraceGenerated(this, $"{stopwatch.ElapsedMilliseconds}ms After Load");
+        this.Trace($"{stopwatch.ElapsedMilliseconds}ms After Load");
 
-        this.TraceGenerated(this, $"{stopwatch.ElapsedMilliseconds}ms Handling {@event.EventType} for state {state.GetType().Name}");
+        this.Trace($"{stopwatch.ElapsedMilliseconds}ms Handling {@event.EventType} for state {state.GetType().Name}");
 
         TState newState = await this.Projection.Handle(state, @event, cancellationToken);
 
-        this.TraceGenerated(this, $"{stopwatch.ElapsedMilliseconds}ms After Handle");
+        this.Trace($"{stopwatch.ElapsedMilliseconds}ms After Handle");
 
         if (newState != state){
             newState = newState with{
@@ -72,22 +72,27 @@ public class ProjectionHandler<TState> : IProjectionHandler where TState : State
             newState = await this.ProjectionStateRepository.Save(newState, @event, cancellationToken);
 
             //Repo might have detected a duplicate event
-            this.TraceGenerated(this, $"{stopwatch.ElapsedMilliseconds}ms After Save");
+            this.Trace($"{stopwatch.ElapsedMilliseconds}ms After Save");
 
             if (this.StateDispatcher != null){
                 //Send to anyone else interested
                 await this.StateDispatcher.Dispatch(newState, @event, cancellationToken);
 
-                this.TraceGenerated(this, $"{stopwatch.ElapsedMilliseconds}ms After Dispatch");
+                this.Trace($"{stopwatch.ElapsedMilliseconds}ms After Dispatch");
             }
         }
         else{
-            this.TraceGenerated(this, $"{stopwatch.ElapsedMilliseconds}ms No Save required");
+            this.Trace($"{stopwatch.ElapsedMilliseconds}ms No Save required");
         }
 
         stopwatch.Stop();
 
-        this.TraceGenerated(this, $"Total time: {stopwatch.ElapsedMilliseconds}ms");
+        this.Trace($"Total time: {stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    private void Trace(String traceMessage){
+        if (this.TraceGenerated != null)
+            this.TraceGenerated(this, traceMessage );
     }
 
     #endregion

@@ -21,16 +21,22 @@ public static class IApplicationBuilderExtenstions
                                                           EventStoreClientSettings clientSettings,
                                                           Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers,
                                                           Action<TraceEventType, String,String> traceHandler,
+                                                          Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver,
                                                           CancellationToken cancellationToken) {
         if (workerConfig == null)
             throw new Exception("No Worker configuration supplied");
+        if (subscriptionRepositoryResolver == null)
+            throw new Exception("No Subscription Repository Resolver supplied");
         if (workerConfig.InternalSubscriptionService == false)
             return;
+        if(workerConfig.SubscriptionWorkers == null || workerConfig.SubscriptionWorkers.Any() == false)
+            throw new Exception("No SubscriptionWorkers supplied");
+        
+        ISubscriptionRepository subscriptionRepository = subscriptionRepositoryResolver(eventStoreConnectionString, workerConfig.InternalSubscriptionServiceCacheDuration);
 
-        ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, workerConfig.InternalSubscriptionServiceCacheDuration);
         // TODO: Some logging....
-        ((SubscriptionRepository)subscriptionRepository).Trace += (sender,
-                                                                   s) => traceHandler(TraceEventType.Information, "REPOSITORY", s);
+        //((SubscriptionRepository)subscriptionRepository).Trace += (sender,
+        //                                                           s) => traceHandler(TraceEventType.Information, "REPOSITORY", s);
 
         // init our SubscriptionRepository
         await subscriptionRepository.PreWarm(cancellationToken);

@@ -8,6 +8,9 @@ using Shared.EntityFramework.ConnectionStringConfiguration;
 
 namespace Shared.Migrations
 {
+    using System.Diagnostics.CodeAnalysis;
+
+    [ExcludeFromCodeCoverage]
     [DbContext(typeof(ConnectionStringConfigurationContext))]
     partial class ConnectionStringConfigurationContextModelSnapshot : ModelSnapshot
     {

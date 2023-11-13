@@ -21,25 +21,28 @@
 
         #region Methods
 
-        /// <summary>
-        /// Convertors the specified aggregate identifier.
-        /// </summary>
-        /// <param name="aggregateId">The aggregate identifier.</param>
-        /// <param name="event">The event.</param>
-        /// <returns></returns>
-        /// <exception cref="System.Exception">Could not find EventType {eventType.Name} in mapping list.</exception>
-        public static IDomainEvent Convertor(Guid aggregateId,
-                                             ResolvedEvent @event)
+        public static IDomainEvent Convertor(Guid aggregateId, ResolvedEvent @event)
         {
-            //TODO: We could pass this Type into GetDomainEvent(s)
-            var eventType = TypeMap.GetType(@event.Event.EventType);
+            Type eventType = null;
+
+            try
+            {
+                eventType = TypeMap.GetType(@event.Event.EventType);
+            }
+            catch (Exception ex)
+            {
+                // Nothing here
+            }
+
+            if (eventType == null)
+                throw new Exception($"Could not find EventType {@event.Event.EventType} in mapping list.");
 
             if (eventType.IsSubclassOf(typeof(DomainEvent)))
             {
                 return TypeMapConvertor.GetDomainEvent(aggregateId, @event);
             }
 
-            throw new Exception($"Could not find EventType {eventType.Name} in mapping list.");
+            return default;
         }
 
         /// <summary>
