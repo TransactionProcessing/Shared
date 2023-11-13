@@ -9,7 +9,8 @@
     using DomainDrivenDesign.EventSourcing;
     using EventStore;
     using global::EventStore.Client;
-    
+    using Shared.TraceHandler;
+
     public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTraceHandler, IAggregateRepository<TAggregate, TDomainEvent> where TAggregate : Aggregate, new()
                                                                                                                                            where TDomainEvent : IDomainEvent
     {

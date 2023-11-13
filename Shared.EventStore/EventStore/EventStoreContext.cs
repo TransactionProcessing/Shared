@@ -19,6 +19,7 @@
     public delegate void TraceHandler(String trace,
                                       LogLevel logLevel);
 
+    [ExcludeFromCodeCoverage(Justification = "This testing is handled with a suite of integration tests")]
     public class EventStoreContext : IEventStoreContext{
         #region Fields
 

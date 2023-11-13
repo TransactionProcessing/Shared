@@ -46,7 +46,7 @@
         /// <value>
         /// The number of historical events.
         /// </value>
-        protected Int64 NumberOfHistoricalEvents => this.EventHistory.Count;
+        internal Int64 NumberOfHistoricalEvents => this.EventHistory.Count;
 
         /// <summary>
         /// Gets or sets the event history.

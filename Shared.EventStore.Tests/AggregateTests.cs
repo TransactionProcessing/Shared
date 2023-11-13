@@ -12,6 +12,7 @@ public class AggregateTests{
         
         t.AggregateId.ShouldBe(TestData.AggregateId);
         t.Version.ShouldBe(AggregateVersion.CreateFrom(-1));
+        t.NumberOfHistoricalEvents.ShouldBe(0);
         t.EventHistory.Count.ShouldBe(0);
         t.PendingEvents.Count.ShouldBe(0);
     }
@@ -24,6 +25,7 @@ public class AggregateTests{
 
         t.AggregateId.ShouldBe(TestData.AggregateId);
         t.Version.ShouldBe(AggregateVersion.CreateFrom(-1));
+        t.NumberOfHistoricalEvents.ShouldBe(0);
         t.EventHistory.Count.ShouldBe(0);
         t.PendingEvents.Count.ShouldBe(1);
     }
@@ -38,6 +40,7 @@ public class AggregateTests{
         t.AggregateId.ShouldBe(TestData.AggregateId);
         t.Version.ShouldBe(AggregateVersion.CreateFrom(-1));
         t.EventHistory.Count.ShouldBe(0);
+        t.NumberOfHistoricalEvents.ShouldBe(0);
         t.PendingEvents.Count.ShouldBe(1);
     }
 
@@ -50,6 +53,7 @@ public class AggregateTests{
         t.AggregateId.ShouldBe(TestData.AggregateId);
         t.Version.ShouldBe(AggregateVersion.CreateFrom(-1));
         t.EventHistory.Count.ShouldBe(0);
+        t.NumberOfHistoricalEvents.ShouldBe(0);
         t.PendingEvents.Count.ShouldBe(0);
     }
 

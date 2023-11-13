@@ -52,8 +52,14 @@
         public DomainEvent CreateDomainEvent(Guid aggregateId, ResolvedEvent @event)
         {
             String json = @event.GetResolvedEventDataAsString();
+            Type eventType = null;
 
-            Type eventType = TypeMap.GetType(@event.Event.EventType);
+            try{
+                eventType = TypeMap.GetType(@event.Event.EventType);
+            }
+            catch(Exception ex){
+                // Nothing here
+            }
 
             if (eventType == null)
                 throw new Exception($"Failed to find a domain event with type {@event.Event.EventType}");
@@ -72,18 +78,10 @@
 
             return domainEvent;
         }
-
-        /// <summary>
-        /// Creates the domain event.
-        /// </summary>
-        /// <param name="json">The json.</param>
-        /// <param name="eventType">Type of the event.</param>
-        /// <returns></returns>
-        public DomainEvent CreateDomainEvent(String json,
-                                                               Type eventType)
+        
+        public DomainEvent CreateDomainEvent(String json, Type eventType)
         {
             DomainEvent domainEvent;
-            JObject jObject = JObject.Parse(json);
 
             try
             {
