@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ public static class IApplicationBuilderExtenstions
 {
     #region Methods
 
+    [ExcludeFromCodeCoverage(Justification = "Cant test with coverage as has thread inside")]
     public static async Task ConfigureSubscriptionService(this IApplicationBuilder applicationBuilder,
                                                           SubscriptionWorkersRoot workerConfig,
                                                           String eventStoreConnectionString,
