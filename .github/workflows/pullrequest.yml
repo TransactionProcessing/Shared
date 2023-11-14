@@ -22,14 +22,14 @@ jobs:
         dotnet-version: '7.0.x'
 
     - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
 
     - name: Trust root certificate
       run: |
-        sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
+        sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
         sudo update-ca-certificates
 
     - name: Run Unit Tests
@@ -62,7 +62,7 @@ jobs:
         dotnet-version: '7.0.x'
 
     - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
@@ -102,7 +102,7 @@ jobs:
         dotnet-version: '7.0.x'  
 
     - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/transactionprocessing/api/v3/index.json
+      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
@@ -115,7 +115,7 @@ jobs:
         
     - name: Trust root certificate
       run: |
-        sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt        
+        sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt        
         sudo security authorizationdb write com.apple.trust-settings.admin allow 
         sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" /usr/local/share/ca-certificates/ca.crt
         sudo security authorizationdb remove com.apple.trust-settings.admin

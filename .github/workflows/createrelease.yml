@@ -32,7 +32,7 @@ jobs:
 
     - name: Trust root certificate
       run: |
-        sudo cp ./Shared.EventStore.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
+        sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
         sudo update-ca-certificates
 
     - name: Run Unit Tests
