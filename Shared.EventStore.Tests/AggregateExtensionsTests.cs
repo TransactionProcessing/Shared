@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Aggregate;
 using DomainDrivenDesign.EventSourcing;
+using Shared.EventStore.Tests.TestObjects;
 using Shouldly;
 using Xunit;
 

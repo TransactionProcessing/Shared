@@ -8,6 +8,7 @@ namespace Shared.Tests
 {
     using DomainDrivenDesign.EventSourcing;
     using EventStore.Tests;
+    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using Xunit;
 

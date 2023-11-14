@@ -2,6 +2,7 @@
 
 using System;
 using Aggregate;
+using Shared.EventStore.Tests.TestObjects;
 using Shouldly;
 using Xunit;
 
