@@ -9,6 +9,7 @@ namespace Shared.EventStore.Tests
     using General;
     using Logger;
     using Moq;
+    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using SubscriptionWorker;
     using Xunit;

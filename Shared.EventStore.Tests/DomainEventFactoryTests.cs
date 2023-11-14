@@ -10,6 +10,7 @@ namespace Shared.EventStore.Tests
     using DomainDrivenDesign.EventSourcing;
     using global::EventStore.Client;
     using Newtonsoft.Json;
+    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using Xunit;
 

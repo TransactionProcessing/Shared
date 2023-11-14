@@ -95,15 +95,5 @@
         #endregion
     }
 
-    public record AggregateNameSetEventTest : DomainEvent
-    {
-        public String AggregateName { get; init; }
-
-        public AggregateNameSetEventTest(Guid aggregateId,
-                                         Guid eventId,
-                                         String aggregateName) : base(aggregateId, eventId)
-        {
-            this.AggregateName = aggregateName;
-        }
-    }
+    
 }

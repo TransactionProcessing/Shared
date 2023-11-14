@@ -8,17 +8,14 @@ namespace Shared.EventStore.Tests
 {
     using System.Xml.Serialization;
     using DomainDrivenDesign.EventSourcing;
-    using Driver;
     using global::EventStore.Client;
     using Shared.EventStore.Aggregate;
+    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using Xunit;
 
     public class TypeMapConvertorTests
     {
-        //public static EventData Convertor(IDomainEvent @event)
-        //public static IDomainEvent Convertor(Guid aggregateId, ResolvedEvent @event)
-
         [Fact]
         public void TypeMapConvertor_Convertor_IDomainEvent_EventDataReturned(){
             AggregateNameSetEvent domainEvent  = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
@@ -60,6 +57,18 @@ namespace Shared.EventStore.Tests
             List<String> assemblyFilters = new List<String>();
             assemblyFilters.Add("Test");
             TypeProvider.LoadDomainEventsTypeDynamically(assemblyFilters);
+        }
+    }
+
+    public record AggregateNameSetEventTest : DomainEvent
+    {
+        public String AggregateName { get; init; }
+
+        public AggregateNameSetEventTest(Guid aggregateId,
+                                         Guid eventId,
+                                         String aggregateName) : base(aggregateId, eventId)
+        {
+            this.AggregateName = aggregateName;
         }
     }
 }
