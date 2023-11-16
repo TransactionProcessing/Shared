@@ -3,7 +3,6 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using CSharpFunctionalExtensions;
     using DomainDrivenDesign.EventSourcing;
 
     public interface IAggregateRepository<TAggregate, TDomainEvent> where TAggregate : Aggregate
@@ -11,13 +10,13 @@
     {
         #region Methods
 
-        Task<Result<TAggregate>> GetLatestVersion(Guid aggregateId,
+        Task<TAggregate> GetLatestVersion(Guid aggregateId,
                                                   CancellationToken cancellationToken);
 
-        Task<Result> SaveChanges(TAggregate aggregate,
+        Task SaveChanges(TAggregate aggregate,
                          CancellationToken cancellationToken);
 
-        Task<Result<TAggregate>> GetLatestVersionFromLastEvent(Guid aggregateId, CancellationToken cancellationToken);
+        Task<TAggregate> GetLatestVersionFromLastEvent(Guid aggregateId, CancellationToken cancellationToken);
 
         #endregion
     }
