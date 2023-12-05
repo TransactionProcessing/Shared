@@ -41,7 +41,7 @@ jobs:
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
-      if: ${{ failure() }}
+      #if: ${{ failure() }}
       with:
         name: tracelogslinux
         path: /home/txnproc/trace/   
