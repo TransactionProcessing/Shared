@@ -126,6 +126,7 @@ public class DockerHelper : BaseDockerHelper
                 this.Trace($"Stopping container [{containerService.Name}]");
                 containerService.Stop();
                 containerService.Remove(true);
+                containerService.Dispose();
                 this.Trace($"Container [{containerService.Name}] stopped");
             }
         }
