@@ -52,7 +52,7 @@ public class GenericSteps
     public async Task StopSystem()
     {
         this.TestingContext.Logger.LogInformation("About to Stop Containers for Scenario Run");
-        await this.TestingContext.DockerHelper.StopContainersForScenarioRun().ConfigureAwait(false);
+        //await this.TestingContext.DockerHelper.StopContainersForScenarioRun().ConfigureAwait(false);
         this.TestingContext.Logger.LogInformation("Containers for Scenario Run Stopped");
     }
 }
