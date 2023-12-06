@@ -125,21 +125,21 @@ public class DockerHelper : BaseDockerHelper
 
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
-                if (containerService.Name.Contains("eventstore")){
-                    try{
-                        Directory.CreateDirectory($"{this.HostTraceFolder}//eventstore//0.0.0.0-2113-cluster-node");
-                    }
-                    catch(Exception ex){
-                        this.Trace($"create directory failed [{ex.Message}]");
-                    }
+                //if (containerService.Name.Contains("eventstore")){
+                //    try{
+                //        Directory.CreateDirectory($"{this.HostTraceFolder}//eventstore//0.0.0.0-2113-cluster-node");
+                //    }
+                //    catch(Exception ex){
+                //        this.Trace($"create directory failed [{ex.Message}]");
+                //    }
                     
-                    try{
-                        containerService.CopyFrom("/var/log/eventstore/0.0.0.0-2113-cluster-node/", this.HostTraceFolder, true);
-                    }
-                    catch(Exception ex){
-                        this.Trace($"copy failed [{ex.Message}]");
-                    }
-                }
+                //    try{
+                //        containerService.CopyFrom("/var/log/eventstore/0.0.0.0-2113-cluster-node/*.json", this.HostTraceFolder, true);
+                //    }
+                //    catch(Exception ex){
+                //        this.Trace($"copy failed [{ex.Message}]");
+                //    }
+                //}
 
                 containerService.Stop();
                 containerService.Remove(true);

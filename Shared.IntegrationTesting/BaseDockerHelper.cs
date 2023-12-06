@@ -344,12 +344,13 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_RUN_PROJECTIONS=all",
                                                      "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
-                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
+                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true",
+                                                     "EVENTSTORE_LOG=/home/txnproc/trace/"
                                                  };
 
         String containerPath = BaseDockerHelper.GetDockerEnginePlatform() switch{
             DockerEnginePlatform.Windows => "C:\\Logs\0.0.0.0-2113-cluster-node",
-            _ => "/var/log/eventstore"
+            _ => "/home/txnproc/trace/"
         };
 
         String certsPath = BaseDockerHelper.GetDockerEnginePlatform() switch
@@ -361,8 +362,7 @@ public abstract class BaseDockerHelper{
         ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
                                                                    .WithName(this.EventStoreContainerName)
-                                                                   .CopyOnDispose(containerPath, this.HostTraceFolder);
-                                                                    //.MountHostFolder(this.HostTraceFolder, containerPath);
+                                                                   .MountHostFolder(this.HostTraceFolder, containerPath);
 
         if (this.IsSecureEventStore == false){
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
