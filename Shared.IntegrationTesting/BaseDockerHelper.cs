@@ -360,7 +360,9 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
-                                                                   .WithName(this.EventStoreContainerName).MountHostFolder(this.HostTraceFolder, containerPath);
+                                                                   .WithName(this.EventStoreContainerName)
+                                                                   .CopyOnDispose(containerPath, this.HostTraceFolder);
+                                                                    //.MountHostFolder(this.HostTraceFolder, containerPath);
 
         if (this.IsSecureEventStore == false){
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
