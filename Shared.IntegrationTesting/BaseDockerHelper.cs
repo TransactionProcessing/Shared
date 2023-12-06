@@ -349,7 +349,7 @@ public abstract class BaseDockerHelper{
 
         String containerPath = BaseDockerHelper.GetDockerEnginePlatform() switch{
             DockerEnginePlatform.Windows => "C:\\Logs\0.0.0.0-2113-cluster-node",
-            _ => "/var/log/eventstore/0.0.0.0-2113-cluster-node"
+            _ => "/var/log/eventstore"
         };
 
         String certsPath = BaseDockerHelper.GetDockerEnginePlatform() switch

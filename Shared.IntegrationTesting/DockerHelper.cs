@@ -11,6 +11,7 @@ using Ductus.FluentDocker;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Services;
+using Ductus.FluentDocker.Services.Extensions;
 using Newtonsoft.Json;
 using Shouldly;
 
@@ -124,9 +125,12 @@ public class DockerHelper : BaseDockerHelper
 
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
+                if (containerService.Name.Contains("eventstore")){
+                    containerService.CopyFrom("/var/log/eventstore", this.HostTraceFolder);
+                }
+
                 containerService.Stop();
                 containerService.Remove(true);
-                containerService.Dispose();
                 this.Trace($"Container [{containerService.Name}] stopped");
             }
         }
