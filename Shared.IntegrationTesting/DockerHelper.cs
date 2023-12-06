@@ -126,7 +126,12 @@ public class DockerHelper : BaseDockerHelper
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
                 if (containerService.Name.Contains("eventstore")){
-                    containerService.CopyFrom("/var/log/eventstore", this.HostTraceFolder);
+                    try{
+                        containerService.CopyFrom("/var/log/eventstore", this.HostTraceFolder, true);
+                    }
+                    catch(Exception ex){
+                        this.Trace(ex.Message);
+                    }
                 }
 
                 containerService.Stop();
