@@ -127,11 +127,17 @@ public class DockerHelper : BaseDockerHelper
                 this.Trace($"Stopping container [{containerService.Name}]");
                 if (containerService.Name.Contains("eventstore")){
                     try{
-                        Directory.CreateDirectory($"{this.HostTraceFolder}\\eventstore\\0.0.0.0-2113-cluster-node");
+                        Directory.CreateDirectory($"{this.HostTraceFolder}//eventstore//0.0.0.0-2113-cluster-node");
+                    }
+                    catch(Exception ex){
+                        this.Trace($"create directory failed [{ex.Message}]");
+                    }
+                    
+                    try{
                         containerService.CopyFrom("/var/log/eventstore/0.0.0.0-2113-cluster-node/", this.HostTraceFolder, true);
                     }
                     catch(Exception ex){
-                        this.Trace(ex.Message);
+                        this.Trace($"copy failed [{ex.Message}]");
                     }
                 }
 
