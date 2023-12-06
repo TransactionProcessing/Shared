@@ -40,6 +40,10 @@ jobs:
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
+    - name: Setup tmate session
+      #if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
+
     - uses: actions/upload-artifact@v2
       #if: ${{ failure() }}
       with:
