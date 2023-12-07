@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Ductus.FluentDocker;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
+using Ductus.FluentDocker.Extensions;
+using Ductus.FluentDocker.Model.Common;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
 using Newtonsoft.Json;
@@ -135,7 +137,8 @@ public class DockerHelper : BaseDockerHelper
                     //{
                     //    this.Trace($"create directory failed [{ex.Message}]");
                     //}
-
+                    
+                    SudoMechanism.NoPassword.SetSudo();
                     try
                     {
                         String logfile = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
