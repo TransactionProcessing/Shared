@@ -71,6 +71,8 @@ public class DockerHelper : BaseDockerHelper
     }
 
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices){
+        SudoMechanism.NoPassword.SetSudo();
+
         this.DockerCredentials.ShouldNotBeNull();
         this.SqlCredentials.ShouldNotBeNull();
         this.SqlServerContainer.ShouldNotBeNull();
@@ -127,40 +129,40 @@ public class DockerHelper : BaseDockerHelper
 
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
-                if (containerService.Name.Contains("eventstore"))
-                {
-                    //try
-                    //{
-                    //    Directory.CreateDirectory($"{this.HostTraceFolder}//eventstore//0.0.0.0-2113-cluster-node");
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //    this.Trace($"create directory failed [{ex.Message}]");
-                    //}
+                //if (containerService.Name.Contains("eventstore"))
+                //{
+                //    //try
+                //    //{
+                //    //    Directory.CreateDirectory($"{this.HostTraceFolder}//eventstore//0.0.0.0-2113-cluster-node");
+                //    //}
+                //    //catch (Exception ex)
+                //    //{
+                //    //    this.Trace($"create directory failed [{ex.Message}]");
+                //    //}
                     
-                    SudoMechanism.NoPassword.SetSudo();
-                    try
-                    {
-                        String logfile = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
-                        containerService.CopyFrom(logfile, this.HostTraceFolder, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        this.Trace($"copy failed [{ex.Message}]");
-                    }
+                //    SudoMechanism.NoPassword.SetSudo();
+                //    try
+                //    {
+                //        String logfile = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
+                //        containerService.CopyFrom(logfile, this.HostTraceFolder, true);
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        this.Trace($"copy failed [{ex.Message}]");
+                //    }
                     
-                }
+                //}
 
-                //containerService.Stop();
-                //containerService.Remove(true);
+                containerService.Stop();
+                containerService.Remove(true);
                 this.Trace($"Container [{containerService.Name}] stopped");
             }
         }
 
         if (this.TestNetworks.Any()) {
             foreach (INetworkService networkService in this.TestNetworks) {
-                //networkService.Stop();
-                //networkService.Remove(true);
+                networkService.Stop();
+                networkService.Remove(true);
             }
         }
     }
