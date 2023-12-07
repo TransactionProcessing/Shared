@@ -156,8 +156,8 @@ public class DockerHelper : BaseDockerHelper
 
         if (this.TestNetworks.Any()) {
             foreach (INetworkService networkService in this.TestNetworks) {
-                networkService.Stop();
-                networkService.Remove(true);
+                //networkService.Stop();
+                //networkService.Remove(true);
             }
         }
     }
