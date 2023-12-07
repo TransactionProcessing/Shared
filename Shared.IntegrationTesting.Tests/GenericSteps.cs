@@ -36,7 +36,7 @@ public class GenericSteps
         this.TestingContext.DockerHelper.SqlCredentials = Setup.SqlCredentials;
         this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
 
-        DockerServices services = DockerServices.EventStore;
+        DockerServices services = DockerServices.EventStore | DockerServices.MessagingService;
         //DockerServices services = DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
         //                          DockerServices.CallbackHandler | DockerServices.EstateManagement | DockerServices.FileProcessor |
         //                          DockerServices.TestHost | DockerServices.TransactionProcessor |
