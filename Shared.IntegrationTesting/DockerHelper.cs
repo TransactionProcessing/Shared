@@ -71,8 +71,6 @@ public class DockerHelper : BaseDockerHelper
     }
 
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices){
-        SudoMechanism.NoPassword.SetSudo();
-
         this.DockerCredentials.ShouldNotBeNull();
         this.SqlCredentials.ShouldNotBeNull();
         this.SqlServerContainer.ShouldNotBeNull();
@@ -123,35 +121,30 @@ public class DockerHelper : BaseDockerHelper
         await this.CreateGenericSubscriptions();
     }
 
+    protected virtual void CopyEventStoreLogs(IContainerService eventStoreContainerService){
+        SudoMechanism.NoPassword.SetSudo();
+        try
+        {
+            //String logfile = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
+            String logfilePath = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
+            eventStoreContainerService.CopyFrom(logfilePath, this.HostTraceFolder, true);
+        }
+        catch (Exception ex)
+        {
+            this.Trace($"copy failed [{ex.Message}]");
+        }
+    }
+
     public override async Task StopContainersForScenarioRun() {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
 
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
-                //if (containerService.Name.Contains("eventstore"))
-                //{
-                //    //try
-                //    //{
-                //    //    Directory.CreateDirectory($"{this.HostTraceFolder}//eventstore//0.0.0.0-2113-cluster-node");
-                //    //}
-                //    //catch (Exception ex)
-                //    //{
-                //    //    this.Trace($"create directory failed [{ex.Message}]");
-                //    //}
-                    
-                //    SudoMechanism.NoPassword.SetSudo();
-                //    try
-                //    {
-                //        String logfile = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
-                //        containerService.CopyFrom(logfile, this.HostTraceFolder, true);
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        this.Trace($"copy failed [{ex.Message}]");
-                //    }
-                    
-                //}
+                if (containerService.Name.Contains("eventstore"))
+                {
+                    CopyEventStoreLogs(containerService);
+                }
 
                 containerService.Stop();
                 containerService.Remove(true);
