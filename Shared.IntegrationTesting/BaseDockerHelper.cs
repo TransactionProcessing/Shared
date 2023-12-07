@@ -344,8 +344,8 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_RUN_PROJECTIONS=all",
                                                      "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
-                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true",
-                                                     "EVENTSTORE_LOG=/home/txnproc/trace/"
+                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"//,
+                                                     //"EVENTSTORE_LOG=/home/txnproc/trace/"
                                                  };
 
         String containerPath = BaseDockerHelper.GetDockerEnginePlatform() switch{

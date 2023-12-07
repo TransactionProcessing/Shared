@@ -138,7 +138,7 @@ public class DockerHelper : BaseDockerHelper
 
                     try
                     {
-                        String logfile = "/home/txnproc/trace/0.0.0.0-2113-cluster-node/log20231207.json";
+                        String logfile = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
                         containerService.CopyFrom(logfile, this.HostTraceFolder, true);
                     }
                     catch (Exception ex)
