@@ -103,7 +103,7 @@ public class DockerHelper : BaseDockerHelper
                                                                       this.SqlServerNetwork,
                                                                       testNetwork
                                                                   };
-
+        SudoMechanism.NoPassword.SetSudo();
         await StartContainer2(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
         // TODO: permenant fix for this hack
         await Task.Delay(TimeSpan.FromSeconds(30));
@@ -143,7 +143,7 @@ public class DockerHelper : BaseDockerHelper
                 this.Trace($"Stopping container [{containerService.Name}]");
                 if (containerService.Name.Contains("eventstore"))
                 {
-                    CopyEventStoreLogs(containerService);
+                    //CopyEventStoreLogs(containerService);
                 }
 
                 containerService.Stop();
