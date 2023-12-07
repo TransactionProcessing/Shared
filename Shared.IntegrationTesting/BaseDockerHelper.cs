@@ -344,13 +344,12 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_RUN_PROJECTIONS=all",
                                                      "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
-                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"//,
-                                                     //"EVENTSTORE_LOG=/home/txnproc/trace/"
+                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
                                                  };
 
         String containerPath = BaseDockerHelper.GetDockerEnginePlatform() switch{
             DockerEnginePlatform.Windows => "C:\\Logs\0.0.0.0-2113-cluster-node",
-            _ => "/home/txnproc/trace/"
+            _ => "var/log/eventstore"
         };
 
         String certsPath = BaseDockerHelper.GetDockerEnginePlatform() switch
