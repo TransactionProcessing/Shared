@@ -103,7 +103,6 @@ public class DockerHelper : BaseDockerHelper
                                                                       this.SqlServerNetwork,
                                                                       testNetwork
                                                                   };
-        SudoMechanism.NoPassword.SetSudo();
         await StartContainer2(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
         // TODO: permenant fix for this hack
         await Task.Delay(TimeSpan.FromSeconds(30));
@@ -126,7 +125,7 @@ public class DockerHelper : BaseDockerHelper
         try
         {
             //String logfile = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
-            String logfilePath = "/var/log/eventstore/0.0.0.0-2113-cluster-node/log20231207.json";
+            String logfilePath = "/var/log/eventstore/";
             eventStoreContainerService.CopyFrom(logfilePath, this.HostTraceFolder, true);
         }
         catch (Exception ex)
@@ -143,7 +142,7 @@ public class DockerHelper : BaseDockerHelper
                 this.Trace($"Stopping container [{containerService.Name}]");
                 if (containerService.Name.Contains("eventstore"))
                 {
-                    //CopyEventStoreLogs(containerService);
+                    CopyEventStoreLogs(containerService);
                 }
 
                 containerService.Stop();
