@@ -346,12 +346,7 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
                                                      "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
                                                  };
-
-        String containerPath = BaseDockerHelper.GetDockerEnginePlatform() switch{
-            DockerEnginePlatform.Windows => "C:\\Logs",
-            _ => "/var/log/eventstore"
-        };
-
+        
         String certsPath = BaseDockerHelper.GetDockerEnginePlatform() switch
         {
             DockerEnginePlatform.Windows => "C:\\EventStoreCerts",
@@ -360,7 +355,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
-                                                                   .WithName(this.EventStoreContainerName).MountHostFolder(this.HostTraceFolder, containerPath);
+                                                                   .WithName(this.EventStoreContainerName);
 
         if (this.IsSecureEventStore == false){
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
@@ -385,25 +380,6 @@ public abstract class BaseDockerHelper{
         }
 
         return eventStoreContainerBuilder;
-        //IContainerService builtContainer = eventStoreContainerBuilder.Build().Start();
-
-        //foreach (INetworkService networkService in networkServices){
-        //    networkService.Attach(builtContainer, false);
-        //    var networkConfig = networkService.GetConfiguration(true);
-        //    this.Trace(JsonConvert.SerializeObject(networkConfig));
-        //}
-
-        //await Retry.For(async () => { builtContainer = builtContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
-
-        //this.EventStoreHttpPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
-        //this.Trace($"EventStore Http Port: [{this.EventStoreHttpPort}]");
-
-        
-
-        //this.Trace("Event Store Container Started");
-
-        //this.Containers.Add(builtContainer);
-        //return builtContainer;
     }
 
     public virtual ContainerBuilder SetupFileProcessorContainer(){

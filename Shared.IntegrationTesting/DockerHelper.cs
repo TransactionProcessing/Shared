@@ -10,7 +10,10 @@ using System.Threading.Tasks;
 using Ductus.FluentDocker;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
+using Ductus.FluentDocker.Extensions;
+using Ductus.FluentDocker.Model.Common;
 using Ductus.FluentDocker.Services;
+using Ductus.FluentDocker.Services.Extensions;
 using Newtonsoft.Json;
 using Shouldly;
 
@@ -118,12 +121,37 @@ public class DockerHelper : BaseDockerHelper
         await this.CreateGenericSubscriptions();
     }
 
+    protected virtual void CopyEventStoreLogs(IContainerService eventStoreContainerService)
+    {
+        SudoMechanism.NoPassword.SetSudo();
+        try
+        {
+            String logfilePath = BaseDockerHelper.GetDockerEnginePlatform() switch
+            {
+                DockerEnginePlatform.Windows => "C:\\Logs",
+                _ => "/var/log/eventstore"
+            };
+
+            eventStoreContainerService.CopyFrom(logfilePath, this.HostTraceFolder, true);
+        }
+        catch (Exception ex)
+        {
+            this.Trace($"copy failed [{ex.Message}]");
+        }
+    }
+
+
     public override async Task StopContainersForScenarioRun() {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
 
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
+                if (containerService.Name.Contains("eventstore"))
+                {
+                    CopyEventStoreLogs(containerService);
+                }
+
                 containerService.Stop();
                 containerService.Remove(true);
                 this.Trace($"Container [{containerService.Name}] stopped");
