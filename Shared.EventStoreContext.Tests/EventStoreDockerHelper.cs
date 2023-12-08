@@ -21,6 +21,30 @@ public class EventStoreDockerHelper : DockerHelper
         await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
     }
 
+    public override async Task StopContainersForScenarioRun(){
+        if (this.Containers.Any())
+        {
+            this.Containers.Reverse();
+
+            foreach (IContainerService containerService in this.Containers)
+            {
+                this.Trace($"Stopping container [{containerService.Name}]");
+                containerService.Stop();
+                containerService.Remove(true);
+                this.Trace($"Container [{containerService.Name}] stopped");
+            }
+        }
+
+        if (this.TestNetworks.Any())
+        {
+            foreach (INetworkService networkService in this.TestNetworks)
+            {
+                networkService.Stop();
+                networkService.Remove(true);
+            }
+        }
+    }
+
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services) {
         this.TestId = Guid.NewGuid();
         INetworkService networkService = this.SetupTestNetwork();
