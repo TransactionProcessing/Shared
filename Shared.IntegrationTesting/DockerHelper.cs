@@ -70,7 +70,10 @@ public class DockerHelper : BaseDockerHelper
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
 
+    
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices){
+        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform();
+
         this.DockerCredentials.ShouldNotBeNull();
         this.SqlCredentials.ShouldNotBeNull();
         this.SqlServerContainer.ShouldNotBeNull();
@@ -125,7 +128,7 @@ public class DockerHelper : BaseDockerHelper
     {
         try
         {
-            String logfilePath = BaseDockerHelper.GetDockerEnginePlatform() switch
+            String logfilePath = this.DockerPlatform switch
             {
                 DockerEnginePlatform.Windows => "C:\\Logs",
                 _ => "/var/log/eventstore"
