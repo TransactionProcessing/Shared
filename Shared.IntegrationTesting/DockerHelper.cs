@@ -132,6 +132,7 @@ public class DockerHelper : BaseDockerHelper
             };
             SudoMechanism.NoPassword.SetSudo();
             eventStoreContainerService.CopyFrom(logfilePath, this.HostTraceFolder, true);
+            SudoMechanism.Password.SetSudo();
         }
         catch (Exception ex)
         {
