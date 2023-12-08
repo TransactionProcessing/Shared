@@ -123,7 +123,6 @@ public class DockerHelper : BaseDockerHelper
 
     protected virtual void CopyEventStoreLogs(IContainerService eventStoreContainerService)
     {
-        SudoMechanism.NoPassword.SetSudo();
         try
         {
             String logfilePath = BaseDockerHelper.GetDockerEnginePlatform() switch
@@ -131,7 +130,7 @@ public class DockerHelper : BaseDockerHelper
                 DockerEnginePlatform.Windows => "C:\\Logs",
                 _ => "/var/log/eventstore"
             };
-
+            SudoMechanism.NoPassword.SetSudo();
             eventStoreContainerService.CopyFrom(logfilePath, this.HostTraceFolder, true);
         }
         catch (Exception ex)
