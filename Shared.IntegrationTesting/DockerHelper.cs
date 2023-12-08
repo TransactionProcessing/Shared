@@ -124,26 +124,22 @@ public class DockerHelper : BaseDockerHelper
         await this.CreateGenericSubscriptions();
     }
 
-    protected virtual void CopyEventStoreLogs(IContainerService eventStoreContainerService)
-    {
-        try
-        {
-            String logfilePath = this.DockerPlatform switch
-            {
-                DockerEnginePlatform.Windows => "C:\\Logs",
-                _ => "/var/log/eventstore"
-            };
+    protected virtual void CopyEventStoreLogs(IContainerService eventStoreContainerService){
+        try{
+            if (this.DockerPlatform == DockerEnginePlatform.Windows)
+                return;
+
+            String logfilePath = "/var/log/eventstore";
+
             SudoMechanism.NoPassword.SetSudo();
             eventStoreContainerService.CopyFrom(logfilePath, this.HostTraceFolder, true);
-            SudoMechanism.Password.SetSudo();
+            SudoMechanism.None.SetSudo();
         }
-        catch (Exception ex)
-        {
+        catch(Exception ex){
             this.Trace($"copy failed [{ex.Message}]");
         }
     }
-
-
+    
     public override async Task StopContainersForScenarioRun() {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
