@@ -259,6 +259,7 @@ public abstract class BaseDockerHelper{
 
         return details.Value;
     }
+    protected DockerEnginePlatform DockerPlatform;
 
     public void SetHostPort(ContainerType key, Int32 hostPort){
         KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
@@ -295,7 +296,7 @@ public abstract class BaseDockerHelper{
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.CallbackHandler))
                                                                  .ExposePort(DockerPorts.CallbackHandlerDockerPort)
-                                                                 .MountHostFolder(this.HostTraceFolder)
+                                                                 .MountHostFolder(this.DockerPlatform,this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
         return callbackHandlerContainer;
@@ -331,7 +332,7 @@ public abstract class BaseDockerHelper{
                                                                   .WithEnvironment(environmentVariables.ToArray())
                                                                   .UseImageDetails(this.GetImageDetails(ContainerType.EstateManagement))
                                                                   .ExposePort(DockerPorts.EstateManagementDockerPort)
-                                                                  .MountHostFolder(this.HostTraceFolder)
+                                                                  .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                   .SetDockerCredentials(this.DockerCredentials);
 
         return estateManagementContainer;
@@ -346,13 +347,8 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
                                                      "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
                                                  };
-
-        String containerPath = BaseDockerHelper.GetDockerEnginePlatform() switch{
-            DockerEnginePlatform.Windows => "C:\\Logs",
-            _ => "/var/log/eventstore"
-        };
-
-        String certsPath = BaseDockerHelper.GetDockerEnginePlatform() switch
+        
+        String certsPath = this.DockerPlatform switch
         {
             DockerEnginePlatform.Windows => "C:\\EventStoreCerts",
             _ => "/etc/eventstore/certs"
@@ -360,7 +356,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
-                                                                   .WithName(this.EventStoreContainerName).MountHostFolder(this.HostTraceFolder, containerPath);
+                                                                   .WithName(this.EventStoreContainerName);
 
         if (this.IsSecureEventStore == false){
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
@@ -385,25 +381,6 @@ public abstract class BaseDockerHelper{
         }
 
         return eventStoreContainerBuilder;
-        //IContainerService builtContainer = eventStoreContainerBuilder.Build().Start();
-
-        //foreach (INetworkService networkService in networkServices){
-        //    networkService.Attach(builtContainer, false);
-        //    var networkConfig = networkService.GetConfiguration(true);
-        //    this.Trace(JsonConvert.SerializeObject(networkConfig));
-        //}
-
-        //await Retry.For(async () => { builtContainer = builtContainer.WaitForPort($"{DockerPorts.EventStoreHttpDockerPort}/tcp"); });
-
-        //this.EventStoreHttpPort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
-        //this.Trace($"EventStore Http Port: [{this.EventStoreHttpPort}]");
-
-        
-
-        //this.Trace("Event Store Container Started");
-
-        //this.Containers.Add(builtContainer);
-        //return builtContainer;
     }
 
     public virtual ContainerBuilder SetupFileProcessorContainer(){
@@ -413,7 +390,6 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add($"urls=http://*:{DockerPorts.FileProcessorDockerPort}");
         environmentVariables.Add(this.SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", this.UseSecureSqlServerDatabase));
 
-        DockerEnginePlatform enginePlatform = BaseDockerHelper.GetDockerEnginePlatform();
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
         Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
 
@@ -458,22 +434,22 @@ public abstract class BaseDockerHelper{
         ContainerBuilder fileProcessorContainer = new Builder().UseContainer().WithName(this.FileProcessorContainerName)
                                                                .WithEnvironment(environmentVariables.ToArray())
                                                                .UseImageDetails(this.GetImageDetails(ContainerType.FileProcessor))
-                                                               .ExposePort(DockerPorts.FileProcessorDockerPort).MountHostFolder(this.HostTraceFolder)
+                                                               .ExposePort(DockerPorts.FileProcessorDockerPort).MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                .SetDockerCredentials(this.DockerCredentials);
 
         // Mount the folder to upload files
-        String uploadFolder = (enginePlatform, isCi) switch{
+        String uploadFolder = (this.DockerPlatform, isCi) switch{
             (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\specflow",
             (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\specflow",
             _ => "/home/txnproc/specflow"
         };
 
         //== DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\specflow" : "/home/txnproc/specflow";
-        if (enginePlatform == DockerEnginePlatform.Windows && isCi){
+        if (this.DockerPlatform == DockerEnginePlatform.Windows && isCi){
             Directory.CreateDirectory(uploadFolder);
         }
 
-        String containerFolder = enginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
+        String containerFolder = this.DockerPlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
         fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
         return fileProcessorContainer;
     }
@@ -497,21 +473,8 @@ public abstract class BaseDockerHelper{
                                                                   .WithEnvironment(environmentVariables.ToArray())
                                                                   .UseImageDetails(this.GetImageDetails(ContainerType.MessagingService))
                                                                   .ExposePort(DockerPorts.MessagingServiceDockerPort)
-                                                                  .MountHostFolder(this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
+                                                                  .MountHostFolder(this.DockerPlatform, this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
 
-        // Now build and return the container                
-        ////IContainerService builtContainer = messagingServiceContainer.Build().Start();
-
-        ////foreach (INetworkService networkService in networkServices){
-        ////    networkService.Attach(builtContainer, false);
-        ////}
-
-        ////this.Trace("Messaging Service Container Started");
-        ////this.Containers.Add(builtContainer);
-
-        //////  Do a health check here
-        ////this.MessagingServicePort = builtContainer.ToHostExposedEndpoint($"{DockerPorts.MessagingServiceDockerPort}/tcp").Port;
-        ////await this.DoHealthCheck(ContainerType.MessagingService);
         return messagingServiceContainer;
     }
 
@@ -539,7 +502,7 @@ public abstract class BaseDockerHelper{
         ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(this.SecurityServiceContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.SecurityService))
-                                                                 .MountHostFolder(this.HostTraceFolder)
+                                                                 .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
         Int32? hostPort = this.GetHostPort(ContainerType.SecurityService);
@@ -608,7 +571,7 @@ public abstract class BaseDockerHelper{
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TestHost);
         ContainerBuilder testHostContainer = new Builder().UseContainer().WithName(this.TestHostContainerName).WithEnvironment(environmentVariables.ToArray())
                                                           .UseImageDetails(this.GetImageDetails(ContainerType.TestHost)).ExposePort(DockerPorts.TestHostPort)
-                                                          .MountHostFolder(this.HostTraceFolder)
+                                                          .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                           .SetDockerCredentials(this.DockerCredentials);
         
         return testHostContainer;
@@ -663,7 +626,7 @@ public abstract class BaseDockerHelper{
                                                                          .WithEnvironment(environmentVariables.ToArray())
                                                                          .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessorAcl))
                                                                          .ExposePort(DockerPorts.TransactionProcessorAclDockerPort)
-                                                                         .MountHostFolder(this.HostTraceFolder)
+                                                                         .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                          .SetDockerCredentials(this.DockerCredentials);
 
         return transactionProcessorACLContainer;
@@ -691,7 +654,7 @@ public abstract class BaseDockerHelper{
                                                                       .WithEnvironment(environmentVariables.ToArray())
                                                                       .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessor))
                                                                       .ExposePort(DockerPorts.TransactionProcessorDockerPort)
-                                                                      .MountHostFolder(this.HostTraceFolder)
+                                                                      .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                       .SetDockerCredentials(this.DockerCredentials);
 
         

@@ -10,7 +10,10 @@ using System.Threading.Tasks;
 using Ductus.FluentDocker;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
+using Ductus.FluentDocker.Extensions;
+using Ductus.FluentDocker.Model.Common;
 using Ductus.FluentDocker.Services;
+using Ductus.FluentDocker.Services.Extensions;
 using Newtonsoft.Json;
 using Shouldly;
 
@@ -67,7 +70,10 @@ public class DockerHelper : BaseDockerHelper
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
 
+    
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices){
+        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform();
+
         this.DockerCredentials.ShouldNotBeNull();
         this.SqlCredentials.ShouldNotBeNull();
         this.SqlServerContainer.ShouldNotBeNull();
@@ -118,12 +124,33 @@ public class DockerHelper : BaseDockerHelper
         await this.CreateGenericSubscriptions();
     }
 
+    protected virtual void CopyEventStoreLogs(IContainerService eventStoreContainerService){
+        try{
+            if (this.DockerPlatform == DockerEnginePlatform.Windows)
+                return;
+
+            String logfilePath = "/var/log/eventstore";
+
+            SudoMechanism.NoPassword.SetSudo();
+            eventStoreContainerService.CopyFrom(logfilePath, this.HostTraceFolder, true);
+            SudoMechanism.None.SetSudo();
+        }
+        catch(Exception ex){
+            this.Trace($"copy failed [{ex.Message}]");
+        }
+    }
+    
     public override async Task StopContainersForScenarioRun() {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
 
             foreach (IContainerService containerService in this.Containers) {
                 this.Trace($"Stopping container [{containerService.Name}]");
+                if (containerService.Name.Contains("eventstore"))
+                {
+                    CopyEventStoreLogs(containerService);
+                }
+
                 containerService.Stop();
                 containerService.Remove(true);
                 this.Trace($"Container [{containerService.Name}] stopped");

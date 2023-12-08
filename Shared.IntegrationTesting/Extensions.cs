@@ -7,11 +7,12 @@ using Ductus.FluentDocker.Model.Builders;
 public static class Extensions
 {
     public static ContainerBuilder MountHostFolder(this ContainerBuilder containerBuilder,
+                                                   DockerEnginePlatform dockerEnginePlatform,
                                                    String hostTraceFolder, 
                                                    String containerPath = null)
     {
         if (containerPath == null) {
-            if (BaseDockerHelper.GetDockerEnginePlatform() == DockerEnginePlatform.Windows) {
+            if (dockerEnginePlatform == DockerEnginePlatform.Windows) {
                 containerPath = "C:\\home\\txnproc\\trace";
             }
             else {
