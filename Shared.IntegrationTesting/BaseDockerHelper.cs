@@ -345,7 +345,8 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_RUN_PROJECTIONS=all",
                                                      "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
-                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true"
+                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true",
+                                                     "EVENTSTORE_PROJECTION_EXECUTION_TIMEOUT=5000"
                                                  };
         
         String certsPath = this.DockerPlatform switch
