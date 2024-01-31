@@ -214,32 +214,16 @@
         }
 
         internal static ProjectionRunningStatus GetStatusFrom(ProjectionDetails projectionDetails){
-            if (projectionDetails == null){
-                return ProjectionRunningStatus.StatisticsNotFound;
-            }
-
-            if (String.Compare(projectionDetails.Status, "Running", StringComparison.CurrentCultureIgnoreCase) == 0){
-                return ProjectionRunningStatus.Running;
-            }
-
-            if (String.Compare(projectionDetails.Status, "Stopped", StringComparison.CurrentCultureIgnoreCase) == 0){
-                return ProjectionRunningStatus.Stopped;
-            }
-
-            if (String.Compare(projectionDetails.Status, "Faulted", StringComparison.CurrentCultureIgnoreCase) == 0){
-                return ProjectionRunningStatus.Faulted;
-            }
-
-            if (String.Compare(projectionDetails.Status, "Faulted (Enabled)", StringComparison.CurrentCultureIgnoreCase) == 0)
+            return projectionDetails switch
             {
-                return ProjectionRunningStatus.Faulted;
-            }
-
-            if (String.Compare(projectionDetails.Status, "Completed/Stopped/Writing results", StringComparison.CurrentCultureIgnoreCase) == 0){
-                return ProjectionRunningStatus.Completed;
-            }
-
-            return ProjectionRunningStatus.Unknown;
+                null => ProjectionRunningStatus.StatisticsNotFound,
+                { Status: var status } when String.Compare(status, "Running", StringComparison.CurrentCultureIgnoreCase) == 0 => ProjectionRunningStatus.Running,
+                { Status: var status } when String.Compare(status, "Stopped", StringComparison.CurrentCultureIgnoreCase) == 0 => ProjectionRunningStatus.Stopped,
+                { Status: var status } when String.Compare(status, "Faulted", StringComparison.CurrentCultureIgnoreCase) == 0
+                                            || String.Compare(status, "Faulted (Enabled)", StringComparison.CurrentCultureIgnoreCase) == 0 => ProjectionRunningStatus.Faulted,
+                { Status: var status } when String.Compare(status, "Completed/Stopped/Writing results", StringComparison.CurrentCultureIgnoreCase) == 0 => ProjectionRunningStatus.Completed,
+                _ => ProjectionRunningStatus.Unknown
+            };
         }
 
         [ExcludeFromCodeCoverage]
