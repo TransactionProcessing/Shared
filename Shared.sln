@@ -30,12 +30,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\createrelease.yml = .github\workflows\createrelease.yml
 		nightlybuild.yml = nightlybuild.yml
 		.github\workflows\pullrequest.yml = .github\workflows\pullrequest.yml
-		.github\workflows\sonarcloud.yml = .github\workflows\sonarcloud.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.EventStoreContext.Tests", "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj", "{A7909DC1-12F9-42F8-B665-E8A2C63B1481}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.IntegrationTesting.UnitTests", "Shared.IntegrationTesting.UnitTests\Shared.IntegrationTesting.UnitTests.csproj", "{5E23CBBB-8484-4F7F-81D9-308957783695}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.IntegrationTesting.UnitTests", "Shared.IntegrationTesting.UnitTests\Shared.IntegrationTesting.UnitTests.csproj", "{5E23CBBB-8484-4F7F-81D9-308957783695}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
