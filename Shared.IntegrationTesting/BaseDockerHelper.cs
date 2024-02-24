@@ -17,6 +17,7 @@ using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Executors;
 using Ductus.FluentDocker.Model.Builders;
 using Ductus.FluentDocker.Model.Containers;
+using Ductus.FluentDocker.Model.Networks;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
 using EventStore.Client;
@@ -28,8 +29,8 @@ using Newtonsoft.Json;
 using Shouldly;
 
 public enum DockerEnginePlatform{
+    Unknown, 
     Linux,
-
     Windows
 }
 
@@ -88,7 +89,7 @@ public abstract class BaseDockerHelper{
 
     protected (Int32 pollingInterval, Int32 cacheDuration) PersistentSubscriptionSettings = (10, 0);
 
-    protected DockerServices RequiredDockerServices;
+    public DockerServices RequiredDockerServices;
 
     protected String SecurityServiceContainerName;
 
@@ -221,17 +222,22 @@ public abstract class BaseDockerHelper{
     }
 
     public static DockerEnginePlatform GetDockerEnginePlatform(){
-        IHostService docker = BaseDockerHelper.GetDockerHost();
+        try{
+            IHostService docker = BaseDockerHelper.GetDockerHost();
 
-        if (docker.Host.IsLinuxEngine()){
-            return DockerEnginePlatform.Linux;
+            if (docker.Host.IsLinuxEngine()){
+                return DockerEnginePlatform.Linux;
+            }
+
+            if (docker.Host.IsWindowsEngine()){
+                return DockerEnginePlatform.Windows;
+            }
+
+            return DockerEnginePlatform.Unknown;
         }
-
-        if (docker.Host.IsWindowsEngine()){
-            return DockerEnginePlatform.Windows;
+        catch(Exception e){
+            throw new Exception("Unable to determine docker Engine Platform", e);
         }
-
-        throw new Exception("Unknown Engine Type");
     }
 
     public static IHostService GetDockerHost(){
@@ -518,9 +524,9 @@ public abstract class BaseDockerHelper{
         return securityServiceContainer;
     }
 
-    public virtual IContainerService SetupSqlServerContainer(INetworkService networkService){
-        if (this.SqlCredentials == default)
-            throw new Exception("Sql Credentials have not been set");
+    public virtual ContainerBuilder ConfigureSqlContainer()
+    {
+        this.Trace("About to Start Estate Management Container");
 
         this.Trace("About to start SQL Server Container");
         ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
@@ -529,9 +535,30 @@ public abstract class BaseDockerHelper{
                                                          .ExposePort(1433)
                                                          .KeepContainer().KeepRunning().ReuseIfExists()
                                                          .SetDockerCredentials(this.DockerCredentials);
+        
+        return containerService;
+    }
 
-        IContainerService databaseServerContainer = containerService.Build().Start()
-                                                                    .WaitForPort("1433/tcp", 30000);
+    public virtual async Task<IContainerService> SetupSqlServerContainer(INetworkService networkService){
+        if (this.SqlCredentials == default)
+            throw new Exception("Sql Credentials have not been set");
+
+        IContainerService databaseServerContainer = await this.StartContainer2(this.ConfigureSqlContainer,
+                                                                               new List<INetworkService>{
+                                                                                                            networkService
+                                                                                                        },
+                                                                               DockerServices.SqlServer);
+
+        //this.Trace("About to start SQL Server Container");
+        //ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
+        //                                                 .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
+        //                                                 .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={this.SqlCredentials.Value.password}")
+        //                                                 .ExposePort(1433)
+        //                                                 .KeepContainer().KeepRunning().ReuseIfExists()
+        //                                                 .SetDockerCredentials(this.DockerCredentials);
+
+        //IContainerService databaseServerContainer = containerService.Build().Start()
+        //                                                            .WaitForPort("1433/tcp", 30000);
 
         networkService.Attach(databaseServerContainer, false);
 
@@ -750,6 +777,25 @@ public abstract class BaseDockerHelper{
         this.Trace($"Subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] created");
     }
 
+    protected async Task DoSqlServerHealthCheck(IContainerService containerService, INetworkService networkService){
+        NetworkConfiguration networkConfig = networkService.GetConfiguration(true);
+        this.Trace(JsonConvert.SerializeObject(networkConfig));
+
+        // Try opening a connection
+        Int32 maxRetries = 10;
+        Int32 counter = 1;
+
+        if (networkService != null)
+        {
+            counter = this.CheckSqlConnection(containerService);
+        }
+
+        if (counter >= maxRetries)
+        {
+            // We have got to the end and still not opened the connection
+            throw new Exception($"Database container not started in {maxRetries} retries");
+        }
+    }
     protected async Task DoEventStoreHealthCheck(){
         String scheme = this.IsSecureEventStore switch
         {
@@ -935,12 +981,12 @@ public abstract class BaseDockerHelper{
 
         ConsoleStream<String> consoleLogs = null;
         try{
-            var containerBuilder = buildContainerFunc();
+            ContainerBuilder containerBuilder = buildContainerFunc();
 
             IContainerService builtContainer = containerBuilder.Build();
             
             consoleLogs = builtContainer.Logs(true);
-            var startedContainer = builtContainer.Start();
+            IContainerService startedContainer = builtContainer.Start();
             foreach (INetworkService networkService in networkServices)
             {
                 networkService.Attach(startedContainer, false);
@@ -961,16 +1007,22 @@ public abstract class BaseDockerHelper{
                 DockerServices.TransactionProcessor => ContainerType.TransactionProcessor,
                 DockerServices.TransactionProcessorAcl => ContainerType.TransactionProcessorAcl,
                 DockerServices.EventStore=> ContainerType.EventStore,
+                DockerServices.SqlServer => ContainerType.SqlServer,
                 _ => ContainerType.NotSet
             };
 
             this.SetHostPortForService(type, startedContainer);
 
-            if (type == ContainerType.EventStore){
-                await DoEventStoreHealthCheck();
-            }
-            else{
-                await this.DoHealthCheck(type);
+            switch(type){
+                case ContainerType.EventStore:
+                    await DoEventStoreHealthCheck();
+                    break;
+                case ContainerType.SqlServer:
+                    await DoSqlServerHealthCheck(startedContainer, networkServices.First());
+                    break;
+                default:
+                    await this.DoHealthCheck(type);
+                    break;
             }
 
             return startedContainer;
@@ -978,7 +1030,7 @@ public abstract class BaseDockerHelper{
         catch (Exception ex){
             if (consoleLogs != null){
                 while (consoleLogs.IsFinished == false){
-                    var s = consoleLogs.TryRead(10000);
+                    String s = consoleLogs.TryRead(10000);
                     this.Trace(s);
                 }
             }
