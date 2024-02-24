@@ -27,6 +27,8 @@ namespace Shared.IntegrationTesting.Tests
             ShouldlyConfiguration.DefaultTaskTimeout = TimeSpan.FromMinutes(1);
 
             DockerHelper dockerHelper = new DockerHelper();
+            dockerHelper.RequiredDockerServices = DockerServices.SqlServer;
+            
 
             NlogLogger logger = new NlogLogger();
             logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
@@ -37,7 +39,7 @@ namespace Shared.IntegrationTesting.Tests
             dockerHelper.SqlServerContainerName = "sharedsqlserver";
 
             Setup.DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork");
-            Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
+            Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork).Result;
         }
 
         //public static String GetConnectionString(String databaseName)
