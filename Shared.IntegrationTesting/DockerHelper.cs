@@ -30,9 +30,9 @@ public enum DockerServices{
     FileProcessor = 256,
     TransactionProcessorAcl = 512 }
 
-public class DockerHelper : BaseDockerHelper
+public abstract class DockerHelper : BaseDockerHelper
 {
-    public DockerHelper() :base(){
+    protected DockerHelper() :base(){
     }
     
     protected  virtual void SetHostTraceFolder(String scenarioName) {
@@ -121,7 +121,7 @@ public class DockerHelper : BaseDockerHelper
         
         await this.LoadEventStoreProjections();
         
-        await this.CreateGenericSubscriptions();
+        await this.CreateSubscriptions();
     }
 
     protected virtual void CopyEventStoreLogs(IContainerService eventStoreContainerService){
@@ -165,28 +165,5 @@ public class DockerHelper : BaseDockerHelper
         }
     }
 
-    public virtual async Task CreateGenericSubscriptions() {
-        List<(String streamName, String groupName, Int32 maxRetries)> subscriptions = new List<(String streamName, String groupName, Int32 maxRetries)>
-        {
-            ($"$ce-MerchantBalanceArchive", "Transaction Processor - Ordered", 0),
-            ($"$et-EstateCreatedEvent", "Transaction Processor - Ordered", 2)
-        };
-        foreach ((String streamName, String groupName, Int32 maxRetries) subscription in subscriptions) {
-            await this.CreatePersistentSubscription(subscription);
-        }
-    }
-
-    public virtual async Task CreateEstateSubscriptions(String estateName) {
-        List<(String streamName, String groupName, Int32 maxRetries)> subscriptions = new List<(String streamName, String groupName, Int32 maxRetries)>
-        {
-            (estateName.Replace(" ", ""), "Estate Management", 2),
-            ($"EstateManagementSubscriptionStream_{estateName.Replace(" ", "")}", "Estate Management - Ordered", 2),
-            ($"TransactionProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "Transaction Processor", 2),
-            ($"FileProcessorSubscriptionStream_{estateName.Replace(" ", "")}", "File Processor", 2)
-        };
-        foreach ((String streamName, String groupName, Int32 maxRetries) subscription in subscriptions)
-        {
-            await this.CreatePersistentSubscription(subscription);
-        }
-    }
+    public abstract Task CreateSubscriptions();
 }

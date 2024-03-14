@@ -45,6 +45,10 @@ public class EventStoreDockerHelper : DockerHelper
         }
     }
 
+    public override async Task CreateSubscriptions(){
+        // Nothing actually needed here
+    }
+
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services) {
         this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform();
         this.TestId = Guid.NewGuid();
