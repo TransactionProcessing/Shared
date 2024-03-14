@@ -6,6 +6,12 @@ using Logger;
 using NLog;
 using TechTalk.SpecFlow;
 
+public class TestDockerHelper : DockerHelper{
+    public override async Task CreateSubscriptions(){
+        // Nothing here
+    }
+}
+
 [Binding]
 [Scope(Tag = "base")]
 public class GenericSteps
@@ -28,7 +34,7 @@ public class GenericSteps
         logger.Initialise(LogManager.GetLogger(scenarioName), scenarioName);
         LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
 
-        this.TestingContext.DockerHelper = new DockerHelper();
+        this.TestingContext.DockerHelper = new TestDockerHelper();
         this.TestingContext.DockerHelper.Logger = logger;
         this.TestingContext.DockerHelper.SqlServerContainer = Setup.DatabaseServerContainer;
         this.TestingContext.DockerHelper.SqlServerNetwork = Setup.DatabaseServerNetwork;

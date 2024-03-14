@@ -26,7 +26,7 @@ namespace Shared.IntegrationTesting.Tests
         protected static void GlobalSetup() {
             ShouldlyConfiguration.DefaultTaskTimeout = TimeSpan.FromMinutes(1);
 
-            DockerHelper dockerHelper = new DockerHelper();
+            DockerHelper dockerHelper = new TestDockerHelper();
             dockerHelper.RequiredDockerServices = DockerServices.SqlServer;
             
 
