@@ -1,10 +1,8 @@
 ﻿namespace Shared.IntegrationTesting.Tests;
 
-using Ductus.FluentDocker;
-using Ductus.FluentDocker.Common;
 using Logger;
 using NLog;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 public class TestDockerHelper : DockerHelper{
     public override async Task CreateSubscriptions(){

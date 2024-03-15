@@ -1,19 +1,19 @@
 ﻿namespace Shared.IntegrationTesting
 {
     using System;
-    using TechTalk.SpecFlow;
+    using Reqnroll;
 
     /// <summary>
     /// 
     /// </summary>
-    public static class SpecflowTableHelper
+    public static class ReqnrollTableHelper
     {
         #region Methods
 
-        public static Boolean GetBooleanValue(TableRow row,
+        public static Boolean GetBooleanValue(DataTableRow row,
                                               String key)
         {
-            String field = SpecflowTableHelper.GetStringRowValue(row, key);
+            String field = ReqnrollTableHelper.GetStringRowValue(row, key);
 
             return bool.TryParse(field, out Boolean value) && value;
         }
@@ -40,26 +40,26 @@
             }
         }
 
-        public static Decimal GetDecimalValue(TableRow row,
+        public static Decimal GetDecimalValue(DataTableRow row,
                                               String key)
         {
-            String field = SpecflowTableHelper.GetStringRowValue(row, key);
+            String field = ReqnrollTableHelper.GetStringRowValue(row, key);
 
             return decimal.TryParse(field, out Decimal value) ? value : -1;
         }
 
-        public static Int32 GetIntValue(TableRow row,
+        public static Int32 GetIntValue(DataTableRow row,
                                         String key)
         {
-            String field = SpecflowTableHelper.GetStringRowValue(row, key);
+            String field = ReqnrollTableHelper.GetStringRowValue(row, key);
 
             return int.TryParse(field, out Int32 value) ? value : -1;
         }
 
-        public static Int16 GetShortValue(TableRow row,
+        public static Int16 GetShortValue(DataTableRow row,
                                           String key)
         {
-            String field = SpecflowTableHelper.GetStringRowValue(row, key);
+            String field = ReqnrollTableHelper.GetStringRowValue(row, key);
 
             if (short.TryParse(field, out Int16 value))
             {
@@ -70,16 +70,16 @@
         }
 
         /// <returns></returns>
-        public static String GetStringRowValue(TableRow row,
+        public static String GetStringRowValue(DataTableRow row,
                                                String key)
         {
             return row.TryGetValue(key, out String value) ? value : "";
         }
         
-        public static T GetEnumValue<T>(TableRow row,
+        public static T GetEnumValue<T>(DataTableRow row,
                                         String key) where T : struct
         {
-            String field = SpecflowTableHelper.GetStringRowValue(row, key);
+            String field = ReqnrollTableHelper.GetStringRowValue(row, key);
 
             return Enum.Parse<T>(field, true);
         }
