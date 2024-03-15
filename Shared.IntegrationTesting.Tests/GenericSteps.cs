@@ -54,10 +54,11 @@ public class GenericSteps
     }
 
     [AfterScenario()]
-    public async Task StopSystem()
-    {
+    public async Task StopSystem(){
+        DockerServices sharedDockerServices = DockerServices.SqlServer;
+
         this.TestingContext.Logger.LogInformation("About to Stop Containers for Scenario Run");
-        await this.TestingContext.DockerHelper.StopContainersForScenarioRun().ConfigureAwait(false);
+        await this.TestingContext.DockerHelper.StopContainersForScenarioRun(sharedDockerServices).ConfigureAwait(false);
         this.TestingContext.Logger.LogInformation("Containers for Scenario Run Stopped");
     }
 }

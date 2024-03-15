@@ -140,27 +140,35 @@ public abstract class DockerHelper : BaseDockerHelper
         }
     }
     
-    public override async Task StopContainersForScenarioRun() {
+    public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices) {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
 
-            foreach (IContainerService containerService in this.Containers) {
-                this.Trace($"Stopping container [{containerService.Name}]");
-                if (containerService.Name.Contains("eventstore"))
-                {
-                    CopyEventStoreLogs(containerService);
+            foreach ((DockerServices, IContainerService) containerService in this.Containers) {
+
+                if ((sharedDockerServices & containerService.Item1) == containerService.Item1){
+                    continue;
                 }
 
-                containerService.Stop();
-                containerService.Remove(true);
-                this.Trace($"Container [{containerService.Name}] stopped");
+                this.Trace($"Stopping container [{containerService.Item2.Name}]");
+                if (containerService.Item2.Name.Contains("eventstore"))
+                {
+                    CopyEventStoreLogs(containerService.Item2);
+                }
+
+                containerService.Item2.Stop();
+                containerService.Item2.Remove(true);
+                this.Trace($"Container [{containerService.Item2.Name}] stopped");
             }
         }
 
         if (this.TestNetworks.Any()) {
-            foreach (INetworkService networkService in this.TestNetworks) {
-                networkService.Stop();
-                networkService.Remove(true);
+            foreach (INetworkService networkService in this.TestNetworks){
+                var cfg = networkService.GetConfiguration(true);
+                if (cfg.Containers.Any() == false){
+                    networkService.Stop();
+                    networkService.Remove(true);
+                }
             }
         }
     }

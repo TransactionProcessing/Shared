@@ -61,7 +61,7 @@ public abstract class BaseDockerHelper{
 
     protected (String clientId, String clientSecret) ClientDetails;
 
-    protected List<IContainerService> Containers;
+    protected List<(DockerServices, IContainerService)> Containers;
 
     protected String EstateManagementContainerName;
 
@@ -118,7 +118,7 @@ public abstract class BaseDockerHelper{
     #region Constructors
 
     public BaseDockerHelper(){
-        this.Containers = new List<IContainerService>();
+        this.Containers = new ();
         this.TestNetworks = new List<INetworkService>();
         this.HealthCheckClient = new HealthCheckClient(new HttpClient(new SocketsHttpHandler{
                                                                                                 SslOptions = new SslClientAuthenticationOptions{
@@ -690,7 +690,7 @@ public abstract class BaseDockerHelper{
 
     public abstract Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices);
 
-    public abstract Task StopContainersForScenarioRun();
+    public abstract Task StopContainersForScenarioRun(DockerServices sharedDockerServices);
 
     protected Int32 CheckSqlConnection(IContainerService databaseServerContainer){
         // Try opening a connection
@@ -992,7 +992,7 @@ public abstract class BaseDockerHelper{
             }
 
             this.Trace($"{dockerService} Container Started");
-            this.Containers.Add(startedContainer);
+            this.Containers.Add((dockerService, startedContainer));
 
             //  Do a health check here
             //this.MessagingServicePort = 

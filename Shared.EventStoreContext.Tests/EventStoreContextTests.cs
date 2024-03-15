@@ -42,7 +42,9 @@
 
         [TearDown]
         public async Task TearDown(){
-            await this.EventStoreDockerHelper.StopContainersForScenarioRun();
+            DockerServices sharedDockerServices = DockerServices.SqlServer;
+
+            await this.EventStoreDockerHelper.StopContainersForScenarioRun(sharedDockerServices);
         }
 
         [Test]
