@@ -21,17 +21,18 @@ public class EventStoreDockerHelper : DockerHelper
         await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
     }
 
-    public override async Task StopContainersForScenarioRun(){
+    public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices)
+    {
         if (this.Containers.Any())
         {
             this.Containers.Reverse();
 
-            foreach (IContainerService containerService in this.Containers)
+            foreach ((DockerServices, IContainerService) containerService in this.Containers)
             {
-                this.Trace($"Stopping container [{containerService.Name}]");
-                containerService.Stop();
-                containerService.Remove(true);
-                this.Trace($"Container [{containerService.Name}] stopped");
+                this.Trace($"Stopping container [{containerService.Item2.Name}]");
+                containerService.Item2.Stop();
+                containerService.Item2.Remove(true);
+                this.Trace($"Container [{containerService.Item2.Name}] stopped");
             }
         }
 
