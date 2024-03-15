@@ -1,30 +1,30 @@
 namespace Shared.IntegrationTesting.UnitTests
 {
+    using Reqnroll;
     using Shouldly;
-    using TechTalk.SpecFlow;
 
-    public class SpecflowTableHelperTests
+    public class ReqnrollTableHelperTests
     {
         [Theory]
         [InlineData("Field1", "true", true)]
         [InlineData("Field1", "false", false)]
-        public void SpecflowTableHelper_GetBooleanValue_ExpectedValueIsReturned(String header, String value, Boolean expectedValue)
+        public void ReqnrollTableHelper_GetBooleanValue_ExpectedValueIsReturned(String header, String value, Boolean expectedValue)
         {
             List<String> headers = new List<String>();
             headers.Add(header);
-            Table table = new Table(headers.ToArray());
+            DataTable table = new DataTable(headers.ToArray());
             table.AddRow(value);
-            Boolean actual = SpecflowTableHelper.GetBooleanValue(table.Rows.First(), header);
+            Boolean actual = ReqnrollTableHelper.GetBooleanValue(table.Rows.First(), header);
             actual.ShouldBe(expectedValue);
         }
 
         [Theory]
         [MemberData(nameof(GetUserChoiceTestData))]
-        public void SpecflowTableHelper_GetDateForDateString_ExpectedValueIsReturned(String value, DateTime expectedDate)
+        public void ReqnrollTableHelper_GetDateForDateString_ExpectedValueIsReturned(String value, DateTime expectedDate)
         {
             
             DateTime today = new DateTime(2023, 11, 27);
-            DateTime actual = SpecflowTableHelper.GetDateForDateString(value, today);
+            DateTime actual = ReqnrollTableHelper.GetDateForDateString(value, today);
             actual.ShouldBe(expectedDate);
         }
 
@@ -45,13 +45,13 @@ namespace Shared.IntegrationTesting.UnitTests
         [InlineData("Field1", "1.00", 1.00)]
         [InlineData("Field1", "-1.23", -1.23)]
         [InlineData("Field1", "1.23", 1.23)]
-        public void SpecflowTableHelper_GetDecimalValue_ExpectedValueIsReturned(String header, String value, Decimal expectedValue)
+        public void ReqnrollTableHelper_GetDecimalValue_ExpectedValueIsReturned(String header, String value, Decimal expectedValue)
         {
             List<String> headers = new List<String>();
             headers.Add(header);
-            Table table = new Table(headers.ToArray());
+            DataTable table = new DataTable(headers.ToArray());
             table.AddRow(value);
-            Decimal actual = SpecflowTableHelper.GetDecimalValue(table.Rows.First(), header);
+            Decimal actual = ReqnrollTableHelper.GetDecimalValue(table.Rows.First(), header);
             actual.ShouldBe(expectedValue);
         }
 
@@ -59,13 +59,13 @@ namespace Shared.IntegrationTesting.UnitTests
         [InlineData("Field1", "-1", -1.00)]
         [InlineData("Field1", "0", 0.00)]
         [InlineData("Field1", "1", 1.00)]        
-        public void SpecflowTableHelper_GetIntValue_ExpectedValueIsReturned(String header, String value, Int32 expectedValue)
+        public void ReqnrollTableHelper_GetIntValue_ExpectedValueIsReturned(String header, String value, Int32 expectedValue)
         {
             List<String> headers = new List<String>();
             headers.Add(header);
-            Table table = new Table(headers.ToArray());
+            DataTable table = new DataTable(headers.ToArray());
             table.AddRow(value);
-            Int32 actual = SpecflowTableHelper.GetIntValue(table.Rows.First(), header);
+            Int32 actual = ReqnrollTableHelper.GetIntValue(table.Rows.First(), header);
             actual.ShouldBe(expectedValue);
         }
 
@@ -73,28 +73,28 @@ namespace Shared.IntegrationTesting.UnitTests
         [InlineData("Field1", "-1", -1.00)]
         [InlineData("Field1", "0", 0.00)]
         [InlineData("Field1", "1", 1.00)]
-        public void SpecflowTableHelper_GetShortValue_ExpectedValueIsReturned(String header, String value, Int16 expectedValue)
+        public void ReqnrollTableHelper_GetShortValue_ExpectedValueIsReturned(String header, String value, Int16 expectedValue)
         {
             List<String> headers = new List<String>();
             headers.Add(header);
-            Table table = new Table(headers.ToArray());
+            DataTable table = new DataTable(headers.ToArray());
             table.AddRow(value);
-            Int16 actual = SpecflowTableHelper.GetShortValue(table.Rows.First(), header);
+            Int16 actual = ReqnrollTableHelper.GetShortValue(table.Rows.First(), header);
             actual.ShouldBe(expectedValue);
         }
 
         [Fact]
-        public void SpecflowTableHelper_GetStringRowValue_ExpectedValueIsReturned()
+        public void ReqnrollTableHelper_GetStringRowValue_ExpectedValueIsReturned()
         {
             String header = "Field1";
             String expectedValue = "TestStringValue";
 
             List<String> headers = new List<String>();
             headers.Add(header);
-            Table table = new Table(headers.ToArray());
+            DataTable table = new DataTable(headers.ToArray());
             table.AddRow(expectedValue);
 
-            String? actual = SpecflowTableHelper.GetStringRowValue(table.Rows.First(), header);
+            String? actual = ReqnrollTableHelper.GetStringRowValue(table.Rows.First(), header);
             actual.ShouldBe(expectedValue);
         }
 
@@ -105,13 +105,13 @@ namespace Shared.IntegrationTesting.UnitTests
         [InlineData("Field1", "InvariantCultureIgnoreCase", StringComparison.InvariantCultureIgnoreCase)]
         [InlineData("Field1", "CurrentCulture", StringComparison.CurrentCulture)]
         [InlineData("Field1", "CurrentCultureIgnoreCase", StringComparison.CurrentCultureIgnoreCase)]
-        public void SpecflowTableHelper_GetEnumValue_ExpectedResultIsReturned(String header, String value, StringComparison expectedValue)
+        public void ReqnrollTableHelper_GetEnumValue_ExpectedResultIsReturned(String header, String value, StringComparison expectedValue)
         {
             List<String> headers = new List<String>();
             headers.Add(header);
-            Table table = new Table(headers.ToArray());
+            DataTable table = new DataTable(headers.ToArray());
             table.AddRow(value);
-            StringComparison actual = SpecflowTableHelper.GetEnumValue<StringComparison>(table.Rows.First(), header);
+            StringComparison actual = ReqnrollTableHelper.GetEnumValue<StringComparison>(table.Rows.First(), header);
             actual.ShouldBe(expectedValue);
         }
     }

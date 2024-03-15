@@ -446,12 +446,11 @@ public abstract class BaseDockerHelper{
 
         // Mount the folder to upload files
         String uploadFolder = (this.DockerPlatform, isCi) switch{
-            (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\specflow",
-            (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\specflow",
-            _ => "/home/txnproc/specflow"
+            (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\reqnroll",
+            (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\reqnroll",
+            _ => "/home/txnproc/reqnroll"
         };
 
-        //== DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\specflow" : "/home/txnproc/specflow";
         if (this.DockerPlatform == DockerEnginePlatform.Windows && isCi){
             Directory.CreateDirectory(uploadFolder);
         }

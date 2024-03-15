@@ -1,19 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Shared.IntegrationTesting.Tests
+﻿namespace Shared.IntegrationTesting.Tests
 {
-    using System.Runtime.CompilerServices;
-    using Ductus.FluentDocker.Common;
     using Ductus.FluentDocker.Services;
-    using Ductus.FluentDocker.Services.Extensions;
     using NLog;
+    using Reqnroll;
     using Shared.Logger;
     using Shouldly;
-    using TechTalk.SpecFlow;
 
     [Binding]
     public class Setup
@@ -31,7 +22,7 @@ namespace Shared.IntegrationTesting.Tests
             
 
             NlogLogger logger = new NlogLogger();
-            logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
+            logger.Initialise(LogManager.GetLogger("Reqnroll"), "Reqnroll");
             LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
             dockerHelper.Logger = logger;
             dockerHelper.SqlCredentials = Setup.SqlCredentials;

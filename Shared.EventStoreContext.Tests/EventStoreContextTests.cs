@@ -25,7 +25,7 @@
             LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
             LogManager.LoadConfiguration("nlog.config");
 
-            logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
+            logger.Initialise(LogManager.GetLogger("Reqnroll"), "Reqnroll");
            
             this.EventStoreDockerHelper = new EventStoreDockerHelper();
             this.EventStoreDockerHelper.Logger = logger;
