@@ -130,7 +130,7 @@ jobs:
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
-    - uses: actions/upload-artifact@v2
+    - name: debug
       run: docker container ls -a
 
     - uses: actions/upload-artifact@v2
