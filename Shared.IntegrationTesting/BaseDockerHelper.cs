@@ -660,10 +660,8 @@ public abstract class BaseDockerHelper{
 
     public abstract Task StopContainersForScenarioRun(DockerServices sharedDockerServices);
 
-    protected Int32 CheckSqlConnection(IContainerService databaseServerContainer){
+    protected void CheckSqlConnection(IContainerService databaseServerContainer){
         // Try opening a connection
-        Int32 maxRetries = 10;
-        Int32 counter = 1;
         this.Trace("About to SQL Server Container is running");
         if (String.IsNullOrEmpty(this.sqlTestConnString)){
             IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
@@ -679,38 +677,25 @@ public abstract class BaseDockerHelper{
         }
 
         SqlConnection connection = new SqlConnection(this.sqlTestConnString);
+        try{
+            connection.Open();
 
-        while (counter <= maxRetries){
-            try{
-                this.Trace($"Database Connection Attempt {counter}");
+            SqlCommand command = connection.CreateCommand();
+            //command.CommandText = "SELECT * FROM sys.databases";
+            command.CommandText = "SELECT 1;";
+            command.ExecuteNonQuery();
 
-                connection.Open();
+            this.Trace("Connection Opened");
 
-                SqlCommand command = connection.CreateCommand();
-                //command.CommandText = "SELECT * FROM sys.databases";
-                command.CommandText = "SELECT 1;";
-                command.ExecuteNonQuery();
-
-                this.Trace("Connection Opened");
-
-                connection.Close();
-                this.Trace("SQL Server Container Running");
-                break;
-            }
-            catch(SqlException ex){
-                if (connection.State == ConnectionState.Open){
-                    connection.Close();
-                }
-
-                this.Logger.LogError(ex);
-                Thread.Sleep(20000);
-            }
-            finally{
-                counter++;
-            }
+            connection.Close();
+            this.Trace("SQL Server Container Running");
         }
-
-        return counter;
+        catch(SqlException ex){
+            if (connection.State == ConnectionState.Open){
+                connection.Close();
+            }
+            throw;
+        }
     }
 
     protected virtual EventStoreClientSettings ConfigureEventStoreSettings(){
@@ -734,17 +719,22 @@ public abstract class BaseDockerHelper{
         this.Trace($"Subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] created");
     }
 
-    protected async Task DoSqlServerHealthCheck(IContainerService containerService, INetworkService networkService){
-        NetworkConfiguration networkConfig = networkService.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
+    protected async Task DoSqlServerHealthCheck(IContainerService containerService){
         // Try opening a connection
         Int32 maxRetries = 10;
         Int32 counter = 1;
 
-        if (networkService != null)
-        {
-            counter = this.CheckSqlConnection(containerService);
+        while (counter <= maxRetries){
+            try{
+                CheckSqlConnection(containerService);
+            }
+            catch(SqlException ex){
+                this.Logger.LogError(ex);
+                await Task.Delay(30000);
+            }
+            finally{
+                counter++;
+            }
         }
 
         if (counter >= maxRetries)
@@ -979,7 +969,7 @@ public abstract class BaseDockerHelper{
                     await DoEventStoreHealthCheck();
                     break;
                 case ContainerType.SqlServer:
-                    await DoSqlServerHealthCheck(startedContainer, networkServices.First());
+                    await DoSqlServerHealthCheck(startedContainer);
                     break;
                 default:
                     await this.DoHealthCheck(type);
