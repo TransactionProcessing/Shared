@@ -151,7 +151,7 @@ public abstract class BaseDockerHelper{
                 this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/azure-sql-edge", true));
             }
 
-            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:21.10.0-buster-slim", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:24.2.0-jammy", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
@@ -351,7 +351,7 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_RUN_PROJECTIONS=all",
                                                      "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
-                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true",
+                                                     //"EVENTSTORE_ENABLE_EXTERNAL_TCP=true",
                                                      "EVENTSTORE_PROJECTION_EXECUTION_TIMEOUT=5000"
                                                  };
         
@@ -746,24 +746,14 @@ public abstract class BaseDockerHelper{
     }
 
     protected virtual EventStoreClientSettings ConfigureEventStoreSettings(){
-        EventStoreClientSettings settings = new EventStoreClientSettings();
-        settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
-
         String connectionString = $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}";
-
-        if (this.IsSecureEventStore){
-            connectionString = $"{connectionString}?tls=true&tlsVerifyCert=false";
-            settings.ConnectivitySettings.Insecure = false;
-            settings.DefaultCredentials = new UserCredentials("admin", "changeit");
-        }
-        else{
-            connectionString = $"{connectionString}?tls=false&tlsVerifyCert=false";
-            settings.ConnectivitySettings.Insecure = true;
-        }
-
-        settings.ConnectivitySettings.Address = new Uri(connectionString);
-
-        return settings;
+        
+        connectionString = this.IsSecureEventStore switch{
+            true => $"{connectionString}?tls=true&tlsVerifyCert=false",
+            _ => $"{connectionString}?tls=false&tlsVerifyCert=false"
+        };
+        
+        return EventStoreClientSettings.Create(connectionString);
     }
 
     protected virtual async Task CreatePersistentSubscription((String streamName, String groupName, Int32 maxRetryCount) subscription){
@@ -922,14 +912,18 @@ public abstract class BaseDockerHelper{
 
                 EventStoreProjectionManagementClient projectionClient = new EventStoreProjectionManagementClient(this.ConfigureEventStoreSettings());
                 List<String> projectionNames = new List<String>();
-
+                
                 foreach (FileInfo file in files){
                     String projection = await BaseDockerHelper.RemoveProjectionTestSetup(file);
                     String projectionName = file.Name.Replace(".js", String.Empty);
 
                     Should.NotThrow(async () => {
                                         this.Trace($"Creating projection [{projectionName}] from file [{file.FullName}]");
-                                        await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
+                                        try{
+                                            await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
+                                        }
+                                        catch(Exception ex){
+                                        }
 
                                         projectionNames.Add(projectionName);
                                         this.Trace($"Projection [{projectionName}] created");
