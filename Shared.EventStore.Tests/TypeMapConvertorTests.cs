@@ -46,12 +46,12 @@ namespace Shared.EventStore.Tests
     }
 
     public class TypeProviderTests{
-        [Fact(Skip = "Need to run independant test")]
+        [Fact]
         public void TypeProvider_LoadDomainEventsTypeDynamically_NoFilters(){
             TypeProvider.LoadDomainEventsTypeDynamically();
         }
 
-        [Fact(Skip = "Need to run independant test")]
+        [Fact]
         public void TypeProvider_LoadDomainEventsTypeDynamically_WithFilters(){
             AggregateNameSetEventTest domainEvent = new AggregateNameSetEventTest(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             List<String> assemblyFilters = new List<String>();

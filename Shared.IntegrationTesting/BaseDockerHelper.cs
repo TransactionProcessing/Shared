@@ -151,7 +151,7 @@ public abstract class BaseDockerHelper{
                 this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/azure-sql-edge", true));
             }
 
-            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:21.10.0-buster-slim", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:24.2.0-jammy", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
@@ -351,7 +351,7 @@ public abstract class BaseDockerHelper{
                                                      "EVENTSTORE_RUN_PROJECTIONS=all",
                                                      "EVENTSTORE_START_STANDARD_PROJECTIONS=true",
                                                      "EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true",
-                                                     "EVENTSTORE_ENABLE_EXTERNAL_TCP=true",
+                                                     //"EVENTSTORE_ENABLE_EXTERNAL_TCP=true",
                                                      "EVENTSTORE_PROJECTION_EXECUTION_TIMEOUT=5000"
                                                  };
         
@@ -525,8 +525,6 @@ public abstract class BaseDockerHelper{
 
     public virtual ContainerBuilder ConfigureSqlContainer()
     {
-        this.Trace("About to Start Estate Management Container");
-
         this.Trace("About to start SQL Server Container");
         ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
                                                          .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
@@ -547,37 +545,7 @@ public abstract class BaseDockerHelper{
                                                                                                             networkService
                                                                                                         },
                                                                                DockerServices.SqlServer);
-
-        //this.Trace("About to start SQL Server Container");
-        //ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
-        //                                                 .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
-        //                                                 .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={this.SqlCredentials.Value.password}")
-        //                                                 .ExposePort(1433)
-        //                                                 .KeepContainer().KeepRunning().ReuseIfExists()
-        //                                                 .SetDockerCredentials(this.DockerCredentials);
-
-        //IContainerService databaseServerContainer = containerService.Build().Start()
-        //                                                            .WaitForPort("1433/tcp", 30000);
-
-        networkService.Attach(databaseServerContainer, false);
-
-        var networkConfig = networkService.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
-        this.Trace("SQL Server Container Started");
-        // Try opening a connection
-        Int32 maxRetries = 10;
-        Int32 counter = 1;
-
-        if (networkService != null){
-            counter = this.CheckSqlConnection(databaseServerContainer);
-        }
-
-        if (counter >= maxRetries){
-            // We have got to the end and still not opened the connection
-            throw new Exception($"Database container not started in {maxRetries} retries");
-        }
-
+        
         return databaseServerContainer;
     }
 
@@ -692,10 +660,8 @@ public abstract class BaseDockerHelper{
 
     public abstract Task StopContainersForScenarioRun(DockerServices sharedDockerServices);
 
-    protected Int32 CheckSqlConnection(IContainerService databaseServerContainer){
+    protected void CheckSqlConnection(IContainerService databaseServerContainer){
         // Try opening a connection
-        Int32 maxRetries = 10;
-        Int32 counter = 1;
         this.Trace("About to SQL Server Container is running");
         if (String.IsNullOrEmpty(this.sqlTestConnString)){
             IPEndPoint sqlServerEndpoint = databaseServerContainer.ToHostExposedEndpoint("1433/tcp");
@@ -711,59 +677,36 @@ public abstract class BaseDockerHelper{
         }
 
         SqlConnection connection = new SqlConnection(this.sqlTestConnString);
+        try{
+            connection.Open();
 
-        while (counter <= maxRetries){
-            try{
-                this.Trace($"Database Connection Attempt {counter}");
+            SqlCommand command = connection.CreateCommand();
+            //command.CommandText = "SELECT * FROM sys.databases";
+            command.CommandText = "SELECT 1;";
+            command.ExecuteNonQuery();
 
-                connection.Open();
+            this.Trace("Connection Opened");
 
-                SqlCommand command = connection.CreateCommand();
-                //command.CommandText = "SELECT * FROM sys.databases";
-                command.CommandText = "SELECT 1;";
-                command.ExecuteNonQuery();
-
-                this.Trace("Connection Opened");
-
-                connection.Close();
-                this.Trace("SQL Server Container Running");
-                break;
-            }
-            catch(SqlException ex){
-                if (connection.State == ConnectionState.Open){
-                    connection.Close();
-                }
-
-                this.Logger.LogError(ex);
-                Thread.Sleep(20000);
-            }
-            finally{
-                counter++;
-            }
+            connection.Close();
+            this.Trace("SQL Server Container Running");
         }
-
-        return counter;
+        catch(SqlException ex){
+            if (connection.State == ConnectionState.Open){
+                connection.Close();
+            }
+            throw;
+        }
     }
 
     protected virtual EventStoreClientSettings ConfigureEventStoreSettings(){
-        EventStoreClientSettings settings = new EventStoreClientSettings();
-        settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
-
         String connectionString = $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}";
-
-        if (this.IsSecureEventStore){
-            connectionString = $"{connectionString}?tls=true&tlsVerifyCert=false";
-            settings.ConnectivitySettings.Insecure = false;
-            settings.DefaultCredentials = new UserCredentials("admin", "changeit");
-        }
-        else{
-            connectionString = $"{connectionString}?tls=false&tlsVerifyCert=false";
-            settings.ConnectivitySettings.Insecure = true;
-        }
-
-        settings.ConnectivitySettings.Address = new Uri(connectionString);
-
-        return settings;
+        
+        connectionString = this.IsSecureEventStore switch{
+            true => $"{connectionString}?tls=true&tlsVerifyCert=false",
+            _ => $"{connectionString}?tls=false&tlsVerifyCert=false"
+        };
+        
+        return EventStoreClientSettings.Create(connectionString);
     }
 
     protected virtual async Task CreatePersistentSubscription((String streamName, String groupName, Int32 maxRetryCount) subscription){
@@ -776,17 +719,24 @@ public abstract class BaseDockerHelper{
         this.Trace($"Subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] created");
     }
 
-    protected async Task DoSqlServerHealthCheck(IContainerService containerService, INetworkService networkService){
-        NetworkConfiguration networkConfig = networkService.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
+    protected async Task DoSqlServerHealthCheck(IContainerService containerService){
         // Try opening a connection
         Int32 maxRetries = 10;
         Int32 counter = 1;
 
-        if (networkService != null)
-        {
-            counter = this.CheckSqlConnection(containerService);
+        while (counter <= maxRetries){
+            try{
+                this.Trace($"Connection attempt {counter}");
+                CheckSqlConnection(containerService);
+                break;
+            }
+            catch(SqlException ex){
+                this.Logger.LogError(ex);
+                await Task.Delay(30000);
+            }
+            finally{
+                counter++;
+            }
         }
 
         if (counter >= maxRetries)
@@ -922,14 +872,18 @@ public abstract class BaseDockerHelper{
 
                 EventStoreProjectionManagementClient projectionClient = new EventStoreProjectionManagementClient(this.ConfigureEventStoreSettings());
                 List<String> projectionNames = new List<String>();
-
+                
                 foreach (FileInfo file in files){
                     String projection = await BaseDockerHelper.RemoveProjectionTestSetup(file);
                     String projectionName = file.Name.Replace(".js", String.Empty);
 
                     Should.NotThrow(async () => {
                                         this.Trace($"Creating projection [{projectionName}] from file [{file.FullName}]");
-                                        await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
+                                        try{
+                                            await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
+                                        }
+                                        catch(Exception ex){
+                                        }
 
                                         projectionNames.Add(projectionName);
                                         this.Trace($"Projection [{projectionName}] created");
@@ -1017,12 +971,14 @@ public abstract class BaseDockerHelper{
                     await DoEventStoreHealthCheck();
                     break;
                 case ContainerType.SqlServer:
-                    await DoSqlServerHealthCheck(startedContainer, networkServices.First());
+                    await DoSqlServerHealthCheck(startedContainer);
                     break;
                 default:
                     await this.DoHealthCheck(type);
                     break;
             }
+
+            this.Trace($"Container [{buildContainerFunc.Method.Name}] started");
 
             return startedContainer;
         }

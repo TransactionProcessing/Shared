@@ -10,6 +10,7 @@ namespace Shared.EventStore.Tests.TestObjects
     using DomainDrivenDesign.EventSourcing;
     using NLog.LayoutRenderers.Wrappers;
     using SubscriptionWorker;
+    using PersistentSubscriptionInfo = SubscriptionWorker.PersistentSubscriptionInfo;
 
     public class TestData
     {
