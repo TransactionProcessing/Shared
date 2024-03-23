@@ -525,8 +525,6 @@ public abstract class BaseDockerHelper{
 
     public virtual ContainerBuilder ConfigureSqlContainer()
     {
-        this.Trace("About to Start Estate Management Container");
-
         this.Trace("About to start SQL Server Container");
         ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
                                                          .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
@@ -547,37 +545,7 @@ public abstract class BaseDockerHelper{
                                                                                                             networkService
                                                                                                         },
                                                                                DockerServices.SqlServer);
-
-        //this.Trace("About to start SQL Server Container");
-        //ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
-        //                                                 .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
-        //                                                 .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={this.SqlCredentials.Value.password}")
-        //                                                 .ExposePort(1433)
-        //                                                 .KeepContainer().KeepRunning().ReuseIfExists()
-        //                                                 .SetDockerCredentials(this.DockerCredentials);
-
-        //IContainerService databaseServerContainer = containerService.Build().Start()
-        //                                                            .WaitForPort("1433/tcp", 30000);
-
-        networkService.Attach(databaseServerContainer, false);
-
-        var networkConfig = networkService.GetConfiguration(true);
-        this.Trace(JsonConvert.SerializeObject(networkConfig));
-
-        this.Trace("SQL Server Container Started");
-        // Try opening a connection
-        Int32 maxRetries = 10;
-        Int32 counter = 1;
-
-        if (networkService != null){
-            counter = this.CheckSqlConnection(databaseServerContainer);
-        }
-
-        if (counter >= maxRetries){
-            // We have got to the end and still not opened the connection
-            throw new Exception($"Database container not started in {maxRetries} retries");
-        }
-
+        
         return databaseServerContainer;
     }
 
@@ -1017,6 +985,8 @@ public abstract class BaseDockerHelper{
                     await this.DoHealthCheck(type);
                     break;
             }
+
+            this.Trace($"Container [{buildContainerFunc.Method.Name}] started");
 
             return startedContainer;
         }
