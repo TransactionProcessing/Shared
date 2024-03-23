@@ -131,6 +131,9 @@ jobs:
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
+      run: docker container ls -a
+
+    - uses: actions/upload-artifact@v2
       #if: ${{ failure() }}
       with:
         name: tracelogsios

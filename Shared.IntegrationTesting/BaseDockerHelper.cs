@@ -728,6 +728,7 @@ public abstract class BaseDockerHelper{
             try{
                 this.Trace($"Connection attempt {counter}");
                 CheckSqlConnection(containerService);
+                break;
             }
             catch(SqlException ex){
                 this.Logger.LogError(ex);
