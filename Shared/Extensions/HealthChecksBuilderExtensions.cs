@@ -29,7 +29,7 @@
                                        "Estate Management Service",
                                        HealthStatus.Unhealthy,
                                        new[] {"estatemanagement"},
-                                       configureHttpMessageHandler:customHttpHandler);
+                                       configurePrimaryHttpMessageHandler:customHttpHandler);
         }
 
         
@@ -49,7 +49,7 @@
                                        httpMethod:HttpMethod.Get,
                                        failureStatus:HealthStatus.Unhealthy,
                                        tags:new[] {"fileprocessing"},
-                                       configureHttpMessageHandler:customHttpHandler);
+                                       configurePrimaryHttpMessageHandler: customHttpHandler);
         }
 
         /// <summary>
@@ -68,7 +68,7 @@
                                        "Messaging Service",
                                        HealthStatus.Unhealthy,
                                        new[] {"messaging", "email", "sms"},
-                                       configureHttpMessageHandler:customHttpHandler);
+                                       configurePrimaryHttpMessageHandler: customHttpHandler);
         }
 
         /// <summary>
@@ -86,7 +86,7 @@
                                        "Security Service",
                                        HealthStatus.Unhealthy,
                                        new[] {"security", "authorisation"},
-                                       configureHttpMessageHandler:customHttpHandler);
+                                       configurePrimaryHttpMessageHandler: customHttpHandler);
         }
 
         /// <summary>
@@ -105,7 +105,7 @@
                                        httpMethod:HttpMethod.Get,
                                        failureStatus:HealthStatus.Unhealthy,
                                        tags:new[] {"transactionprocessing"},
-                                       configureHttpMessageHandler:customHttpHandler);
+                                       configurePrimaryHttpMessageHandler: customHttpHandler);
         }
         
         #endregion
