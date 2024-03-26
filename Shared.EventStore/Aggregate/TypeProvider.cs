@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
     using DomainDrivenDesign.EventSourcing;
@@ -12,41 +13,26 @@
     /// </summary>
     public static class TypeProvider
     {
-        #region Fields
-
-        /// <summary>
-        /// The default assembly filters
-        /// </summary>
-        private static readonly List<String> DefaultAssemblyFilters = new List<String>
-                                                                      {
-                                                                          "Microsoft"
-                                                                      };
-
-        #endregion
-
         #region Methods
 
-        public static void LoadDomainEventsTypeDynamically(List<string> assemblyFilters = null)
+        public static void LoadDomainEventsTypeDynamically(Assembly[] assemblies = null)
         {
-            List<Assembly> assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
-
-            if (assemblyFilters == null) {
-                assemblyFilters = TypeProvider.DefaultAssemblyFilters;
+            if (assemblies == null){
+                // Add a default
+                assemblies = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*DomainEvents*.dll")
+                                      .Select(x => Assembly.Load(AssemblyName.GetAssemblyName(x))).ToArray();
             }
 
-            List<Type> source = new List<Type>();
-            foreach (string assemblyFilter in assemblyFilters)
+            IEnumerable<Type> allTypes = assemblies.SelectMany(a => a.GetTypes());
+
+            List<Type> filteredTypes = allTypes
+                                       .Where(t => t.IsSubclassOf(typeof(DomainEvent)))
+                                       .OrderBy(e => e.Name).ToList();
+
+            foreach (Type type in filteredTypes)
             {
-                List<Assembly> filteredAssemblies = assemblies.Where(a => a.FullName.Contains(assemblyFilter) == true).ToList();
-                foreach (Assembly a in filteredAssemblies)
-                {
-                    assemblies.Remove(a);
-                }
-            }
-            source.AddRange(assemblies.SelectMany((Func<Assembly, IEnumerable<Type>>)(a => (IEnumerable<Type>)a.GetTypes())));
-
-            foreach (Type type in source.Where((Func<Type, bool>)(t => t.IsSubclassOf(typeof(DomainEvent)))).OrderBy((Func<Type, string>)(e => e.Name)).ToList())
                 TypeMap.AddType(type, type.Name);
+            }
         }
 
         #endregion

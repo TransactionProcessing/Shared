@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace Shared.EventStore.Tests
 {
+    using System.Reflection;
     using System.Xml.Serialization;
     using DomainDrivenDesign.EventSourcing;
+    using General;
     using global::EventStore.Client;
     using Shared.EventStore.Aggregate;
     using Shared.EventStore.Tests.TestObjects;
@@ -46,17 +48,13 @@ namespace Shared.EventStore.Tests
     }
 
     public class TypeProviderTests{
+        
         [Fact]
-        public void TypeProvider_LoadDomainEventsTypeDynamically_NoFilters(){
-            TypeProvider.LoadDomainEventsTypeDynamically();
-        }
-
-        [Fact]
-        public void TypeProvider_LoadDomainEventsTypeDynamically_WithFilters(){
-            AggregateNameSetEventTest domainEvent = new AggregateNameSetEventTest(TestData.AggregateId, TestData.EventId, TestData.EstateName);
-            List<String> assemblyFilters = new List<String>();
-            assemblyFilters.Add("Test");
-            TypeProvider.LoadDomainEventsTypeDynamically(assemblyFilters);
+        public void TypeProvider_LoadDomainEventsTypeDynamically(){
+            Assembly assem = Assembly.GetAssembly(typeof(AggregateNameSetEventTest));
+            TypeProvider.LoadDomainEventsTypeDynamically(new List<Assembly>{assem}.ToArray());
+            var t = TypeMap.GetType("AggregateNameSetEventTest");
+            t.ShouldNotBeNull();
         }
     }
 
