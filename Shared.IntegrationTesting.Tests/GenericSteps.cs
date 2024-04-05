@@ -40,11 +40,10 @@ public class GenericSteps
         this.TestingContext.DockerHelper.SqlCredentials = Setup.SqlCredentials;
         this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
 
-        DockerServices services = DockerServices.EventStore | DockerServices.MessagingService;
-        //DockerServices services = DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
-        //                          DockerServices.CallbackHandler | DockerServices.EstateManagement | DockerServices.FileProcessor |
-        //                          DockerServices.TestHost | DockerServices.TransactionProcessor |
-        //                          DockerServices.TransactionProcessorAcl;
+        DockerServices services = DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
+                                  DockerServices.CallbackHandler | DockerServices.EstateManagement | DockerServices.FileProcessor |
+                                  DockerServices.TestHost | DockerServices.TransactionProcessor |
+                                  DockerServices.TransactionProcessorAcl;
 
         this.TestingContext.Logger = logger;
         this.TestingContext.Logger.LogInformation("About to Start Containers for Scenario Run");

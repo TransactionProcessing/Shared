@@ -29,6 +29,15 @@
             dockerHelper.DockerCredentials = Setup.DockerCredentials;
             dockerHelper.SqlServerContainerName = "sharedsqlserver";
 
+            String? isCi = Environment.GetEnvironmentVariable("IsCI");
+            dockerHelper.Logger.LogInformation($"IsCI [{isCi}]");
+            if (String.Compare(isCi, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0)
+            {
+                // override teh SQL Server image
+                dockerHelper.Logger.LogInformation("Sql Image overridden");
+                dockerHelper.SetImageDetails(ContainerType.SqlServer, ("mssqlserver:2022-ltsc2022", false));
+            }
+
             Setup.DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork");
             Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork).Result;
         }
