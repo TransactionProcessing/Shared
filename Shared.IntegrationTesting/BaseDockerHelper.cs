@@ -133,7 +133,7 @@ public abstract class BaseDockerHelper{
         DockerEnginePlatform engineType = BaseDockerHelper.GetDockerEnginePlatform();
         if (engineType == DockerEnginePlatform.Windows){
             this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2019", true));
-            this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/eventstore", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/eventstore_windows", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservicewindows:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservicewindows:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandlerwindows:master", true));
