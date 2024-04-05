@@ -41,7 +41,7 @@ public class GenericSteps
         this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
 
         String? isCi = Environment.GetEnvironmentVariable("IsCI");
-        this.TestingContext.Logger.LogInformation($"IsCI [{isCi}]");
+        this.TestingContext.DockerHelper.Logger.LogInformation($"IsCI [{isCi}]");
         if (String.Compare(isCi, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0){
             // override teh SQL Server image
             this.TestingContext.Logger.LogInformation("Sql Image overridden");

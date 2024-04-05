@@ -31,8 +31,18 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests\Shared.Tests.csproj"
+
+    - name: Run Event Store Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
+
+    - name: Run Integration Tests
+      env:
+          IsCI: true
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v2
@@ -66,6 +76,10 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests\Shared.Tests.csproj"
+
+    - name: Run Event Store Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
@@ -102,13 +116,7 @@ jobs:
 
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
-
-    - name: Run Unit Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"        
-        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
-        
+                 
     - name: Trust root certificate
       run: |
         sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt        
@@ -116,11 +124,21 @@ jobs:
         sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" /usr/local/share/ca-certificates/ca.crt
         sudo security authorizationdb remove com.apple.trust-settings.admin
           
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
+
     - name: Run Event Store Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
+
+    - name: Run Integration Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - name: debug
       if: ${{ failure() }}
