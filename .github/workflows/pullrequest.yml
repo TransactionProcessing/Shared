@@ -15,12 +15,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-
-    # - name: Install NET 7
-    #   uses: actions/setup-dotnet@v2
-    #   with:
-    #     dotnet-version: '7.0.x'
-
+    
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
@@ -75,6 +70,8 @@ jobs:
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
     - name: Run Integration Tests
+      env:
+          IsCI: true
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
@@ -99,12 +96,7 @@ jobs:
       run: |
         brew install docker
         colima start --cpu 2 --memory 8 --disk 100
-
-    # - name: Install NET 7
-    #   uses: actions/setup-dotnet@v2
-    #   with:
-    #     dotnet-version: '7.0.x'  
-
+        
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
