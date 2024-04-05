@@ -42,8 +42,7 @@ public class GenericSteps
 
         String? isCi = Environment.GetEnvironmentVariable("IsCI");
         this.TestingContext.Logger.LogInformation($"IsCI [{isCi}]");
-        if (String.Compare(isCi, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0)
-        {
+        if (String.Compare(isCi, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0){
             // override teh SQL Server image
             this.TestingContext.Logger.LogInformation("Sql Image overridden");
             this.TestingContext.DockerHelper.SetImageDetails(ContainerType.SqlServer, ("mssqlserver:2022-ltsc2022", false));
