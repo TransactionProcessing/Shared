@@ -64,6 +64,11 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Build Windows SQL Server
+      run: |
+         cd SQLDocker
+         docker build -t mssqlserver:2022-ltsc2022 --build-arg SQL_VERSION=2022 --build-arg WIN_VERSION=ltsc2022 .
+
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 

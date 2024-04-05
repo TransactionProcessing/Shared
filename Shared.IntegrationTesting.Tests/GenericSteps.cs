@@ -40,14 +40,6 @@ public class GenericSteps
         this.TestingContext.DockerHelper.SqlCredentials = Setup.SqlCredentials;
         this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
 
-        String? isCi = Environment.GetEnvironmentVariable("IsCI");
-        this.TestingContext.DockerHelper.Logger.LogInformation($"IsCI [{isCi}]");
-        if (String.Compare(isCi, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0){
-            // override teh SQL Server image
-            this.TestingContext.Logger.LogInformation("Sql Image overridden");
-            this.TestingContext.DockerHelper.SetImageDetails(ContainerType.SqlServer, ("mssqlserver:2022-ltsc2022", false));
-        }
-
         DockerServices services = DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
                                   DockerServices.CallbackHandler | DockerServices.EstateManagement | DockerServices.FileProcessor |
                                   DockerServices.TestHost | DockerServices.TransactionProcessor |
