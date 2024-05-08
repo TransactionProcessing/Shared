@@ -859,6 +859,17 @@ public abstract class BaseDockerHelper{
         return DockerPorts.SecurityServiceDockerPort;
     }
 
+    protected virtual List<String> GetRequiredProjections(){
+        List<String> requiredProjections = new List<String>();
+
+        requiredProjections.Add("CallbackHandlerEnricher.js");
+        requiredProjections.Add("EstateAggregator.js");
+        requiredProjections.Add("MerchantAggregator.js");
+        requiredProjections.Add("MerchantBalanceCalculator.js");
+
+        return requiredProjections;
+    }
+
     protected virtual async Task LoadEventStoreProjections(){
         //Start our Continuous Projections - we might decide to do this at a different stage, but now lets try here
         String projectionsFolder = "projections/continuous";
@@ -869,11 +880,14 @@ public abstract class BaseDockerHelper{
 
             if (di.Exists){
                 FileInfo[] files = di.GetFiles();
-
+                var requiredProjections = this.GetRequiredProjections();
                 EventStoreProjectionManagementClient projectionClient = new EventStoreProjectionManagementClient(this.ConfigureEventStoreSettings());
                 List<String> projectionNames = new List<String>();
                 
                 foreach (FileInfo file in files){
+                    if (requiredProjections.Contains(file.Name) == false)
+                        continue;
+
                     String projection = await BaseDockerHelper.RemoveProjectionTestSetup(file);
                     String projectionName = file.Name.Replace(".js", String.Empty);
 
