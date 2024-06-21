@@ -64,32 +64,32 @@
             this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
         }
 
-        private SubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
-                                   IDomainEventHandlerResolver domainEventHandlerResolver,
-                                   ISubscriptionRepository subscriptionRepository,
-                                   Int32 persistentSubscriptionPollingInSeconds = 60)
-        {
-            this.DomainEventHandlerResolver = domainEventHandlerResolver;
-            this.SubscriptionRepository = subscriptionRepository;
-            this.EventStorePersistentSubscriptionsClient = new(eventStoreConnectionSettings);
+        //private SubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
+        //                           IDomainEventHandlerResolver domainEventHandlerResolver,
+        //                           ISubscriptionRepository subscriptionRepository,
+        //                           Int32 persistentSubscriptionPollingInSeconds = 60)
+        //{
+        //    this.DomainEventHandlerResolver = domainEventHandlerResolver;
+        //    this.SubscriptionRepository = subscriptionRepository;
+        //    this.EventStorePersistentSubscriptionsClient = new(eventStoreConnectionSettings);
 
-            this.PersistentSubscriptionPollingInSeconds = persistentSubscriptionPollingInSeconds;
+        //    this.PersistentSubscriptionPollingInSeconds = persistentSubscriptionPollingInSeconds;
 
-            EventStoreClientSettings settings = eventStoreConnectionSettings;
-            this.HttpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
+        //    EventStoreClientSettings settings = eventStoreConnectionSettings;
+        //    this.HttpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
 
-            this.GetNewSubscriptions = (all, current)
-                                           => SubscriptionWorkerHelper.GetNewSubscriptions(all,
-                                                                                           current,
-                                                                                           this.IncludeGroups,
-                                                                                           this.IgnoreGroups,
-                                                                                           this.IncludeStreams,
-                                                                                           this.IgnoreStreams);
+        //    this.GetNewSubscriptions = (all, current)
+        //                                   => SubscriptionWorkerHelper.GetNewSubscriptions(all,
+        //                                                                                   current,
+        //                                                                                   this.IncludeGroups,
+        //                                                                                   this.IgnoreGroups,
+        //                                                                                   this.IncludeStreams,
+        //                                                                                   this.IgnoreStreams);
 
-            this.WriteTrace = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Trace, this, message);
-            this.WriteWarning = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Warning, this, message);
-            this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
-        }
+        //    this.WriteTrace = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Trace, this, message);
+        //    this.WriteWarning = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Warning, this, message);
+        //    this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
+        //}
 
         #endregion
 
@@ -130,24 +130,12 @@
                    };
         }
 
-        public static SubscriptionWorker CreateSubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
-                                                                            IDomainEventHandlerResolver domainEventHandlerResolver,
-                                                                            ISubscriptionRepository subscriptionRepository,
-                                                                            Int32 inflightMessages = 200,
-                                                                            Int32 persistentSubscriptionPollingInSeconds = 60)
-        {
-            return new(eventStoreConnectionSettings, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
-                   {
-                       InflightMessages = inflightMessages
-                   };
-        }
-
-        public static SubscriptionWorker CreateOrderedSubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
+        public static SubscriptionWorker CreateOrderedSubscriptionWorker(String eventStoreConnectionString,
                                                                          IDomainEventHandlerResolver domainEventHandlerResolver,
                                                                          ISubscriptionRepository subscriptionRepository,
                                                                          Int32 persistentSubscriptionPollingInSeconds = 60)
         {
-            return new(eventStoreConnectionSettings, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
+            return new(eventStoreConnectionString, domainEventHandlerResolver, subscriptionRepository, persistentSubscriptionPollingInSeconds)
                    {
                        InflightMessages = 1
                    };
