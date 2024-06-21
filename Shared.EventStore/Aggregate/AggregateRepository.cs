@@ -20,13 +20,16 @@
         /// </summary>
         internal readonly IEventStoreContext EventStoreContext;
 
+        private readonly IDomainEventFactory<IDomainEvent> DomainEventFactory;
+
         #endregion
 
         #region Constructors
 
-        public AggregateRepository(IEventStoreContext eventStoreContext)
+        public AggregateRepository(IEventStoreContext eventStoreContext, IDomainEventFactory<IDomainEvent> domainEventFactory)
         {
             this.EventStoreContext = eventStoreContext;
+            DomainEventFactory = domainEventFactory;
         }
 
         #endregion
@@ -95,7 +98,7 @@
 
                 foreach (ResolvedEvent resolvedEvent in resolvedEvents)
                 {
-                    IDomainEvent domainEvent = TypeMapConvertor.Convertor(aggregate.AggregateId, resolvedEvent);
+                    IDomainEvent domainEvent = TypeMapConvertor.Convertor(DomainEventFactory, aggregate.AggregateId, resolvedEvent);
 
                     domainEvents.Add(domainEvent);
                 }

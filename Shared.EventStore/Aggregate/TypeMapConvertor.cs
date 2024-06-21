@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.Aggregate
+﻿using System.Runtime.CompilerServices;
+
+namespace Shared.EventStore.Aggregate
 {
     using System;
     using DomainDrivenDesign.EventSourcing;
@@ -15,11 +17,19 @@
         /// <summary>
         /// The domain event record factory
         /// </summary>
-        private static readonly DomainEventFactory domainEventFactory = new DomainEventFactory();
+        private static readonly DomainEventFactory StandardDomainEventFactory = new DomainEventFactory();
+
+        private static IDomainEventFactory<IDomainEvent> OverrideDomainEventFactory = null;
 
         #endregion
 
         #region Methods
+
+        public static IDomainEvent Convertor(IDomainEventFactory<IDomainEvent> overrideFactory, Guid aggregateId, ResolvedEvent @event)
+        {
+            OverrideDomainEventFactory = overrideFactory;
+            return Convertor(aggregateId, @event);
+        }
 
         public static IDomainEvent Convertor(Guid aggregateId, ResolvedEvent @event)
         {
@@ -72,7 +82,11 @@
         private static IDomainEvent GetDomainEvent(Guid aggregateId,
                                                          ResolvedEvent @event)
         {
-            return TypeMapConvertor.domainEventFactory.CreateDomainEvent(aggregateId, @event);
+            if (OverrideDomainEventFactory != null)
+            {
+                return OverrideDomainEventFactory.CreateDomainEvent(aggregateId, @event);
+            }
+            return TypeMapConvertor.StandardDomainEventFactory.CreateDomainEvent(aggregateId, @event);
         }
 
         #endregion
