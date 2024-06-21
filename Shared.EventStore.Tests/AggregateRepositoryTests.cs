@@ -17,7 +17,8 @@ public class AggregateRepositoryTests{
     [Fact]
     public async Task AggregateRepository_GetLatestVersion_AggregateReturned(){
         Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
-        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object);
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object,factory);
 
         AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
         EventRecord r = TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestAggregate");
@@ -33,7 +34,8 @@ public class AggregateRepositoryTests{
     public async Task AggregateRepository_GetLatestVersion_ErrorApplyingEvents_ErrorThrown()
     {
         Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
-        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object);
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Error");
         EventRecord r = TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestAggregate");
 
@@ -50,7 +52,8 @@ public class AggregateRepositoryTests{
     public async Task AggregateRepository_GetLatestVersion_NoEvents_AggregateReturned()
     {
         Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
-        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object);
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         var testAggregate = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
         testAggregate.ShouldNotBeNull();
     }
@@ -59,7 +62,8 @@ public class AggregateRepositoryTests{
     public async Task AggregateRepository_GetLatestVersionFromLastEvent_AggregateReturned()
     {
         Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
-        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object);
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         var testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
         testAggregate.ShouldNotBeNull();
     }
@@ -68,7 +72,8 @@ public class AggregateRepositoryTests{
     public async Task AggregateRepository_SaveChanges_NoChangesMade_ChangesAreSaved()
     {
         Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
-        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object);
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         var testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
 
         Should.NotThrow(async () => {
@@ -80,7 +85,8 @@ public class AggregateRepositoryTests{
     public async Task AggregateRepository_SaveChanges_ChangesMade_ChangesAreSaved()
     {
         Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
-        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object);
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         TestAggregate testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
 
         Should.NotThrow(async () => {

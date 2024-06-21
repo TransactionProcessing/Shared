@@ -13,6 +13,8 @@
         /// </summary>
         private readonly IEventStoreContextManager EventStoreContextManager;
 
+        private readonly IDomainEventFactory<IDomainEvent> DomainEventFactory;
+
         #endregion
 
         #region Constructors
@@ -21,9 +23,10 @@
         /// Initializes a new instance of the <see cref="AggregateRepositoryManager" /> class.
         /// </summary>
         /// <param name="eventStoreContextManager">The event store context manager.</param>
-        public AggregateRepositoryManager(IEventStoreContextManager eventStoreContextManager)
+        public AggregateRepositoryManager(IEventStoreContextManager eventStoreContextManager, IDomainEventFactory<IDomainEvent>  domainEventFactory)
         {
             this.EventStoreContextManager = eventStoreContextManager;
+            DomainEventFactory = domainEventFactory;
         }
 
         #endregion
@@ -41,7 +44,7 @@
         {
             IEventStoreContext context = this.EventStoreContextManager.GetEventStoreContext(identifier.ToString());
 
-            return new AggregateRepository<TAggregate, TDomainEvent>(context);
+            return new AggregateRepository<TAggregate, TDomainEvent>(context, DomainEventFactory);
         }
 
         #endregion
