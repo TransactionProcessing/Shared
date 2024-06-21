@@ -20,7 +20,6 @@ public static class IApplicationBuilderExtenstions
     public static async Task ConfigureSubscriptionService(this IApplicationBuilder applicationBuilder,
                                                           SubscriptionWorkersRoot workerConfig,
                                                           String eventStoreConnectionString,
-                                                          EventStoreClientSettings clientSettings,
                                                           Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers,
                                                           Action<TraceEventType, String,String> traceHandler,
                                                           Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver,
@@ -44,7 +43,7 @@ public static class IApplicationBuilderExtenstions
         await subscriptionRepository.PreWarm(cancellationToken);
 
         List<SubscriptionWorker> workers =
-            IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository, workerConfig, eventHandlerResolvers, clientSettings,traceHandler);
+            IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository, workerConfig, eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         foreach (SubscriptionWorker subscriptionWorker in workers) {
             await subscriptionWorker.StartAsync(cancellationToken);
         }
@@ -52,8 +51,8 @@ public static class IApplicationBuilderExtenstions
 
     private static List<SubscriptionWorker> ConfigureSubscriptions(ISubscriptionRepository subscriptionRepository,
                                                                    SubscriptionWorkersRoot configuration,
+                                                                   String eventStoreConnectionString,
                                                                    Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers,
-                                                                   EventStoreClientSettings clientSettings,
                                                                    Action<TraceEventType, String, String> traceHandler) {
         List<SubscriptionWorker> workers = new();
 
@@ -65,7 +64,7 @@ public static class IApplicationBuilderExtenstions
                 KeyValuePair<String, IDomainEventHandlerResolver> ehr = eventHandlerResolvers.SingleOrDefault(e => e.Key == "Ordered");
 
                 if (ehr.Value != null) {
-                    SubscriptionWorker worker = SubscriptionWorker.CreateOrderedSubscriptionWorker(clientSettings,
+                    SubscriptionWorker worker = SubscriptionWorker.CreateOrderedSubscriptionWorker(eventStoreConnectionString,
                                                                                                    ehr.Value,
                                                                                                    subscriptionRepository,
                                                                                                    configuration.PersistentSubscriptionPollingInSeconds);
@@ -86,7 +85,7 @@ public static class IApplicationBuilderExtenstions
                 KeyValuePair<String, IDomainEventHandlerResolver> ehr = eventHandlerResolvers.SingleOrDefault(e => e.Key == "Main");
                 if (ehr.Value != null) {
                     for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++) {
-                        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(clientSettings,
+                        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString,
                                                                                                 ehr.Value,
                                                                                                 subscriptionRepository,
                                                                                                 configurationSubscriptionWorker.InflightMessages,
