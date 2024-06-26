@@ -107,29 +107,35 @@
         {
             try
             {
-                if (resolvedEvent.SilentlyHandleEvent())
+                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                 {
+                    if (resolvedEvent.SilentlyHandleEvent())
+                    {
+                        await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+                        return;
+                    }
+
+                    Logger.Logger.LogInformation(
+                        $"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
+
+                    IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
+
+                    List<IDomainEventHandler> domainEventHandlers =
+                        domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
+
+                    if (domainEventHandlers == null || domainEventHandlers.Any() == false)
+                    {
+                        // Log a warning out 
+                        Logger.Logger.LogWarning(
+                            $"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
+                        await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+                        return;
+                    }
+
+                    await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
+
                     await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
-                    return;
                 }
-
-                Logger.Logger.LogInformation($"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
-
-                IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
-
-                List<IDomainEventHandler> domainEventHandlers = domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
-
-                if (domainEventHandlers == null || domainEventHandlers.Any() == false)
-                {
-                    // Log a warning out 
-                    Logger.Logger.LogWarning($"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
-                    await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
-                    return;
-                }
-
-                await domainEvent.DispatchToHandlers(domainEventHandlers, cancellationToken);
-                
-                await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
             }
             catch (Exception e)
             {
