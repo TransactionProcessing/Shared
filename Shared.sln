@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.EventStoreContext.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.IntegrationTesting.UnitTests", "Shared.IntegrationTesting.UnitTests\Shared.IntegrationTesting.UnitTests.csproj", "{5E23CBBB-8484-4F7F-81D9-308957783695}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventStoreTest", "EventStoreTest\EventStoreTest.csproj", "{ACAEBB31-8188-4D65-AC3B-954181A34FA8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +88,10 @@ Global
 		{5E23CBBB-8484-4F7F-81D9-308957783695}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E23CBBB-8484-4F7F-81D9-308957783695}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E23CBBB-8484-4F7F-81D9-308957783695}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACAEBB31-8188-4D65-AC3B-954181A34FA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACAEBB31-8188-4D65-AC3B-954181A34FA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACAEBB31-8188-4D65-AC3B-954181A34FA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACAEBB31-8188-4D65-AC3B-954181A34FA8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -102,6 +108,7 @@ Global
 		{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
 		{A7909DC1-12F9-42F8-B665-E8A2C63B1481} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
 		{5E23CBBB-8484-4F7F-81D9-308957783695} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
+		{ACAEBB31-8188-4D65-AC3B-954181A34FA8} = {C641A0E0-A26E-4B16-89E2-DD6E33509C6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {34032CEC-68CD-41EA-8707-D450689AEA46}
