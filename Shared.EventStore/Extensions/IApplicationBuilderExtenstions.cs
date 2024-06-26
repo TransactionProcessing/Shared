@@ -22,30 +22,36 @@ public static class IApplicationBuilderExtenstions
                                                           String eventStoreConnectionString,
                                                           Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers,
                                                           Action<TraceEventType, String,String> traceHandler,
-                                                          Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver,
-                                                          CancellationToken cancellationToken) {
-        if (workerConfig == null)
-            throw new Exception("No Worker configuration supplied");
-        if (subscriptionRepositoryResolver == null)
-            throw new Exception("No Subscription Repository Resolver supplied");
-        if (workerConfig.InternalSubscriptionService == false)
-            return;
-        if(workerConfig.SubscriptionWorkers == null || workerConfig.SubscriptionWorkers.Any() == false)
-            throw new Exception("No SubscriptionWorkers supplied");
-        
-        ISubscriptionRepository subscriptionRepository = subscriptionRepositoryResolver(eventStoreConnectionString, workerConfig.InternalSubscriptionServiceCacheDuration);
+                                                          Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver) {
 
-        // TODO: Some logging....
-        //((SubscriptionRepository)subscriptionRepository).Trace += (sender,
-        //                                                           s) => traceHandler(TraceEventType.Information, "REPOSITORY", s);
+        using (CancellationTokenSource cts = new CancellationTokenSource())
+        {
+            if (workerConfig == null)
+                throw new Exception("No Worker configuration supplied");
+            if (subscriptionRepositoryResolver == null)
+                throw new Exception("No Subscription Repository Resolver supplied");
+            if (workerConfig.InternalSubscriptionService == false)
+                return;
+            if (workerConfig.SubscriptionWorkers == null || workerConfig.SubscriptionWorkers.Any() == false)
+                throw new Exception("No SubscriptionWorkers supplied");
 
-        // init our SubscriptionRepository
-        await subscriptionRepository.PreWarm(cancellationToken);
+            ISubscriptionRepository subscriptionRepository = subscriptionRepositoryResolver(eventStoreConnectionString,
+                workerConfig.InternalSubscriptionServiceCacheDuration);
 
-        List<SubscriptionWorker> workers =
-            IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository, workerConfig, eventStoreConnectionString, eventHandlerResolvers, traceHandler);
-        foreach (SubscriptionWorker subscriptionWorker in workers) {
-            await subscriptionWorker.StartAsync(cancellationToken);
+            // TODO: Some logging....
+            //((SubscriptionRepository)subscriptionRepository).Trace += (sender,
+            //                                                           s) => traceHandler(TraceEventType.Information, "REPOSITORY", s);
+
+            // init our SubscriptionRepository
+            await subscriptionRepository.PreWarm(cts.Token);
+
+            List<SubscriptionWorker> workers =
+                IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository, workerConfig,
+                    eventStoreConnectionString, eventHandlerResolvers, traceHandler);
+            foreach (SubscriptionWorker subscriptionWorker in workers)
+            {
+                await subscriptionWorker.StartAsync(cts.Token);
+            }
         }
     }
 
