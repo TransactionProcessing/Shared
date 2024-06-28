@@ -16,5 +16,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}          
           last-commit-age-days: 60
-          dry-run: true
+          dry-run: false
           rate-limit: true
