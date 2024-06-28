@@ -866,6 +866,7 @@ public abstract class BaseDockerHelper{
         requiredProjections.Add("EstateAggregator.js");
         requiredProjections.Add("MerchantAggregator.js");
         requiredProjections.Add("MerchantBalanceCalculator.js");
+        requiredProjections.Add("MerchantBalanceProjection.js");
 
         return requiredProjections;
     }
