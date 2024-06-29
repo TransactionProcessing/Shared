@@ -97,8 +97,5 @@ namespace Shared.Tests
 
             queryString.Contains("param2").ShouldBeTrue();
         }
-
     }
-
-
 }
