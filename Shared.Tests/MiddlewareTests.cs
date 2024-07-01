@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Shared.Tests
 {
@@ -50,15 +51,18 @@ namespace Shared.Tests
         }
 
         [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("RequestBody")]
-        public async Task RequestLoggingMiddleware_RequestIsLogged(String requestBody)
+        [InlineData(null, true)]
+        [InlineData("", true)]
+        [InlineData("RequestBody", true)]
+        [InlineData(null, false)]
+        [InlineData("", false)]
+        [InlineData("RequestBody", false)]
+        public async Task RequestLoggingMiddleware_RequestIsLogged(String requestBody, Boolean logRequests)
         {
             TestLogger logger = TestHelpers.InitialiseLogger();
-
-            //const string expectedOutput = "Request handed over to next request delegate";
-
+            RequestResponseMiddlewareLoggingConfig configuration =
+                new RequestResponseMiddlewareLoggingConfig(LogLevel.Warning, logRequests, true);
+            
             DefaultHttpContext defaultContext = new DefaultHttpContext();
             if (requestBody != null){
                 defaultContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
@@ -75,7 +79,7 @@ namespace Shared.Tests
                                                                                                  return Task.CompletedTask;
                                                                                              });
 
-            await middlewareInstance.Invoke(defaultContext);
+            await middlewareInstance.Invoke(defaultContext, configuration);
 
             defaultContext.Request.Body.Seek(0, SeekOrigin.Begin);
             String body = await new StreamReader(defaultContext.Request.Body).ReadToEndAsync();
@@ -85,12 +89,24 @@ namespace Shared.Tests
             else{
                 Assert.Equal(String.Empty, body);
             }
-            logger.GetLogEntries().Last().ShouldNotBeNullOrEmpty();
+
+            if (logRequests)
+            {
+                logger.GetLogEntries().Last().ShouldNotBeNullOrEmpty();
+            }
+            else
+            {
+                logger.GetLogEntries().Length.ShouldBe(0);
+            }
         }
 
-        [Fact]
-        public async Task  ResponseLoggingMiddleware_RequestIsLogged(){
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task  ResponseLoggingMiddleware_RequestIsLogged(Boolean logResponses){
             TestLogger logger = TestHelpers.InitialiseLogger();
+            RequestResponseMiddlewareLoggingConfig configuration =
+                new RequestResponseMiddlewareLoggingConfig(LogLevel.Warning, true, logResponses);
 
             const string expectedOutput = "Request handed over to next request delegate";
 
@@ -104,13 +120,20 @@ namespace Shared.Tests
                                                                                                    return Task.CompletedTask;
                                                                                                });
 
-            await middlewareInstance.Invoke(defaultContext);
+            await middlewareInstance.Invoke(defaultContext, configuration);
 
             defaultContext.Response.Body.Seek(0, SeekOrigin.Begin);
             String body = new StreamReader(defaultContext.Response.Body).ReadToEnd();
             Assert.Equal(expectedOutput, body);
 
-            logger.GetLogEntries().Last().ShouldNotBeNullOrEmpty();
+            if (logResponses)
+            {
+                logger.GetLogEntries().Last().ShouldNotBeNullOrEmpty();
+            }
+            else
+            {
+                logger.GetLogEntries().Length.ShouldBe(0);
+            }
         }
         
         [Fact]
