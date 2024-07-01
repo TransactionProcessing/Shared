@@ -12,19 +12,10 @@ namespace Shared.Middleware
     public class RequestLoggingMiddleware
     {
         #region Fields
-
-        /// <summary>
-        /// The next
-        /// </summary>
         private readonly RequestDelegate next;
-
         #endregion
-        
+
         #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RequestLoggingMiddleware"/> class.
-        /// </summary>
-        /// <param name="next">The next.</param>
         public RequestLoggingMiddleware(RequestDelegate next)
         {
             this.next = next;
@@ -33,33 +24,32 @@ namespace Shared.Middleware
 
         #region Public Methods
 
-        #region public async Task Invoke(HttpContext context)        
-        /// <summary>
-        /// Invokes the specified context.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <returns></returns>
-        public async Task Invoke(HttpContext context)
+        #region public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
         {
-            var requestBodyStream = new MemoryStream();
             var originalRequestBody = context.Request.Body;
-
-            await context.Request.Body.CopyToAsync(requestBodyStream);
-            requestBodyStream.Seek(0, SeekOrigin.Begin);
-
-            var url = context.Request.GetDisplayUrl();
-            var requestBodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
-            StringBuilder logMessage = new StringBuilder();
-            logMessage.Append($"Request: Method: {context.Request.Method} Url: {url}");
-            if (requestBodyText != String.Empty)
+            if (configuration.LogRequests)
             {
-                logMessage.Append(" ");
-                logMessage.Append($"Body: {requestBodyText}");
-            }
-            Helpers.LogMessage(url, logMessage);
+                var requestBodyStream = new MemoryStream();
 
-            requestBodyStream.Seek(0, SeekOrigin.Begin);
-            context.Request.Body = requestBodyStream;
+                await context.Request.Body.CopyToAsync(requestBodyStream);
+                requestBodyStream.Seek(0, SeekOrigin.Begin);
+
+                var url = context.Request.GetDisplayUrl();
+                var requestBodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
+                StringBuilder logMessage = new StringBuilder();
+                logMessage.Append($"Request: Method: {context.Request.Method} Url: {url}");
+                if (requestBodyText != String.Empty)
+                {
+                    logMessage.Append(" ");
+                    logMessage.Append($"Body: {requestBodyText}");
+                }
+
+                Helpers.LogMessage(url, logMessage, configuration.LoggingLevel);
+
+                requestBodyStream.Seek(0, SeekOrigin.Begin);
+                context.Request.Body = requestBodyStream;
+            }
 
             await next(context);
             context.Request.Body = originalRequestBody;
