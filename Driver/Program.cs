@@ -1,4 +1,6 @@
-﻿namespace Driver
+﻿using System.Diagnostics;
+
+namespace Driver
 {
     using System;
     using System.Collections.Generic;
@@ -39,11 +41,14 @@
         }
 
         private static async Task Main(String[] args) {
-            //await Program.SubscriptionsTest();
-            await Program.QueryTest();
+            Logger.Initialise(NullLogger.Instance);
+            await Program.SubscriptionsTest();
+            //await Program.QueryTest();
 
             //TestDockerHelper t = new TestDockerHelper();
             //await t.StartContainersForScenarioRun("");
+
+            Console.ReadKey();
         }
 
         private static async Task QueryTest(){
@@ -58,34 +63,30 @@
 
         private static async Task SubscriptionsTest() {
             String eventStoreConnectionString = "esdb://127.0.0.1:2113?tls=false";
-            //Int32 inflightMessages = 50;
-            //Int32 persistentSubscriptionPollingInSeconds = 10;
-            //Int32 cacheDuration = 0;
-
-            //String 
-
-            //ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, cacheDuration);
-
-            ////((SubscriptionRepository)subscriptionRepository).Trace += (sender, s) => Extensions.log(TraceEventType.Information, "REPOSITORY", s);
-
-            //// init our SubscriptionRepository
-            //subscriptionRepository.PreWarm(CancellationToken.None).Wait();
-
-            //IDomainEventHandlerResolver eventHandlerResolver = new DomainEventHandlerResolver(new Dictionary<String, String[]>(), null);
-
-            //SubscriptionWorker concurrentSubscriptions = SubscriptionWorker.CreateSubscriptionWorker(Program.ConfigureEventStoreSettings(),
-            //                                                                                                   eventHandlerResolver,
-            //                                                                                                   subscriptionRepository,
-            //                                                                                                   inflightMessages,
-            //                                                                                                   persistentSubscriptionPollingInSeconds);
-
-            //concurrentSubscriptions.Trace += (_, args) => Extensions.concurrentLog(TraceEventType.Information, args.Message);
-            //concurrentSubscriptions.Warning += (_, args) => Extensions.concurrentLog(TraceEventType.Warning, args.Message);
-            //concurrentSubscriptions.Error += (_, args) => Extensions.concurrentLog(TraceEventType.Error, args.Message);
-
+            Int32 inflightMessages = 50;
+            Int32 persistentSubscriptionPollingInSeconds = 10;
+            Int32 cacheDuration = 0;
             
+            ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, cacheDuration);
 
-            //concurrentSubscriptions.StartAsync(CancellationToken.None).Wait();
+            //((SubscriptionRepository)subscriptionRepository).Trace += (sender, s) => Extensions.log(TraceEventType.Information, "REPOSITORY", s);
+
+            // init our SubscriptionRepository
+            subscriptionRepository.PreWarm(CancellationToken.None).Wait();
+
+            IDomainEventHandlerResolver eventHandlerResolver = new DomainEventHandlerResolver(new Dictionary<String, String[]>(), null);
+
+            SubscriptionWorker concurrentSubscriptions = SubscriptionWorker.CreateSubscriptionWorker(
+                eventStoreConnectionString, eventHandlerResolver,
+                subscriptionRepository, inflightMessages, persistentSubscriptionPollingInSeconds);
+
+            concurrentSubscriptions.Trace += (_, args) => Console.WriteLine($"{TraceEventType.Information}|{args.Message}");
+            concurrentSubscriptions.Warning += (_, args) => Console.WriteLine($"{TraceEventType.Warning}|{args.Message}");
+            concurrentSubscriptions.Error += (_, args) => Console.WriteLine($"{TraceEventType.Error}|{args.Message}");
+
+
+
+            concurrentSubscriptions.StartAsync(CancellationToken.None).Wait();
         }
 
         #endregion

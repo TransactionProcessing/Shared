@@ -64,33 +64,6 @@
             this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
         }
 
-        //private SubscriptionWorker(EventStoreClientSettings eventStoreConnectionSettings,
-        //                           IDomainEventHandlerResolver domainEventHandlerResolver,
-        //                           ISubscriptionRepository subscriptionRepository,
-        //                           Int32 persistentSubscriptionPollingInSeconds = 60)
-        //{
-        //    this.DomainEventHandlerResolver = domainEventHandlerResolver;
-        //    this.SubscriptionRepository = subscriptionRepository;
-        //    this.EventStorePersistentSubscriptionsClient = new(eventStoreConnectionSettings);
-
-        //    this.PersistentSubscriptionPollingInSeconds = persistentSubscriptionPollingInSeconds;
-
-        //    EventStoreClientSettings settings = eventStoreConnectionSettings;
-        //    this.HttpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
-
-        //    this.GetNewSubscriptions = (all, current)
-        //                                   => SubscriptionWorkerHelper.GetNewSubscriptions(all,
-        //                                                                                   current,
-        //                                                                                   this.IncludeGroups,
-        //                                                                                   this.IgnoreGroups,
-        //                                                                                   this.IncludeStreams,
-        //                                                                                   this.IgnoreStreams);
-
-        //    this.WriteTrace = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Trace, this, message);
-        //    this.WriteWarning = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Warning, this, message);
-        //    this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
-        //}
-
         #endregion
 
         #region Properties
@@ -195,38 +168,49 @@
 
                     List<PersistentSubscriptionInfo> result = this.GetNewSubscriptions(all.PersistentSubscriptionInfo, current);
 
-                    this.WriteWarning($"Picked up {result.Count} subscriptions");
-
-                    // Check we have retrieved back some configuration
-                    foreach (PersistentSubscriptionInfo subscriptionDto in result)
+                    if (result.Count > 0)
                     {
-                        this.WriteWarning($"Creating subscription [{subscriptionDto.StreamName}-{subscriptionDto.GroupName}]");
+                        this.WriteWarning($"Picked up {result.Count} subscriptions");
 
-                        PersistentSubscriptionDetails persistentSubscriptionDetails = new(subscriptionDto.StreamName, subscriptionDto.GroupName)
-                                                                                      {
-                                                                                          InflightMessages = this.InflightMessages
-                                                                                      };
-                        IPersistentSubscriptionsClient persistentSubscriptionsClient;
-
-                        if (this.InMemory)
+                        // Check we have retrieved back some configuration
+                        foreach (PersistentSubscriptionInfo subscriptionDto in result)
                         {
-                            persistentSubscriptionsClient = new InMemoryPersistentSubscriptionsClient();
+                            this.WriteWarning(
+                                $"Creating subscription [{subscriptionDto.StreamName}-{subscriptionDto.GroupName}]");
+
+                            PersistentSubscriptionDetails persistentSubscriptionDetails =
+                                new(subscriptionDto.StreamName, subscriptionDto.GroupName)
+                                {
+                                    InflightMessages = this.InflightMessages
+                                };
+                            IPersistentSubscriptionsClient persistentSubscriptionsClient;
+
+                            if (this.InMemory)
+                            {
+                                persistentSubscriptionsClient = new InMemoryPersistentSubscriptionsClient();
+                            }
+                            else
+                            {
+                                persistentSubscriptionsClient =
+                                    new EventStorePersistentSubscriptionsClient(
+                                        this.EventStorePersistentSubscriptionsClient);
+                            }
+
+                            PersistentSubscription subscription =
+                                PersistentSubscription.Create(persistentSubscriptionsClient,
+                                    persistentSubscriptionDetails,
+                                    this.DomainEventHandlerResolver);
+
+                            subscription.SubscriptionHasDropped += (sender, args) =>
+                                this.SubscriptionDropped((PersistentSubscription)sender, args);
+
+                            await subscription.ConnectToSubscription(stoppingToken);
+
+                            this.WriteWarning(
+                                $"Subscription [{subscriptionDto.StreamName}-{subscriptionDto.GroupName}] connected");
+
+                            this.CurrentSubscriptions.Add(subscription);
                         }
-                        else
-                        {
-                            persistentSubscriptionsClient = new EventStorePersistentSubscriptionsClient(this.EventStorePersistentSubscriptionsClient);
-                        }
-
-                        PersistentSubscription subscription =
-                            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, this.DomainEventHandlerResolver);
-
-                        subscription.SubscriptionHasDropped += (sender, args) => this.SubscriptionDropped((PersistentSubscription)sender, args);
-
-                        await subscription.ConnectToSubscription(stoppingToken);
-
-                        this.WriteWarning($"Subscription [{subscriptionDto.StreamName}-{subscriptionDto.GroupName}] connected");
-
-                        this.CurrentSubscriptions.Add(subscription);
                     }
                 }
                 catch (Exception e)
