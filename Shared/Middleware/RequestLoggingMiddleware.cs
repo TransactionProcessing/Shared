@@ -22,15 +22,17 @@ namespace Shared.Middleware
         }
         #endregion
 
-        #region Public Methods
-
         #region public async Task Invoke(HttpContext context)
         public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
         {
-            var originalRequestBody = context.Request.Body;
-            if (configuration.LogRequests)
+            if (configuration.LogRequests == false)
+            {
+                await next(context);
+            }
+            else
             {
                 var requestBodyStream = new MemoryStream();
+                var originalRequestBody = context.Request.Body;
 
                 await context.Request.Body.CopyToAsync(requestBodyStream);
                 requestBodyStream.Seek(0, SeekOrigin.Begin);
@@ -49,10 +51,10 @@ namespace Shared.Middleware
 
                 requestBodyStream.Seek(0, SeekOrigin.Begin);
                 context.Request.Body = requestBodyStream;
-            }
 
-            await next(context);
-            context.Request.Body = originalRequestBody;
+                await next(context);
+                context.Request.Body = originalRequestBody;
+            }
         }
         #endregion
 
