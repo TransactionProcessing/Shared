@@ -57,7 +57,5 @@ namespace Shared.Middleware
             }
         }
         #endregion
-
-        #endregion
     }
 }
