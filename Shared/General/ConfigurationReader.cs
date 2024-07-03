@@ -75,6 +75,25 @@
             return ConfigurationReader.GetTypedValueFromSection<T>(sectionName, keyName);
         }
 
+        public static T GetValueOrDefault<T>(String sectionName, String keyName, T defaultValue)
+        {
+            try
+            {
+                var value = ConfigurationReader.GetValue(sectionName, keyName);
+
+                if (String.IsNullOrEmpty(value))
+                {
+                    return defaultValue;
+                }
+
+                return (T)Convert.ChangeType(value, typeof(T));
+            }
+            catch (KeyNotFoundException kex)
+            {
+                return defaultValue;
+            }
+        }
+
         /// <summary>
         /// Initialises the specified configuration root.
         /// </summary>

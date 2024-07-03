@@ -29,16 +29,20 @@ namespace Shared.Middleware
         #region public async Task Invoke(HttpContext context)        
         public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
         {
-            var url = context.Request.GetDisplayUrl();
-            var bodyStream = context.Response.Body;
-
-            var responseBodyStream = new MemoryStream();
-            context.Response.Body = responseBodyStream;
-
-            await next(context);
-
-            if (configuration.LogResponses)
+            if (configuration.LogResponses == false)
             {
+                await next(context);
+            }
+            else
+            {
+                var url = context.Request.GetDisplayUrl();
+                var bodyStream = context.Response.Body;
+
+                var responseBodyStream = new ResponseLoggingMemoryStream();
+                context.Response.Body = responseBodyStream;
+
+                await next(context);
+
                 responseBodyStream.Seek(0, SeekOrigin.Begin);
                 var responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
                 StringBuilder logMessage = new StringBuilder();
@@ -52,12 +56,36 @@ namespace Shared.Middleware
                 Helpers.LogMessage(url, logMessage, configuration.LoggingLevel);
 
                 responseBodyStream.Seek(0, SeekOrigin.Begin);
-            }
+                await responseBodyStream.CopyToAsync(bodyStream);
 
-            await responseBodyStream.CopyToAsync(bodyStream);
+                if (responseBodyStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction"))
+                {
+                    responseBodyStream.ForceClose();
+                }
+            }
         }
         #endregion
 
         #endregion
+    }
+
+    public class ResponseLoggingMemoryStream : MemoryStream
+    {
+        public override void Close()
+        {
+            // Dont close by default
+            // base.Close();
+        }
+
+        public void ForceClose()
+        {
+            base.Close();
+        }
+
+        public bool IsDisposed()
+        {
+            return this.CanRead && this.CanSeek && this.CanWrite;
+        }
+
     }
 }
