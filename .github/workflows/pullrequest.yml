@@ -60,7 +60,7 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: Install NET 8
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4.4.0
       with:
         dotnet-version: '8.0.x'
 
@@ -93,7 +93,7 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4.4.0
       #if: ${{ failure() }}
       with:
         name: tracelogswindows
@@ -147,7 +147,7 @@ jobs:
       if: ${{ failure() }}
       run: docker container ls -a
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4.4.0
       if: ${{ failure() }}
       with:
         name: tracelogsios
