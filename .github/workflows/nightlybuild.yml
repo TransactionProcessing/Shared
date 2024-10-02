@@ -125,7 +125,7 @@ jobs:
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
 
-    runs-on: macos-12
+    runs-on: macos-latest
     
     steps:
     - uses: actions/checkout@v1
