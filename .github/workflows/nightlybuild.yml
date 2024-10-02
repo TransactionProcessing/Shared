@@ -133,6 +133,7 @@ jobs:
     - name: Setup Docker
       run: |
         brew install docker --cask
+        brew install colima --cask
         #colima start
         colima start --cpu 2 --memory 8 --disk 100
 
