@@ -113,7 +113,7 @@ jobs:
       run: |
         brew install docker --cask
         brew install colima
-        colima start --cpu 2 --memory 8 --disk 100
+        colima start --cpu 2 --memory 8 --disk 100 --vm-type docker
         
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
