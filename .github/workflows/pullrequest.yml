@@ -43,7 +43,7 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4.4.3
       #if: ${{ failure() }}
       with:
         name: tracelogslinux
@@ -93,7 +93,7 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
-    - uses: actions/upload-artifact@v4.4.0
+    - uses: actions/upload-artifact@v4.4.3
       #if: ${{ failure() }}
       with:
         name: tracelogswindows
@@ -147,7 +147,7 @@ jobs:
       if: ${{ failure() }}
       run: docker container ls -a
 
-    - uses: actions/upload-artifact@v4.4.0
+    - uses: actions/upload-artifact@v4.4.3
       if: ${{ failure() }}
       with:
         name: tracelogsios
