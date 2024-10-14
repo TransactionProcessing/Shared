@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.Tests{
+﻿using SimpleResults;
+
+namespace Shared.EventStore.Tests{
     using Aggregate;
     using DomainDrivenDesign.EventSourcing;
     using EventStore;
@@ -9,6 +11,7 @@
     using Newtonsoft.Json;
     using NLog;
     using Shouldly;
+    using System.Diagnostics.Tracing;
     using static IdentityModel.OidcConstants;
 
     public class EventStoreContextTests : IDisposable{
@@ -35,16 +38,15 @@
 
         #region Methods
 
-        //TimeSpan? deadline = null;
         public void Dispose(){
-            //this.EventStoreDockerHelper.StopContainersForScenarioRun().Wait();
+            
         }
-
-        [TearDown]
+        
+        [OneTimeTearDown]
         public async Task TearDown(){
             DockerServices sharedDockerServices = DockerServices.SqlServer;
 
-            await this.EventStoreDockerHelper.StopContainersForScenarioRun(sharedDockerServices);
+            //await this.EventStoreDockerHelper.StopContainersForScenarioRun(sharedDockerServices);
         }
 
         [Test]
@@ -99,11 +101,11 @@
         [TestCase(true)]
         [TestCase(false)]
         public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore){
+
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}");
 
             TimeSpan deadline = TimeSpan.FromMinutes(2);
-            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
-
+            
             IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
@@ -117,7 +119,8 @@
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
+            Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            insertEventResult.IsSuccess.ShouldBeTrue();
         }
 
         [Test]
@@ -125,7 +128,6 @@
         [TestCase(false)]
         public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
-            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
             
@@ -144,9 +146,13 @@
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
+            Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            insertEventResult.IsSuccess.ShouldBeTrue();
 
-            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
+            Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+
+            resolvedEventsResult.IsSuccess.ShouldBeTrue();
+            resolvedEventsResult.Data.Count.ShouldBe(events.Length);
         }
 
         [Test]
@@ -154,7 +160,6 @@
         [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_EventsAreRead(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
-            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_EventsAreRead{secureEventStore}");
 
@@ -172,9 +177,13 @@
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
+            Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            insertEventResult.IsSuccess.ShouldBeTrue();
 
-            await this.ReadEventsBackwards(context, streamName, events.Length, deadline, retryTimeout);
+            Result<List<ResolvedEvent>>? resolvedEventsResult = await context.GetEventsBackward(streamName, events.Length, CancellationToken.None);
+
+            resolvedEventsResult.IsSuccess.ShouldBeTrue();
+            resolvedEventsResult.Data.Count.ShouldBe(events.Length);
         }
 
         [Test]
@@ -182,16 +191,18 @@
         [TestCase(false)]
         public async Task EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
-            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
-
+            
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead{secureEventStore}");
 
             IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
             Guid aggreggateId = Guid.NewGuid();
             String streamName = $"TestStream1-{aggreggateId:N}";
+            
+            Result<List<ResolvedEvent>>? resolvedEventsResult = await context.GetEventsBackward(streamName, 1, CancellationToken.None);
 
-            await this.ReadEventsBackwards(context, streamName, null, deadline, retryTimeout);
+            resolvedEventsResult.Status.ShouldBe(ResultStatus.NotFound);
+
         }
 
         [Test]
@@ -199,7 +210,6 @@
         [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
-            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
             
@@ -218,15 +228,30 @@
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
-            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
+            //await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
+            Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            insertEventResult.IsSuccess.ShouldBeTrue();
 
-            //String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
+            Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+
+            resolvedEventsResult.IsSuccess.ShouldBeTrue();
+            resolvedEventsResult.Data.Count.ShouldBe(events.Length);
+
             String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estate.push(e.data.estateName);\r\n        }\r\n  });";
 
-            //Exception ex = Should.Throw<Exception>(async () => { await this.RunTransientQuery(context, query, 1);});
-            //ex.Message.ShouldBe("Faulted");
-            await this.RunTransientQuery(context, query, 1);
+            Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+            queryResult.IsFailed.ShouldBeTrue();
+
+            String errors = String.Join("|", queryResult.Errors);
+            this.EventStoreDockerHelper.Trace(errors);
+            if (errors.Any())
+            {
+                errors.Contains("Faulted").ShouldBeTrue();
+            }
+            else
+            {
+                queryResult.Message.Contains("Faulted").ShouldBeTrue();
+            }
         }
 
         [Test]
@@ -253,12 +278,19 @@
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
-            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
+            Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            insertEventResult.IsSuccess.ShouldBeTrue();
+
+            Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+
+            resolvedEventsResult.IsSuccess.ShouldBeTrue();
+            resolvedEventsResult.Data.Count.ShouldBe(events.Length);
 
             String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
 
-            String queryResult = await this.RunTransientQuery(context, query, 2, deadline, retryTimeout);
+            Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+            queryResult.IsSuccess.ShouldBeTrue();
+            queryResult.Data.ShouldNotBeNullOrEmpty();
 
             var definition = new{
                                     estates = new List<String>()
@@ -293,12 +325,19 @@
             IEventDataFactory factory = new EventDataFactory();
             EventData[] events = factory.CreateEventDataList(domainEvents);
 
-            await this.InsertEvents(context, streamName, events, deadline, retryTimeout);
-            await this.ReadEvents(context, streamName, events.Length, deadline, retryTimeout);
+            Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
+            insertEventResult.IsSuccess.ShouldBeTrue();
+
+            Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+
+            resolvedEventsResult.IsSuccess.ShouldBeTrue();
+            resolvedEventsResult.Data.Count.ShouldBe(events.Length);
 
             String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                \r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s, e){\r\n          }\r\n  });";
 
-            await this.RunTransientQuery(context, query, 3, deadline, retryTimeout);
+            Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+            queryResult.IsSuccess.ShouldBeTrue();
+            queryResult.Data.ShouldBeEmpty();
         }
 
         private IEventStoreContext CreateContext(Boolean secureEventStore, TimeSpan? deadline = null){
@@ -312,83 +351,42 @@
 
         #endregion
         
-        private async Task InsertEvents(IEventStoreContext context, String streamName, EventData[] events, TimeSpan deadline, TimeSpan retryTimeout){
-            await Retry.For(async () => {
-                                await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
-                            },
-                            retryTimeout,
-                            deadline);
 
-            await Retry.For(async () => {
-                                List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
-
-                                resolvedEvents.Count.ShouldBe(events.Length);
-                            },
-                            retryTimeout,
-                            deadline);
-        }
-
-        private async Task ReadEvents(IEventStoreContext context, String streamName, Int32 eventCount, TimeSpan deadline, TimeSpan retryTimeout){
-            await Retry.For(async () => {
-                                List<ResolvedEvent> resolvedEvents = null;
-                                resolvedEvents = await context.ReadEvents(streamName, 0, CancellationToken.None);
-
-                                resolvedEvents.Count.ShouldBe(eventCount);
-                            },
-                            retryTimeout,
-                            deadline);
-        }
-
-        private async Task ReadEventsBackwards(IEventStoreContext context, String streamName, Int32? eventCount, TimeSpan deadline, TimeSpan retryTimeout){
-            await Retry.For(async () => {
-
-                                IList<ResolvedEvent> resolvedEvents = await context.GetEventsBackward(streamName, eventCount.GetValueOrDefault(1), CancellationToken.None);
-
-                                if (eventCount == null){
-                                    resolvedEvents.ShouldBeEmpty();
-                                }
-                                else{
-                                    resolvedEvents.Count.ShouldBe(eventCount.GetValueOrDefault(0));
-                                }
-                            },
-                            retryTimeout,
-                            deadline);
-        }
-
-        private async Task<String> RunTransientQuery(IEventStoreContext context, String query, Int32 checkType, TimeSpan? deadline = null, TimeSpan? retryTimeout = null){
-            Int32 counter = 0;
-            String queryResult = null;
-            await Retry.For(async () => {
-                                counter++;
-                                this.EventStoreDockerHelper.Trace($"Inside Retry Counter [{counter}] Check Type [{checkType}]");
-
-                                if (checkType == 1){
+        //private async Task<String> RunTransientQuery(IEventStoreContext context, String query, Int32 checkType, TimeSpan? deadline = null, TimeSpan? retryTimeout = null){
+        //    Int32 counter = 0;
+        //    String queryResult = null;
+        //    await Retry.For(async () => {
+        //                        counter++;
+        //                        this.EventStoreDockerHelper.Trace($"Inside Retry Counter [{counter}] Check Type [{checkType}]");
+        //                        Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+        //                        if (checkType == 1){
+        //                            queryResult.IsFailed.ShouldBeTrue();
                                     
-                                    Exception ex = Should.Throw<Exception>(async () => {
-                                        this.EventStoreDockerHelper.Trace($"About to call RunTransientQuery");
-                                        await context.RunTransientQuery(query, CancellationToken.None);
-                                                                           });
-                                    this.EventStoreDockerHelper.Trace($"{ex.Message}");
-                                    ex.Message.ShouldBe("Faulted");
-                                }
-                                else{
-                                    queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-
-                                    switch(checkType){
-                                        case 2: // Not Null or Empty
-                                            queryResult.ShouldNotBeNullOrEmpty();
-                                            break;
-                                        case 3: // Empty
-                                            queryResult.ShouldBeEmpty();
-                                            break;
-                                    }
-                                }
-                            },
-                            retryTimeout,
-                            deadline);
-            return queryResult; 
+        //                            String errors = String.Join("|", queryResult.Errors);
+        //                            this.EventStoreDockerHelper.Trace(errors);
+        //                            if (errors.Any()) {
+        //                                errors.Contains("Faulted").ShouldBeTrue();
+        //                            }
+        //                            else {
+        //                                queryResult.Message.Contains("Faulted").ShouldBeTrue();
+        //                            }
+        //                        }
+        //                        else{
+                                    
+        //                            switch(checkType){
+        //                                case 2: // Not Null or Empty
+        //                                    queryResult.Data.ShouldNotBeNullOrEmpty();
+        //                                    break;
+        //                                case 3: // Empty
+        //                                    queryResult.Data.ShouldBeEmpty();
+        //                                    break;
+        //                            }
+        //                        }
+        //                    },
+        //                    retryTimeout,
+        //                    deadline);
+        //    return queryResult; 
             
-        }
+        //}
     }
 }

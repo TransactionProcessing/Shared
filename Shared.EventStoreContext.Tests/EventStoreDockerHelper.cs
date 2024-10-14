@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.Tests;
+﻿using Ductus.FluentDocker.Builders;
+
+namespace Shared.EventStore.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -14,8 +16,10 @@ using Shouldly;
 
 public class EventStoreDockerHelper : DockerHelper
 {
+    
+
     public async Task StartContainers(Boolean isSecureEventStore, String testName) {
-        this.IsSecureEventStore = isSecureEventStore;
+        //this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder(testName);
         this.ScenarioName = testName;
         await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
@@ -53,16 +57,39 @@ public class EventStoreDockerHelper : DockerHelper
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services) {
         this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform();
         this.TestId = Guid.NewGuid();
-        INetworkService networkService = this.SetupTestNetwork();
+        INetworkService networkService = this.SetupTestNetwork("eventstoretestnetwork", true);
         this.SetupContainerNames();
-
+        
         this.RequiredDockerServices = services;
+        
+        ContainerBuilder SetupSecureEventStoreContainerLocal() {
+            this.IsSecureEventStore = true;
 
-        await this.StartContainer2(this.SetupEventStoreContainer,
+            this.EventStoreContainerName = "UnitTestEventStore_Secure";
+
+            return this.SetupEventStoreContainer().ReuseIfExists();
+        }
+
+        ContainerBuilder SetupInsecureEventStoreContainerLocal()
+        {
+            this.IsSecureEventStore = false;
+
+            this.EventStoreContainerName = "UnitTestEventStore_Insecure";
+
+            return this.SetupEventStoreContainer().ReuseIfExists();
+        }
+
+        await this.StartContainer2(SetupSecureEventStoreContainerLocal,
                                   new List<INetworkService> {
                                                                 networkService
                                                             },
                                   DockerServices.EventStore);
+
+        await this.StartContainer2(SetupInsecureEventStoreContainerLocal,
+            new List<INetworkService> {
+                networkService
+            },
+            DockerServices.EventStore);
 
     }
 
@@ -70,7 +97,7 @@ public class EventStoreDockerHelper : DockerHelper
     {
         String connectionString = secureEventStore switch
         {
-            true => $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=true&tlsVerifyCert=false",
+            true => $"esdb://admin:changeit@127.0.0.1:{this.EventStoreSecureHttpPort}?tls=true&tlsVerifyCert=false",
             _ => $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=false"
         };
 
@@ -87,10 +114,7 @@ public class EventStoreDockerHelper : DockerHelper
             settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
                                                       {
                                                           SslOptions = {
-                                                                           RemoteCertificateValidationCallback = (sender,
-                                                                                                                  certificate,
-                                                                                                                  chain,
-                                                                                                                  errors) => true,
+                                                                           RemoteCertificateValidationCallback = (_, _, _, _) => true,
                                                                        }
                                                       };
         }

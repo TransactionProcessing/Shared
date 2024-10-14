@@ -70,6 +70,7 @@ public abstract class BaseDockerHelper{
     protected String EventStoreContainerName;
 
     protected Int32 EventStoreHttpPort;
+    protected Int32 EventStoreSecureHttpPort;
 
     protected String FileProcessorContainerName;
 
@@ -1013,6 +1014,9 @@ public abstract class BaseDockerHelper{
     private void SetHostPortForService(ContainerType type, IContainerService startedContainer){
         switch(type){
             case ContainerType.EventStore:
+                if (this.IsSecureEventStore) {
+                    this.EventStoreSecureHttpPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
+                }
                 this.EventStoreHttpPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
                 break;
             case ContainerType.MessagingService:

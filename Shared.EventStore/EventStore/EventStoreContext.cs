@@ -1,4 +1,8 @@
-﻿namespace Shared.EventStore.EventStore{
+﻿using Shared.Exceptions;
+using SimpleResults;
+
+namespace Shared.EventStore.EventStore
+{
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -20,7 +24,8 @@
                                       LogLevel logLevel);
 
     [ExcludeFromCodeCoverage(Justification = "This testing is handled with a suite of integration tests")]
-    public class EventStoreContext : IEventStoreContext{
+    public class EventStoreContext : IEventStoreContext
+    {
         #region Fields
 
         /// <summary>
@@ -39,7 +44,8 @@
 
         #region Constructors
 
-        public EventStoreContext(EventStoreClient eventStoreClient, EventStoreProjectionManagementClient projectionManagementClient, TimeSpan? deadline = null){
+        public EventStoreContext(EventStoreClient eventStoreClient, EventStoreProjectionManagementClient projectionManagementClient, TimeSpan? deadline = null)
+        {
             this.EventStoreClient = eventStoreClient;
             this.ProjectionManagementClient = projectionManagementClient;
             this.Deadline = deadline;
@@ -55,118 +61,164 @@
 
         #region Methods
 
-        public async Task<IList<ResolvedEvent>> GetEventsBackward(String streamName,
-                                                                       Int32 maxNumberOfEventsToRetrieve,
-                                                                       CancellationToken cancellationToken){
+        public async Task<Result<List<ResolvedEvent>>> GetEventsBackward(String streamName,
+                                                                          Int32 maxNumberOfEventsToRetrieve,
+                                                                          CancellationToken cancellationToken)
+        {
             List<ResolvedEvent> resolvedEvents = new();
+            try
+            {
+                EventStoreClient.ReadStreamResult response = this.EventStoreClient.ReadStreamAsync(Direction.Backwards,
+                    streamName, StreamPosition.End, maxNumberOfEventsToRetrieve, resolveLinkTos: true,
+                    deadline: this.Deadline, cancellationToken: cancellationToken);
 
-            EventStoreClient.ReadStreamResult response = this.EventStoreClient.ReadStreamAsync(Direction.Backwards,
-                                                                                               streamName,
-                                                                                               StreamPosition.End,
-                                                                                               maxNumberOfEventsToRetrieve,
-                                                                                               resolveLinkTos:true,
-                                                                                               deadline:this.Deadline,
-                                                                                               cancellationToken:cancellationToken);
+                if (await response.ReadState == ReadState.StreamNotFound)
+                {
+                    return Result.NotFound($"Stream name {streamName} not found");
+                }
 
-            if (await response.ReadState == ReadState.StreamNotFound){
-                return resolvedEvents;
+                List<ResolvedEvent> events = await response.ToListAsync(cancellationToken);
+
+                resolvedEvents.AddRange(events);
+
+                return Result.Success(resolvedEvents);
             }
-
-            List<ResolvedEvent> events = await response.ToListAsync(cancellationToken);
-
-            resolvedEvents.AddRange(events);
-
-            return resolvedEvents;
+            catch (Exception e) {
+                return Result.Failure(e.GetExceptionMessages());
+            }
         }
 
-        public async Task<String> GetPartitionResultFromProjection(String projectionName,
-                                                                   String partitionId,
-                                                                   CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, partitionId, deadline: this.Deadline, cancellationToken:cancellationToken);
+        public async Task<Result<String>> GetPartitionResultFromProjection(String projectionName,
+                                                                           String partitionId,
+                                                                           CancellationToken cancellationToken)
+        {
+            try {
+                JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(
+                    projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
 
-            return jsonElement.GetRawText();
+                return Result.Success(jsonElement.GetRawText());
+            }
+            catch (Exception ex) {
+                return Result.Failure(ex.GetExceptionMessages());
+            }
         }
 
-        public async Task<String> GetPartitionStateFromProjection(String projectionName,
-                                                                  String partitionId,
-                                                                  CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, partitionId, deadline: this.Deadline, cancellationToken:cancellationToken);
+        public async Task<Result<String>> GetPartitionStateFromProjection(String projectionName,
+                                                                          String partitionId,
+                                                                          CancellationToken cancellationToken)
+        {
+            try {
+                JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(
+                    projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
 
-            return jsonElement.GetRawText();
+                return Result.Success(jsonElement.GetRawText());
+            }
+            catch (Exception ex) {
+                return Result.Failure(ex.GetExceptionMessages());
+            }
         }
 
-        public async Task<String> GetResultFromProjection(String projectionName,
-                                                          CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName, deadline: this.Deadline, cancellationToken:cancellationToken);
+        public async Task<Result<String>> GetResultFromProjection(String projectionName,
+                                                                  CancellationToken cancellationToken)
+        {
+            try {
+                JsonElement jsonElement =
+                    (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName,
+                        deadline: this.Deadline, cancellationToken: cancellationToken);
 
-            return jsonElement.GetRawText();
+                return Result.Success(jsonElement.GetRawText());
+            }
+            catch (Exception ex) {
+                return Result.Failure(ex.GetExceptionMessages());
+            }
         }
 
-        public async Task<String> GetStateFromProjection(String projectionName,
-                                                         CancellationToken cancellationToken){
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName, deadline: this.Deadline, cancellationToken:cancellationToken);
+        public async Task<Result<String>> GetStateFromProjection(String projectionName,
+                                                                 CancellationToken cancellationToken) {
+            try {
+                JsonElement jsonElement =
+                    (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName,
+                        deadline: this.Deadline, cancellationToken: cancellationToken);
 
-            return jsonElement.GetRawText();
+                return Result.Success(jsonElement.GetRawText());
+            }
+            catch (Exception ex) {
+                return Result.Failure(ex.GetExceptionMessages());
+            }
         }
 
-        public async Task InsertEvents(String streamName,
-                                       Int64 expectedVersion,
-                                       List<EventData> aggregateEvents,
-                                       CancellationToken cancellationToken){
-            await this.InsertEvents(streamName, expectedVersion, aggregateEvents, null, cancellationToken);
+        public async Task<Result> InsertEvents(String streamName,
+                                               Int64 expectedVersion,
+                                               List<EventData> aggregateEvents,
+                                               CancellationToken cancellationToken)
+        {
+            return await this.InsertEvents(streamName, expectedVersion, aggregateEvents, null, cancellationToken);
         }
 
-        public async Task InsertEvents(String streamName,
+        public async Task<Result> InsertEvents(String streamName,
                                        Int64 expectedVersion,
                                        List<EventData> aggregateEvents,
                                        Object metadata,
-                                       CancellationToken cancellationToken){
+                                       CancellationToken cancellationToken)
+        {
             List<EventData> eventData = new List<EventData>();
-            JsonSerializerSettings s = new JsonSerializerSettings{
-                                                                     TypeNameHandling = TypeNameHandling.All
-                                                                 };
+            JsonSerializerSettings s = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.All
+            };
 
             this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
-            await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion), aggregateEvents.AsEnumerable(), deadline:this.Deadline, cancellationToken:cancellationToken);
+            try {
+                await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion),
+                    aggregateEvents.AsEnumerable(), deadline: this.Deadline, cancellationToken: cancellationToken);
+                return Result.Success();
+            }
+            catch (Exception e) {
+                return Result.Failure(e.GetExceptionMessages());
+            }
         }
 
-        public async Task<List<ResolvedEvent>> ReadEvents(String streamName,
+        public async Task<Result<List<ResolvedEvent>>> ReadEvents(String streamName,
                                                           Int64 fromVersion,
-                                                          CancellationToken cancellationToken){
+                                                          CancellationToken cancellationToken)
+        {
             this.LogInformation($"About to read events from Stream {streamName} fromVersion is {fromVersion}");
 
             List<ResolvedEvent> resolvedEvents = new List<ResolvedEvent>();
             EventStoreClient.ReadStreamResult response;
             List<ResolvedEvent> events;
-            do{
-                response = this.EventStoreClient.ReadStreamAsync(Direction.Forwards,
-                                                                 streamName,
-                                                                 StreamPosition.FromInt64(fromVersion),
-                                                                 2,
-                                                                 resolveLinkTos:true,
-                                                                 deadline: this.Deadline,
-                                                                 cancellationToken:cancellationToken);
+            try {
+                do {
+                    response = this.EventStoreClient.ReadStreamAsync(Direction.Forwards, streamName,
+                        StreamPosition.FromInt64(fromVersion), 2, resolveLinkTos: true, deadline: this.Deadline,
+                        cancellationToken: cancellationToken);
 
-                // Check the read state
-                ReadState readState = await response.ReadState;
+                    // Check the read state
+                    ReadState readState = await response.ReadState;
 
-                if (readState == ReadState.StreamNotFound){
-                    this.LogInformation($"Read State from Stream {streamName} is {readState}");
-                    return null;
-                }
+                    if (readState == ReadState.StreamNotFound) {
+                        this.LogInformation($"Read State from Stream {streamName} is {readState}");
+                        return Result.NotFound($"Stream name {streamName} not found");
+                    }
 
-                events = await response.ToListAsync(cancellationToken);
+                    events = await response.ToListAsync(cancellationToken);
 
-                resolvedEvents.AddRange(events);
+                    resolvedEvents.AddRange(events);
 
-                fromVersion += events.Count;
-            } while (events.Any());
+                    fromVersion += events.Count;
+                } while (events.Any());
 
-            this.LogInformation($"About to return {resolvedEvents.Count} events from Stream {streamName}");
-            return resolvedEvents;
+                this.LogInformation($"About to return {resolvedEvents.Count} events from Stream {streamName}");
+                return Result.Success(resolvedEvents);
+            }
+            catch (Exception e)
+            {
+                return Result.Failure(e.GetExceptionMessages());
+            }
         }
 
-        public async Task<String> RunTransientQuery(String query, CancellationToken cancellationToken){
+        public async Task<Result<String>> RunTransientQuery(String query, CancellationToken cancellationToken)
+        {
             CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             String queryName = Guid.NewGuid().ToString();
 
@@ -176,44 +228,50 @@
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
 
-                while (true){
-                    if (cancellationToken.IsCancellationRequested){
+                while (true)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
                         source.Token.ThrowIfCancellationRequested();
                     }
 
-                    ProjectionDetails projectionDetails = await this.ProjectionManagementClient.GetStatusAsync(queryName, deadline: this.Deadline, cancellationToken:source.Token);
+                    ProjectionDetails projectionDetails = await this.ProjectionManagementClient.GetStatusAsync(queryName, deadline: this.Deadline, cancellationToken: source.Token);
 
                     ProjectionRunningStatus status = EventStoreContext.GetStatusFrom(projectionDetails);
 
                     if (status == ProjectionRunningStatus.Faulted)
-                        throw new Exception(ProjectionRunningStatus.Faulted.ToString());
+                        return Result.Failure($"Projection {projectionDetails.Name} Status is Faulted");
 
                     // We need to wait until the query has been run before we continue.
-                    if (status == ProjectionRunningStatus.Completed){
-                        JsonDocument jsonDocument = await this.ProjectionManagementClient.GetResultAsync(queryName, deadline: this.Deadline, cancellationToken:source.Token);
+                    if (status == ProjectionRunningStatus.Completed)
+                    {
+                        JsonDocument jsonDocument = await this.ProjectionManagementClient.GetResultAsync(queryName, deadline: this.Deadline, cancellationToken: source.Token);
 
-                        if (jsonDocument.RootElement.ToString() == "{}"){
-                            return String.Empty;
+                        if (jsonDocument.RootElement.ToString() == "{}")
+                        {
+                            return Result.Success<String>(String.Empty);
                         }
 
-                        return jsonDocument.RootElement.ToString();
+                        return Result.Success<String>(jsonDocument.RootElement.ToString());
                     }
-                    
+
                     await Task.Delay(100, source.Token);
                 }
             }
-            catch(RpcException rex){
+            catch (RpcException rex)
+            {
                 this.LogError(rex);
-                throw new Exception(ProjectionRunningStatus.Faulted.ToString(), rex);
+                Exception ex = new Exception(ProjectionRunningStatus.Faulted.ToString(), rex);
+                return Result.Failure(ex.GetExceptionMessages());
             }
-            finally{
-                await this.ProjectionManagementClient.DisableAsync(queryName, deadline: this.Deadline, cancellationToken:cancellationToken);
+            finally
+            {
+                await this.ProjectionManagementClient.DisableAsync(queryName, deadline: this.Deadline, cancellationToken: cancellationToken);
             }
-
-            return null;
         }
 
-        internal static ProjectionRunningStatus GetStatusFrom(ProjectionDetails projectionDetails){
+        internal static ProjectionRunningStatus GetStatusFrom(ProjectionDetails projectionDetails)
+        {
             return projectionDetails switch
             {
                 null => ProjectionRunningStatus.StatisticsNotFound,
@@ -227,32 +285,41 @@
         }
 
         [ExcludeFromCodeCoverage]
-        private void LogDebug(String trace){
-            if (this.TraceGenerated != null){
+        private void LogDebug(String trace)
+        {
+            if (this.TraceGenerated != null)
+            {
                 this.TraceGenerated(trace, LogLevel.Debug);
             }
         }
 
         [ExcludeFromCodeCoverage]
-        private void LogError(Exception exception){
-            if (this.TraceGenerated != null){
+        private void LogError(Exception exception)
+        {
+            if (this.TraceGenerated != null)
+            {
                 this.TraceGenerated(exception.Message, LogLevel.Error);
-                if (exception.InnerException != null){
+                if (exception.InnerException != null)
+                {
                     this.LogError(exception.InnerException);
                 }
             }
         }
 
         [ExcludeFromCodeCoverage]
-        private void LogInformation(String trace){
-            if (this.TraceGenerated != null){
+        private void LogInformation(String trace)
+        {
+            if (this.TraceGenerated != null)
+            {
                 this.TraceGenerated(trace, LogLevel.Information);
             }
         }
 
         [ExcludeFromCodeCoverage]
-        private void LogWarning(String trace){
-            if (this.TraceGenerated != null){
+        private void LogWarning(String trace)
+        {
+            if (this.TraceGenerated != null)
+            {
                 this.TraceGenerated(trace, LogLevel.Warning);
             }
         }
