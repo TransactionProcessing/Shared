@@ -109,14 +109,14 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    # Install Colima and Docker
+    - name: Install coreutils (includes timeout)
+      run: brew install coreutils
+    
     - name: Setup Docker with Colima
       run: |
         brew install docker --cask
         brew install colima
-        #colima start --cpu 2 --memory 4 --disk 60
-        #nohup colima start --cpu 2 --memory 4 --disk 60 &
-        timeout 180 colima start --cpu 2 --memory 4 --disk 60
+        gtimeout 180 colima start --cpu 2 --memory 4 --disk 60
 
     - name: Check Colima Status
       run: colima status
