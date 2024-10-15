@@ -109,12 +109,19 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: Setup Docker
+    # Install Colima and Docker
+    - name: Setup Docker with Colima
       run: |
         brew install docker --cask
         brew install colima
-        colima start --cpu 2 --memory 8 --disk 100 --vm-type docker
-        
+        colima start --cpu 2 --memory 4 --disk 60
+
+    # Verify Docker installation
+    - name: Verify Docker Installation
+      run: |
+        docker --version
+        docker ps
+
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
