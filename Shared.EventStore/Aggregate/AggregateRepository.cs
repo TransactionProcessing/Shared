@@ -1,4 +1,7 @@
-﻿namespace Shared.EventStore.Aggregate
+﻿using Shared.Exceptions;
+using SimpleResults;
+
+namespace Shared.EventStore.Aggregate
 {
     using System;
     using System.Collections.Generic;
@@ -36,7 +39,7 @@
 
         #region Methods
 
-        public async Task<TAggregate> GetLatestVersion(Guid aggregateId,
+        public async Task<Result<TAggregate>> GetLatestVersion(Guid aggregateId,
                                                                CancellationToken cancellationToken)
         {
             TAggregate aggregate = new()
@@ -45,22 +48,26 @@
                                    };
             String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
             
-            List<ResolvedEvent> resolvedEvents = await this.EventStoreContext.ReadEvents(streamName, 0, cancellationToken);
+            Result<List<ResolvedEvent>> readEventsResult = await this.EventStoreContext.ReadEvents(streamName, 0, cancellationToken);
 
-            return this.ProcessEvents(aggregate, resolvedEvents);
+            if (readEventsResult.IsFailed)
+                return ResultHelpers.CreateFailure(readEventsResult);
+
+            return this.ProcessEvents(aggregate, readEventsResult.Data);
         
         }
-
-        public async Task<TAggregate> GetLatestVersionFromLastEvent(Guid aggregateId,
+        
+        public async Task<Result<TAggregate>> GetLatestVersionFromLastEvent(Guid aggregateId,
                                                                     CancellationToken cancellationToken){
             TAggregate aggregate = new(){
                                             AggregateId = aggregateId
                                         };
 
             String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
-            IList<ResolvedEvent> events = await this.EventStoreContext.GetEventsBackward(streamName, 1, cancellationToken);
-
-            return this.ProcessEvents(aggregate, events);
+            Result<List<ResolvedEvent>> getEventsResult = await this.EventStoreContext.GetEventsBackward(streamName, 1, cancellationToken);
+            if (getEventsResult.IsFailed)
+                return ResultHelpers.CreateFailure(getEventsResult);
+            return this.ProcessEvents(aggregate, getEventsResult.Data);
         }
 
         public static String GetStreamName(Guid aggregateId)
@@ -68,14 +75,14 @@
             return typeof(TAggregate).Name + "-" + aggregateId.ToString().Replace("-", string.Empty);
         }
 
-        public async Task SaveChanges(TAggregate aggregate,
+        public async Task<Result> SaveChanges(TAggregate aggregate,
                                       CancellationToken cancellationToken){
             String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
             IList<IDomainEvent> pendingEvents = aggregate.GetPendingEvents();
 
 
             if (!pendingEvents.Any())
-                return;
+                return Result.Success();
 
             List<EventData> events = new();
 
@@ -85,45 +92,85 @@
                 events.Add(@event);
             }
 
-            await this.EventStoreContext.InsertEvents(streamName, aggregate.Version, events, cancellationToken);
+            Result result = await this.EventStoreContext.InsertEvents(streamName, aggregate.Version, events, cancellationToken);
+            if (result.IsFailed)
+                return ResultHelpers.CreateFailure(result);
+
             aggregate.CommitPendingEvents();
+            return Result.Success();
         }
 
-        private TAggregate ProcessEvents(TAggregate aggregate,
-                                         IList<ResolvedEvent> resolvedEvents)
-        {
-            if (resolvedEvents != null && resolvedEvents.Count > 0)
-            {
+        private Result<TAggregate> ProcessEvents(TAggregate aggregate,
+                                                 IList<ResolvedEvent> resolvedEvents) {
+
+            if (resolvedEvents != null && resolvedEvents.Count > 0) {
                 List<IDomainEvent> domainEvents = new();
 
-                foreach (ResolvedEvent resolvedEvent in resolvedEvents)
-                {
-                    IDomainEvent domainEvent = TypeMapConvertor.Convertor(DomainEventFactory, aggregate.AggregateId, resolvedEvent);
+                foreach (ResolvedEvent resolvedEvent in resolvedEvents) {
+                    IDomainEvent domainEvent =
+                        TypeMapConvertor.Convertor(DomainEventFactory, aggregate.AggregateId, resolvedEvent);
 
                     domainEvents.Add(domainEvent);
                 }
 
-                return domainEvents.Aggregate(aggregate,
-                                              (aggregate1,
-                                               @event) =>
-                                              {
-                                                  try
-                                                  {
-                                                      aggregate1.Apply(@event);
-                                                      return aggregate1;
-                                                  }
-                                                  catch(Exception e)
-                                                  {
-                                                      Exception ex = new Exception($"Failed to apply domain event {@event.EventType} to Aggregate {aggregate.GetType()} ",
-                                                                                   e);
-                                                      throw ex;
-                                                  }
-                                              });
+                try {
+                    domainEvents.Aggregate(aggregate, (aggregate1,
+                                                       @event) => {
+                        try {
+                            aggregate1.Apply(@event);
+                            return aggregate1;
+                        }
+                        catch (Exception e) {
+                            Exception ex =
+                                new Exception(
+                                    $"Failed to apply domain event {@event.EventType} to Aggregate {aggregate.GetType()} ",
+                                    e);
+                            throw ex;
+                        }
+                    });
+
+                    return Result.Success(aggregate);
+                }
+                catch (Exception ex) {
+                    return Result.Failure(ex.GetExceptionMessages());
+                }
             }
 
-            return aggregate;
+            return Result.Success(aggregate);
         }
 
         #endregion
+    }
+
+    public static class ResultHelpers{
+        public static Result CreateFailure(Result result) {
+            if (result.IsFailed) {
+                if (result.Errors.Any()) {
+                    return Result.Failure(result.Errors);
+                }
+
+                if (String.IsNullOrEmpty(result.Message) == false) {
+                    return Result.Failure(result.Message);
+                }
+            }
+            return Result.Failure("Unknown Failure");
+        }
+
+        public static Result CreateFailure<T>(Result<T> result)
+        {
+            if (result.IsFailed)
+            {
+                if (result.Errors.Any())
+                {
+                    return Result.Failure(result.Errors);
+                }
+
+                if (String.IsNullOrEmpty(result.Message) == false)
+                {
+                    return Result.Failure(result.Message);
+                }
+            }
+            return Result.Failure("Unknown Failure");
+        }
     }
 }

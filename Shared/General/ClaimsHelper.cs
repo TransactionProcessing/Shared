@@ -1,4 +1,6 @@
-﻿namespace Shared.General
+﻿using SimpleResults;
+
+namespace Shared.General
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
@@ -19,9 +21,9 @@
         /// <param name="defaultValue">The default value.</param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException">No claim [{customClaimType}] found for user id [{userIdClaim.Value}</exception>
-        public static Claim GetUserClaim(ClaimsPrincipal user,
-                                         String customClaimType,
-                                         String defaultValue = "") {
+        public static Result<Claim> GetUserClaim(ClaimsPrincipal user,
+                                                 String customClaimType,
+                                                 String defaultValue = "") {
             Claim userClaim = null;
 
             if (ClaimsHelper.IsPasswordToken(user)) {
@@ -29,14 +31,14 @@
                 userClaim = user.Claims.SingleOrDefault(c => c.Type.ToLower() == customClaimType.ToLower());
 
                 if (userClaim == null) {
-                    throw new NotFoundException($"Claim type [{customClaimType}] not found");
+                    return Result.NotFound($"Claim type [{customClaimType}] not found");
                 }
             }
             else {
                 userClaim = new Claim(customClaimType, defaultValue);
             }
 
-            return userClaim;
+            return Result.Success(userClaim);
         }
 
         /// <summary>

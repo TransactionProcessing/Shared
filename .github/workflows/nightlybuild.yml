@@ -70,7 +70,7 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
-    - uses: actions/upload-artifact@v4.4.0
+    - uses: actions/upload-artifact@v4.4.3
       if: ${{ failure() }}
       with:
         name: tracelogslinux
@@ -114,62 +114,57 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
-    - uses: actions/upload-artifact@v4.4.0
+    - uses: actions/upload-artifact@v4.4.3
       if: ${{ failure() }}
       with:
         name: tracelogswindows
         path: C:\\Users\\runneradmin\\txnproc
 
-  buildmacos:
-    name: "Nightly Build - Mac"
-    env:
-        ASPNETCORE_ENVIRONMENT: "Production"
+  # buildmacos:
+  #   name: "Nightly Build - Mac"
+  #   env:
+  #       ASPNETCORE_ENVIRONMENT: "Production"
 
-    runs-on: macos-latest
+  #   runs-on: macos-latest
     
-    steps:
-    - uses: actions/checkout@v1
+  #   steps:
+  #   - uses: actions/checkout@v1
 
-    - name: Setup Docker
-      run: |
-        brew install docker --cask
-        brew install colima
-        #colima start
-        colima start --cpu 2 --memory 8 --disk 100
+  #   - name: Setup Docker
+  #     run: |
+  #       brew install docker --cask
+  #       brew install colima
+  #       #colima start
+  #       colima start --cpu 2 --memory 8 --disk 100
 
-    # - name: Install NET 7
-    #   uses: actions/setup-dotnet@v2
-    #   with:
-    #     dotnet-version: '7.0.x'
+  #   - name: Restore Nuget Packages
+  #     run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
-    - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
-
-    - name: Build Code
-      run: dotnet build Shared.sln --configuration Release
+  #   - name: Build Code
+  #     run: dotnet build Shared.sln --configuration Release
           
-    - name: Run Integration Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+  #   - name: Run Integration Tests
+  #     run: |
+  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+  #       dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
         
-    - name: Trust root certificate
-      run: |
-        sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt        
-        sudo security authorizationdb write com.apple.trust-settings.admin allow 
-        sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" /usr/local/share/ca-certificates/ca.crt
-        sudo security authorizationdb remove com.apple.trust-settings.admin
+  #   - name: Trust root certificate
+  #     run: |
+  #       sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt        
+  #       sudo security authorizationdb write com.apple.trust-settings.admin allow 
+  #       sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" /usr/local/share/ca-certificates/ca.crt
+  #       sudo security authorizationdb remove com.apple.trust-settings.admin
           
-    - name: Run Event Store Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"        
+  #   - name: Run Event Store Tests
+  #     run: |
+  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+  #       dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"        
 
-    - uses: actions/upload-artifact@v4.4.0
-      if: ${{ failure() }}
-      with:
-        name: tracelogsios
-        path: /Users/runner/txnproc/trace/
+  #   - uses: actions/upload-artifact@v4.4.3
+  #     if: ${{ failure() }}
+  #     with:
+  #       name: tracelogsios
+  #       path: /Users/runner/txnproc/trace/
 
   codecoverage:
     name: "Nightly Build - Code Coverage"
@@ -180,12 +175,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2.3.4
-
-    # - name: Install NET 7
-    #   uses: actions/setup-dotnet@v2
-    #   with:
-    #     dotnet-version: '7.0.101'
-
+    
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 

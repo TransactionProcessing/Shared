@@ -67,7 +67,7 @@
                                                                                  cancellationToken: cancellationToken);
                 if (await readResult.AnyAsync(cancellationToken) == false)
                 {
-                    throw new Exception("$all stream not found");
+                    return HealthCheckResult.Unhealthy("$all stream not found");
                 }
 
                 return HealthCheckResult.Healthy();

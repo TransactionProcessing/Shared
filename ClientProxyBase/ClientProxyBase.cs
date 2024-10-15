@@ -1,4 +1,5 @@
 ﻿using System;
+using SimpleResults;
 
 namespace ClientProxyBase
 {
@@ -52,32 +53,26 @@ namespace ClientProxyBase
         /// <exception cref="Exception">An internal error has occurred
         /// or
         /// An internal error has occurred</exception>
-        protected virtual async Task<String> HandleResponse(HttpResponseMessage responseMessage,
+        protected virtual async Task<Result<String>> HandleResponse(HttpResponseMessage responseMessage,
                                                             CancellationToken cancellationToken)
         {
             String result = String.Empty;
             
             // Read the content from the response
+            // Cant passs cancellation token as net standard does not support this :|
             String content = await responseMessage.Content.ReadAsStringAsync();
 
             // Check the response code
-            if (!responseMessage.IsSuccessStatusCode)
-            {
-                // throw a specific  exception to inherited class
-                switch (responseMessage.StatusCode)
-                {
-                    case HttpStatusCode.BadRequest:
-                        throw new InvalidOperationException(content);
-                    case HttpStatusCode.Unauthorized:
-                    case HttpStatusCode.Forbidden:
-                        throw new UnauthorizedAccessException(content);
-                    case HttpStatusCode.NotFound:
-                        throw new KeyNotFoundException(content);
-                    case HttpStatusCode.InternalServerError:
-                        throw new Exception("An internal error has occurred");
-                    default:
-                        throw new Exception($"An internal error has occurred ({responseMessage.StatusCode})");
-                }
+            if (!responseMessage.IsSuccessStatusCode) {
+                return responseMessage.StatusCode switch {
+                    HttpStatusCode.BadRequest => Result.Invalid(content),
+                    HttpStatusCode.Forbidden => Result.Forbidden(content),
+                    HttpStatusCode.Unauthorized => Result.Unauthorized(content),
+                    HttpStatusCode.NotFound => Result.NotFound(content),
+                    HttpStatusCode.Conflict => Result.Conflict(content),
+                    HttpStatusCode.InternalServerError => Result.CriticalError("An internal error has occurred"),
+                    _ => Result.Failure($"An internal error has occurred ({responseMessage.StatusCode})")
+                };
             }
 
             // Set the result
