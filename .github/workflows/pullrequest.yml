@@ -109,25 +109,26 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    # Install Docker Desktop for macOS
-    - name: Install Docker Desktop
-      run: brew install --cask docker
-
-    # Start Docker Desktop
-    - name: Start Docker Desktop
-      run: open /Applications/Docker.app
-
-    # Wait for Docker to start
-    - name: Wait for Docker to be available
+    # Install Colima and Docker
+    - name: Setup Docker with Colima
       run: |
-        until docker info > /dev/null 2>&1; do
-          echo "Waiting for Docker to start..."
-          sleep 10
-        done
+        brew install docker --cask
+        brew install colima
+        colima start --cpu 2 --memory 4 --disk 60
 
-    # Verify Docker Installation
+    - name: Check Colima Status
+      run: colima status
+
+    - name: Print Colima Logs
+      run: |
+        cat /Users/runner/.colima/_lima/colima/ha.stderr.log
+        cat /Users/runner/.colima/_lima/colima/ha.stdout.log
+
+    # Verify Docker installation
     - name: Verify Docker Installation
-      run: docker --version
+      run: |
+        docker --version
+        docker ps
 
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
