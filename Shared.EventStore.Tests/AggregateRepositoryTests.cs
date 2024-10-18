@@ -32,7 +32,20 @@ public class AggregateRepositoryTests{
         testAggregate.IsSuccess.ShouldBeTrue();
         testAggregate.Data.ShouldNotBeNull();
     }
-    
+
+    [Fact]
+    public async Task AggregateRepository_GetLatestVersion_NotFound_AggregateReturned()
+    {
+        Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
+
+        context.Setup(c => c.ReadEvents(It.IsAny<String>(), It.IsAny<Int64>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.NotFound("Stream doesnt exist"));
+        Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
+        testAggregate.IsFailed.ShouldBeTrue();
+        testAggregate.Status.ShouldBe(ResultStatus.NotFound);
+    }
+
     [Fact]
     public async Task AggregateRepository_GetLatestVersion_ErrorApplyingEvents_ErrorThrown()
     {
