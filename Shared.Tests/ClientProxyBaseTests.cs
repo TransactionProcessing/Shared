@@ -132,7 +132,7 @@ namespace Shared.Tests
         }
 
         public async Task<Result<String>> Test(HttpResponseMessage responseMessage, CancellationToken cancellationToken){
-            return await this.HandleResponse(responseMessage, cancellationToken);
+            return await this.HandleResponseX(responseMessage, cancellationToken);
         }
     }
 }
