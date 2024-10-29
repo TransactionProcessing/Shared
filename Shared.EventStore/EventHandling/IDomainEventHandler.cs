@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.EventHandling
+﻿using SimpleResults;
+
+namespace Shared.EventStore.EventHandling
 {
     using System.Threading;
     using System.Threading.Tasks;
@@ -14,7 +16,7 @@
         /// <param name="domainEvent">The domain event.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        Task Handle(IDomainEvent domainEvent,
+        Task<Result> Handle(IDomainEvent domainEvent,
                     CancellationToken cancellationToken);
 
         #endregion

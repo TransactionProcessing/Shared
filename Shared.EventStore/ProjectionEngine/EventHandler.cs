@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.ProjectionEngine;
+﻿using SimpleResults;
+
+namespace Shared.EventStore.ProjectionEngine;
 
 using System;
 using System.Collections.Generic;
@@ -36,14 +38,14 @@ public class EventHandler : IDomainEventHandler{
 
     #region Methods
 
-    public async Task Handle(IDomainEvent domainEvent,
+    public async Task<Result> Handle(IDomainEvent domainEvent,
                              CancellationToken cancellationToken){
         // Lookup the event type in the config
         String handlerType = ConfigurationReader.GetValue("AppSettings:EventStateConfig", domainEvent.GetType().Name);
 
         IDomainEventHandler handler = this.Resolver(handlerType);
 
-        await handler.Handle(domainEvent, cancellationToken);
+        return await handler.Handle(domainEvent, cancellationToken);
     }
 
     #endregion
