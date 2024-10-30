@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.SubscriptionWorker
+﻿using SimpleResults;
+
+namespace Shared.EventStore.SubscriptionWorker
 {
     using System;
     using System.Collections.Generic;
@@ -128,13 +130,17 @@
                         // Log a warning out 
                         Logger.Logger.LogWarning(
                             $"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
-                        await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
                         return;
                     }
 
-                    await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
-
-                    await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+                    Result result = await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
+                    if (result.IsSuccess) {
+                        await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+                    }
+                    else {
+                        Exception ex = new($"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()} Result was {result.Message}");
+                        Logger.Logger.LogError(ex);
+                    }
                 }
             }
             catch (Exception e)

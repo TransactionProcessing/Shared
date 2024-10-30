@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.Tests;
+﻿using SimpleResults;
+
+namespace Shared.EventStore.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -18,9 +20,8 @@ public class EventDispatchHelperTests{
         AggregateNameSetEvent @event = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
         List<IDomainEventHandler> handlers = new List<IDomainEventHandler>();
         handlers.Add(new TestDomainEventHandler());
-        Should.NotThrow(async () => {
-                            await @event.DispatchToHandlers(handlers, CancellationToken.None);
-                        });
+        Result result = await @event.DispatchToHandlers(handlers, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
     }
 
     [Fact]
@@ -29,10 +30,15 @@ public class EventDispatchHelperTests{
         AggregateNameSetEvent @event = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
         List<IDomainEventHandler> handlers = new List<IDomainEventHandler>();
         Mock<IDomainEventHandler> domainEventHandler = new Mock<IDomainEventHandler>();
-        domainEventHandler.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).Throws<Exception>();
+        domainEventHandler.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure);
+        Mock<IDomainEventHandler> domainEventHandler2 = new Mock<IDomainEventHandler>();
+        domainEventHandler2.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure);
         handlers.Add(domainEventHandler.Object);
-        Should.Throw<Exception>(async () => {
-                                    await @event.DispatchToHandlers(handlers, CancellationToken.None);
-                                });
+        handlers.Add(domainEventHandler2.Object);
+        Result dispatchResult = await @event.DispatchToHandlers(handlers, CancellationToken.None);
+        dispatchResult.IsFailed.ShouldBeTrue();
+        
     }
 }
