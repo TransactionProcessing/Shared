@@ -42,7 +42,7 @@ namespace ClientProxyBase
             String result = String.Empty;
 
             // Read the content from the response
-            String content = await responseMessage.Content.ReadAsStringAsync();
+            String content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
             // Check the response code
             if (!responseMessage.IsSuccessStatusCode)
@@ -87,14 +87,12 @@ namespace ClientProxyBase
         /// <exception cref="Exception">An internal error has occurred
         /// or
         /// An internal error has occurred</exception>
-        protected virtual async Task<Result<String>> HandleResponseX(HttpResponseMessage responseMessage,
-                                                            CancellationToken cancellationToken)
+        protected virtual async Task<Result<StringResult>> HandleResponseX(HttpResponseMessage responseMessage,
+                                                                           CancellationToken cancellationToken)
         {
-            String result = String.Empty;
-            
+           
             // Read the content from the response
-            // Cant passs cancellation token as net standard does not support this :|
-            String content = await responseMessage.Content.ReadAsStringAsync();
+            String content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
             // Check the response code
             if (!responseMessage.IsSuccessStatusCode) {
@@ -108,13 +106,12 @@ namespace ClientProxyBase
                     _ => Result.Failure($"An internal error has occurred ({responseMessage.StatusCode})")
                 };
             }
-
-            // Set the result
-            result = content;
-
-            return result;
+            
+            return Result.Success(new StringResult(content));
         }
 
         #endregion
     }
+
+    public record StringResult(String StringData);
 }
