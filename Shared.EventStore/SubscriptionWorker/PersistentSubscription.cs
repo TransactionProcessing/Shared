@@ -130,6 +130,7 @@ namespace Shared.EventStore.SubscriptionWorker
                         // Log a warning out 
                         Logger.Logger.LogWarning(
                             $"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
+                        await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
                         return;
                     }
 
