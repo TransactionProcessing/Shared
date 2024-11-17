@@ -6,10 +6,12 @@
 
   <ItemGroup>
     <Folder Include="Exceptions\" />
+    <Folder Include="Results\" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	  <PackageReference Include="SimpleResults" Version="3.0.0" />
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NLog" Version="5.2.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.3">
@@ -22,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClientProxyBase\ClientProxyBase.csproj" />
+    <!--<ProjectReference Include="..\ClientProxyBase\ClientProxyBase.csproj" />-->
   </ItemGroup>
 
 </Project>

@@ -25,7 +25,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\ClientProxyBase\ClientProxyBase.csproj" />
 		<ProjectReference Include="..\Shared.EventStore\Shared.EventStore.csproj" />
+		<ProjectReference Include="..\Shared.Results\Shared.Results.csproj" />
 		<ProjectReference Include="..\Shared\Shared.csproj" />
 	</ItemGroup>
 
