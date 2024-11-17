@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ClientProxyBase;
 using SimpleResults;
 
 namespace Shared.Tests
@@ -10,7 +11,6 @@ namespace Shared.Tests
     using System.Net;
     using System.Net.Http;
     using System.Threading;
-    using ClientProxyBase;
     using Shouldly;
     using Xunit;
 
@@ -127,7 +127,7 @@ namespace Shared.Tests
         }
     }
 
-    public class TestClient : ClientProxyBase{
+    public class TestClient : ClientProxyBase.ClientProxyBase{
         public TestClient(HttpClient httpClient) : base(httpClient){
         }
 
