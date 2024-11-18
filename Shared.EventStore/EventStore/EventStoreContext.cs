@@ -96,7 +96,7 @@ namespace Shared.EventStore.EventStore
                 JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(
                     projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
 
-                return Result.Success(jsonElement.GetRawText());
+                return Result.Success<String>(jsonElement.GetRawText());
             }
             catch (Exception ex) {
                 return Result.Failure(ex.GetExceptionMessages());
@@ -111,7 +111,7 @@ namespace Shared.EventStore.EventStore
                 JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(
                     projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
 
-                return Result.Success(jsonElement.GetRawText());
+                return Result.Success<String>(jsonElement.GetRawText());
             }
             catch (Exception ex) {
                 return Result.Failure(ex.GetExceptionMessages());
@@ -126,7 +126,7 @@ namespace Shared.EventStore.EventStore
                     (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName,
                         deadline: this.Deadline, cancellationToken: cancellationToken);
 
-                return Result.Success(jsonElement.GetRawText());
+                return Result.Success<String>(jsonElement.GetRawText());
             }
             catch (Exception ex) {
                 return Result.Failure(ex.GetExceptionMessages());
@@ -140,7 +140,7 @@ namespace Shared.EventStore.EventStore
                     (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName,
                         deadline: this.Deadline, cancellationToken: cancellationToken);
 
-                return Result.Success(jsonElement.GetRawText());
+                return Result.Success<String>(jsonElement.GetRawText());
             }
             catch (Exception ex) {
                 return Result.Failure(ex.GetExceptionMessages());

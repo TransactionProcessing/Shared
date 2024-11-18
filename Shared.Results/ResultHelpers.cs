@@ -97,4 +97,6 @@ public static class ResultHelpers
             _ => Result.Failure("An unexpected error occurred.")
         };
     }
+
+    public record StringResult(String StringData);
 }

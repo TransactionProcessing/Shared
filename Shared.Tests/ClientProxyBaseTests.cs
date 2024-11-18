@@ -33,9 +33,9 @@ namespace Shared.Tests
             HttpResponseMessage response = new HttpResponseMessage(statusCode);
             response.Content = new StringContent(responseContent);
             TestClient proxybase = new TestClient(new HttpClient());
-            Result<StringResult> result  = await proxybase.Test(response, CancellationToken.None);
+            Result<String> result  = await proxybase.Test(response, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
-            result.Data.StringData.ShouldBe(responseContent);
+            result.Data.ShouldBe(responseContent);
                          
         }
 
@@ -131,7 +131,7 @@ namespace Shared.Tests
         public TestClient(HttpClient httpClient) : base(httpClient){
         }
 
-        public async Task<Result<StringResult>> Test(HttpResponseMessage responseMessage, CancellationToken cancellationToken){
+        public async Task<Result<String>> Test(HttpResponseMessage responseMessage, CancellationToken cancellationToken){
             return await this.HandleResponseX(responseMessage, cancellationToken);
         }
     }
