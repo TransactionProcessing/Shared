@@ -82,7 +82,7 @@ namespace ClientProxyBase
         /// <exception cref="Exception">An internal error has occurred
         /// or
         /// An internal error has occurred</exception>
-        protected virtual async Task<Result<StringResult>> HandleResponseX(HttpResponseMessage responseMessage,
+        protected virtual async Task<Result<String>> HandleResponseX(HttpResponseMessage responseMessage,
                                                                            CancellationToken cancellationToken) {
 
             // Read the content from the response
@@ -101,11 +101,9 @@ namespace ClientProxyBase
                 };
             }
 
-            return Result.Success(new StringResult(content));
+            return Result.Success<String>(content);
         }
 
         #endregion
     }
-
-    public record StringResult(String StringData);
 }

@@ -1,28 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-	  <DebugType>Full</DebugType>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<DebugType>Full</DebugType>
+	</PropertyGroup>
 
-  <ItemGroup>
-	  <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.2.1" />
-	  <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.2.1" />
-	  <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.2.1" />
-	  <PackageReference Include="IdentityModel" Version="6.2.0" />
-	  <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="8.0.3" />
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	  <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
-	  <PackageReference Include="SimpleResults" Version="3.0.0" />
-      <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.2.1" />
+		<PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.2.1" />
+		<PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.2.1" />
+		<PackageReference Include="IdentityModel" Version="6.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="8.0.3" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
+		<PackageReference Include="SimpleResults" Version="3.0.0" />
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Shared.DomainDrivenDesign\Shared.DomainDrivenDesign.csproj" />
-    <ProjectReference Include="..\Shared.Results\Shared.Results.csproj" />
-    <ProjectReference Include="..\Shared\Shared.csproj" />
-    <ProjectReference Include="..\Shared.Results\Shared.Results.csproj" PrivateAssets="All" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Shared.DomainDrivenDesign\Shared.DomainDrivenDesign.csproj" />
+		<ProjectReference Include="..\Shared\Shared.csproj" />
+		<ProjectReference Include="..\Shared.Results\Shared.Results.csproj" PrivateAssets="All" />
+	</ItemGroup>
 
 	<Target Name="IncludeP2PAssets">
 		<ItemGroup>
