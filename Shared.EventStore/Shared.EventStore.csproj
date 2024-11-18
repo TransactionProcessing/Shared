@@ -19,6 +19,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Shared.DomainDrivenDesign\Shared.DomainDrivenDesign.csproj" />
+		<ProjectReference Include="..\Shared.Results\Shared.Results.csproj" />
 		<ProjectReference Include="..\Shared\Shared.csproj" />
 	</ItemGroup>
 
