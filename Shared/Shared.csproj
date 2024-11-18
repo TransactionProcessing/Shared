@@ -24,7 +24,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--<ProjectReference Include="..\ClientProxyBase\ClientProxyBase.csproj" />-->
+	  <ProjectReference Include="..\Shared.Results\Shared.Results.csproj" PrivateAssets="All" />
   </ItemGroup>
+
+	<Target Name="IncludeP2PAssets">
+		<ItemGroup>
+			<BuildOutputInPackage Include="$(OutputPath)EstateManagement.DataTransferObjects.dll" />
+		</ItemGroup>
+	</Target>
 
 </Project>
