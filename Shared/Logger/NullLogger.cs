@@ -25,29 +25,37 @@
         }
 
         public void LogCritical(Exception exception) {
+            // This is a null logger so needs to actual implementation
         }
 
         public void LogCritical(String message,
                                 Exception exception) {
+            // This is a null logger so needs to actual implementation
         }
 
         public void LogDebug(String message) {
+            // This is a null logger so needs to actual implementation
         }
 
         public void LogError(Exception exception) {
+            // This is a null logger so needs to actual implementation
         }
 
         public void LogError(String message,
                              Exception exception) {
+            // This is a null logger so needs to actual implementation
         }
 
         public void LogInformation(String message) {
+            // This is a null logger so needs to actual implementation
         }
 
         public void LogTrace(String message) {
+            // This is a null logger so needs to actual implementation
         }
 
         public void LogWarning(String message) {
+            // This is a null logger so needs to actual implementation
         }
 
         #endregion

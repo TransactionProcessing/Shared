@@ -16,10 +16,10 @@ namespace Shared.EventStore.Tests.TestObjects
     {
         #region Methods
 
-        public static Guid AggregateId = Guid.Parse("103B335B-540A-4985-BB80-FD9B2BABF866");
-        public static Guid EventId = Guid.Parse("C9416757-582C-4F67-A320-80FE1E937045");
+        public static readonly Guid AggregateId = Guid.Parse("103B335B-540A-4985-BB80-FD9B2BABF866");
+        public static readonly Guid EventId = Guid.Parse("C9416757-582C-4F67-A320-80FE1E937045");
 
-        public static string EstateName = "Test Estate 1";
+        public static readonly string EstateName = "Test Estate 1";
 
         public static EventRecord CreateEventRecord<T>(T domainEvent, string streamId, bool addToMap) where T : DomainEvent
         {
