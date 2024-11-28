@@ -10,7 +10,11 @@ namespace Shared.Web
     {
         private Dictionary<string, (object value, Boolean alwaysInclude)> parameters = new Dictionary<String, (Object value, Boolean alwaysInclude)>();
 
-        public QueryStringBuilder AddParameter(string key, object value, Boolean alwaysInclude = false)
+        public QueryStringBuilder AddParameter(string key,
+                                               object value) =>
+            AddParameter(key, value, false);
+
+        public QueryStringBuilder AddParameter(string key, object value, Boolean alwaysInclude)
         {
             this.parameters.Add(key, (value, alwaysInclude));
             return this;

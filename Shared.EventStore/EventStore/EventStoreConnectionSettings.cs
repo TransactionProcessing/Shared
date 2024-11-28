@@ -8,106 +8,50 @@
     {
         #region Public Properties
 
-        /// <summary>
-        /// Gets or sets the connection string.
-        /// </summary>
-        /// <value>
-        /// The connection string.
-        /// </value>
         public String ConnectionString { get; set; }
 
-        /// <summary>
-        /// Gets or sets the ip address.
-        /// </summary>
-        /// <value>
-        /// The ip address.
-        /// </value>
         public String IpAddress { get; set; }
 
-        /// <summary>
-        /// Gets or sets the tcp port.
-        /// </summary>
-        /// <value>
-        /// The tcp port.
-        /// </value>
         public Int32 TcpPort { get; set; }
 
-        /// <summary>
-        /// Gets or sets the HTTP port.
-        /// </summary>
-        /// <value>
-        /// The HTTP port.
-        /// </value>
         public Int32 HttpPort { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the connection.
-        /// </summary>
-        /// <value>
-        /// The name of the connection.
-        /// </value>
-        public String ConnectionName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the user.
-        /// </summary>
-        /// <value>
-        /// The name of the user.
-        /// </value>
+        
         public String UserName { get; set; }
 
-        /// <summary>
-        /// Gets or sets the password.
-        /// </summary>
-        /// <value>
-        /// The password.
-        /// </value>
         public String Password { get; set; }
 
         #endregion
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EventStoreConnectionSettings"/> class.
-        /// </summary>
         public EventStoreConnectionSettings()
         {
 
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EventStoreConnectionSettings"/> class.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <param name="connectionName">Name of the connection.</param>
-        /// <param name="httpPort">The HTTP port.</param>
-        private EventStoreConnectionSettings(String connectionString, String connectionName = null, Int32 httpPort=2113)
+        private EventStoreConnectionSettings(String connectionString, Int32 httpPort)
         {
             // Parse Connection String
             this.ParseConnectionString(connectionString);
 
             this.ConnectionString = connectionString;
-            this.ConnectionName = connectionName;
             this.HttpPort = httpPort;
         }
-
+        
         #endregion
 
         #region Public Methods
 
         #region public static EventStoreConnectionSettings Create()        
-        /// <summary>
-        /// Creates the specified connection string.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <param name="connectionName">Name of the connection.</param>
-        /// <param name="httpPort">The HTTP port.</param>
-        /// <returns></returns>
-        public static EventStoreConnectionSettings Create(String connectionString, String connectionName = null,
-            Int32 httpPort = 2113)
+        public static EventStoreConnectionSettings Create(String connectionString,
+            Int32 httpPort)
         {
-            return new EventStoreConnectionSettings(connectionString,connectionName, httpPort);
+            return new EventStoreConnectionSettings(connectionString, httpPort);
+        }
+
+        public static EventStoreConnectionSettings Create(String connectionString)
+        {
+            return new EventStoreConnectionSettings(connectionString, 2113);
         }
         #endregion
 
@@ -115,11 +59,6 @@
 
         #region Private Methods
 
-        #region private void ParseConnectionString(String connectionString)        
-        /// <summary>
-        /// Parses the connection string.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
         private void ParseConnectionString(String connectionString)
         {
             // Check for the presence of the @ symbol as this is the start of the address
@@ -186,8 +125,6 @@
             this.UserName = splitUserDetails[0];
             this.Password = splitUserDetails[1];
         }
-        #endregion
-
         #endregion
     }
 }

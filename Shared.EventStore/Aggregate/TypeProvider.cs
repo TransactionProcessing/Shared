@@ -15,7 +15,7 @@
     {
         #region Methods
 
-        public static void LoadDomainEventsTypeDynamically(Assembly[] assemblies = null)
+        public static void LoadDomainEventsTypeDynamically(Assembly[] assemblies)
         {
             if (assemblies == null){
                 // Add a default
@@ -34,6 +34,8 @@
                 TypeMap.AddType(type, type.Name);
             }
         }
+
+        public static void LoadDomainEventsTypeDynamically() => LoadDomainEventsTypeDynamically(null);
 
         #endregion
     }

@@ -44,6 +44,10 @@ namespace Shared.EventStore.Tests.TestObjects
             return r;
         }
 
+        public static EventRecord CreateEventRecord<T>(T domainEvent,
+                                                       string streamId) where T : DomainEvent =>
+            CreateEventRecord(domainEvent, streamId, true);
+
         public static List<PersistentSubscriptionInfo> GetPersistentSubscriptions_DemoEstate()
         {
             List<PersistentSubscriptionInfo> list = new List<PersistentSubscriptionInfo>();
