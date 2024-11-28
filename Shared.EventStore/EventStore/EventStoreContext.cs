@@ -219,7 +219,7 @@ namespace Shared.EventStore.EventStore
 
         public async Task<Result<String>> RunTransientQuery(String query, CancellationToken cancellationToken)
         {
-            CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             String queryName = Guid.NewGuid().ToString();
 
             try

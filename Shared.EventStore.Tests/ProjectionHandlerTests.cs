@@ -63,17 +63,11 @@
             ProjectionHandler<TestState> handler = new ProjectionHandler<TestState>(projectionStateRepository.Object,
                                                                                     projection.Object,
                                                                                     dispatcher.Object);
-            handler.TraceGenerated += this.Handler_TraceGenerated;
 
             AggregateNameSetEvent @event = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             await handler.Handle(@event, CancellationToken.None);
         }
 
-        private void Handler_TraceGenerated(object sender, string e)
-        {
-            
-            
-        }
 
         [Fact]
         public async Task ProjectionHandler_Handle_NullEvent_EventHandled()

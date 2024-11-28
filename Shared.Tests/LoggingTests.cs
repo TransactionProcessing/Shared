@@ -52,6 +52,8 @@ namespace Shared.Tests{
                 case LogLevel.Warning:
                     Should.NotThrow(() => Logger.LogWarning(message));
                     break;
+                default:
+                    throw new InvalidDataException($"invlaid log level {loglevel}");
             }
         }
     }
