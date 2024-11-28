@@ -36,8 +36,6 @@ namespace Shared.EventStore.Tests
                                                                          return new TestDomainEventHandler();
                                                                      };
 
-            List<String> handlers = new List<String>();
-
             DomainEventHandlerResolver r = new DomainEventHandlerResolver(eventHandlerConfiguration, createEventHandlerFunc);
             List<IDomainEventHandler> result = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
             result.ShouldBeNull();
@@ -56,7 +54,7 @@ namespace Shared.EventStore.Tests
             eventHandlerConfiguration.Add("EstateCreatedEvent", handlers.ToArray());
 
             Should.Throw<NotSupportedException>(() => {
-                                                    DomainEventHandlerResolver r = new DomainEventHandlerResolver(eventHandlerConfiguration, createEventHandlerFunc);
+                                                    new DomainEventHandlerResolver(eventHandlerConfiguration, createEventHandlerFunc);
                                                 });
         }
     }

@@ -86,12 +86,6 @@
         [Fact]
         public async Task ProjectionHandler_Handle_EventNotHandled_EventHandled()
         {
-            TestState originalState = new TestState();
-            TestState updatedState = new TestState
-                                     {
-                                         Name = "Test Name"
-                                     };
-
             Mock<IProjectionStateRepository<TestState>> projectionStateRepository = new Mock<IProjectionStateRepository<TestState>>();
             Mock<IProjection<TestState>> projection = new Mock<IProjection<TestState>>();
             projection.Setup(p => p.ShouldIHandleEvent(It.IsAny<IDomainEvent>())).Returns(false);
