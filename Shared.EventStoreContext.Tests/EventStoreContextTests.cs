@@ -39,7 +39,7 @@ namespace Shared.EventStore.Tests{
         #region Methods
 
         public void Dispose(){
-            
+            // Just needed for the interface
         }
         
         [OneTimeTearDown]
