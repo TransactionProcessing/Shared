@@ -44,7 +44,7 @@ namespace Shared.Tests
 
             TestLogger logger = TestHelpers.InitialiseLogger();
 
-            Helpers.LogMessage(url, message);
+            Helpers.LogMessage(url, message, LogLevel.Information);
             
             logger.GetLogEntries().Last().Contains("HEALTH_CHECK").ShouldBe(healthCheckLog);
 

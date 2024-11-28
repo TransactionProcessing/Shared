@@ -13,6 +13,10 @@ namespace Shared.General
     {
         #region Methods
 
+        public static Result<Claim> GetUserClaim(ClaimsPrincipal user,
+                                                 String customClaimType) =>
+            GetUserClaim(user, customClaimType, String.Empty);
+
         /// <summary>
         /// Gets the user claims.
         /// </summary>
@@ -23,7 +27,7 @@ namespace Shared.General
         /// <exception cref="InvalidOperationException">No claim [{customClaimType}] found for user id [{userIdClaim.Value}</exception>
         public static Result<Claim> GetUserClaim(ClaimsPrincipal user,
                                                  String customClaimType,
-                                                 String defaultValue = "") {
+                                                 String defaultValue) {
             Claim userClaim = null;
 
             if (ClaimsHelper.IsPasswordToken(user)) {

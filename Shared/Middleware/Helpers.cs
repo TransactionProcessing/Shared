@@ -8,8 +8,8 @@ using System.Text;
 public static class Helpers
 {
     public static Boolean IsHealthCheckRequest(String url) => url.EndsWith("/health");
-
-    public static void LogMessage(String url, StringBuilder message, LogLevel logLevel = LogLevel.Information)
+    
+    public static void LogMessage(String url, StringBuilder message, LogLevel logLevel)
     {
         String logMessage = Helpers.IsHealthCheckRequest(url) switch
         {

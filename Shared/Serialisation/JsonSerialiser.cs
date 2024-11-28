@@ -10,20 +10,12 @@ public class JsonSerialiser : IStringSerialiser
 {
     #region Constructors
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonSerialiser" /> class.
-    /// </summary>
-    /// <param name="jsonOptionsFunc">The json options function.</param>
-    public JsonSerialiser(Func<JsonSerializerSettings> jsonOptionsFunc = null)
+    public JsonSerialiser() : this(JsonSerialiser.GetDefaultSettings) {
+
+    }
+    public JsonSerialiser(Func<JsonSerializerSettings> jsonOptionsFunc)
     {
-        if (jsonOptionsFunc == null)
-        {
-            this.JsonSerializerSettings = JsonSerialiser.GetDefaultSettings();
-        }
-        else
-        {
-            this.JsonSerializerSettings = jsonOptionsFunc();
-        }
+        this.JsonSerializerSettings = jsonOptionsFunc();
     }
 
     #endregion

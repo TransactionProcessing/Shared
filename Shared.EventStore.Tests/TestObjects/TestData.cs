@@ -21,7 +21,7 @@ namespace Shared.EventStore.Tests.TestObjects
 
         public static string EstateName = "Test Estate 1";
 
-        public static EventRecord CreateEventRecord<T>(T domainEvent, string streamId, bool addToMap = true) where T : DomainEvent
+        public static EventRecord CreateEventRecord<T>(T domainEvent, string streamId, bool addToMap) where T : DomainEvent
         {
             byte[] eventData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainEvent));
             byte[] customEventMetaData = Encoding.UTF8.GetBytes(string.Empty);
@@ -43,6 +43,10 @@ namespace Shared.EventStore.Tests.TestObjects
                                             customEventMetaData);
             return r;
         }
+
+        public static EventRecord CreateEventRecord<T>(T domainEvent,
+                                                       string streamId) where T : DomainEvent =>
+            CreateEventRecord(domainEvent, streamId, true);
 
         public static List<PersistentSubscriptionInfo> GetPersistentSubscriptions_DemoEstate()
         {

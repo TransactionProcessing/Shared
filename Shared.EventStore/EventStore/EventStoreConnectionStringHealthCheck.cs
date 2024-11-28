@@ -36,10 +36,15 @@
         /// </summary>
         /// <param name="settings">The settings.</param>
         /// <param name="userCredentials">The user credentials.</param>
-        public EventStoreConnectionStringHealthCheck(EventStoreClientSettings settings, UserCredentials userCredentials = null)
+        public EventStoreConnectionStringHealthCheck(EventStoreClientSettings settings, UserCredentials userCredentials)
         {
             this.EventStoreClientSettings = settings;
             this.UserCredentials = userCredentials;
+        }
+
+        public EventStoreConnectionStringHealthCheck(EventStoreClientSettings settings) : this(settings, null)
+        {
+            
         }
 
         #endregion
@@ -56,7 +61,7 @@
         /// </returns>
         /// <exception cref="Exception">$all stream not found</exception>
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
-                                                              CancellationToken cancellationToken = default)
+                                                              CancellationToken cancellationToken)
         {
             try
             {

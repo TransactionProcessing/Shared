@@ -14,7 +14,7 @@ public static class DomainEventHelper{
         return propertyInfo != null;
     }
 
-    public static T GetProperty<T>(IDomainEvent domainEvent, String propertyName, Boolean ignoreCase = false){
+    public static T GetProperty<T>(IDomainEvent domainEvent, String propertyName, Boolean ignoreCase){
         PropertyInfo propertyInfo = null;
         PropertyInfo[] properties = domainEvent.GetType()
                                                .GetProperties();
@@ -31,4 +31,8 @@ public static class DomainEventHelper{
 
         return default(T);
     }
+
+    public static T GetProperty<T>(IDomainEvent domainEvent,
+                                   String propertyName) =>
+        GetProperty<T>(domainEvent, propertyName, false);
 }

@@ -78,8 +78,10 @@
         #endregion
 
         #region Methods
-        
-        public IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier="EventStoreConnectionString")
+
+        public IEventStoreContext GetEventStoreContext(String connectionIdentifier) => this.GetEventStoreContext(connectionIdentifier, "EventStoreConnectionString");
+
+        public IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier)
         {
             if (this.Context != null)
             {
@@ -88,9 +90,9 @@
 
             this.WriteTrace($"No resolved context found, about to resolve one using connectionIdentifier {connectionIdentifier}");
 
-            if (this.EventStoreContexts.ContainsKey(connectionIdentifier))
+            if (this.EventStoreContexts.TryGetValue(connectionIdentifier, out IEventStoreContext context))
             {
-                return this.EventStoreContexts[connectionIdentifier];
+                return context;
             }
 
             this.WriteTrace($"Creating a new EventStoreContext for connectionIdentifier {connectionIdentifier}");
@@ -113,16 +115,7 @@
                 return this.EventStoreContexts[connectionIdentifier];
             }
         }
-        
-        private void GuardAgainstNoConnectionIdentifier(String connectionIdentifier)
-        {
-            //Check if the connectionStringIdentifier is present
-            if (string.IsNullOrEmpty(connectionIdentifier))
-            {
-                throw new ArgumentException("Value cannot be empty.", nameof(connectionIdentifier));
-            }
-        }
-
+       
         private void WriteTrace(String trace)
         {
             if (this.TraceGenerated != null)
