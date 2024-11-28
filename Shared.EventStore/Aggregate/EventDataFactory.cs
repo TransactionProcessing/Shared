@@ -38,7 +38,6 @@
         /// </summary>
         public EventDataFactory()
         {
-            //this.Serialiser = new JsonSerialiser(jsonOptionsFunc);
             JsonConvert.DefaultSettings = EventDataFactory.jsonOptionsFunc;
         }
 

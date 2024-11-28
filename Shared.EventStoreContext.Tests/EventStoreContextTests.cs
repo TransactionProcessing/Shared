@@ -351,42 +351,5 @@ namespace Shared.EventStore.Tests{
 
         #endregion
         
-
-        //private async Task<String> RunTransientQuery(IEventStoreContext context, String query, Int32 checkType, TimeSpan? deadline = null, TimeSpan? retryTimeout = null){
-        //    Int32 counter = 0;
-        //    String queryResult = null;
-        //    await Retry.For(async () => {
-        //                        counter++;
-        //                        this.EventStoreDockerHelper.Trace($"Inside Retry Counter [{counter}] Check Type [{checkType}]");
-        //                        Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-        //                        if (checkType == 1){
-        //                            queryResult.IsFailed.ShouldBeTrue();
-                                    
-        //                            String errors = String.Join("|", queryResult.Errors);
-        //                            this.EventStoreDockerHelper.Trace(errors);
-        //                            if (errors.Any()) {
-        //                                errors.Contains("Faulted").ShouldBeTrue();
-        //                            }
-        //                            else {
-        //                                queryResult.Message.Contains("Faulted").ShouldBeTrue();
-        //                            }
-        //                        }
-        //                        else{
-                                    
-        //                            switch(checkType){
-        //                                case 2: // Not Null or Empty
-        //                                    queryResult.Data.ShouldNotBeNullOrEmpty();
-        //                                    break;
-        //                                case 3: // Empty
-        //                                    queryResult.Data.ShouldBeEmpty();
-        //                                    break;
-        //                            }
-        //                        }
-        //                    },
-        //                    retryTimeout,
-        //                    deadline);
-        //    return queryResult; 
-            
-        //}
     }
 }

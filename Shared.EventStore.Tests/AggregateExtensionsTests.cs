@@ -80,7 +80,6 @@ public class AggregateExtensionsTests{
     public void AggregateExtensions_GetPendingEvents_EventIsApplied()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
         t.CommitPendingEvents();
         IList<IDomainEvent> events = t.GetPendingEvents();
         events.Count.ShouldBe(0);
