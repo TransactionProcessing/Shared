@@ -161,12 +161,6 @@ namespace Shared.EventStore.EventStore
                                        Object metadata,
                                        CancellationToken cancellationToken)
         {
-            List<EventData> eventData = new List<EventData>();
-            JsonSerializerSettings s = new JsonSerializerSettings
-            {
-                TypeNameHandling = TypeNameHandling.All
-            };
-
             this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
             try {
                 await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion),

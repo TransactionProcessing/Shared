@@ -33,7 +33,7 @@ public static class TestHelpers{
         return responseData;
     }
 
-    public const String ExceptionMessage = "Test Exception Message";
+    public static readonly String ExceptionMessage = "Test Exception Message";
 
     public static T CreateException<T>() where T : Exception{
         return (T)System.Activator.CreateInstance(typeof(T), TestHelpers.ExceptionMessage);
