@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Net;
+using SimpleResults;
 
 namespace Shared.HealthChecks;
 
@@ -23,52 +24,38 @@ public class HealthCheckClient : IHealthCheckClient
 
     #region Methods
 
-    public async Task<String> PerformHealthCheck(String scheme, 
-                                                            String uri,
-                                                            Int32 port,
-                                                            CancellationToken cancellationToken) {
+    public async Task<Result<String>> PerformHealthCheck(String scheme, 
+                                                         String uri,
+                                                         Int32 port,
+                                                         CancellationToken cancellationToken) {
         String requestUri = this.BuildRequestUri(scheme, uri, port);
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
         HttpResponseMessage responseMessage = await this.HttpClient.SendAsync(request);
 
-        String responseData = await this.HandleResponse(responseMessage, cancellationToken);
+        Result<String> responseData = await this.HandleResponse(responseMessage, cancellationToken);
 
         return responseData;
     }
 
-    protected virtual async Task<String> HandleResponse(HttpResponseMessage responseMessage,
+    protected virtual async Task<Result<String>> HandleResponse(HttpResponseMessage responseMessage,
                                                         CancellationToken cancellationToken)
     {
-        String result = String.Empty;
-
         // Read the content from the response
         String content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
         // Check the response code
-        if (!responseMessage.IsSuccessStatusCode)
-        {
-            // throw a specific  exception to inherited class
-            switch (responseMessage.StatusCode)
-            {
-                case HttpStatusCode.BadRequest:
-                    throw new InvalidOperationException(content);
-                case HttpStatusCode.Unauthorized:
-                case HttpStatusCode.Forbidden:
-                    throw new UnauthorizedAccessException(content);
-                case HttpStatusCode.NotFound:
-                    throw new KeyNotFoundException(content);
-                case HttpStatusCode.InternalServerError:
-                    throw new Exception("An internal error has occurred");
-                default:
-                    throw new Exception($"An internal error has occurred ({responseMessage.StatusCode})");
-            }
-        }
+        Result<String> result = (responseMessage.IsSuccessStatusCode, responseMessage.StatusCode) switch {
+            (true, _) => Result.Success<String>(content),
+            (_, HttpStatusCode.BadRequest) => Result.Invalid(content),
+            (_, HttpStatusCode.Forbidden) => Result.Forbidden(content),
+            (_, HttpStatusCode.NotFound) => Result.NotFound(content),
+            (_, HttpStatusCode.Unauthorized) => Result.Unauthorized(content),
+            (_, HttpStatusCode.InternalServerError) => Result.CriticalError(content),
+            _ => Result.Failure(content)
 
-        // Set the result
-        result = content;
-
+        };
         return result;
     }
 

@@ -116,11 +116,52 @@ public class AggregateRepositoryTests{
         Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
     }
-    
+
+    [Fact]
+    public async Task AggregateRepository_SaveChanges_ErrorsOnInsert_FailedResult()
+    {
+        Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+
+        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
+        EventRecord r = TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestAggregate");
+        List<ResolvedEvent> e = new List<ResolvedEvent>{
+            new ResolvedEvent(r, null, null)
+        };
+        context.Setup(c => c.GetEventsBackward(It.IsAny<String>(), It.IsAny<Int32>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Success(e));
+        context.Setup(c => c.InsertEvents(It.IsAny<String>(), It.IsAny<long>(), It.IsAny<List<EventData>>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Failure("error"));
+
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
+        Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
+        testAggregate.Data.SetAggregateName("New name", Guid.NewGuid());
+        Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
+        result.IsFailed.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task AggregateRepository_GetLatestVersionFromLastEvent_GetEventsFailed_FailedResult()
+    {
+        Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
+
+        AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
+
+        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
+        EventRecord r = TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestAggregate");
+        List<ResolvedEvent> e = new List<ResolvedEvent>{
+            new ResolvedEvent(r, null, null)
+        };
+        context.Setup(c => c.GetEventsBackward(It.IsAny<String>(), It.IsAny<Int32>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Failure("error"));
+
+        Result<TestAggregate> result = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
+        result.IsFailed.ShouldBeTrue();
+    }
+
     [Fact]
     public async Task AggregateRepository_SaveChanges_ChangesMade_ChangesAreSaved()
     {
         Mock<IEventStoreContext> context = new Mock<IEventStoreContext>();
+        context.Setup(c => c.InsertEvents(It.IsAny<String>(), It.IsAny<long>(), It.IsAny<List<EventData>>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Success);
         IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
 
         AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
@@ -132,7 +173,7 @@ public class AggregateRepositoryTests{
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         TestAggregate testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
-        testAggregate.SetAggregateName("New name");
+        testAggregate.SetAggregateName("New name", Guid.NewGuid());
         Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
     }

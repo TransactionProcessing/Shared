@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 
 namespace Shared.Middleware;
 
@@ -8,7 +9,8 @@ using System.Text;
 public static class Helpers
 {
     public static Boolean IsHealthCheckRequest(String url) => url.EndsWith("/health");
-    
+
+    [ExcludeFromCodeCoverage]
     public static void LogMessage(String url, StringBuilder message, LogLevel logLevel)
     {
         String logMessage = Helpers.IsHealthCheckRequest(url) switch

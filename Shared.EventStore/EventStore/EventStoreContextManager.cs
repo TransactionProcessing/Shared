@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.EventStore
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Shared.EventStore.EventStore
 {
     using System;
     using System.Collections.Generic;
@@ -115,7 +117,8 @@
                 return this.EventStoreContexts[connectionIdentifier];
             }
         }
-       
+
+        [ExcludeFromCodeCoverage]
         private void WriteTrace(String trace)
         {
             if (this.TraceGenerated != null)

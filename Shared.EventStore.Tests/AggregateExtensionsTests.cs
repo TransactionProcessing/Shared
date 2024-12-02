@@ -45,7 +45,7 @@ public class AggregateExtensionsTests{
     public void AggregateExtensions_GetPendingEvents_EventsReturned()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        t.SetAggregateName("Test");
+        t.SetAggregateName("Test", Guid.NewGuid());
         IList<IDomainEvent> events = t.GetPendingEvents();
         events.Count.ShouldBe(1);
     }
@@ -56,7 +56,7 @@ public class AggregateExtensionsTests{
     public void AggregateExtensions_IsEventDuplicate_EventsIsADuplicate(Boolean commitPending)
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        t.SetAggregateName("Test");
+        t.SetAggregateName("Test", TestData.EventId);
         if (commitPending) { t.CommitPendingEvents(); }
         var eventIsDuplicate = t.IsEventDuplicate(TestData.EventId);
         eventIsDuplicate.ShouldBeTrue();
@@ -68,7 +68,7 @@ public class AggregateExtensionsTests{
     public void AggregateExtensions_IsEventDuplicate_EventsIsNotADuplicate(Boolean commitPending)
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        t.SetAggregateName("Test");
+        t.SetAggregateName("Test", Guid.NewGuid());
         if (commitPending) { t.CommitPendingEvents(); }
         var eventIsDuplicate = t.IsEventDuplicate(Guid.NewGuid());
         eventIsDuplicate.ShouldBeFalse();

@@ -1,4 +1,6 @@
-﻿namespace Shared.HealthChecks
+﻿using SimpleResults;
+
+namespace Shared.HealthChecks
 {
     using System;
     using System.Threading;
@@ -8,10 +10,10 @@
     {
         #region Methods
 
-        Task<String> PerformHealthCheck(String scheme, 
-                                                   String uri,
-                                                   Int32 port,
-                                                   CancellationToken cancellationToken);
+        Task<Result<String>> PerformHealthCheck(String scheme, 
+                                                String uri,
+                                                Int32 port,
+                                                CancellationToken cancellationToken);
 
         #endregion
     }

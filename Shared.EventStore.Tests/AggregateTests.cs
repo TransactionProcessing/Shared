@@ -22,7 +22,7 @@ public class AggregateTests{
     public void Aggregate_ApplyAndAppend_EventIsAppended()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        t.SetAggregateName("Test");
+        t.SetAggregateName("Test", Guid.NewGuid());
 
         t.AggregateId.ShouldBe(TestData.AggregateId);
         t.Version.ShouldBe(AggregateVersion.CreateFrom(-1));
@@ -35,8 +35,8 @@ public class AggregateTests{
     public void Aggregate_ApplyAndAppend_DuplicateEvent_EventIsAppended()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        t.SetAggregateName("Test");
-        t.SetAggregateName("Test");
+        t.SetAggregateName("Test",TestData.EventId);
+        t.SetAggregateName("Test", TestData.EventId);
 
         t.AggregateId.ShouldBe(TestData.AggregateId);
         t.Version.ShouldBe(AggregateVersion.CreateFrom(-1));
@@ -63,7 +63,7 @@ public class AggregateTests{
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
         Should.Throw<Exception>(() => {
-                                    t.SetAggregateName("Error");
+                                    t.SetAggregateName("Error",Guid.NewGuid());
                                 });
     }
 
