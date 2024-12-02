@@ -21,7 +21,7 @@ namespace Driver
         #region Methods
 
         internal static EventStoreClientSettings ConfigureEventStoreSettings() {
-            EventStoreClientSettings settings = new(); //EventStoreClientSettings.Create("esdb://127.0.0.1:2113?tls=trur");
+            EventStoreClientSettings settings = new();
 
             settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
                                                                                  SslOptions = {
@@ -43,10 +43,6 @@ namespace Driver
         private static async Task Main(String[] args) {
             Logger.Initialise(NullLogger.Instance);
             await Program.SubscriptionsTest();
-            //await Program.QueryTest();
-
-            //TestDockerHelper t = new TestDockerHelper();
-            //await t.StartContainersForScenarioRun("");
 
             Console.ReadKey();
         }
@@ -69,8 +65,6 @@ namespace Driver
             
             ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, cacheDuration);
 
-            //((SubscriptionRepository)subscriptionRepository).Trace += (sender, s) => Extensions.log(TraceEventType.Information, "REPOSITORY", s);
-
             // init our SubscriptionRepository
             subscriptionRepository.PreWarm(CancellationToken.None).Wait();
 
@@ -89,10 +83,6 @@ namespace Driver
             concurrentSubscriptions.StartAsync(CancellationToken.None).Wait();
         }
 
-        #endregion
-
-        #region Others
-        
         #endregion
     }
 
