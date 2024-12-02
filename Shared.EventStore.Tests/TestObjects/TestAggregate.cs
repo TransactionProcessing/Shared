@@ -40,9 +40,9 @@ public record TestAggregate : Aggregate
         AggregateName = domainEvent.AggregateName;
     }
 
-    public void SetAggregateName(string aggregateName)
+    public void SetAggregateName(string aggregateName, Guid eventId)
     {
-        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(AggregateId, TestData.EventId, aggregateName);
+        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(AggregateId, eventId, aggregateName);
 
         ApplyAndAppend(aggregateNameSetEvent);
     }

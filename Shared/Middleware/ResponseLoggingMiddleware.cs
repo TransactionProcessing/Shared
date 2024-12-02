@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -69,6 +70,7 @@ namespace Shared.Middleware
         #endregion
     }
 
+    [ExcludeFromCodeCoverage]
     public class ResponseLoggingMemoryStream : MemoryStream
     {
         public override void Close()

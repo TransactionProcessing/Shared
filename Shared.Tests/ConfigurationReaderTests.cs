@@ -154,5 +154,36 @@ namespace Shared.Tests
             var value = ConfigurationReader.GetConnectionString("HealthCheck");
             value.ShouldBe("server=192.168.1.133;database=master;user id=sa;password=Sc0tland");
         }
+
+        [Fact]
+        public void ConfigurationReader_GetValueOrDefault_ValueIsReturned()
+        {
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
+            ConfigurationReader.Initialise(configurationBuilder.Build());
+
+            var value = ConfigurationReader.GetValueOrDefault("AppSettings","EstateManagementApi", "http://127.0.0.1:5001");
+            value.ShouldBe("http://127.0.0.1:5000");
+        }
+
+        [Fact]
+        public void ConfigurationReader_GetValueOrDefault_DefaultValueIsReturned()
+        {
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
+            ConfigurationReader.Initialise(configurationBuilder.Build());
+
+            var value = ConfigurationReader.GetValueOrDefault("AppSettings", "EstateManagementApiX", "http://127.0.0.1:5001");
+            value.ShouldBe("http://127.0.0.1:5001");
+        }
+
+        [Fact]
+        public void ConfigurationReader_GetValueOrDefault_ConfigEmpty_DefaultValueIsReturned()
+        {
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
+            ConfigurationReader.Initialise(configurationBuilder.Build());
+
+            var value = ConfigurationReader.GetValueOrDefault("AppSettings", "Test", "http://127.0.0.1:5001");
+            value.ShouldBe("http://127.0.0.1:5001");
+        }
+
     }
 }

@@ -15,22 +15,20 @@ public static class ResultHelpers
         };
     }
 
-    public static Result CreateFailure(Result result)
-    {
-        if (result.IsFailed)
-        {
-            return BuildResult(result.Status, result.Message, result.Errors);
-        }
-        return Result.Failure("Unknown Failure");
+    public static Result CreateFailure(Result result) {
+        return result.IsFailed switch {
+            true => BuildResult(result.Status, result.Message, result.Errors),
+            _ => throw new InvalidDataException("Cant create a failed result from a success")
+        };
     }
 
     public static Result CreateFailure<T>(Result<T> result)
     {
-        if (result.IsFailed)
+        return result.IsFailed switch
         {
-            return BuildResult(result.Status, result.Message, result.Errors);
-        }
-        return Result.Failure("Unknown Failure");
+            true => BuildResult(result.Status, result.Message, result.Errors),
+            _ => throw new InvalidDataException("Cant create a failed result from a success")
+        };
     }
 
     private static Result BuildResult(ResultStatus status, String messageValue, IEnumerable<String> errorList)
@@ -38,7 +36,7 @@ public static class ResultHelpers
         return (status, messageValue, errorList) switch
         {
             // If the status is NotFound and there are errors, return the errors
-            (ResultStatus.NotFound, _, List<string> errors) when errors is { Count: > 0 } =>
+            (ResultStatus.NotFound, _, List<string> errors) when errors is { Count: >= 0 } =>
                 Result.NotFound(errors),
 
             // If the status is NotFound and the message is not null or empty, return the message
@@ -46,7 +44,7 @@ public static class ResultHelpers
                 Result.NotFound(message),
 
             // If the status is Failure and there are errors, return the errors
-            (ResultStatus.Failure, _, List<string> errors) when errors is { Count: > 0 } =>
+            (ResultStatus.Failure, _, List<string> errors) when errors is { Count: >= 0 } =>
                 Result.Failure(errors),
 
             // If the status is Failure and the message is not null or empty, return the message
@@ -54,15 +52,15 @@ public static class ResultHelpers
                 Result.Failure(message),
 
             // If the status is Forbidden and there are errors, return the errors
-            (ResultStatus.Forbidden, _, List<string> errors) when errors is { Count: > 0 } =>
+            (ResultStatus.Forbidden, _, List<string> errors) when errors is { Count: >= 0 } =>
                 Result.Forbidden(errors),
 
             // If the status is Forbidden and the message is not null or empty, return the message
             (ResultStatus.Forbidden, string message, _) when !string.IsNullOrEmpty(message) =>
-                Result.NotFound(message),
+                Result.Forbidden(message),
             //###
             // If the status is Invalid and there are errors, return the errors
-            (ResultStatus.Invalid, _, List<string> errors) when errors is { Count: > 0 } =>
+            (ResultStatus.Invalid, _, List<string> errors) when errors is { Count: >= 0 } =>
                 Result.Invalid(errors),
 
             // If the status is Invalid and the message is not null or empty, return the message
@@ -70,7 +68,7 @@ public static class ResultHelpers
                 Result.Invalid(message),
 
             // If the status is Unauthorized and there are errors, return the errors
-            (ResultStatus.Unauthorized, _, List<string> errors) when errors is { Count: > 0 } =>
+            (ResultStatus.Unauthorized, _, List<string> errors) when errors is { Count: >= 0 } =>
                 Result.Unauthorized(errors),
 
             // If the status is Unauthorized and the message is not null or empty, return the message
@@ -78,7 +76,7 @@ public static class ResultHelpers
                 Result.Unauthorized(message),
 
             // If the status is Conflict and there are errors, return the errors
-            (ResultStatus.Conflict, _, List<string> errors) when errors is { Count: > 0 } =>
+            (ResultStatus.Conflict, _, List<string> errors) when errors is { Count: >= 0 } =>
                 Result.Conflict(errors),
 
             // If the status is Conflict and the message is not null or empty, return the message
@@ -86,7 +84,7 @@ public static class ResultHelpers
                 Result.Conflict(message),
 
             // If the status is CriticalError and there are errors, return the errors
-            (ResultStatus.CriticalError, _, List<string> errors) when errors is { Count: > 0 } =>
+            (ResultStatus.CriticalError, _, List<string> errors) when errors is { Count: >= 0 } =>
                 Result.CriticalError(errors),
 
             // If the status is CriticalError and the message is not null or empty, return the message
@@ -97,6 +95,4 @@ public static class ResultHelpers
             _ => Result.Failure("An unexpected error occurred.")
         };
     }
-
-    public record StringResult(String StringData);
 }

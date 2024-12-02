@@ -28,15 +28,35 @@ namespace Shared.Tests
         [InlineData(HttpStatusCode.AlreadyReported)]
         [InlineData(HttpStatusCode.IMUsed)]
 
-        public async Task ClientProxyBase_HandleResponse_SuccessStatus(HttpStatusCode statusCode){
+        public async Task ClientProxyBase_HandleResponseX_SuccessStatus(HttpStatusCode statusCode){
             String responseContent = $"Content - {statusCode}";
             HttpResponseMessage response = new HttpResponseMessage(statusCode);
             response.Content = new StringContent(responseContent);
             TestClient proxybase = new TestClient(new HttpClient());
-            Result<String> result  = await proxybase.Test(response, CancellationToken.None);
+            Result<String> result  = await proxybase.Test_HandleResponseX(response, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             result.Data.ShouldBe(responseContent);
-                         
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.OK)]
+        [InlineData(HttpStatusCode.Created)]
+        [InlineData(HttpStatusCode.Accepted)]
+        [InlineData(HttpStatusCode.NonAuthoritativeInformation)]
+        [InlineData(HttpStatusCode.NoContent)]
+        [InlineData(HttpStatusCode.ResetContent)]
+        [InlineData(HttpStatusCode.PartialContent)]
+        [InlineData(HttpStatusCode.MultiStatus)]
+        [InlineData(HttpStatusCode.AlreadyReported)]
+        [InlineData(HttpStatusCode.IMUsed)]
+
+        public async Task ClientProxyBase_HandleResponse_SuccessStatus(HttpStatusCode statusCode)
+        {
+            String responseContent = $"Content - {statusCode}";
+            HttpResponseMessage response = new HttpResponseMessage(statusCode);
+            response.Content = new StringContent(responseContent);
+            TestClient proxybase = new TestClient(new HttpClient());
+            Should.NotThrow(async () => { await proxybase.Test_HandleResponse(response, CancellationToken.None); });
         }
 
         [Theory]
@@ -44,8 +64,18 @@ namespace Shared.Tests
         [InlineData(HttpStatusCode.SwitchingProtocols, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.Processing, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.EarlyHints, ResultStatus.Failure)]
-        public async Task ClientProxyBase_HandleResponse_1xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus){
-            await TestMethod(statusCode, resultStatus);
+        public async Task ClientProxyBase_HandleResponseX_1xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus){
+            await TestMethod_HandleResponseX(statusCode, resultStatus);
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.Continue, typeof(Exception))]
+        [InlineData(HttpStatusCode.SwitchingProtocols, typeof(Exception))]
+        [InlineData(HttpStatusCode.Processing, typeof(Exception))]
+        [InlineData(HttpStatusCode.EarlyHints, typeof(Exception))]
+        public async Task ClientProxyBase_HandleResponse_1xx_ErrorStatus(HttpStatusCode statusCode, Type expectedException)
+        {
+            await TestMethod_HandleResponse(statusCode, expectedException);
         }
 
         [Theory]
@@ -63,9 +93,29 @@ namespace Shared.Tests
         [InlineData(HttpStatusCode.TemporaryRedirect, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.RedirectKeepVerb, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.PermanentRedirect, ResultStatus.Failure)]
-        public async Task ClientProxyBase_HandleResponse_3xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus)
+        public async Task ClientProxyBase_HandleResponseX_3xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus)
         {
-            await TestMethod(statusCode, resultStatus);
+            await TestMethod_HandleResponseX(statusCode, resultStatus);
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.MultipleChoices, typeof(Exception))]
+        [InlineData(HttpStatusCode.Ambiguous, typeof(Exception))]
+        [InlineData(HttpStatusCode.MovedPermanently, typeof(Exception))]
+        [InlineData(HttpStatusCode.Moved, typeof(Exception))]
+        [InlineData(HttpStatusCode.Found, typeof(Exception))]
+        [InlineData(HttpStatusCode.Redirect, typeof(Exception))]
+        [InlineData(HttpStatusCode.SeeOther, typeof(Exception))]
+        [InlineData(HttpStatusCode.RedirectMethod, typeof(Exception))]
+        [InlineData(HttpStatusCode.NotModified, typeof(Exception))]
+        [InlineData(HttpStatusCode.UseProxy, typeof(Exception))]
+        [InlineData(HttpStatusCode.Unused, typeof(Exception))]
+        [InlineData(HttpStatusCode.TemporaryRedirect, typeof(Exception))]
+        [InlineData(HttpStatusCode.RedirectKeepVerb, typeof(Exception))]
+        [InlineData(HttpStatusCode.PermanentRedirect, typeof(Exception))]
+        public async Task ClientProxyBase_HandleResponse_3xx_ErrorStatus(HttpStatusCode statusCode, Type expectedException)
+        {
+            await TestMethod_HandleResponse(statusCode, expectedException);
         }
 
         [Theory]
@@ -96,9 +146,42 @@ namespace Shared.Tests
         [InlineData(HttpStatusCode.TooManyRequests, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.RequestHeaderFieldsTooLarge, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.UnavailableForLegalReasons, ResultStatus.Failure)]
-        public async Task ClientProxyBase_HandleResponse_4xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus)
+        public async Task ClientProxyBase_HandleResponseX_4xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus)
         {
-            await TestMethod(statusCode, resultStatus);
+            await TestMethod_HandleResponseX(statusCode, resultStatus);
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.BadRequest, typeof(InvalidOperationException))]
+        [InlineData(HttpStatusCode.Unauthorized, typeof(UnauthorizedAccessException))]
+        [InlineData(HttpStatusCode.PaymentRequired, typeof(Exception))]
+        [InlineData(HttpStatusCode.Forbidden, typeof(UnauthorizedAccessException))]
+        [InlineData(HttpStatusCode.NotFound, typeof(KeyNotFoundException))]
+        [InlineData(HttpStatusCode.MethodNotAllowed, typeof(Exception))]
+        [InlineData(HttpStatusCode.NotAcceptable, typeof(Exception))]
+        [InlineData(HttpStatusCode.ProxyAuthenticationRequired, typeof(Exception))]
+        [InlineData(HttpStatusCode.RequestTimeout, typeof(Exception))]
+        [InlineData(HttpStatusCode.Conflict, typeof(Exception))]
+        [InlineData(HttpStatusCode.Gone, typeof(Exception))]
+        [InlineData(HttpStatusCode.LengthRequired, typeof(Exception))]
+        [InlineData(HttpStatusCode.PreconditionFailed, typeof(Exception))]
+        [InlineData(HttpStatusCode.RequestEntityTooLarge, typeof(Exception))]
+        [InlineData(HttpStatusCode.RequestUriTooLong, typeof(Exception))]
+        [InlineData(HttpStatusCode.UnsupportedMediaType, typeof(Exception))]
+        [InlineData(HttpStatusCode.RequestedRangeNotSatisfiable, typeof(Exception))]
+        [InlineData(HttpStatusCode.ExpectationFailed, typeof(Exception))]
+        [InlineData(HttpStatusCode.MisdirectedRequest, typeof(Exception))]
+        [InlineData(HttpStatusCode.UnprocessableEntity, typeof(Exception))]
+        [InlineData(HttpStatusCode.Locked, typeof(Exception))]
+        [InlineData(HttpStatusCode.FailedDependency, typeof(Exception))]
+        [InlineData(HttpStatusCode.UpgradeRequired, typeof(Exception))]
+        [InlineData(HttpStatusCode.PreconditionRequired, typeof(Exception))]
+        [InlineData(HttpStatusCode.TooManyRequests, typeof(Exception))]
+        [InlineData(HttpStatusCode.RequestHeaderFieldsTooLarge, typeof(Exception))]
+        [InlineData(HttpStatusCode.UnavailableForLegalReasons, typeof(Exception))]
+        public async Task ClientProxyBase_HandleResponse_4xx_ErrorStatus(HttpStatusCode statusCode, Type expectedException)
+        {
+            await TestMethod_HandleResponse(statusCode, expectedException);
         }
 
         [Theory]
@@ -113,25 +196,54 @@ namespace Shared.Tests
         [InlineData(HttpStatusCode.LoopDetected, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.NotExtended, ResultStatus.Failure)]
         [InlineData(HttpStatusCode.NetworkAuthenticationRequired, ResultStatus.Failure)]
-        public async Task ClientProxyBase_HandleResponse_5xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus)
+        public async Task ClientProxyBase_HandleResponseX_5xx_ErrorStatus(HttpStatusCode statusCode, ResultStatus resultStatus)
         {
-            await TestMethod(statusCode, resultStatus);
+            await TestMethod_HandleResponseX(statusCode, resultStatus);
         }
 
-        private async Task TestMethod(HttpStatusCode statusCode, ResultStatus resultStatus)
+        [Theory]
+        [InlineData(HttpStatusCode.InternalServerError, typeof(Exception))]
+        [InlineData(HttpStatusCode.NotImplemented, typeof(Exception))]
+        [InlineData(HttpStatusCode.BadGateway, typeof(Exception))]
+        [InlineData(HttpStatusCode.ServiceUnavailable, typeof(Exception))]
+        [InlineData(HttpStatusCode.GatewayTimeout, typeof(Exception))]
+        [InlineData(HttpStatusCode.HttpVersionNotSupported, typeof(Exception))]
+        [InlineData(HttpStatusCode.VariantAlsoNegotiates, typeof(Exception))]
+        [InlineData(HttpStatusCode.InsufficientStorage, typeof(Exception))]
+        [InlineData(HttpStatusCode.LoopDetected, typeof(Exception))]
+        [InlineData(HttpStatusCode.NotExtended, typeof(Exception))]
+        [InlineData(HttpStatusCode.NetworkAuthenticationRequired, typeof(Exception))]
+        public async Task ClientProxyBase_HandleResponse_5xx_ErrorStatus(HttpStatusCode statusCode, Type expectedException)
+        {
+            await TestMethod_HandleResponse(statusCode, expectedException);
+        }
+
+        private async Task TestMethod_HandleResponseX(HttpStatusCode statusCode, ResultStatus resultStatus)
         {
             var proxybase = new TestClient(new HttpClient());
-            var result = await proxybase.Test(new HttpResponseMessage(statusCode), CancellationToken.None);
+            var result = await proxybase.Test_HandleResponseX(new HttpResponseMessage(statusCode), CancellationToken.None);
             result.Status.ShouldBe(resultStatus);
+        }
 
+        private async Task TestMethod_HandleResponse(HttpStatusCode statusCode, Type expectedException)
+        {
+            var proxybase = new TestClient(new HttpClient());
+            var exception = Should.Throw<Exception>(async() => {
+                await proxybase.Test_HandleResponse(new HttpResponseMessage(statusCode), CancellationToken.None);
+            });
+            exception.ShouldBeOfType(expectedException);
         }
     }
 
     public class TestClient : ClientProxyBase.ClientProxyBase{
         public TestClient(HttpClient httpClient) : base(httpClient){
         }
+        public async Task Test_HandleResponse(HttpResponseMessage responseMessage, CancellationToken cancellationToken)
+        {
+            await this.HandleResponse(responseMessage, cancellationToken);
+        }
 
-        public async Task<Result<String>> Test(HttpResponseMessage responseMessage, CancellationToken cancellationToken){
+        public async Task<Result<String>> Test_HandleResponseX(HttpResponseMessage responseMessage, CancellationToken cancellationToken){
             return await this.HandleResponseX(responseMessage, cancellationToken);
         }
     }
