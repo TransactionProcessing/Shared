@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Net.Http;
     using System.Threading;
@@ -9,6 +10,7 @@
     using EventHandling;
     using global::EventStore.Client;
 
+    [ExcludeFromCodeCoverage]
     public class SubscriptionWorker
     {
         #region Fields

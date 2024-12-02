@@ -2,11 +2,13 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Net.Http;
     using EventHandling;
     using global::EventStore.Client;
 
+    [ExcludeFromCodeCoverage]
     public static class SubscriptionWorkerHelper
     {
         #region Methods

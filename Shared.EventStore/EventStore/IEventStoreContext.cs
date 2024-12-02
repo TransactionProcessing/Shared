@@ -52,6 +52,9 @@ namespace Shared.EventStore.EventStore{
                                                      Int64 fromVersion,
                                                      CancellationToken cancellationToken);
 
+        Task<Result<List<ResolvedEvent>>> ReadLastEventsFromAll(Int64 numberEvents,
+                                                                CancellationToken cancellationToken);
+
         Task<Result<String>> RunTransientQuery(String query, CancellationToken cancellationToken);
         
         #endregion

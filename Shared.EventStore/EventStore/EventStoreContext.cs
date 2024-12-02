@@ -11,6 +11,7 @@ namespace Shared.EventStore.EventStore
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
+    using Azure;
     using global::EventStore.Client;
     using Grpc.Core;
     using Microsoft.Extensions.Logging;
@@ -208,6 +209,18 @@ namespace Shared.EventStore.EventStore
             catch (Exception e)
             {
                 return Result.Failure(e.GetExceptionMessages());
+            }
+        }
+
+        public async Task<Result<List<ResolvedEvent>>> ReadLastEventsFromAll(Int64 numberEvents,
+                                                                             CancellationToken cancellationToken) {
+            try {
+                IAsyncEnumerable<ResolvedEvent> readResult = this.EventStoreClient.ReadAllAsync(Direction.Backwards, Position.End, maxCount: numberEvents, resolveLinkTos: true, cancellationToken: cancellationToken);
+
+                return Result.Success(await readResult.ToListAsync(cancellationToken));
+            }
+            catch (Exception ex) {
+                return Result.Failure(ex.GetExceptionMessages());
             }
         }
 

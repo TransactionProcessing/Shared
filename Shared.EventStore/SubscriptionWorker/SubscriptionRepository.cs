@@ -2,12 +2,14 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
     using global::EventStore.Client;
     using Newtonsoft.Json;
 
+    [ExcludeFromCodeCoverage]
     public class SubscriptionRepository : ISubscriptionRepository
     {
         #region Fields
