@@ -55,7 +55,7 @@ public static class IApplicationBuilderExtenstions
         }
     }
 
-    private static List<SubscriptionWorker> ConfigureSubscriptions(ISubscriptionRepository subscriptionRepository,
+    internal static List<SubscriptionWorker> ConfigureSubscriptions(ISubscriptionRepository subscriptionRepository,
                                                                    SubscriptionWorkersRoot configuration,
                                                                    String eventStoreConnectionString,
                                                                    Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers,

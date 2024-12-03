@@ -1,4 +1,7 @@
-﻿namespace Shared.EventStore.EventStore
+﻿using IdentityModel.Client;
+using SimpleResults;
+
+namespace Shared.EventStore.EventStore
 {
     using System;
     using System.Collections.Generic;
@@ -15,6 +18,9 @@
     /// <seealso cref="Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck" />
     public class EventStoreConnectionStringHealthCheck : IHealthCheck
     {
+        private readonly EventStoreClient Client;
+private readonly EventStoreProjectionManagementClient ProjectionManagementClient;
+
         #region Fields
 
         /// <summary>
@@ -26,6 +32,8 @@
         /// The user credentials
         /// </summary>
         private readonly UserCredentials UserCredentials;
+
+        private readonly IEventStoreContext Context;
 
         #endregion
 
@@ -40,11 +48,18 @@
         {
             this.EventStoreClientSettings = settings;
             this.UserCredentials = userCredentials;
+            this.Client = new EventStoreClient(settings);
+            this.ProjectionManagementClient = new(settings);
+            this.Context = new EventStoreContext(this.Client, this.ProjectionManagementClient);
         }
 
         public EventStoreConnectionStringHealthCheck(EventStoreClientSettings settings) : this(settings, null)
         {
             
+        }
+
+        internal EventStoreConnectionStringHealthCheck(IEventStoreContext context) {
+            this.Context = context;
         }
 
         #endregion
@@ -65,21 +80,18 @@
         {
             try
             {
-                EventStoreClient client = new(this.EventStoreClientSettings);
-                IAsyncEnumerable<ResolvedEvent> readResult = client.ReadAllAsync(Direction.Forwards, Position.Start,
-                                                                                 userCredentials: this.UserCredentials,
-                                                                                 resolveLinkTos: true,
-                                                                                 cancellationToken: cancellationToken);
-                if (await readResult.AnyAsync(cancellationToken) == false)
-                {
-                    return HealthCheckResult.Unhealthy("$all stream not found");
+                Result<List<ResolvedEvent>> readResult = await this.Context.ReadLastEventsFromAll(1, cancellationToken);
+                if (readResult.IsFailed) {
+                    return HealthCheckResult.Unhealthy("Failed during read of $all stream");
                 }
-
+                if (readResult.Data.Any() == false)
+                    return HealthCheckResult.Unhealthy("$all stream not found");
+                
                 return HealthCheckResult.Healthy();
             }
             catch(Exception ex)
             {
-                return new HealthCheckResult(context.Registration.FailureStatus, exception:ex);
+                return new HealthCheckResult(HealthStatus.Unhealthy, exception:ex);
             }
         }
 

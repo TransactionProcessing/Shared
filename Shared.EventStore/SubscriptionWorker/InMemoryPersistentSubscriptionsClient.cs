@@ -2,11 +2,13 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using global::EventStore.Client;
 
+    [ExcludeFromCodeCoverage]
     public class InMemoryPersistentSubscriptionsClient : IPersistentSubscriptionsClient
     {
         private Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> EventAppeared;

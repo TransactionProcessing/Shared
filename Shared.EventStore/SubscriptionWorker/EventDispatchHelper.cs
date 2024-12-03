@@ -1,4 +1,5 @@
-﻿using Shared.Exceptions;
+﻿using System.Diagnostics.CodeAnalysis;
+using Shared.Exceptions;
 using SimpleResults;
 
 namespace Shared.EventStore.SubscriptionWorker
@@ -11,6 +12,7 @@ namespace Shared.EventStore.SubscriptionWorker
     using DomainDrivenDesign.EventSourcing;
     using EventHandling;
 
+    [ExcludeFromCodeCoverage]
     public static class EventDispatchHelper
     {
         #region Methods
