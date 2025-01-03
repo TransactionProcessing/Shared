@@ -1,8 +1,10 @@
 ﻿using System;
+using Newtonsoft.Json;
 using SimpleResults;
 
 namespace ClientProxyBase
 {
+    using System.Collections;
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
@@ -64,24 +66,7 @@ namespace ClientProxyBase
 
             return result;
         }
-
-        /// <summary>
-        /// Handles the response.
-        /// </summary>
-        /// <param name="responseMessage">The response message.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
-        /// <exception cref="System.InvalidOperationException"></exception>
-        /// <exception cref="System.UnauthorizedAccessException"></exception>
-        /// <exception cref="InvalidDataException"></exception>
-        /// <exception cref="System.Exception">An internal error has occurred
-        /// or
-        /// An internal error has occurred</exception>
-        /// <exception cref="InvalidOperationException"></exception>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        /// <exception cref="Exception">An internal error has occurred
-        /// or
-        /// An internal error has occurred</exception>
+        
         protected virtual async Task<Result<String>> HandleResponseX(HttpResponseMessage responseMessage,
                                                                            CancellationToken cancellationToken) {
 
@@ -102,6 +87,25 @@ namespace ClientProxyBase
             }
 
             return Result.Success<String>(content);
+        }
+
+        protected virtual ResponseData<T> HandleResponseContent<T>(String content)
+        {
+            if (String.IsNullOrEmpty(content))
+            {
+                T data = default(T);
+                if (typeof(IEnumerable).IsAssignableFrom(typeof(T)))
+                {
+                    data = (T)Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(T).GetGenericArguments()));
+                }
+                else
+                {
+                    data = (T)Activator.CreateInstance(typeof(T));
+                }
+
+                return new ResponseData<T> { Data = data };
+            }
+            return JsonConvert.DeserializeObject<ResponseData<T>>(content);
         }
 
         #endregion
