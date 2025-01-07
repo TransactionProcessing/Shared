@@ -185,7 +185,7 @@ namespace Shared.EventStore.EventStore
             try {
                 do {
                     response = this.EventStoreClient.ReadStreamAsync(Direction.Forwards, streamName,
-                        StreamPosition.FromInt64(fromVersion), 2, resolveLinkTos: true, deadline: this.Deadline,
+                        StreamPosition.FromInt64(fromVersion), Int32.MaxValue, resolveLinkTos: true, deadline: this.Deadline,
                         cancellationToken: cancellationToken);
 
                     // Check the read state
