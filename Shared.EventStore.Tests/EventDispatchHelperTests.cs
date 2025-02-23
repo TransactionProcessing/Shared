@@ -60,7 +60,7 @@ public class EventDispatchHelperTests{
         handlers.Add(domainEventHandler2.Object);
         Result dispatchResult = await @event.DispatchToHandlers(handlers, CancellationToken.None);
         dispatchResult.IsFailed.ShouldBeTrue();
-        dispatchResult.Message.ShouldBe("One or more event handlers have failed. Error Messages [Error Message 1\r\nError Message 2\r\nError Message 3]");
+        dispatchResult.Message.ShouldBe($"One or more event handlers have failed. Error Messages [Error Message 1{Environment.NewLine}Error Message 2{Environment.NewLine}Error Message 3]");
 
     }
 }
