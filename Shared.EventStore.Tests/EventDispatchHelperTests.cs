@@ -41,4 +41,26 @@ public class EventDispatchHelperTests{
         dispatchResult.IsFailed.ShouldBeTrue();
         
     }
+
+    [Fact]
+    public async Task EventDispatchHelper_DispatchToHandlers_HandlersFail_ErrorThrown()
+    {
+        AggregateNameSetEvent @event = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+        List<IDomainEventHandler> handlers = new List<IDomainEventHandler>();
+        Mock<IDomainEventHandler> domainEventHandler = new Mock<IDomainEventHandler>();
+        domainEventHandler.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure("Error Message 1"));
+        Mock<IDomainEventHandler> domainEventHandler2 = new Mock<IDomainEventHandler>();
+        domainEventHandler2.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(new List<String>() {
+                "Error Message 2",
+                "Error Message 3"
+            }));
+        handlers.Add(domainEventHandler.Object);
+        handlers.Add(domainEventHandler2.Object);
+        Result dispatchResult = await @event.DispatchToHandlers(handlers, CancellationToken.None);
+        dispatchResult.IsFailed.ShouldBeTrue();
+        dispatchResult.Message.ShouldBe($"One or more event handlers have failed. Error Messages [Error Message 1{Environment.NewLine}Error Message 2{Environment.NewLine}Error Message 3]");
+
+    }
 }
