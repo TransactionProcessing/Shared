@@ -34,8 +34,15 @@ namespace Shared.EventStore.SubscriptionWorker
             {
                 Result[] results = await all;
                 if (results.Any(r => r.IsFailed)) {
-                    IEnumerable<String> failedResults = results.Where(r => r.IsFailed).Select(r => r.Message);
-                    String errors = String.Join(Environment.NewLine, failedResults);
+                    var failedResults = results.Where(r => r.IsFailed && String.IsNullOrEmpty(r.Message) == false).Select(r => r.Message).ToList();
+                    var failedResults2 = results.Where(r => r.IsFailed).Select(r => r.Errors).ToList();
+                    var masterList = new List<String>();
+                    masterList.AddRange(failedResults);
+                    foreach (IEnumerable<String> enumerable in failedResults2) {
+                        masterList.AddRange(enumerable);
+                    }
+                    
+                    String errors = String.Join(Environment.NewLine, masterList);
                     // We have a failed result so need to do something with it
                     return Result.Failure($"One or more event handlers have failed. Error Messages [{errors}]");
                 }
