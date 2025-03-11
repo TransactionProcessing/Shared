@@ -63,10 +63,6 @@ public abstract class BaseDockerHelper{
 
     protected List<(DockerServices, IContainerService)> Containers;
 
-    protected String EstateManagementContainerName;
-
-    protected Int32 EstateManagementPort;
-
     protected String EventStoreContainerName;
 
     protected Int32 EventStoreHttpPort;
@@ -139,7 +135,6 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservicewindows:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandlerwindows:master", true));
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhostswindows:master", true));
-            this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagementwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
@@ -152,12 +147,11 @@ public abstract class BaseDockerHelper{
                 this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/azure-sql-edge", true));
             }
 
-            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:24.2.0-jammy", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:24.10.0-jammy", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
             this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
-            this.ImageDetails.Add(ContainerType.EstateManagement, ("stuartferguson/estatemanagement:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
@@ -217,7 +211,6 @@ public abstract class BaseDockerHelper{
                                    $"AppSettings:ClientSecret={this.ClientDetails.clientSecret}",
                                    $"AppSettings:MessagingServiceApi=http://{this.MessagingServiceContainerName}:{DockerPorts.MessagingServiceDockerPort}",
                                    $"AppSettings:TransactionProcessorApi=http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}",
-                                   $"AppSettings:EstateManagementApi=http://{this.EstateManagementContainerName}:{DockerPorts.EstateManagementDockerPort}",
                                    healthCheckConnString
                                };
     }
@@ -313,7 +306,6 @@ public abstract class BaseDockerHelper{
         // Setup the container names
         this.EventStoreContainerName = $"eventstore{this.TestId:N}";
         this.SecurityServiceContainerName = $"securityservice{this.TestId:N}";
-        this.EstateManagementContainerName = $"estate{this.TestId:N}";
         this.TestHostContainerName = $"testhosts{this.TestId:N}";
         this.CallbackHandlerContainerName = $"callbackhandler{this.TestId:N}";
         this.FileProcessorContainerName = $"fileprocessor{this.TestId:N}";
@@ -321,30 +313,7 @@ public abstract class BaseDockerHelper{
         this.TransactionProcessorContainerName = $"transaction{this.TestId:N}";
         this.TransactionProcessorAclContainerName = $"transactionacl{this.TestId:N}";
     }
-
-    public virtual ContainerBuilder SetupEstateManagementContainer(){
-        this.Trace("About to Start Estate Management Container");
-
-        List<String> environmentVariables = this.GetCommonEnvironmentVariables();
-        environmentVariables.Add($"urls=http://*:{DockerPorts.EstateManagementDockerPort}");
-        environmentVariables.Add(this.SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", this.UseSecureSqlServerDatabase));
-
-        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.EstateManagement);
-
-        if (additionalEnvironmentVariables != null){
-            environmentVariables.AddRange(additionalEnvironmentVariables);
-        }
-
-        ContainerBuilder estateManagementContainer = new Builder().UseContainer().WithName(this.EstateManagementContainerName)
-                                                                  .WithEnvironment(environmentVariables.ToArray())
-                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.EstateManagement))
-                                                                  .ExposePort(DockerPorts.EstateManagementDockerPort)
-                                                                  .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
-                                                                  .SetDockerCredentials(this.DockerCredentials);
-
-        return estateManagementContainer;
-    }
-
+    
     public virtual ContainerBuilder SetupEventStoreContainer(){
         this.Trace("About to Start Event Store Container");
 
@@ -814,7 +783,6 @@ public abstract class BaseDockerHelper{
     protected async Task DoHealthCheck(ContainerType containerType){
         (String, Int32) containerDetails = containerType switch{
             ContainerType.CallbackHandler => ("http", this.CallbackHandlerPort),
-            ContainerType.EstateManagement => ("http", this.EstateManagementPort),
             ContainerType.FileProcessor => ("http", this.FileProcessorPort),
             ContainerType.MessagingService => ("http", this.MessagingServicePort),
             ContainerType.TestHost => ("http", this.TestHostServicePort),
@@ -970,7 +938,6 @@ public abstract class BaseDockerHelper{
                 DockerServices.CallbackHandler => ContainerType.CallbackHandler,
                 DockerServices.MessagingService => ContainerType.MessagingService,
                 DockerServices.SecurityService => ContainerType.SecurityService,
-                DockerServices.EstateManagement => ContainerType.EstateManagement,
                 DockerServices.FileProcessor => ContainerType.FileProcessor,
                 DockerServices.TestHost => ContainerType.TestHost,
                 DockerServices.TransactionProcessor => ContainerType.TransactionProcessor,
@@ -1030,9 +997,6 @@ public abstract class BaseDockerHelper{
                 break;
             case ContainerType.TestHost:
                 this.TestHostServicePort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TestHostPort}/tcp").Port;
-                break;
-            case ContainerType.EstateManagement:
-                this.EstateManagementPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.EstateManagementDockerPort}/tcp").Port;
                 break;
             case ContainerType.TransactionProcessor:
                 this.TransactionProcessorPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorDockerPort}/tcp").Port;
