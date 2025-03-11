@@ -41,7 +41,7 @@ public class GenericSteps
         this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
 
         DockerServices services = DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
-                                  DockerServices.CallbackHandler | DockerServices.EstateManagement | DockerServices.FileProcessor |
+                                  DockerServices.CallbackHandler | DockerServices.FileProcessor |
                                   DockerServices.TestHost | DockerServices.TransactionProcessor |
                                   DockerServices.TransactionProcessorAcl;
 

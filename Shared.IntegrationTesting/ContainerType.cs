@@ -8,7 +8,6 @@ public enum ContainerType
     SecurityService,
     CallbackHandler,
     TestHost,
-    EstateManagement,
     TransactionProcessor,
     FileProcessor,
     TransactionProcessorAcl,

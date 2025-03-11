@@ -25,10 +25,9 @@ public enum DockerServices{
     SecurityService = 8,
     CallbackHandler = 16,
     TestHost = 32,
-    EstateManagement = 64,
-    TransactionProcessor = 128,
-    FileProcessor = 256,
-    TransactionProcessorAcl = 512 }
+    TransactionProcessor = 64,
+    FileProcessor = 128,
+    TransactionProcessorAcl = 256 }
 
 public abstract class DockerHelper : BaseDockerHelper
 {
@@ -114,7 +113,6 @@ public abstract class DockerHelper : BaseDockerHelper
         await StartContainer2(this.SetupSecurityServiceContainer, networks, DockerServices.SecurityService);
         await StartContainer2(this.SetupCallbackHandlerContainer, networks, DockerServices.CallbackHandler);
         await StartContainer2(this.SetupTestHostContainer, networks, DockerServices.TestHost);
-        await StartContainer2(this.SetupEstateManagementContainer, networks, DockerServices.EstateManagement);
         await StartContainer2(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
         await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
         await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
