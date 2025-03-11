@@ -32,16 +32,8 @@
             this.EventHandlerConfiguration = eventHandlerConfiguration;
 
             this.DomainEventHandlers = new Dictionary<String, IDomainEventHandler>();
-
-            List<String> handlers = new List<String>();
-
-            // Precreate the Event Handlers here
-            foreach (KeyValuePair<String, String[]> handlerConfig in eventHandlerConfiguration)
-            {
-                handlers.AddRange(handlerConfig.Value);
-            }
-
-            IEnumerable<String> distinctHandlers = handlers.Distinct();
+            
+            IEnumerable<String> distinctHandlers = eventHandlerConfiguration.Keys.Select(k => k);
 
             foreach (String handlerTypeString in distinctHandlers)
             {
@@ -72,15 +64,17 @@
             String typeString = domainEvent.GetType().Name;
 
             // Lookup the list
-            Boolean eventIsConfigured = this.EventHandlerConfiguration.ContainsKey(typeString);
-
+            var eventIsConfigured = this.EventHandlerConfiguration.Any(kv => kv.Value.Contains(typeString));
             if (!eventIsConfigured)
             {
                 // No handlers setup, return null and let the caller decide what to do next
                 return null;
             }
 
-            String[] handlers = this.EventHandlerConfiguration[typeString];
+            List<String> handlers = this.EventHandlerConfiguration
+                .Where(kv => kv.Value.Contains(typeString))
+                .Select(kv => kv.Key)
+                .ToList();
 
             List<IDomainEventHandler> handlersToReturn = new List<IDomainEventHandler>();
 

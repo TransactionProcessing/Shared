@@ -18,3 +18,14 @@ public class TestDomainEventHandler : IDomainEventHandler
         return Result.Success();
     }
 }
+
+public class TestDomainEventHandler2 : IDomainEventHandler
+{
+    public List<IDomainEvent> DomainEvents = new();
+
+    public async Task<Result> Handle(IDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        DomainEvents.Add(domainEvent);
+        return Result.Success();
+    }
+}

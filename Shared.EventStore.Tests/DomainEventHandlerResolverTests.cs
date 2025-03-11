@@ -14,18 +14,22 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void DomainEventHandlerResolver_GetDomainEventHandlers_HandlerResolved(){
             Dictionary<String, String[]> eventHandlerConfiguration= new Dictionary<String, String[]>();
-            Func<Type, IDomainEventHandler> createEventHandlerFunc = (t) => {
-                                                                         return new TestDomainEventHandler();
-                                                                     };
 
-            List<String> handlers = new List<String>();
-            handlers.Add("Shared.EventStore.Tests.TestObjects.TestDomainEventHandler, Shared.EventStore.Tests");
-            eventHandlerConfiguration.Add("EstateCreatedEvent", handlers.ToArray());
+            IDomainEventHandler CreateEventHandlerFunc(Type t) {
+                if (t.Name == nameof(TestDomainEventHandler)) return new TestDomainEventHandler();
 
-            DomainEventHandlerResolver r = new DomainEventHandlerResolver(eventHandlerConfiguration, createEventHandlerFunc);
+                if (t.Name == nameof(TestDomainEventHandler2)) return new TestDomainEventHandler2();
+                return null;
+            }
+
+            eventHandlerConfiguration.Add("Shared.EventStore.Tests.TestObjects.TestDomainEventHandler, Shared.EventStore.Tests", new String[]{"EstateCreatedEvent"});
+            eventHandlerConfiguration.Add("Shared.EventStore.Tests.TestObjects.TestDomainEventHandler2, Shared.EventStore.Tests", new String[] { "EstateCreatedEvent" });
+
+            DomainEventHandlerResolver r = new DomainEventHandlerResolver(eventHandlerConfiguration, CreateEventHandlerFunc);
             List<IDomainEventHandler> result  = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
-            result.Count.ShouldBe(1);
-            result.Single().ShouldBeOfType(typeof(TestDomainEventHandler));
+            result.Count.ShouldBe(2);
+            result.Count(x => x.GetType() == typeof(TestDomainEventHandler)).ShouldBe(1);
+            result.Count(x => x.GetType() == typeof(TestDomainEventHandler2)).ShouldBe(1);
         }
 
         [Fact]
