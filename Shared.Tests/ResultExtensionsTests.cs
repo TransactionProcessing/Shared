@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Results;
+using Shared.Results.Web;
 using Shouldly;
 using SimpleResults;
 using Xunit;

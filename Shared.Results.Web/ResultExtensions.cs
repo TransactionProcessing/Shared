@@ -3,7 +3,7 @@ using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using SimpleResults;
 
-namespace Shared.Results;
+namespace Shared.Results.Web;
 
 public static class ResultExtensions
 {
