@@ -37,6 +37,8 @@ public enum DockerEnginePlatform{
 public abstract class BaseDockerHelper{
     #region Fields
 
+    public Boolean SkipHealthChecks;
+
     public Dictionary<ContainerType, List<String>> AdditionalVariables = new Dictionary<ContainerType, List<String>>();
 
     public (String URL, String UserName, String Password)? DockerCredentials;
@@ -114,7 +116,8 @@ public abstract class BaseDockerHelper{
 
     #region Constructors
 
-    public BaseDockerHelper(){
+    protected BaseDockerHelper(Boolean skipHealthChecks=false) {
+        this.SkipHealthChecks = skipHealthChecks;
         this.Containers = new ();
         this.TestNetworks = new List<INetworkService>();
         this.HealthCheckClient = new HealthCheckClient(new HttpClient(new SocketsHttpHandler{
@@ -949,16 +952,24 @@ public abstract class BaseDockerHelper{
 
             this.SetHostPortForService(type, startedContainer);
 
-            switch(type){
-                case ContainerType.EventStore:
-                    await DoEventStoreHealthCheck();
-                    break;
-                case ContainerType.SqlServer:
-                    await DoSqlServerHealthCheck(startedContainer);
-                    break;
-                default:
-                    await this.DoHealthCheck(type);
-                    break;
+            if (this.SkipHealthChecks == true) {
+                this.Trace($"Container [{buildContainerFunc.Method.Name}] health check skipped");
+            }
+                
+            else {
+             
+                switch (type)
+                {
+                    case ContainerType.EventStore:
+                        await DoEventStoreHealthCheck();
+                        break;
+                    case ContainerType.SqlServer:
+                        await DoSqlServerHealthCheck(startedContainer);
+                        break;
+                    default:
+                        await this.DoHealthCheck(type);
+                        break;
+                }
             }
 
             this.Trace($"Container [{buildContainerFunc.Method.Name}] started");
