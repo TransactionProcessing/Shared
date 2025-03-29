@@ -31,7 +31,7 @@ public enum DockerServices{
 
 public abstract class DockerHelper : BaseDockerHelper
 {
-    protected DockerHelper() :base(){
+    protected DockerHelper(Boolean skipHealthChecks=false) :base(skipHealthChecks){
     }
     
     protected  virtual void SetHostTraceFolder(String scenarioName) {
