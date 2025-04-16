@@ -42,7 +42,13 @@ namespace Shared.EventStore.Tests
                         Enabled = true,
                         IsOrdered = false,
                         InstanceCount = 1,
+                    },new SubscriptionWorkerConfig
+                    {
+                        Enabled = true,
+                        IsDomainOnly = true,
+                        InstanceCount = 1,
                     }
+
                 }
             };
             Mock<IDomainEventHandlerResolver> deh = new Mock<IDomainEventHandlerResolver>();
