@@ -87,28 +87,54 @@ public static class IApplicationBuilderExtenstions
                     workers.Add(worker);
                 }
             }
+            else if (configurationSubscriptionWorker.IsDomainOnly) {
+                KeyValuePair<String, IDomainEventHandlerResolver> ehr = eventHandlerResolvers.SingleOrDefault(e => e.Key == "Domain");
+
+                if (ehr.Value != null)
+                {
+                    for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++)
+                    {
+                        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, ehr.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds);
+
+                        worker.Trace += (_,
+                                         args) => traceHandler(TraceEventType.Information, "DOMAIN", args.Message);
+                        worker.Warning += (_,
+                                           args) => traceHandler(TraceEventType.Warning, "DOMAIN", args.Message);
+                        worker.Error += (_,
+                                         args) => traceHandler(TraceEventType.Error, "DOMAIN", args.Message);
+                        worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
+                        worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
+                        worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
+                        worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
+
+                        workers.Add(worker);
+                    }
+                }
+            }
             else {
-                List<KeyValuePair<String, IDomainEventHandlerResolver>> resolvers = eventHandlerResolvers.Where(e => e.Key != "Ordered").ToList();
+                KeyValuePair<String, IDomainEventHandlerResolver> ehr = eventHandlerResolvers.SingleOrDefault(e => e.Key == "Main");
+                if (ehr.Value != null)
+                {
+                    for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++)
+                    {
+                        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString,
+                            ehr.Value,
+                            subscriptionRepository,
+                            configurationSubscriptionWorker.InflightMessages,
+                            configuration.PersistentSubscriptionPollingInSeconds);
 
-                foreach (KeyValuePair<String, IDomainEventHandlerResolver> domainEventHandlerResolver in resolvers) {
+                        worker.Trace += (_,
+                                         args) => traceHandler(TraceEventType.Information, "MAIN", args.Message);
+                        worker.Warning += (_,
+                                           args) => traceHandler(TraceEventType.Warning, "MAIN", args.Message);
+                        worker.Error += (_,
+                                         args) => traceHandler(TraceEventType.Error, "MAIN", args.Message);
+                        worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
+                        worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
+                        worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
+                        worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
 
-                    if (domainEventHandlerResolver.Value != null) {
-                        for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++) {
-                            SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, domainEventHandlerResolver.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds);
-
-                            worker.Trace += (_,
-                                             args) => traceHandler(TraceEventType.Information, domainEventHandlerResolver.Key.ToUpper(), args.Message);
-                            worker.Warning += (_,
-                                               args) => traceHandler(TraceEventType.Warning, domainEventHandlerResolver.Key.ToUpper(), args.Message);
-                            worker.Error += (_,
-                                             args) => traceHandler(TraceEventType.Error, domainEventHandlerResolver.Key.ToUpper(), args.Message);
-                            worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
-                            worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
-                            worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
-                            worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
-
-                            workers.Add(worker);
-                        }
+                        workers.Add(worker);
                     }
                 }
             }

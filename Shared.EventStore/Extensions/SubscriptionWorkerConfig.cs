@@ -23,6 +23,7 @@ public class SubscriptionWorkerConfig
     public Int32 InstanceCount { get; set; }
 
     public Boolean IsOrdered { get; set; }
+    public Boolean IsDomainOnly { get; set; }
 
     public String WorkerName { get; set; }
 
