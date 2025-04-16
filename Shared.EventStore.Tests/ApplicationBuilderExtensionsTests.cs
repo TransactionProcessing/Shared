@@ -50,10 +50,11 @@ namespace Shared.EventStore.Tests
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             eventHandlerResolvers.Add("Ordered", deh.Object);
             eventHandlerResolvers.Add("Main", deh.Object);
+            eventHandlerResolvers.Add("Domain", deh.Object);
             Action<TraceEventType, String, String> traceHandler = (et, type, msg)=> { TestOutputHelper.WriteLine(msg); };
             var result = IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository.Object, config,
                 eventStoreConnectionString, eventHandlerResolvers, traceHandler);
-            result.Count.ShouldBe(2);
+            result.Count.ShouldBe(3);
         }
 
         [Fact]

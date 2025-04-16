@@ -88,27 +88,27 @@ public static class IApplicationBuilderExtenstions
                 }
             }
             else {
-                KeyValuePair<String, IDomainEventHandlerResolver> ehr = eventHandlerResolvers.SingleOrDefault(e => e.Key == "Main");
-                if (ehr.Value != null) {
-                    for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++) {
-                        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString,
-                                                                                                ehr.Value,
-                                                                                                subscriptionRepository,
-                                                                                                configurationSubscriptionWorker.InflightMessages,
-                                                                                                configuration.PersistentSubscriptionPollingInSeconds);
+                List<KeyValuePair<String, IDomainEventHandlerResolver>> resolvers = eventHandlerResolvers.Where(e => e.Key != "Ordered").ToList();
 
-                        worker.Trace += (_,
-                                         args) => traceHandler(TraceEventType.Information, "MAIN", args.Message);
-                        worker.Warning += (_,
-                                           args) => traceHandler(TraceEventType.Warning, "MAIN", args.Message);
-                        worker.Error += (_,
-                                         args) => traceHandler(TraceEventType.Error, "MAIN", args.Message);
-                        worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
-                        worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
-                        worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
-                        worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
+                foreach (KeyValuePair<String, IDomainEventHandlerResolver> domainEventHandlerResolver in resolvers) {
 
-                        workers.Add(worker);
+                    if (domainEventHandlerResolver.Value != null) {
+                        for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++) {
+                            SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, domainEventHandlerResolver.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds);
+
+                            worker.Trace += (_,
+                                             args) => traceHandler(TraceEventType.Information, domainEventHandlerResolver.Key.ToUpper(), args.Message);
+                            worker.Warning += (_,
+                                               args) => traceHandler(TraceEventType.Warning, domainEventHandlerResolver.Key.ToUpper(), args.Message);
+                            worker.Error += (_,
+                                             args) => traceHandler(TraceEventType.Error, domainEventHandlerResolver.Key.ToUpper(), args.Message);
+                            worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
+                            worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
+                            worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
+                            worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
+
+                            workers.Add(worker);
+                        }
                     }
                 }
             }
