@@ -113,7 +113,7 @@ public class AggregateRepositoryTests{
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
 
-        Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
+        Result result = await testAggregateRepository.SaveChanges(testAggregate.Data, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
     }
 
@@ -134,7 +134,7 @@ public class AggregateRepositoryTests{
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
         testAggregate.Data.SetAggregateName("New name", Guid.NewGuid());
-        Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
+        Result result = await testAggregateRepository.SaveChanges(testAggregate.Data, CancellationToken.None);
         result.IsFailed.ShouldBeTrue();
     }
 
@@ -172,7 +172,8 @@ public class AggregateRepositoryTests{
         context.Setup(c => c.GetEventsBackward(It.IsAny<String>(), It.IsAny<Int32>(), It.IsAny<CancellationToken>())).ReturnsAsync(e);
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Object, factory);
-        TestAggregate testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
+        Result<TestAggregate> testAggregaterResult = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
+        var testAggregate = testAggregaterResult.Data;
         testAggregate.SetAggregateName("New name", Guid.NewGuid());
         Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();

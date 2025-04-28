@@ -1,16 +1,5 @@
 ﻿namespace Shared.IntegrationTesting;
 
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Security;
-using System.Threading;
-using System.Threading.Tasks;
 using Ductus.FluentDocker.Builders;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
@@ -25,8 +14,20 @@ using HealthChecks;
 using Logger;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Security;
+using System.Threading;
+using System.Threading.Tasks;
 
 public enum DockerEnginePlatform{
     Unknown, 
@@ -783,8 +784,8 @@ public abstract class BaseDockerHelper{
         });
     }
 
-    protected async Task DoHealthCheck(ContainerType containerType){
-        (String, Int32) containerDetails = containerType switch{
+    protected async Task DoHealthCheck(ContainerType containerType) {
+        (String, Int32) containerDetails = containerType switch {
             ContainerType.CallbackHandler => ("http", this.CallbackHandlerPort),
             ContainerType.FileProcessor => ("http", this.FileProcessorPort),
             ContainerType.MessagingService => ("http", this.MessagingServicePort),
@@ -799,20 +800,23 @@ public abstract class BaseDockerHelper{
             return;
 
         await Retry.For(async () => {
-                            this.Trace($"About to do health check for {containerType}");
+            this.Trace($"About to do health check for {containerType}");
 
-                            String healthCheck =
-                                await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
+            SimpleResults.Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
-                            HealthCheckResult result = JsonConvert.DeserializeObject<HealthCheckResult>(healthCheck);
+            if (healthCheckResult.IsSuccess) {
+                HealthChecks.HealthCheckResult result = JsonConvert.DeserializeObject<HealthChecks.HealthCheckResult>(healthCheckResult.Data);
 
-                            this.Trace($"health check complete for {containerType} result is [{healthCheck}]");
+                this.Trace($"health check complete for {containerType} result is [{healthCheckResult.Data}]");
 
-                            result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheck}");
-                            this.Trace($"health check complete for {containerType}");
-                        },
-                        TimeSpan.FromMinutes(3),
-                        TimeSpan.FromSeconds(20));
+                result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheckResult.Data}");
+                this.Trace($"health check complete for {containerType}");
+            }
+            else {
+                this.Trace($"health check failed for {containerType}");
+                throw new Exception($"Health check failed for {containerType} [{healthCheckResult.Message}]");
+            }
+        }, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
     }
 
     protected void Error(String message, Exception ex){
