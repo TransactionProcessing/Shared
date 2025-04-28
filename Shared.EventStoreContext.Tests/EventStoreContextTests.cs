@@ -295,7 +295,7 @@ namespace Shared.EventStore.Tests{
             var definition = new{
                                     estates = new List<String>()
                                 };
-            var result = JsonConvert.DeserializeAnonymousType(queryResult, definition);
+            var result = JsonConvert.DeserializeAnonymousType(queryResult.Data, definition);
 
             result.estates.Contains(event1.EstateName).ShouldBeTrue();
             result.estates.Contains(event2.EstateName).ShouldBeTrue();
