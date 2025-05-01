@@ -21,10 +21,14 @@ jobs:
 
   move-issues:
     needs: get-date
+    run: |
+      echo "PR Number: ${{ github.event.pull_request.number }}"
+      echo "Project Column Name: Review"
+      echo "Project Name Prefix: ${{ needs.get-date.outputs.project_name_prefix }}"
     uses: TransactionProcessing/org-ci-workflows/.github/workflows/move-linked-issue.yml@main
     with:
       pr_number: ${{ github.event.pull_request.number }}
       project_column_name: "Review"
-      #project_name_prefix: ${{ needs.get-date.outputs.project_name_prefix }}
+      project_name_prefix: ${{ needs.get-date.outputs.project_name_prefix }}
     secrets:
       gh_token: ${{ secrets.GH_TOKEN }}
