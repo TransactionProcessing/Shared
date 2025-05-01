@@ -1,8 +1,11 @@
-name: Move PR Issues to Project Column
+name: Move Linked Issues
 
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize]
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   get-date:
@@ -10,25 +13,15 @@ jobs:
     outputs:
       project_name_prefix: ${{ steps.format_date.outputs.formatted_date }}
     steps:
-    - name: Get PR creation date
-      id: format_date
-      run: |
-        PR_DATE="${{ github.event.pull_request.created_at }}"
-        FORMATTED_DATE=$(date -d "$PR_DATE" "+%B %Y")  # Format to Month Year
-        echo "formatted_date=${FORMATTED_DATE} Sprint"
-        echo "formatted_date=${FORMATTED_DATE} Sprint" >> $GITHUB_ENV
-        echo "::set-output name=formatted_date::${FORMATTED_DATE} Sprint"  # Set the output correctly
-
-  debug:
-    needs: get-date
-    runs-on: ubuntu-latest
-    steps:
-      - name: debug
-        id: debugoutput
+      - name: Get PR creation date
+        id: format_date
         run: |
-          echo "PR Number: ${{ github.event.pull_request.number }}"
-          echo "Project Column Name: Review"
-          echo "Project Name Prefix: ${{ needs.get-date.outputs.project_name_prefix }}"    
+          # Extract the month and year from the PR creation date
+          PR_DATE="${{ github.event.pull_request.created_at }}"
+          FORMATTED_DATE=$(date -d "$PR_DATE" "+%B %Y")  # Format to Month Year
+          echo "formatted_date=${FORMATTED_DATE} Sprint"
+          echo "formatted_date=${FORMATTED_DATE} Sprint" >> $GITHUB_ENV  # Set the formatted date to an environment variable
+          echo "project_name_prefix=${FORMATTED_DATE} Sprint" >> $GITHUB_ENV  # Set the project name prefix to an environment variable
 
   move-issues:
     needs: get-date
@@ -36,6 +29,6 @@ jobs:
     with:
       pr_number: ${{ github.event.pull_request.number }}
       project_column_name: "Review"
-      project_name_prefix: ${{ needs.get-date.outputs.project_name_prefix }}
+      project_name_prefix: ${{ env.project_name_prefix }}  # Access the environment variable here
     secrets:
       gh_token: ${{ secrets.GH_TOKEN }}
