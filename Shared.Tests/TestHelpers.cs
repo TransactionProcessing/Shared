@@ -7,7 +7,6 @@ using Logger;
 using Microsoft.AspNetCore.Http;
 using Middleware;
 using Newtonsoft.Json;
-using Shared.Middleware;
 
 public static class TestHelpers{
     public static DefaultHttpContext CreateHttpContext()

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Shared.Exceptions;
+using Shared.Middleware;
 
 namespace Shared.Tests
 {
@@ -18,9 +20,6 @@ namespace Shared.Tests
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
     using NLog.LayoutRenderers.Wrappers;
-    using Shared.Exceptions;
-    using Shared.Logger;
-    using Shared.Middleware;
     using Shouldly;
     using Xunit;
 
