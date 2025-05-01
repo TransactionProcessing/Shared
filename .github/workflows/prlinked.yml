@@ -30,7 +30,10 @@ jobs:
         run: |
           echo "PR Number: ${{ github.event.pull_request.number }}"
           echo "Project Column Name: Review"
-          echo "Project Name Prefix: ${{ steps.format_date.outputs.project_name_prefix }}"
+          #echo "Project Name Prefix: ${{ steps.format_date.outputs.project_name_prefix }}"
+          echo "Project Name Prefix (from output): ${{ steps.format_date.outputs.formatted_date }}"
+          echo "Debug - Output file content:"
+          cat "$GITHUB_OUTPUT"  # This will show the contents of $GITHUB_OUTPUT
 
   move-issues:
     needs: get-date
