@@ -20,8 +20,13 @@ jobs:
           PR_DATE="${{ github.event.pull_request.created_at }}"
           FORMATTED_DATE=$(date -d "$PR_DATE" "+%B %Y")  # Format to Month Year
           echo "formatted_date=${FORMATTED_DATE} Sprint"
-          echo "formatted_date=${FORMATTED_DATE} Sprint" >> $GITHUB_ENV  # Set the formatted date to an environment variable
-          echo "project_name_prefix=${FORMATTED_DATE} Sprint" >> "$GITHUB_OUTPUT"  # Set the project name prefix to an environment variable
+          
+          # Set the output for the job
+          echo "project_name_prefix=${FORMATTED_DATE} Sprint" >> "$GITHUB_OUTPUT"  # Set output correctly
+          
+      - name: Debug output from get-date job
+        run: |
+          echo "Formatted Date (from $GITHUB_OUTPUT): $(cat "$GITHUB_OUTPUT")"
 
   debug-date:
     needs: get-date
@@ -31,10 +36,7 @@ jobs:
         run: |
           echo "PR Number: ${{ github.event.pull_request.number }}"
           echo "Project Column Name: Review"
-          #echo "Project Name Prefix: ${{ steps.format_date.outputs.project_name_prefix }}"
-          echo "Project Name Prefix (from output): ${{ steps.format_date.outputs.formatted_date }}"
-          echo "Debug - Output file content:"
-          cat "$GITHUB_OUTPUT"  # This will show the contents of $GITHUB_OUTPUT
+          echo "Project Name Prefix (from get-date job output): ${{ needs.get-date.outputs.project_name_prefix }}"  # Correct way to access output
 
   move-issues:
     needs: get-date
