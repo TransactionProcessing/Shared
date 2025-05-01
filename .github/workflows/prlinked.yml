@@ -19,12 +19,19 @@ jobs:
           echo "formatted_date=${FORMATTED_DATE} Sprint"
           echo "formatted_date=${FORMATTED_DATE} Sprint" >> $GITHUB_ENV
 
+  debug:
+    needs: get-date
+    runs-on: ubuntu-latest
+    steps:
+      - name: debug
+        id: debugoutput
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "Project Column Name: Review"
+          echo "Project Name Prefix: ${{ needs.get-date.outputs.project_name_prefix }}"    
+
   move-issues:
     needs: get-date
-    run: |
-      echo "PR Number: ${{ github.event.pull_request.number }}"
-      echo "Project Column Name: Review"
-      echo "Project Name Prefix: ${{ needs.get-date.outputs.project_name_prefix }}"
     uses: TransactionProcessing/org-ci-workflows/.github/workflows/move-linked-issue.yml@main
     with:
       pr_number: ${{ github.event.pull_request.number }}
