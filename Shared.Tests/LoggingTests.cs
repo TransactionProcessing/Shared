@@ -8,18 +8,15 @@ using Xunit;
 
 namespace Shared.Tests{
     using Microsoft.AspNetCore.Http;
-    using Shared.Middleware;
-    using Shared.Tests;
     using System.IO;
     using System.Threading.Tasks;
-    using Shared.Logger;
 
     public partial class SharedTests
     {
         [Fact]
         public void Logger_Initialise_IsInitialised(){
             TestHelpers.InitialiseLogger();
-            Logger.IsInitialised.ShouldBeTrue();
+            Logger.Logger.IsInitialised.ShouldBeTrue();
         }
 
         [Theory]
@@ -35,22 +32,22 @@ namespace Shared.Tests{
             
             switch(loglevel){
                 case LogLevel.Critical:
-                    Should.NotThrow(() => Logger.LogCritical(new Exception(message)));
+                    Should.NotThrow(() => Logger.Logger.LogCritical(new Exception(message)));
                     break;
                 case LogLevel.Debug:
-                    Should.NotThrow(() => Logger.LogDebug(message));
+                    Should.NotThrow(() => Logger.Logger.LogDebug(message));
                     break;
                 case LogLevel.Error:
-                    Should.NotThrow(() => Logger.LogError(new Exception(message)));
+                    Should.NotThrow(() => Logger.Logger.LogError(new Exception(message)));
                     break;
                 case LogLevel.Information:
-                    Should.NotThrow(() => Logger.LogInformation(message));
+                    Should.NotThrow(() => Logger.Logger.LogInformation(message));
                     break;
                 case LogLevel.Trace:
-                    Should.NotThrow(() => Logger.LogTrace(message));
+                    Should.NotThrow(() => Logger.Logger.LogTrace(message));
                     break;
                 case LogLevel.Warning:
-                    Should.NotThrow(() => Logger.LogWarning(message));
+                    Should.NotThrow(() => Logger.Logger.LogWarning(message));
                     break;
                 default:
                     throw new InvalidDataException($"invlaid log level {loglevel}");
