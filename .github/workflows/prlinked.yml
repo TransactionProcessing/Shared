@@ -25,13 +25,12 @@ jobs:
 
   debug-date:
     runs-on: ubuntu-latest
-    needs: get-date
     steps:
       - name: debug        
         run: |
           echo "PR Number: ${{ github.event.pull_request.number }}"
           echo "Project Column Name: Review"
-          echo "Project Name Prefix: ${{ needs.get-date.outputs.project_name_prefix }}"
+          echo "Project Name Prefix: ${{ steps.format_date.outputs.project_name_prefix }}"
 
   move-issues:
     needs: get-date
