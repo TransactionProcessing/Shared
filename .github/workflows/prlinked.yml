@@ -29,6 +29,6 @@ jobs:
     with:
       pr_number: ${{ github.event.pull_request.number }}
       project_column_name: "Review"
-      project_name_prefix: ${{ needs.get-date.outputs.project_name_prefix }}  # Use the output from get-date job
+      project_name_prefix: $project_name_prefix  # Use the output from get-date job
     secrets:
       gh_token: ${{ secrets.GH_TOKEN }}
