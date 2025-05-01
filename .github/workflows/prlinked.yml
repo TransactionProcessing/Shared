@@ -23,7 +23,7 @@ jobs:
     uses: TransactionProcessing/org-ci-workflows/.github/workflows/move-linked-issue.yml@main
     with:
       pr_number: ${{ github.event.pull_request.number }}
-      project_column_name: "In review"
+      project_column_name: "Review"
       project_name_prefix: ${{ needs.get-date.outputs.project_name_prefix }}
     secrets:
       gh_token: ${{ secrets.GH_TOKEN }}
