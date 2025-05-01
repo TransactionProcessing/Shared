@@ -24,6 +24,7 @@ jobs:
           echo "project_name_prefix=${FORMATTED_DATE} Sprint" >> "$GITHUB_OUTPUT"  # Set the project name prefix to an environment variable
 
   debug-date:
+    needs: get-date
     runs-on: ubuntu-latest
     steps:
       - name: debug        
