@@ -23,6 +23,16 @@ jobs:
           echo "formatted_date=${FORMATTED_DATE} Sprint" >> $GITHUB_ENV  # Set the formatted date to an environment variable
           echo "project_name_prefix=${FORMATTED_DATE} Sprint" >> "$GITHUB_OUTPUT"  # Set the project name prefix to an environment variable
 
+  debug-date:
+    runs-on: ubuntu-latest
+    needs: get-date
+    steps:
+      - name: debug        
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "Project Column Name: Review"
+          echo "Project Name Prefix: ${{ needs.get-date.outputs.project_name_prefix }}"
+
   move-issues:
     needs: get-date
     uses: TransactionProcessing/org-ci-workflows/.github/workflows/move-linked-issue.yml@main
