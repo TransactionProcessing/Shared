@@ -207,6 +207,59 @@ namespace Shared.Tests
                 executionCount.ShouldBe(retryCount + 1); // 3 retries + 1 initial attempt
             }
 
+            [Fact]
+            public async Task CreatePolicy_NoRetriesNeeded_ExceptionThrown()
+            {
+                // Arrange
+                int retryCount = 3;
+                int executionCount = 0;
+
+                IAsyncPolicy<Result> policy = PolicyFactory.CreatePolicy<Result>(retryCount: retryCount, retryDelay: TimeSpan.Zero, policyTag: "TestPolicy");
+
+                Task<Result> Action()
+                {
+                    executionCount++;
+                    if (executionCount < retryCount)
+                    {
+                        throw new Exception("Test exception");
+                    }
+                    return Task.FromResult(Result.Success());
+                }
+
+                // Act
+                Should.Throw<Exception>(async () => { await PolicyFactory.ExecuteWithPolicyAsync(Action, policy, "TestPolicy"); });
+
+                // Assert
+                executionCount.ShouldBe(1);
+            }
+
+            [Fact]
+            public async Task CreatePolicy_RetriesConfiguredNumberOfTimes_CustomShouldRetryOnException()
+            {
+                // Arrange
+                int retryCount = 3;
+                int executionCount = 0;
+
+                IAsyncPolicy<Result> policy = PolicyFactory.CreatePolicy<Result>(retryCount: retryCount, retryDelay: TimeSpan.Zero, policyTag: "TestPolicy", null, ShouldRetryException);
+
+                Task<Result> Action()
+                {
+                    executionCount++;
+                    if (executionCount <= retryCount)
+                    {
+                        throw new TaskCanceledException("Test exception", new TimeoutException());
+                    }
+                    return Task.FromResult(Result.Success());
+                }
+
+                // Act
+                var result =  await PolicyFactory.ExecuteWithPolicyAsync(Action, policy, "TestPolicy");
+
+                // Assert
+                result.IsSuccess.ShouldBeTrue();
+                executionCount.ShouldBe(retryCount + 1);
+            }
+
 
             private static bool ShouldRetry(ResultBase result)
             {
@@ -216,6 +269,17 @@ namespace Shared.Tests
                     _ => false
                 };
             }
+
+            private static bool ShouldRetryException(Exception exception)
+            {
+                return exception switch
+                {
+                    TaskCanceledException { InnerException: TimeoutException } => true,
+                    _ => false
+                };
+            }
+
+
         }
     }
 

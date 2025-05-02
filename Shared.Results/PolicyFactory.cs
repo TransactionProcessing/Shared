@@ -10,11 +10,13 @@ namespace Shared.Results
         private enum LogType { Retry, Final }
 
         public static IAsyncPolicy<T> CreatePolicy<T>(int retryCount = 5, TimeSpan? retryDelay = null, string policyTag = "",
-                                                      Func<T, Boolean>? shouldRetry = null) where T : ResultBase
+                                                      Func<T, Boolean>? shouldRetry = null,
+                                                      Func<Exception, bool> shouldRetryException = null) where T : ResultBase
         {
             Func<T, Boolean> retryCondition = shouldRetry ?? (ShouldRetry);
+            Func<Exception, Boolean> retryExceptionCondition = shouldRetryException ?? (ShouldRetryException);
             TimeSpan delay = retryDelay ?? TimeSpan.FromSeconds(5);
-            return CreateRetryPolicy<T>(retryCount, delay, policyTag, retryCondition);
+            return CreateRetryPolicy<T>(retryCount, delay, policyTag, retryCondition, retryExceptionCondition);
         }
 
         public static async Task<T> ExecuteWithPolicyAsync<T>(Func<Task<T>> action, IAsyncPolicy<T> policy, string policyTag = "") where T : ResultBase
@@ -28,10 +30,12 @@ namespace Shared.Results
             return result;
         }
 
-        private static AsyncRetryPolicy<T> CreateRetryPolicy<T>(int retryCount, TimeSpan retryDelay, string policyTag, Func<T, bool> shouldRetry) where T : ResultBase
+        private static AsyncRetryPolicy<T> CreateRetryPolicy<T>(int retryCount, TimeSpan retryDelay, string policyTag, Func<T, bool> shouldRetry,
+                                                                Func<Exception, bool> shouldRetryException) where T : ResultBase
         {
             return Policy<T>
-                .HandleResult(shouldRetry)
+                .Handle<Exception>(shouldRetryException)
+                .OrResult(shouldRetry)
                 .WaitAndRetryAsync(
                     retryCount,
                     _ => retryDelay,
@@ -51,6 +55,10 @@ namespace Shared.Results
                 { Message: not null } when MatchesRetryCondition(result.Message) => true,
                 _ => false
             };
+        }
+
+        private static bool ShouldRetryException(Exception exception) {
+            return false;
         }
 
         private static bool MatchesRetryCondition(string input)
