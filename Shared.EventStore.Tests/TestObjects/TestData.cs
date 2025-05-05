@@ -1,3 +1,5 @@
+using Shared.General;
+
 namespace Shared.EventStore.Tests.TestObjects
 {
     using System;
@@ -5,7 +7,6 @@ namespace Shared.EventStore.Tests.TestObjects
     using System.Diagnostics.CodeAnalysis;
     using global::EventStore.Client;
     using Newtonsoft.Json;
-    using Shared.General;
     using System.Text;
     using DomainDrivenDesign.EventSourcing;
     using NLog.LayoutRenderers.Wrappers;

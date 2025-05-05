@@ -1,3 +1,5 @@
+using Shared.EventStore.Tests.TestObjects;
+
 namespace Shared.EventStore.Tests
 {
     using System;
@@ -5,7 +7,6 @@ namespace Shared.EventStore.Tests
     using System.Threading.Tasks;
     using EventHandling;
     using Moq;
-    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using SubscriptionWorker;
     using Xunit;

@@ -1,11 +1,12 @@
-﻿namespace Shared.EventStore.Tests
+﻿using Shared.EventStore.Tests.TestObjects;
+
+namespace Shared.EventStore.Tests
 {
     using System.Threading;
     using System.Threading.Tasks;
     using DomainDrivenDesign.EventSourcing;
     using Moq;
     using ProjectionEngine;
-    using Shared.EventStore.Tests.TestObjects;
     using Xunit;
 
     public class ProjectionHandlerTests{

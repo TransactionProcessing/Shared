@@ -1,10 +1,11 @@
+using Shared.EventStore.Tests.TestObjects;
+
 namespace Shared.EventStore.Tests
 {
     using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using SubscriptionWorker;
     using Xunit;

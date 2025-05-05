@@ -1,4 +1,5 @@
-﻿using SimpleResults;
+﻿using Shared.EventStore.Tests.TestObjects;
+using SimpleResults;
 
 namespace Shared.EventStore.Tests;
 
@@ -9,7 +10,6 @@ using System.Threading.Tasks;
 using DomainDrivenDesign.EventSourcing;
 using EventHandling;
 using Moq;
-using Shared.EventStore.Tests.TestObjects;
 using Shouldly;
 using SubscriptionWorker;
 using Xunit;

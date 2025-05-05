@@ -1,3 +1,5 @@
+using Shared.EventStore.Tests.TestObjects;
+
 namespace Shared.EventStore.Tests
 {
     using System;
@@ -9,7 +11,6 @@ namespace Shared.EventStore.Tests
     using General;
     using Logger;
     using Moq;
-    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using SubscriptionWorker;
     using Xunit;
@@ -18,7 +19,7 @@ namespace Shared.EventStore.Tests
     {
         public PersistentSubscriptionTests()
         {
-            Shared.Logger.Logger.Initialise(NullLogger.Instance);
+            Logger.Initialise(NullLogger.Instance);
 
             TypeMap.AddType<EstateCreatedEvent>("EstateCreatedEvent");
         }
