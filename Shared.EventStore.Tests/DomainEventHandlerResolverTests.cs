@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Shared.EventStore.EventHandling;
+using Shared.EventStore.Tests.TestObjects;
 
 namespace Shared.EventStore.Tests
 {
-    using Shared.EventStore.EventHandling;
-    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using Xunit;
 

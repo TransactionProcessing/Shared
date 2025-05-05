@@ -1,8 +1,9 @@
+using Shared.EventStore.Tests.TestObjects;
+
 namespace Shared.EventStore.Tests;
 
 using System;
 using DomainDrivenDesign.EventSourcing;
-using Shared.EventStore.Tests.TestObjects;
 using Shouldly;
 using Xunit;
 

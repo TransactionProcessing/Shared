@@ -1,4 +1,5 @@
-﻿using SimpleResults;
+﻿using Shared.EventStore.Tests.TestObjects;
+using SimpleResults;
 
 namespace Shared.EventStore.Tests;
 
@@ -11,7 +12,6 @@ using DomainDrivenDesign.EventSourcing;
 using EventStore;
 using global::EventStore.Client;
 using Moq;
-using Shared.EventStore.Tests.TestObjects;
 using Shouldly;
 using Xunit;
 

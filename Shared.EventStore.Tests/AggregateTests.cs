@@ -1,8 +1,9 @@
-﻿namespace Shared.EventStore.Tests;
+﻿using Shared.EventStore.Tests.TestObjects;
+
+namespace Shared.EventStore.Tests;
 
 using System;
 using Aggregate;
-using Shared.EventStore.Tests.TestObjects;
 using Shouldly;
 using Xunit;
 

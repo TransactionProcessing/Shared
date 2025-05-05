@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Shared.EventStore.Tests.TestObjects;
 
 namespace Shared.EventStore.Tests
 {
@@ -10,7 +11,6 @@ namespace Shared.EventStore.Tests
     using DomainDrivenDesign.EventSourcing;
     using global::EventStore.Client;
     using Newtonsoft.Json;
-    using Shared.EventStore.Tests.TestObjects;
     using Shouldly;
     using Xunit;
 

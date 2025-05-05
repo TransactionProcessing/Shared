@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Moq;
+using Shared.EventStore.EventStore;
 using Shouldly;
 using SimpleResults;
 
@@ -12,7 +13,6 @@ using Extensions;
 using global::EventStore.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Pose;
-using Shared.EventStore.EventStore;
 using System;
 using TestObjects;
 using Xunit;
