@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
 using SimpleResults;
@@ -8,6 +10,8 @@ namespace Shared.Results
     public static class PolicyFactory
     {
         private enum LogType { Retry, Final }
+
+        public static EventHandler<(String, LogLevel)> Log;
 
         public static IAsyncPolicy<T> CreatePolicy<T>(int retryCount = 5, TimeSpan? retryDelay = null, string policyTag = "",
                                                       Func<T, Boolean>? shouldRetry = null,
@@ -82,17 +86,19 @@ namespace Shared.Results
         [ExcludeFromCodeCoverage]
         private static void LogResult(string policyTag, ResultBase result, int retryCount, LogType type)
         {
+            if (Log == null) return;
+
             string message = FormatResultMessage(result);
 
             switch (type)
             {
                 case LogType.Retry:
-                    Logger.Logger.LogWarning($"{policyTag} - Retry {retryCount} due to error: {message}. Waiting before retrying...");
+                    Log(null, ($"{policyTag} - Retry {retryCount} due to error: {message}. Waiting before retrying...", LogLevel.Warning));
                     break;
 
                 case LogType.Final:
                     string retryMessage = retryCount > 0 ? $" after {retryCount} retries." : "";
-                    Logger.Logger.LogWarning($"{policyTag} - {message}{retryMessage}");
+                    Log(null, ($"{policyTag} - {message}{retryMessage}", LogLevel.Warning));
                     break;
             }
         }
