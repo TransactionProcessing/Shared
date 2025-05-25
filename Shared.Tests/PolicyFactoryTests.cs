@@ -21,17 +21,12 @@ namespace Shared.Tests
     {
         public class PolicyFactoryTests
         {
-            public PolicyFactoryTests() {
-                Logger.Logger.Initialise(new NullLogger());
-            }
-
             [Fact]
             public async Task CreatePolicy_NoRetriesNeeded()
             {
                 // Arrange
                 int retryCount = 3;
                 int executionCount = 0;
-
                 IAsyncPolicy<Result> policy = PolicyFactory.CreatePolicy<Result>(retryCount: retryCount, retryDelay: TimeSpan.Zero, policyTag: "TestPolicy");
 
                 Queue<Result> resultSequence = new Queue<Result>(new[]
