@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
 using SimpleResults;
@@ -11,7 +10,7 @@ namespace Shared.Results
     {
         private enum LogType { Retry, Final }
 
-        public static EventHandler<(String, LogLevel)> Log;
+        public static EventHandler<String> Log;
 
         public static IAsyncPolicy<T> CreatePolicy<T>(int retryCount = 5, TimeSpan? retryDelay = null, string policyTag = "",
                                                       Func<T, Boolean>? shouldRetry = null,
@@ -93,12 +92,12 @@ namespace Shared.Results
             switch (type)
             {
                 case LogType.Retry:
-                    Log(null, ($"{policyTag} - Retry {retryCount} due to error: {message}. Waiting before retrying...", LogLevel.Warning));
+                    Log(null, ($"{policyTag} - Retry {retryCount} due to error: {message}. Waiting before retrying..."));
                     break;
 
                 case LogType.Final:
                     string retryMessage = retryCount > 0 ? $" after {retryCount} retries." : "";
-                    Log(null, ($"{policyTag} - {message}{retryMessage}", LogLevel.Warning));
+                    Log(null, ($"{policyTag} - {message}{retryMessage}"));
                     break;
             }
         }
