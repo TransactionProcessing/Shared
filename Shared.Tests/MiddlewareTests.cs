@@ -136,7 +136,7 @@ namespace Shared.Tests
         }
         
         [Fact]
-        public async void ExceptionHandlerMiddleware_ArgumentNullExceptionThrown_BadRequestHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_ArgumentNullExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -155,7 +155,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_InvalidDataExceptionThrown_BadRequestHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_InvalidDataExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -174,7 +174,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_InvalidOperationExceptionThrown_BadRequestHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_InvalidOperationExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -193,7 +193,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_FormatExceptionThrown_BadRequestHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_FormatExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -212,7 +212,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_NotSupportedExceptionThrown_BadRequestHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_NotSupportedExceptionThrown_BadRequestHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -231,7 +231,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_NotFoundExceptionThrown_NotFoundHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_NotFoundExceptionThrown_NotFoundHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -250,7 +250,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_NotImplementedExceptionThrown_NotImplementedHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_NotImplementedExceptionThrown_NotImplementedHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -269,7 +269,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_OtherExceptionThrown_InternalServerErrorHttpStatusCodeReturned()
+        public async Task ExceptionHandlerMiddleware_OtherExceptionThrown_InternalServerErrorHttpStatusCodeReturned()
         {
             TestHelpers.InitialiseLogger();
 
@@ -288,7 +288,7 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public async void ExceptionHandlerMiddleware_NoExceptionThrown_OKResponseReturned()
+        public async Task ExceptionHandlerMiddleware_NoExceptionThrown_OKResponseReturned()
         {
             TestHelpers.InitialiseLogger();
 
