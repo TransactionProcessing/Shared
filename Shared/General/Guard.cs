@@ -101,7 +101,7 @@ namespace Shared.General
         public static void ThrowIfInvalidGuid(Guid argumentValue, String argumentName)
         {
             // Check if the Guid is null or empty
-            if (argumentValue == null || argumentValue == Guid.Empty)
+            if (argumentValue == Guid.Empty)
             {
                 // Throw an exception
                 throw new ArgumentNullException(argumentName);

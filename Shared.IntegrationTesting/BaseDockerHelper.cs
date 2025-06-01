@@ -688,7 +688,7 @@ public abstract class BaseDockerHelper{
 
         PersistentSubscriptionSettings settings = new PersistentSubscriptionSettings(resolveLinkTos:true, StreamPosition.Start, maxRetryCount:subscription.maxRetryCount);
         this.Trace($"Creating persistent subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] Retry Count [{subscription.maxRetryCount}]");
-        await client.CreateAsync(subscription.streamName, subscription.groupName, settings);
+        await client.CreateToStreamAsync(subscription.streamName, subscription.groupName, settings);
 
         this.Trace($"Subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] created");
     }

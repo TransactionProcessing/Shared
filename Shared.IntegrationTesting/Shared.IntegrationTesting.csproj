@@ -1,21 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+	  <TargetFrameworks>net9.0</TargetFrameworks>
 	<DebugType>None</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="8.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.10.59" />
     <PackageReference Include="IdentityModel" Version="6.2.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.13" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.13" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="8.0.13" />
-    <PackageReference Include="Reqnroll" Version="2.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="9.0.5" />
+    <PackageReference Include="Reqnroll" Version="2.4.1" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.8" />
-    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.8" />
+    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.9" />
+    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.9" />
     <PackageReference Include="SimpleResults" Version="4.0.0" />
   </ItemGroup>
 
