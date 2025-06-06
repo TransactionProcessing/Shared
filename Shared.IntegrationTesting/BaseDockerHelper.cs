@@ -1,4 +1,6 @@
-﻿namespace Shared.IntegrationTesting;
+﻿using System.Net.Http.Headers;
+
+namespace Shared.IntegrationTesting;
 
 using Ductus.FluentDocker.Builders;
 using Ductus.FluentDocker.Commands;
@@ -26,6 +28,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -741,8 +744,9 @@ public abstract class BaseDockerHelper{
                 };
                 using (HttpClient client = new HttpClient(httpClientHandler))
                 {
-                    client.DefaultRequestHeaders.Authorization =
-                        new BasicAuthenticationHeaderValue("admin", "changeit");
+                    String authenticationString = $"admin:changeit";
+                    String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
                     HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
                     pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -770,8 +774,9 @@ public abstract class BaseDockerHelper{
                 };
                 using (HttpClient client = new HttpClient(httpClientHandler))
                 {
-                    client.DefaultRequestHeaders.Authorization =
-                        new BasicAuthenticationHeaderValue("admin", "changeit");
+                    String authenticationString = $"admin:changeit";
+                    String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
                     HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
 
