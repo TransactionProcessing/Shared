@@ -11,8 +11,6 @@ namespace Shared.EventStore.Tests{
     using Newtonsoft.Json;
     using NLog;
     using Shouldly;
-    using System.Diagnostics.Tracing;
-    using static IdentityModel.OidcConstants;
 
     public class EventStoreContextTests : IDisposable{
         #region Fields

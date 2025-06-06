@@ -1,5 +1,4 @@
-﻿using IdentityModel.Client;
-using SimpleResults;
+﻿using SimpleResults;
 
 namespace Shared.EventStore.EventStore
 {

@@ -1,12 +1,14 @@
 ﻿namespace Shared.EventStore.SubscriptionWorker
 {
+    using EventHandling;
+    using global::EventStore.Client;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Net.Http;
-    using EventHandling;
-    using global::EventStore.Client;
+    using System.Net.Http.Headers;
+    using System.Text;
 
     [ExcludeFromCodeCoverage]
     public static class SubscriptionWorkerHelper
@@ -44,8 +46,9 @@
 
             if (settings.DefaultCredentials != null)
             {
-                client.DefaultRequestHeaders.Authorization =
-                    new BasicAuthenticationHeaderValue(settings.DefaultCredentials.Username, settings.DefaultCredentials.Password);
+                String authenticationString = $"{settings.DefaultCredentials.Username}:{settings.DefaultCredentials.Password}";
+                String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
             return client;
