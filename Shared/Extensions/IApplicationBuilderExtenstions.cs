@@ -1,12 +1,13 @@
-﻿using System.Text;
-using Shared.Middleware;
+﻿using Shared.Middleware;
+using System.Text;
 
 namespace Shared.Extensions
 {
     using Microsoft.AspNetCore.Builder;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
-    using System.Collections.Generic;
     using System;
+    using System.Collections.Generic;
 
     public static class IApplicationBuilderExtenstions
     {
