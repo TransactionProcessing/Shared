@@ -16,7 +16,7 @@ namespace Shared.Middleware
 
         public async Task Invoke(HttpContext context)
         {
-            var correlationId = context.Request.Headers[HeaderName].FirstOrDefault();
+            var correlationId = context.Request.Headers[HeaderName].FirstOrDefault() ?? Guid.NewGuid().ToString();
             context.Items[HeaderName] = correlationId;
 
             using (NLog.ScopeContext.PushProperty("CorrelationId", correlationId))
