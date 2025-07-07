@@ -8,6 +8,7 @@ namespace Shared.EntityFramework.ConnectionStringConfiguration
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Diagnostics.CodeAnalysis;
 
+    [Obsolete]
     [ExcludeFromCodeCoverage]
     public class ConnectionStringConfiguration
     {

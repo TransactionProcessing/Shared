@@ -5,6 +5,7 @@
     using System.Threading.Tasks;
     using Microsoft.EntityFrameworkCore;
 
+    [Obsolete("Replaced by DbContextResolver")]
     public interface IDbContextFactory<T> where T : DbContext
     {
         #region Methods

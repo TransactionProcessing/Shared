@@ -7,6 +7,7 @@ namespace Shared.EntityFramework.ConnectionStringConfiguration
 {
     using System.Diagnostics.CodeAnalysis;
 
+    [Obsolete]
     [ExcludeFromCodeCoverage]
     public class ConnectionStringConfigurationContext : DbContext
     {
