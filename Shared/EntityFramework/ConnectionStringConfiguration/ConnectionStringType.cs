@@ -4,7 +4,7 @@
     using System.ComponentModel.DataAnnotations;
     using System.Diagnostics.CodeAnalysis;
 
-    [Obsolete()]
+    [Obsolete]
     [ExcludeFromCodeCoverage]
     public class ConnectionStringType
     {

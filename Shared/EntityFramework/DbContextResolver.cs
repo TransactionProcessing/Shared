@@ -14,7 +14,7 @@ namespace Shared.EntityFramework
     public interface IDbContextResolver<TContext> where TContext : DbContext
     {
         ResolvedDbContext<TContext> Resolve(String connectionStringKey);
-        ResolvedDbContext<TContext> Resolve(String connectionStringKey, String databaseName);
+        ResolvedDbContext<TContext> Resolve(String connectionStringKey, String databaseNameSuffix);
     }
 
     public class DbContextResolver<TContext> : IDbContextResolver<TContext> where TContext : DbContext
@@ -29,10 +29,10 @@ namespace Shared.EntityFramework
         }
 
         public ResolvedDbContext<TContext> Resolve(String connectionStringKey) {
-            return this.Resolve(connectionStringKey);
+            return this.Resolve(connectionStringKey, String.Empty);
         }
 
-        public ResolvedDbContext<TContext> Resolve(String connectionStringKey, String connectionIdentifer)
+        public ResolvedDbContext<TContext> Resolve(String connectionStringKey, String databaseNameSuffix)
         {
             IServiceScope scope = _rootProvider.CreateScope();
             String connectionString = _config.GetConnectionString(connectionStringKey);
@@ -40,9 +40,9 @@ namespace Shared.EntityFramework
                 throw new InvalidOperationException($"Connection string for '{connectionStringKey}' not found.");
             
             // Update the connection string with the identifier if needed
-            if (!String.IsNullOrWhiteSpace(connectionIdentifer)) {
+            if (!String.IsNullOrWhiteSpace(databaseNameSuffix)) {
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
-                builder.InitialCatalog = $"{builder.InitialCatalog}-{connectionIdentifer}";
+                builder.InitialCatalog = $"{builder.InitialCatalog}-{databaseNameSuffix}";
                 connectionString = builder.ConnectionString;
 
 

@@ -22,20 +22,20 @@ namespace Shared.Tests {
         [Fact]
         public void Resolve_WithValidConnectionString_ResolvesDbContext() {
             // Arrange
-            var services = new ServiceCollection();
+            ServiceCollection services = new ServiceCollection();
             services.AddDbContext<TestDbContext>(options => options.UseInMemoryDatabase("TestDb"));
-            var provider = services.BuildServiceProvider();
+            ServiceProvider provider = services.BuildServiceProvider();
 
-            var configSectionMock = new Mock<IConfigurationSection>();
+            Mock<IConfigurationSection> configSectionMock = new Mock<IConfigurationSection>();
             configSectionMock.Setup(x => x["Default"]).Returns("Server=.;Database=Default;Trusted_Connection=True;");
 
-            var configMock = new Mock<IConfiguration>();
+            Mock<IConfiguration> configMock = new Mock<IConfiguration>();
             configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(configSectionMock.Object);
 
-            var resolver = new DbContextResolver<TestDbContext>(provider, configMock.Object);
+            DbContextResolver<TestDbContext> resolver = new DbContextResolver<TestDbContext>(provider, configMock.Object);
 
             // Act
-            var result = resolver.Resolve("Default", null);
+            ResolvedDbContext<TestDbContext> result = resolver.Resolve("Default", null);
 
             // Assert
             result.ShouldNotBeNull();
@@ -46,16 +46,16 @@ namespace Shared.Tests {
         [Fact]
         public void Resolve_WithMissingConnectionString_Throws() {
             // Arrange
-            var services = new ServiceCollection();
-            var provider = services.BuildServiceProvider();
+            ServiceCollection services = new ServiceCollection();
+            ServiceProvider provider = services.BuildServiceProvider();
 
-            var configSectionMock = new Mock<IConfigurationSection>();
+            Mock<IConfigurationSection> configSectionMock = new Mock<IConfigurationSection>();
             configSectionMock.Setup(x => x["Missing"]).Returns(String.Empty);
 
-            var configMock = new Mock<IConfiguration>();
+            Mock<IConfiguration> configMock = new Mock<IConfiguration>();
             configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(configSectionMock.Object);
 
-            var resolver = new DbContextResolver<TestDbContext>(provider, configMock.Object);
+            DbContextResolver<TestDbContext> resolver = new DbContextResolver<TestDbContext>(provider, configMock.Object);
 
             // Act & Assert
             Should.Throw<InvalidOperationException>(() => resolver.Resolve("Missing", null));
@@ -64,20 +64,19 @@ namespace Shared.Tests {
         [Fact]
         public void Resolve_WithConnectionIdentifier_UpdatesInitialCatalog() {
             // Arrange
-            var baseConnectionString = "Server=.;Database=BaseDb;Trusted_Connection=True;";
-            var services = new ServiceCollection();
-            var provider = services.BuildServiceProvider();
+            ServiceCollection services = new ServiceCollection();
+            ServiceProvider provider = services.BuildServiceProvider();
 
-            var configSectionMock = new Mock<IConfigurationSection>();
+            Mock<IConfigurationSection> configSectionMock = new Mock<IConfigurationSection>();
             configSectionMock.Setup(x => x["Default"]).Returns("Server=.;Database=DefaultDb;Trusted_Connection=True;");
 
-            var configMock = new Mock<IConfiguration>();
+            Mock<IConfiguration> configMock = new Mock<IConfiguration>();
             configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(configSectionMock.Object);
 
-            var resolver = new DbContextResolver<TestDbContext>(provider, configMock.Object);
+            DbContextResolver<TestDbContext> resolver = new DbContextResolver<TestDbContext>(provider, configMock.Object);
 
             // Act
-            var result = resolver.Resolve("Default", "Tenant1");
+            ResolvedDbContext<TestDbContext> result = resolver.Resolve("Default", "Tenant1");
 
             // Assert
             result.ShouldNotBeNull();
