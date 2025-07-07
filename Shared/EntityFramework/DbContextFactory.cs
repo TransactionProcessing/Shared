@@ -7,6 +7,7 @@
     using Microsoft.EntityFrameworkCore;
     using Repositories;
 
+    [Obsolete("Replaced by DbContextResolver")]
     public class DbContextFactory<T> : IDbContextFactory<T> where T : DbContext
     {
         #region Fields
