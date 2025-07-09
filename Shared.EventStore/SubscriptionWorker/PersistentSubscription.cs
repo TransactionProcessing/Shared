@@ -113,13 +113,11 @@ namespace Shared.EventStore.SubscriptionWorker
             {
                 JToken rootToken = JToken.Parse(domainEventAsString);
 
-                // Look for both "organisationId" and "OrganisationId"
                 JToken estateIdIdToken = rootToken.SelectTokens("..estateId").FirstOrDefault() ??
-                                         rootToken.SelectTokens("..estateId").FirstOrDefault();
+                                         rootToken.SelectTokens("..EstateId").FirstOrDefault();
 
-                // Look for both "storeId" and "StoreId"
                 JToken merchantIdToken = rootToken.SelectTokens("..merchantId").FirstOrDefault() ??
-                                         rootToken.SelectTokens("..merchantId").FirstOrDefault();
+                                         rootToken.SelectTokens("..MerchantId").FirstOrDefault();
 
                 Guid.TryParse(estateIdIdToken?.Value<String>(), out Guid estateId);
                 Guid.TryParse(merchantIdToken?.Value<String>(), out Guid merchantId);
@@ -149,12 +147,12 @@ namespace Shared.EventStore.SubscriptionWorker
                         return;
                     }
                     IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
-                    //TenantIdentifiers tenantIdentifiers = PersistentSubscription.GetTenantIdentifiersFromDomainEvent(domainEvent);
-                    //Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings","LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
+                    TenantIdentifiers tenantIdentifiers = PersistentSubscription.GetTenantIdentifiersFromDomainEvent(domainEvent);
+                    Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings","LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
 
-                    //TenantContext tenantContext = new();
-                    //tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
-                    //TenantContext.CurrentTenant = tenantContext;
+                    TenantContext tenantContext = new();
+                    tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
+                    TenantContext.CurrentTenant = tenantContext;
 
                     Logger.Logger.LogInformation(
                         $"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
