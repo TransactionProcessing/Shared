@@ -2,16 +2,20 @@
 
 namespace Shared.EventStore.SubscriptionWorker
 {
+    using Aggregate;
+    using DomainDrivenDesign.EventSourcing;
+    using EventHandling;
+    using global::EventStore.Client;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Shared.General;
+    using Shared.TennantContext;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Aggregate;
-    using DomainDrivenDesign.EventSourcing;
-    using EventHandling;
-    using global::EventStore.Client;
 
     [ExcludeFromCodeCoverage]
     public class PersistentSubscription
@@ -101,6 +105,34 @@ namespace Shared.EventStore.SubscriptionWorker
 
         public override String ToString() => $"{this.PersistentSubscriptionDetails.StreamName}-{this.PersistentSubscriptionDetails.GroupName}";
 
+        private static TenantIdentifiers GetTenantIdentifiersFromDomainEvent(IDomainEvent domainEvent)
+        {
+            String domainEventAsString = JsonConvert.SerializeObject(domainEvent);
+
+            try
+            {
+                JToken rootToken = JToken.Parse(domainEventAsString);
+
+                // Look for both "organisationId" and "OrganisationId"
+                JToken estateIdIdToken = rootToken.SelectTokens("..estateId").FirstOrDefault() ??
+                                         rootToken.SelectTokens("..estateId").FirstOrDefault();
+
+                // Look for both "storeId" and "StoreId"
+                JToken merchantIdToken = rootToken.SelectTokens("..merchantId").FirstOrDefault() ??
+                                         rootToken.SelectTokens("..merchantId").FirstOrDefault();
+
+                Guid.TryParse(estateIdIdToken?.Value<String>(), out Guid estateId);
+                Guid.TryParse(merchantIdToken?.Value<String>(), out Guid merchantId);
+
+                return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, merchantId);
+            }
+            catch (Exception)
+            {
+                Logger.Logger.LogWarning($"Unable to get estateId from request body [{domainEventAsString}]");
+                return TenantIdentifiers.Default();
+            }
+        }
+
         internal static async Task EventAppeared(global::EventStore.Client.PersistentSubscription persistentSubscription,
                                                  ResolvedEvent resolvedEvent,
                                                  Int32? retryCount,
@@ -116,12 +148,17 @@ namespace Shared.EventStore.SubscriptionWorker
                         await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
                         return;
                     }
+                    IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
+                    TenantIdentifiers tenantIdentifiers = PersistentSubscription.GetTenantIdentifiersFromDomainEvent(domainEvent);
+                    Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings","LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
+
+                    TenantContext tenantContext = new();
+                    tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
+                    TenantContext.CurrentTenant = tenantContext;
 
                     Logger.Logger.LogInformation(
                         $"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
-
-                    IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
-
+                    
                     List<IDomainEventHandler> domainEventHandlers =
                         domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
 
