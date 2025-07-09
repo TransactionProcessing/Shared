@@ -148,10 +148,10 @@ namespace Shared.EventStore.SubscriptionWorker
                     }
                     IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
                     TenantIdentifiers tenantIdentifiers = PersistentSubscription.GetTenantIdentifiersFromDomainEvent(domainEvent);
-                    Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings","LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
+                    //Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings","LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
 
                     TenantContext tenantContext = new();
-                    tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
+                    tenantContext.Initialise(tenantIdentifiers, false);
                     TenantContext.CurrentTenant = tenantContext;
 
                     Logger.Logger.LogInformation(
