@@ -161,12 +161,13 @@ public static class HttpContextExtensionMethods
     public static TenantIdentifiers GetIdentifiersFromRoute(this HttpContext context)
     {
         // Get the org Id
+        
         context.Request.RouteValues.TryGetValue("estateId", out object estateIdRouteValue);
-        Guid.TryParse(estateIdRouteValue.ToString(), out Guid estateId);
+        Guid.TryParse(estateIdRouteValue?.ToString(), out Guid estateId);
 
         // Try and get the store Id
         context.Request.RouteValues.TryGetValue("merchantId", out object merchantIdRouteValue);
-        Guid.TryParse(merchantIdRouteValue.ToString(), out Guid merchantId);
+        Guid.TryParse(merchantIdRouteValue?.ToString(), out Guid merchantId);
 
         return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, merchantId);
     }
