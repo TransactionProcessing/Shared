@@ -1,154 +1,159 @@
 ﻿namespace Shared.Logger
 {
+    using NLog;
+    using Shared.TennantContext;
     using System;
     using System.Diagnostics.CodeAnalysis;
 
-    /// <summary>
-    /// 
-    /// </summary>
     [ExcludeFromCodeCoverage]
-    public static class Logger
-    {
-        #region Fields
-
-        /// <summary>
-        /// The logger object
-        /// </summary>
+    public static class Logger {
         private static ILogger LoggerObject;
 
-        #endregion
-
-        #region Properties
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this instance is initialised.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if this instance is initialised; otherwise, <c>false</c>.
-        /// </value>
         public static Boolean IsInitialised { get; set; }
 
-        #endregion
-
-        #region Methods
-
-        /// <summary>
-        /// Initialises the specified logger object.
-        /// </summary>
-        /// <param name="loggerObject">The logger object.</param>
-        /// <param name="fileName">Name of the file.</param>
         public static void Initialise(NLog.Logger loggerObject,
-                                      String fileName)
-        {
+                                      String fileName) {
             NlogLogger logger = new NlogLogger();
             logger.Initialise(loggerObject, fileName);
             Logger.Initialise(logger);
         }
 
-        public static void Initialise(Microsoft.Extensions.Logging.ILogger loggerObject)
-        {
+        public static void Initialise(Microsoft.Extensions.Logging.ILogger loggerObject) {
             MicrosoftLogger logger = new MicrosoftLogger();
             logger.Initialise(loggerObject);
             Logger.Initialise(logger);
         }
 
-        /// <summary>
-        /// Initialises the specified logger object.
-        /// </summary>
-        /// <param name="loggerObject">The logger object.</param>
-        /// <exception cref="ArgumentNullException">loggerObject</exception>
-        public static void Initialise(ILogger loggerObject)
-        {
+        public static void Initialise(ILogger loggerObject) {
             Logger.LoggerObject = loggerObject ?? throw new ArgumentNullException(nameof(loggerObject));
 
             Logger.IsInitialised = true;
         }
 
-        /// <summary>
-        /// Logs the critical.
-        /// </summary>
-        /// <param name="exception">The exception.</param>
-        public static void LogCritical(Exception exception)
-        {
-            Logger.ValidateLoggerObject();
+        public static void LogCritical(Exception exception) {
+            ValidateLoggerObject();
 
-            Logger.LoggerObject.LogCritical(exception);
-        }
+            TenantContext tenantContext = TenantContext.CurrentTenant;
 
-        /// <summary>
-        /// Logs the debug.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public static void LogDebug(String message)
-        {
-            Logger.ValidateLoggerObject();
+            using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+                // Write to the normal log
+                LoggerObject.LogCritical(exception);
 
-            Logger.LoggerObject.LogDebug(message);
-        }
-
-        /// <summary>
-        /// Logs the error.
-        /// </summary>
-        /// <param name="exception">The exception.</param>
-        public static void LogError(Exception exception)
-        {
-            Logger.ValidateLoggerObject();
-
-            Logger.LoggerObject.LogError(exception);
-        }
-
-        public static void LogError(String message, Exception exception)
-        {
-            Logger.ValidateLoggerObject();
-
-            Logger.LoggerObject.LogError(message, exception);
-        }
-
-        /// <summary>
-        /// Logs the information.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public static void LogInformation(String message)
-        {
-            Logger.ValidateLoggerObject();
-
-            Logger.LoggerObject.LogInformation(message);
-        }
-
-        /// <summary>
-        /// Logs the trace.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public static void LogTrace(String message)
-        {
-            Logger.ValidateLoggerObject();
-
-            Logger.LoggerObject.LogTrace(message);
-        }
-
-        /// <summary>
-        /// Logs the warning.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public static void LogWarning(String message)
-        {
-            Logger.ValidateLoggerObject();
-
-            Logger.LoggerObject.LogWarning(message);
-        }
-
-        /// <summary>
-        /// Validates the logger object.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">Logger has not been initialised</exception>
-        private static void ValidateLoggerObject()
-        {
-            if (Logger.LoggerObject == null)
-            {
-                throw new InvalidOperationException("Logger has not been initialised");
+                if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                    // Write to the tenant log
+                    using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                        LoggerObject.LogCritical(exception);
+                    }
+                }
             }
         }
 
-        #endregion
+        public static void LogDebug(String message) {
+            ValidateLoggerObject();
+            TenantContext tenantContext = TenantContext.CurrentTenant;
+            using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+                // Write to the normal log
+                LoggerObject.LogDebug(message);
+
+                if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                    // Write to the tenant log
+                    using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                        LoggerObject.LogDebug(message);
+                    }
+                }
+            }
+        }
+
+        public static void LogError(Exception exception) {
+            ValidateLoggerObject();
+
+            TenantContext tenantContext = TenantContext.CurrentTenant;
+            using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+                // Write to the normal log
+                LoggerObject.LogError(exception);
+
+                if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                    // Write to the tenant log
+                    using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                        LoggerObject.LogError(exception);
+                    }
+                }
+            }
+        }
+
+        public static void LogError(String message,
+                                    Exception exception) {
+            ValidateLoggerObject();
+
+            TenantContext tenantContext = TenantContext.CurrentTenant;
+            using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+                // Write to the normal log
+                LoggerObject.LogError(message, exception);
+
+                if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                    // Write to the tenant log
+                    using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                        LoggerObject.LogError(message, exception);
+                    }
+                }
+            }
+        }
+
+        public static void LogInformation(String message) {
+            ValidateLoggerObject();
+
+            TenantContext tenantContext = TenantContext.CurrentTenant;
+            using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+                // Write to the normal log
+                Logger.LoggerObject.LogInformation(message);
+
+                if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                    // Write to the tenant log
+                    using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                        Logger.LoggerObject.LogInformation(message);
+                    }
+                }
+            }
+        }
+
+        public static void LogTrace(String message) {
+            ValidateLoggerObject();
+
+            TenantContext tenantContext = TenantContext.CurrentTenant;
+            using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+                // Write to the normal log
+                Logger.LoggerObject.LogTrace(message);
+
+                if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                    // Write to the tenant log
+                    using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                        Logger.LoggerObject.LogTrace(message);
+                    }
+                }
+            }
+        }
+
+        public static void LogWarning(String message) {
+            ValidateLoggerObject();
+
+            TenantContext tenantContext = TenantContext.CurrentTenant;
+            using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+                // Write to the normal log
+                Logger.LoggerObject.LogWarning(message);
+
+                if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                    // Write to the tenant log
+                    using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                        Logger.LoggerObject.LogWarning(message);
+                    }
+                }
+            }
+        }
+
+        private static void ValidateLoggerObject() {
+            if (Logger.LoggerObject == null) {
+                throw new InvalidOperationException("Logger has not been initialised");
+            }
+        }
     }
 }

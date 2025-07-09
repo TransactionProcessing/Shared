@@ -22,6 +22,7 @@ namespace Shared.EventStore.Tests {
             _memoryCache = new MemoryCache(new MemoryCacheOptions());
             _aggregateService = new AggregateService(_repositoryResolverMock.Object, _memoryCache);
             Logger.Logger.Initialise(new NullLogger());
+            
         }
 
         [Fact]
