@@ -116,13 +116,13 @@ namespace Shared.EventStore.SubscriptionWorker
                 JToken estateIdIdToken = rootToken.SelectTokens("..estateId").FirstOrDefault() ??
                                          rootToken.SelectTokens("..EstateId").FirstOrDefault();
 
-                JToken merchantIdToken = rootToken.SelectTokens("..merchantId").FirstOrDefault() ??
-                                         rootToken.SelectTokens("..MerchantId").FirstOrDefault();
+                //JToken merchantIdToken = rootToken.SelectTokens("..merchantId").FirstOrDefault() ??
+                //                         rootToken.SelectTokens("..MerchantId").FirstOrDefault();
 
                 Guid.TryParse(estateIdIdToken?.Value<String>(), out Guid estateId);
-                Guid.TryParse(merchantIdToken?.Value<String>(), out Guid merchantId);
+                //Guid.TryParse(merchantIdToken?.Value<String>(), out Guid merchantId);
 
-                return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, merchantId);
+                return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, Guid.Empty);
             }
             catch (Exception)
             {
