@@ -47,6 +47,9 @@ jobs:
         dotnet pack "Shared\Shared.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/Shared.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }} 
 
+        dotnet pack "Shared.Logger\Shared.Logger.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet nuget push Nugets/Shared.Logger.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }} 
+        
         dotnet pack "Shared.DomainDrivenDesign\Shared.DomainDrivenDesign.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/Shared.DomainDrivenDesign.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
