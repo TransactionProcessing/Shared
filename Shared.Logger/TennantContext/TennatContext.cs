@@ -59,45 +59,6 @@
             tenantContext.PerTenantLogsEnabled = perTenantLogsEnabled;
         }
 
-        //public static void WriteExceptionToLog(this TenantContext tenantContext,
-        //                                       Exception exception)
-        //{
-        //    using (MappedDiagnosticsLogicalContext.SetScoped("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}"))
-        //    {
-        //        // Write to the normal log
-        //        Logger.Logger.LogError(exception);
-
-        //        if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty)
-        //        {
-        //            // Write to the tenant log
-        //            using (MappedDiagnosticsLogicalContext.SetScoped("tenantId", $"_{tenantContext.EstateId.ToString()}"))
-        //            {
-        //                Logger.Logger.LogError(exception);
-        //            }
-        //        }
-        //    }
-        //}
-
-        //public static void WriteMessageToLog(this TenantContext tenantContext,
-        //                                     LogLevel logLevel,
-        //                                     String message)
-        //{
-        //    using (MappedDiagnosticsLogicalContext.SetScoped("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}"))
-        //    {
-        //        // Write to the normal log
-        //        Logger.WriteToLog(LoggerCategory.General, eventType, message);
-
-        //        if (tenantContext.PerTenantLogsEnabled && tenantContext.OrganisationId != Guid.Empty)
-        //        {
-        //            // Write to the tenant log
-        //            using (MappedDiagnosticsLogicalContext.SetScoped("tenantId", $"_{tenantContext.OrganisationId.ToString()}"))
-        //            {
-        //                Logger.WriteToLog(LoggerCategory.General, eventType, message);
-        //            }
-        //        }
-        //    }
-        //}
-
         #endregion
     }
 }
