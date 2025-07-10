@@ -1,14 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
-using NLog;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Shared.TennantContext
+﻿namespace Shared.Logger.TennantContext
 {
     public record TenantIdentifiers(Guid EstateId,
                                     Guid MerchantId)

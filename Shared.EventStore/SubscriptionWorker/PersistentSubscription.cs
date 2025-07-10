@@ -9,7 +9,7 @@ namespace Shared.EventStore.SubscriptionWorker
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Shared.General;
-    using Shared.TennantContext;
+    using Shared.Logger.TennantContext;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;

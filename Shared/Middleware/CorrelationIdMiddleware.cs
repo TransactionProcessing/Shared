@@ -3,7 +3,7 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using Shared.General;
-using Shared.TennantContext;
+using Shared.Logger.TennantContext;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,39 +16,6 @@ using ClaimsPrincipal = System.Security.Claims.ClaimsPrincipal;
 
 namespace Shared.Middleware
 {
-    /*public class CorrelationIdMiddleware
-    {
-        private readonly RequestDelegate _next;
-        private const string HeaderName = "X-Correlation-ID";
-
-        public CorrelationIdMiddleware(RequestDelegate next) => _next = next;
-
-        public async Task Invoke(HttpContext context)
-        {
-            var correlationId = context.Request.Headers[HeaderName].FirstOrDefault() ?? Guid.NewGuid().ToString();
-            context.Items[HeaderName] = correlationId;
-
-            using (NLog.ScopeContext.PushProperty("CorrelationId", correlationId))
-            {
-                context.Response.OnStarting(() =>
-                {
-                    context.Response.Headers[HeaderName] = correlationId;
-                    return Task.CompletedTask;
-                });
-
-                try
-                {
-                    await _next(context);
-                }
-                // No need to explicitly remove the property, as disposing the scope handles it
-                finally
-                {
-                    // ScopeContext.PushProperty automatically handles cleanup on dispose
-                }
-            }
-        }
-    }*/
-
     public class TenantMiddleware
     {
         #region Fields

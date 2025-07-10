@@ -10,6 +10,7 @@ namespace Shared.EventStore.Tests{
     using Logger;
     using Newtonsoft.Json;
     using NLog;
+    using Shared.Middleware;
     using Shouldly;
 
     public class EventStoreContextTests : IDisposable{
@@ -17,19 +18,19 @@ namespace Shared.EventStore.Tests{
 
         private readonly EventStoreDockerHelper EventStoreDockerHelper;
 
-        #endregion
-
-        #region Constructors
-
-        public EventStoreContextTests(){
+        public EventStoreContextTests()
+        {
             NlogLogger logger = new NlogLogger();
-            LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
-            LogManager.LoadConfiguration("nlog.config");
+            LogManager.Setup(b => {
+                b.SetupLogFactory(setup => setup.AddCallSiteHiddenAssembly(typeof(NlogLogger).Assembly));
+                b.SetupLogFactory(setup => setup.AddCallSiteHiddenAssembly(typeof(Shared.Logger.Logger).Assembly));
+                b.SetupLogFactory(setup => setup.AddCallSiteHiddenAssembly(typeof(TenantMiddleware).Assembly));
+                b.LoadConfigurationFromFile("nlog.config");
+            });
 
             logger.Initialise(LogManager.GetLogger("Reqnroll"), "Reqnroll");
-           
-            this.EventStoreDockerHelper = new EventStoreDockerHelper();
-            this.EventStoreDockerHelper.Logger = logger;
+
+            this.EventStoreDockerHelper = new EventStoreDockerHelper { Logger = logger };
         }
 
         #endregion
