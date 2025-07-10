@@ -1,7 +1,8 @@
-﻿namespace Shared.Logger
+﻿using Shared.Logger.TennantContext;
+
+namespace Shared.Logger
 {
     using NLog;
-    using Shared.TennantContext;
     using System;
     using System.Diagnostics.CodeAnalysis;
 

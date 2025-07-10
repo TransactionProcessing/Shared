@@ -5,7 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Logger\" />
     <Folder Include="Results\" />
+    <Folder Include="TennantContext\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,5 +23,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared.Logger\Shared.Logger.csproj" />
   </ItemGroup>
 </Project>
