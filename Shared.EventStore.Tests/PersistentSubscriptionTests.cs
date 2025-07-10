@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Shared.EventStore.Tests.TestObjects;
 
 namespace Shared.EventStore.Tests
@@ -20,6 +21,7 @@ namespace Shared.EventStore.Tests
         public PersistentSubscriptionTests()
         {
             Logger.Initialise(NullLogger.Instance);
+            ConfigurationReader.Initialise(new ConfigurationRoot(new List<IConfigurationProvider>()));
 
             TypeMap.AddType<EstateCreatedEvent>("EstateCreatedEvent");
         }
