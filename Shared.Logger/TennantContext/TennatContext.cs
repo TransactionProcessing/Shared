@@ -27,7 +27,7 @@
 
         public static TenantContext CurrentTenant
         {
-            get => TenantContext.Current?.Value ?? new TenantContext();
+            get => TenantContext.Current?.Value;
             set => TenantContext.Current.Value = value;
         }
 

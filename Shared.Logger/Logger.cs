@@ -36,6 +36,10 @@ namespace Shared.Logger
 
             TenantContext tenantContext = TenantContext.CurrentTenant;
 
+            if (tenantContext == null) {
+                LoggerObject.LogCritical(exception);
+                return;
+            }
             using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
                 // Write to the normal log
                 LoggerObject.LogCritical(exception);
@@ -47,11 +51,18 @@ namespace Shared.Logger
                     }
                 }
             }
+        
         }
 
         public static void LogDebug(String message) {
             ValidateLoggerObject();
             TenantContext tenantContext = TenantContext.CurrentTenant;
+
+            if (tenantContext == null) {
+                LoggerObject.LogDebug(message);
+                return;
+            }
+
             using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
                 // Write to the normal log
                 LoggerObject.LogDebug(message);
@@ -69,6 +80,12 @@ namespace Shared.Logger
             ValidateLoggerObject();
 
             TenantContext tenantContext = TenantContext.CurrentTenant;
+
+            if (tenantContext == null) {
+                LoggerObject.LogError(exception);
+                return;
+            }
+
             using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
                 // Write to the normal log
                 LoggerObject.LogError(exception);
@@ -87,6 +104,10 @@ namespace Shared.Logger
             ValidateLoggerObject();
 
             TenantContext tenantContext = TenantContext.CurrentTenant;
+            if (tenantContext == null) {
+                LoggerObject.LogError(message, exception);
+                return;
+            }
             using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
                 // Write to the normal log
                 LoggerObject.LogError(message, exception);
@@ -104,6 +125,10 @@ namespace Shared.Logger
             ValidateLoggerObject();
 
             TenantContext tenantContext = TenantContext.CurrentTenant;
+            if (tenantContext == null) {
+                Logger.LoggerObject.LogInformation(message);
+                return;
+            }
             using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
                 // Write to the normal log
                 Logger.LoggerObject.LogInformation(message);
@@ -121,6 +146,10 @@ namespace Shared.Logger
             ValidateLoggerObject();
 
             TenantContext tenantContext = TenantContext.CurrentTenant;
+            if (tenantContext == null) {
+                Logger.LoggerObject.LogTrace(message);
+                return;
+            }
             using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
                 // Write to the normal log
                 Logger.LoggerObject.LogTrace(message);
@@ -138,6 +167,10 @@ namespace Shared.Logger
             ValidateLoggerObject();
 
             TenantContext tenantContext = TenantContext.CurrentTenant;
+            if (tenantContext == null) {
+                Logger.LoggerObject.LogWarning(message);
+                return;
+            }
             using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
                 // Write to the normal log
                 Logger.LoggerObject.LogWarning(message);
