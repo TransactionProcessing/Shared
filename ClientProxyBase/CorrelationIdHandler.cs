@@ -8,7 +8,7 @@ namespace ClientProxyBase;
 public class CorrelationIdHandler : DelegatingHandler
 {
     private readonly IHttpContextAccessor _accessor;
-    private const string HeaderName = "X-Correlation-ID";
+    private const string HeaderName = "correlationId";
 
     public CorrelationIdHandler(IHttpContextAccessor accessor) => this._accessor = accessor;
 
