@@ -12,3 +12,5 @@ jobs:
       issue-body: "Version Number xyz is now available"
       target-repos: "TransactionProcessing/Testing"
       project-org: "TransactionProcessing"
+    secrets:
+      gh_token: ${{ secrets.GH_TOKEN }}      
