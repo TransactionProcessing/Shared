@@ -11,7 +11,8 @@ jobs:
         ASPNETCORE_ENVIRONMENT: "Production"
 
     runs-on: ubuntu-latest
-
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
     steps:
     - uses: actions/checkout@v1
 
@@ -67,3 +68,14 @@ jobs:
 
         dotnet pack "Shared.Results.Web\Shared.Results.Web.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/Shared.Results.Web.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+  create-shared-issue:
+    needs: build
+    uses: TransactionProcessing/org-ci-workflows/.github/workflows/reusable-create-shared-issue.yml@main
+    with:
+      issue-title: "Update Shared Nugets"
+      issue-body: "Version Number ${{ needs.build.outputs.version }} is now available"
+      target-repos: "TransactionProcessing/FileProcessor TransactionProcessing/EstateManagementUI TransactionProcessing/CallbackHandler TransactionProcessing/EstateReportingAPI TransactionProcessing/TransactionProcessor TransactionProcessing/SecurityService TransactionProcessing/Messaging TransactionProcessing/TransactionProcessorACL TransactionProcessing/MobileConfiguration TransactionProcessing/TestHosts TransactionProcessing/FileFormatConversion TransactionProcessing/SupportTools TransactionProcessing/TransactionMobile"
+      project-org: "TransactionProcessing"
+    secrets:
+      gh_token: ${{ secrets.GH_TOKEN }}        
