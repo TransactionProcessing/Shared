@@ -1,7 +1,7 @@
 name: Use Reusable Job - Create Shared Nuget Update Issue
 
 on:
-  workflow_dispatch:
+  repository_dispatch:
 
 jobs:
   create-shared-issue:
