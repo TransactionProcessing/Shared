@@ -12,5 +12,3 @@ jobs:
       issue-body: "Version Number xyz is now available"
       target-repos: "TransactionProcessing/Testing"
       project-org: "TransactionProcessing"
-    secrets:
-      GH_PAT: ${{ secrets.GH_TOKEN }}
