@@ -372,7 +372,7 @@ public abstract class BaseDockerHelper{
 
         List<String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add($"urls=http://*:{DockerPorts.FileProcessorDockerPort}");
-        environmentVariables.Add(this.SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "EstateReportingReadModel", this.UseSecureSqlServerDatabase));
+        environmentVariables.Add(this.SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
         Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
