@@ -845,13 +845,11 @@ public abstract class BaseDockerHelper{
     }
 
     protected virtual List<String> GetRequiredProjections(){
-        List<String> requiredProjections = new List<String>();
-
-        requiredProjections.Add("CallbackHandlerEnricher.js");
-        requiredProjections.Add("EstateAggregator.js");
-        requiredProjections.Add("MerchantAggregator.js");
-        requiredProjections.Add("MerchantBalanceCalculator.js");
-        requiredProjections.Add("MerchantBalanceProjection.js");
+        List<String> requiredProjections = [
+            "MerchantAggregator.js",
+            "MerchantBalanceCalculator.js",
+            "MerchantBalanceProjection.js"
+        ];
 
         return requiredProjections;
     }
