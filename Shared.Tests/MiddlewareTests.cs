@@ -305,18 +305,6 @@ namespace Shared.Tests
         }
 
         [Fact]
-        public void HealthChecksBuilderExtensions_AddEstateManagementService_ServiceAdded(){
-
-            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
-            ConfigurationReader.Initialise(configurationBuilder.Build());
-
-            TestHealthChecksBuilder builder = new ();
-            IHealthChecksBuilder healthChecksBuilder = builder.AddEstateManagementService();
-            ((TestHealthChecksBuilder)healthChecksBuilder).Registrations.Count.ShouldBe(1);
-            ((TestHealthChecksBuilder)healthChecksBuilder).Registrations.First().Name.ShouldBe("Estate Management Service");
-        }
-
-        [Fact]
         public void HealthChecksBuilderExtensions_AddFileProcessorService_ServiceAdded()
         {
 

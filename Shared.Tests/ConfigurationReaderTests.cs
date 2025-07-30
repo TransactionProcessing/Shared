@@ -37,8 +37,10 @@ namespace Shared.Tests
         [Fact]
         public void ConfigurationReader_GetBaseServerUri_ValueReturned()
         {
-            Uri uri = ConfigurationReader.GetBaseServerUri("EstateManagementApi");
-            uri.AbsoluteUri.ShouldBe("http://127.0.0.1:5000/");
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
+            ConfigurationReader.Initialise(configurationBuilder.Build());
+            Uri uri = ConfigurationReader.GetBaseServerUri("TransactionProcessorApi");
+            uri.AbsoluteUri.ShouldBe("http://127.0.0.1:5002/");
         }
 
         [Fact]
@@ -85,8 +87,8 @@ namespace Shared.Tests
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             ConfigurationReader.Initialise(configurationBuilder.Build());
 
-            var value = ConfigurationReader.GetValue("EstateManagementApi");
-            value.ShouldBe("http://127.0.0.1:5000");
+            var value = ConfigurationReader.GetValue("TransactionProcessorApi");
+            value.ShouldBe("http://127.0.0.1:5002");
         }
 
 
@@ -161,8 +163,8 @@ namespace Shared.Tests
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             ConfigurationReader.Initialise(configurationBuilder.Build());
 
-            var value = ConfigurationReader.GetValueOrDefault("AppSettings","EstateManagementApi", "http://127.0.0.1:5001");
-            value.ShouldBe("http://127.0.0.1:5000");
+            var value = ConfigurationReader.GetValueOrDefault("AppSettings","TransactionProcessorApi", "http://127.0.0.1:5001");
+            value.ShouldBe("http://127.0.0.1:5002");
         }
 
         [Fact]
@@ -171,7 +173,7 @@ namespace Shared.Tests
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             ConfigurationReader.Initialise(configurationBuilder.Build());
 
-            var value = ConfigurationReader.GetValueOrDefault("AppSettings", "EstateManagementApiX", "http://127.0.0.1:5001");
+            var value = ConfigurationReader.GetValueOrDefault("AppSettings", "TransactionProcessorApiX", "http://127.0.0.1:5001");
             value.ShouldBe("http://127.0.0.1:5001");
         }
 

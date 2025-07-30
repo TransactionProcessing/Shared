@@ -12,33 +12,6 @@
     public static class HealthChecksBuilderExtensions
     {
         #region Methods
-
-        /// <summary>
-        /// Adds the estate management service.
-        /// </summary>
-        /// <param name="builder">The builder.</param>
-        /// <param name="customHttpHandler">The custom HTTP handler.</param>
-        /// <returns></returns>
-        public static IHealthChecksBuilder AddEstateManagementService(this IHealthChecksBuilder builder,
-                                                                      Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
-        {
-            Uri uri = new Uri($"{ConfigurationReader.GetValue("AppSettings", "EstateManagementApi")}/health");
-
-            return builder.AddUrlGroup(uri,
-                                       HttpMethod.Get,
-                                       "Estate Management Service",
-                                       HealthStatus.Unhealthy,
-                                       new[] {"estatemanagement"},
-                                       configurePrimaryHttpMessageHandler:customHttpHandler);
-        }
-
-        
-        /// <summary>
-        /// Adds the file processor service.
-        /// </summary>
-        /// <param name="builder">The builder.</param>
-        /// <param name="customHttpHandler">The custom HTTP handler.</param>
-        /// <returns></returns>
         public static IHealthChecksBuilder AddFileProcessorService(this IHealthChecksBuilder builder,
                                                                    Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
@@ -52,12 +25,6 @@
                                        configurePrimaryHttpMessageHandler: customHttpHandler);
         }
 
-        /// <summary>
-        /// Adds the messaging service.
-        /// </summary>
-        /// <param name="builder">The builder.</param>
-        /// <param name="customHttpHandler">The custom HTTP handler.</param>
-        /// <returns></returns>
         public static IHealthChecksBuilder AddMessagingService(this IHealthChecksBuilder builder,
                                                                Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
@@ -71,12 +38,6 @@
                                        configurePrimaryHttpMessageHandler: customHttpHandler);
         }
 
-        /// <summary>
-        /// Adds the security service.
-        /// </summary>
-        /// <param name="builder">The builder.</param>
-        /// <param name="customHttpHandler">The custom HTTP handler.</param>
-        /// <returns></returns>
         public static IHealthChecksBuilder AddSecurityService(this IHealthChecksBuilder builder,
                                                               Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
@@ -89,12 +50,6 @@
                                        configurePrimaryHttpMessageHandler: customHttpHandler);
         }
 
-        /// <summary>
-        /// Adds the transaction processor service.
-        /// </summary>
-        /// <param name="builder">The builder.</param>
-        /// <param name="customHttpHandler">The custom HTTP handler.</param>
-        /// <returns></returns>
         public static IHealthChecksBuilder AddTransactionProcessorService(this IHealthChecksBuilder builder,
                                                                           Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {

@@ -618,7 +618,6 @@ public abstract class BaseDockerHelper{
         environmentVariables
             .Add($"OperatorConfiguration:PataPawaPostPay:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/PataPawaPostPayService/basichttp");
         environmentVariables.Add(this.SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
-        environmentVariables.Add(this.SetConnectionString("ConnectionStrings:EstateReportingReadModel", "EstateReportingReadModel", this.UseSecureSqlServerDatabase));
 
         List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.FileProcessor);
 
