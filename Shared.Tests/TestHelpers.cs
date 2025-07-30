@@ -50,7 +50,6 @@ public static class TestHelpers{
                                                                                         ["AppSettings:ClientId"] = "clientId",
                                                                                         ["AppSettings:ClientSecret"] = "Secret1",
                                                                                         ["AppSettings:TestArray"] = "[\"A\", \"B\", \"C\"]",
-        ["AppSettings:EstateManagementApi"] = "http://127.0.0.1:5000",
         ["AppSettings:FileProcessorApi"] = "http://127.0.0.1:5009",
         ["AppSettings:MessagingServiceApi"] = "http://127.0.0.1:5006",
         ["SecurityConfiguration:Authority"] = "http://127.0.0.1:5001",
