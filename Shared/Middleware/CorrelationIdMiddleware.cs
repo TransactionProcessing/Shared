@@ -50,6 +50,7 @@ namespace Shared.Middleware
             if (correlationId != Guid.Empty)
             {
                 tenantContext.SetCorrelationId(correlationId);
+                context.Items[KeyNameCorrelationId] = correlationId.ToString(); // make it accessible to HttpClient handlers
             }
 
             tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
