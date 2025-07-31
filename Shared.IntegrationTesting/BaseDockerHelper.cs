@@ -617,9 +617,10 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add($"OperatorConfiguration:Safaricom:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/api/safaricom");
         environmentVariables
             .Add($"OperatorConfiguration:PataPawaPostPay:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/PataPawaPostPayService/basichttp");
+        environmentVariables.Add($"OperatorConfiguration:PataPawaPrePay:Url=http://{this.TestHostContainerName}:{DockerPorts.TestHostPort}/api/patapawaprepay");
         environmentVariables.Add(this.SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
-        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.FileProcessor);
+        List<String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.TransactionProcessor);
 
         if (additionalEnvironmentVariables != null){
             environmentVariables.AddRange(additionalEnvironmentVariables);
