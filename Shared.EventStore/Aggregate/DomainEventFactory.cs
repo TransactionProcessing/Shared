@@ -23,7 +23,7 @@
         /// </summary>
         public DomainEventFactory()
         {
-            JsonIgnoreAttributeIgnorerContractResolver jsonIgnoreAttributeIgnorerContractResolver = new JsonIgnoreAttributeIgnorerContractResolver();
+            JsonIgnoreAttributeIgnorerContractResolver jsonIgnoreAttributeIgnorerContractResolver = new();
 
             JsonConvert.DefaultSettings = () =>
                                           {

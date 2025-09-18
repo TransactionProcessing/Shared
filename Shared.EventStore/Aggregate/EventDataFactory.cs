@@ -59,7 +59,7 @@
 
             Byte[] data = Encoding.Default.GetBytes(JsonConvert.SerializeObject(domainEvent));
 
-            EventData eventData = new EventData(Uuid.FromGuid(domainEvent.EventId), domainEvent.EventType, data);
+            EventData eventData = new(Uuid.FromGuid(domainEvent.EventId), domainEvent.EventType, data);
 
             return eventData;
         }

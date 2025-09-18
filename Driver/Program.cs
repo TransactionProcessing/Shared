@@ -49,9 +49,9 @@ namespace Driver
 
         private static async Task QueryTest(){
             String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
-            EventStoreClient client = new EventStoreClient(Program.ConfigureEventStoreSettings());
-            EventStoreProjectionManagementClient projection = new EventStoreProjectionManagementClient(Program.ConfigureEventStoreSettings());
-            EventStoreContext context = new EventStoreContext(client, projection);
+            EventStoreClient client = new(Program.ConfigureEventStoreSettings());
+            EventStoreProjectionManagementClient projection = new(Program.ConfigureEventStoreSettings());
+            EventStoreContext context = new(client, projection);
 
             var result = await context.RunTransientQuery(query, CancellationToken.None);
             Console.WriteLine(result);

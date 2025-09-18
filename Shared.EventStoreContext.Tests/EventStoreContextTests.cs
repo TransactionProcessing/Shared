@@ -20,7 +20,7 @@ namespace Shared.EventStore.Tests{
 
         public EventStoreContextTests()
         {
-            NlogLogger logger = new NlogLogger();
+            NlogLogger logger = new();
             LogManager.Setup(b => {
                 b.SetupLogFactory(setup => setup.AddCallSiteHiddenAssembly(typeof(NlogLogger).Assembly));
                 b.SetupLogFactory(setup => setup.AddCallSiteHiddenAssembly(typeof(Shared.Logger.Logger).Assembly));
@@ -30,7 +30,7 @@ namespace Shared.EventStore.Tests{
 
             logger.Initialise(LogManager.GetLogger("Reqnroll"), "Reqnroll");
 
-            this.EventStoreDockerHelper = new EventStoreDockerHelper { Logger = logger };
+            this.EventStoreDockerHelper = new() { Logger = logger };
         }
 
         #endregion
@@ -66,7 +66,7 @@ namespace Shared.EventStore.Tests{
         [TestCase("COMPLETED/STOPPED/WRITING RESULTS", ProjectionRunningStatus.Completed)]
         [TestCase("Unknown", ProjectionRunningStatus.Unknown)]
         public void EventStoreContext_GetStatusFrom_CorrectValueReturned(String status, ProjectionRunningStatus expected){
-            ProjectionDetails projectionDetails = new ProjectionDetails(0,
+            ProjectionDetails projectionDetails = new(0,
                                                                         0,
                                                                         0,
                                                                         String.Empty,

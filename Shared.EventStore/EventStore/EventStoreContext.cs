@@ -268,7 +268,7 @@ namespace Shared.EventStore.EventStore
             catch (RpcException rex)
             {
                 this.LogError(rex);
-                Exception ex = new Exception(ProjectionRunningStatus.Faulted.ToString(), rex);
+                Exception ex = new(ProjectionRunningStatus.Faulted.ToString(), rex);
                 return Result.Failure(ex.GetExceptionMessages());
             }
             finally

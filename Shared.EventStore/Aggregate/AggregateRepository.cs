@@ -123,7 +123,7 @@ namespace Shared.EventStore.Aggregate
                         }
                         catch (Exception e) {
                             Exception ex =
-                                new Exception(
+                                new(
                                     $"Failed to apply domain event {@event.EventType} to Aggregate {aggregate.GetType()} ",
                                     e);
                             throw ex;

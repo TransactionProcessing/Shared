@@ -83,7 +83,7 @@
                 this.PendingEvents.Add(domainEvent);
             }
             catch(Exception e) {
-                Exception ex = new Exception($"Failed to apply event {domainEvent.EventType} to Aggregate {this.GetType().Name}", e);
+                Exception ex = new($"Failed to apply event {domainEvent.EventType} to Aggregate {this.GetType().Name}", e);
 
                 throw ex;
             }
