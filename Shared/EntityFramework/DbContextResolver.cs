@@ -41,7 +41,7 @@ namespace Shared.EntityFramework
             
             // Update the connection string with the identifier if needed
             if (!String.IsNullOrWhiteSpace(databaseNameSuffix)) {
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+                SqlConnectionStringBuilder builder = new(connectionString);
                 builder.InitialCatalog = $"{builder.InitialCatalog}-{databaseNameSuffix}";
                 connectionString = builder.ConnectionString;
 

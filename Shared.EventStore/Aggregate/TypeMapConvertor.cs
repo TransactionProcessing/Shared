@@ -17,7 +17,7 @@ namespace Shared.EventStore.Aggregate
         /// <summary>
         /// The domain event record factory
         /// </summary>
-        private static readonly DomainEventFactory StandardDomainEventFactory = new DomainEventFactory();
+        private static readonly DomainEventFactory StandardDomainEventFactory = new();
 
         private static IDomainEventFactory<IDomainEvent> OverrideDomainEventFactory = null;
 
@@ -62,7 +62,7 @@ namespace Shared.EventStore.Aggregate
         /// <returns></returns>
         public static EventData Convertor(IDomainEvent @event)
         {
-            EventDataFactory eventDataFactory = new EventDataFactory();
+            EventDataFactory eventDataFactory = new();
             return eventDataFactory.CreateEventData(@event);
         }
 
