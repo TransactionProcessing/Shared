@@ -94,7 +94,7 @@ namespace Shared.Tests
             Result newresult = ResultHelpers.CreateFailure(result);
 
             newresult.Status.ShouldBe(result.Status);
-            if (String.IsNullOrEmpty(message) == false) {
+            if (!String.IsNullOrEmpty(message)) {
                 newresult.Message.ShouldBe(message);
             }
             else {
@@ -156,7 +156,7 @@ namespace Shared.Tests
             }
             else {
                 newresult.Status.ShouldBe(result.Status);
-                if (String.IsNullOrEmpty(message) == false) {
+                if (!String.IsNullOrEmpty(message)) {
                     newresult.Message.ShouldBe(message);
                 }
                 else {
@@ -174,7 +174,7 @@ namespace Shared.Tests
                 };
             }
 
-            if (String.IsNullOrEmpty(message) == false) {
+            if (!String.IsNullOrEmpty(message)) {
                 return status switch {
                     ResultStatus.Invalid => Result.Invalid(message),
                     ResultStatus.NotFound => Result.NotFound(message),

@@ -74,7 +74,7 @@ namespace Shared.General
         /// </returns>
         public static Boolean IsUserRolesValid(ClaimsPrincipal user,
                                                String[] allowedRoles) {
-            if (ClaimsHelper.IsPasswordToken(user) == false) {
+            if (!ClaimsHelper.IsPasswordToken(user)) {
                 return true;
             }
 

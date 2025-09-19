@@ -83,7 +83,7 @@ private readonly EventStoreProjectionManagementClient ProjectionManagementClient
                 if (readResult.IsFailed) {
                     return HealthCheckResult.Unhealthy("Failed during read of $all stream");
                 }
-                if (readResult.Data.Any() == false)
+                if (!readResult.Data.Any())
                     return HealthCheckResult.Unhealthy("$all stream not found");
                 
                 return HealthCheckResult.Healthy();

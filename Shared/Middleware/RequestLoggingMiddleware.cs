@@ -25,7 +25,7 @@ namespace Shared.Middleware
         #region public async Task Invoke(HttpContext context)
         public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
         {
-            if (configuration.LogRequests == false)
+            if (!configuration.LogRequests)
             {
                 await next(context);
             }

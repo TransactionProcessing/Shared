@@ -270,7 +270,7 @@ public abstract class BaseDockerHelper{
 
     public void SetHostPort(ContainerType key, Int32 hostPort){
         KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
-        if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>)) == false){
+        if (!details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
             // Found so we can overwrite
             this.HostPorts[key] = hostPort;
         }
@@ -282,7 +282,7 @@ public abstract class BaseDockerHelper{
     public void SetImageDetails(ContainerType key,
                                 (String imageName, Boolean useLatest) newDetails){
         KeyValuePair<ContainerType, (String imageName, Boolean useLatest)> details = this.ImageDetails.SingleOrDefault(c => c.Key == key);
-        if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>)) == false){
+        if (!details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
             // Found so we can overwrite
             this.ImageDetails[key] = newDetails;
         }
@@ -342,7 +342,7 @@ public abstract class BaseDockerHelper{
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
                                                                    .WithName(this.EventStoreContainerName);
 
-        if (this.IsSecureEventStore == false){
+        if (!this.IsSecureEventStore){
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
         }
         else{
@@ -375,7 +375,7 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add(this.SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
+        Boolean isCi = !String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
 
         if (FdOs.IsLinux()){
             // we are running in CI Linux
@@ -849,7 +849,7 @@ public abstract class BaseDockerHelper{
                 List<String> projectionNames = new();
                 
                 foreach (FileInfo file in files){
-                    if (requiredProjections.Contains(file.Name) == false)
+                    if (!requiredProjections.Contains(file.Name))
                         continue;
 
                     String projection = await BaseDockerHelper.RemoveProjectionTestSetup(file);
@@ -894,7 +894,7 @@ public abstract class BaseDockerHelper{
                                                  String databaseName,
                                                  Boolean isSecure = false){
         String encryptValue = String.Empty;
-        if (isSecure == false){
+        if (!isSecure){
             encryptValue = ";Encrypt=False";
         }
 
@@ -943,7 +943,7 @@ public abstract class BaseDockerHelper{
 
             this.SetHostPortForService(type, startedContainer);
 
-            if (this.SkipHealthChecks == true) {
+            if (this.SkipHealthChecks) {
                 this.Trace($"Container [{buildContainerFunc.Method.Name}] health check skipped");
             }
                 
@@ -969,7 +969,7 @@ public abstract class BaseDockerHelper{
         }
         catch (Exception ex){
             if (consoleLogs != null){
-                while (consoleLogs.IsFinished == false){
+                while (!consoleLogs.IsFinished){
                     String s = consoleLogs.TryRead(10000);
                     this.Trace(s);
                 }
