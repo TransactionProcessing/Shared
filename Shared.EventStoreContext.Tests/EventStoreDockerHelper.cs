@@ -109,7 +109,7 @@ public class EventStoreDockerHelper : DockerHelper
         };
         settings.DefaultDeadline = deadline;
         
-        if (secureEventStore == false)
+        if (!secureEventStore)
         {
             settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
                                                       {

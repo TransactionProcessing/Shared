@@ -105,7 +105,7 @@
 
             try
             {
-                if (this.RefreshRequired(forceRefresh, this.Subscriptions) == false)
+                if (!this.RefreshRequired(forceRefresh, this.Subscriptions))
                 {
                     return this.GetSubscriptionsFromCache("refresh not required");
                 }

@@ -270,7 +270,7 @@ public abstract class BaseDockerHelper{
 
     public void SetHostPort(ContainerType key, Int32 hostPort){
         KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
-        if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>)) == false){
+        if (!details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
             // Found so we can overwrite
             this.HostPorts[key] = hostPort;
         }
@@ -282,7 +282,7 @@ public abstract class BaseDockerHelper{
     public void SetImageDetails(ContainerType key,
                                 (String imageName, Boolean useLatest) newDetails){
         KeyValuePair<ContainerType, (String imageName, Boolean useLatest)> details = this.ImageDetails.SingleOrDefault(c => c.Key == key);
-        if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>)) == false){
+        if (!details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
             // Found so we can overwrite
             this.ImageDetails[key] = newDetails;
         }
@@ -342,7 +342,7 @@ public abstract class BaseDockerHelper{
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
                                                                    .WithName(this.EventStoreContainerName);
 
-        if (this.IsSecureEventStore == false){
+        if (!this.IsSecureEventStore){
             environmentVariables.Add("EVENTSTORE_INSECURE=true");
         }
         else{
@@ -375,7 +375,7 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add(this.SetConnectionString("ConnectionStrings:TransactionProcessorReadModel", "TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        Boolean isCi = String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
+        Boolean isCi = !String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
 
         if (FdOs.IsLinux()){
             // we are running in CI Linux
@@ -737,25 +737,15 @@ public abstract class BaseDockerHelper{
         {
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
 
-            using (HttpClientHandler httpClientHandler = new())
-            {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
-                                                                               cert,
-                                                                               chain,
-                                                                               errors) =>
-                {
-                    return true;
-                };
-                using (HttpClient client = new(httpClientHandler))
-                {
-                    String authenticationString = $"admin:changeit";
-                    String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            using HttpClientHandler httpClientHandler = new();
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            using HttpClient client = new(httpClientHandler);
+            String authenticationString = "admin:changeit";
+            String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
-                    HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
-                    pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-                }
-            }
+            HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
+            pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         },
 
                         TimeSpan.FromSeconds(300),
@@ -767,29 +757,19 @@ public abstract class BaseDockerHelper{
         {
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
 
-            using (HttpClientHandler httpClientHandler = new())
-            {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
-                                                                               cert,
-                                                                               chain,
-                                                                               errors) =>
-                {
-                    return true;
-                };
-                using (HttpClient client = new(httpClientHandler))
-                {
-                    String authenticationString = $"admin:changeit";
-                    String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            using HttpClientHandler httpClientHandler = new();
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            using HttpClient client = new(httpClientHandler);
+            String authenticationString = "admin:changeit";
+            String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
-                    HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
+            HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
 
-                    infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-                    String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+            String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                    this.Trace(infoData);
-                }
-            }
+            this.Trace(infoData);
         });
     }
 
@@ -868,7 +848,7 @@ public abstract class BaseDockerHelper{
                 List<String> projectionNames = new();
                 
                 foreach (FileInfo file in files){
-                    if (requiredProjections.Contains(file.Name) == false)
+                    if (!requiredProjections.Contains(file.Name))
                         continue;
 
                     String projection = await BaseDockerHelper.RemoveProjectionTestSetup(file);
@@ -913,7 +893,7 @@ public abstract class BaseDockerHelper{
                                                  String databaseName,
                                                  Boolean isSecure = false){
         String encryptValue = String.Empty;
-        if (isSecure == false){
+        if (!isSecure){
             encryptValue = ";Encrypt=False";
         }
 
@@ -962,7 +942,7 @@ public abstract class BaseDockerHelper{
 
             this.SetHostPortForService(type, startedContainer);
 
-            if (this.SkipHealthChecks == true) {
+            if (this.SkipHealthChecks) {
                 this.Trace($"Container [{buildContainerFunc.Method.Name}] health check skipped");
             }
                 
@@ -988,7 +968,7 @@ public abstract class BaseDockerHelper{
         }
         catch (Exception ex){
             if (consoleLogs != null){
-                while (consoleLogs.IsFinished == false){
+                while (!consoleLogs.IsFinished){
                     String s = consoleLogs.TryRead(10000);
                     this.Trace(s);
                 }

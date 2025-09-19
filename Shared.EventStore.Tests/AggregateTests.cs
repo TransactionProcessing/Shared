@@ -63,9 +63,7 @@ public class AggregateTests{
     public void Aggregate_ApplyAndAppend_ErrorInApplyAndAppend_ExceptionIsThrown()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        Should.Throw<Exception>(() => {
-                                    t.SetAggregateName("Error",Guid.NewGuid());
-                                });
+        Should.Throw<Exception>(() => t.SetAggregateName("Error", Guid.NewGuid()));
     }
 
     [Fact]

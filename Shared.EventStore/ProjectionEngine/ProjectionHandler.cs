@@ -41,7 +41,7 @@ public class ProjectionHandler<TState> : IProjectionHandler where TState : State
     public async Task Handle(IDomainEvent @event, CancellationToken cancellationToken){
         if (@event == null) return;
 
-        if (this.Projection.ShouldIHandleEvent(@event) == false){
+        if (!this.Projection.ShouldIHandleEvent(@event)){
             return;
         }
 

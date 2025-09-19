@@ -41,7 +41,7 @@ public abstract class DockerHelper : BaseDockerHelper
         // We are running windows local (can use "C:\\home\\txnproc\\trace\\{scenarioName}")
         // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
-        Boolean isCI = (String.IsNullOrEmpty(ciEnvVar) == false && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
+        Boolean isCI = (!String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
         if (FdOs.IsLinux()) {
             this.HostTraceFolder = $"/home/txnproc/trace/{scenarioName}";
         }
@@ -50,13 +50,13 @@ public abstract class DockerHelper : BaseDockerHelper
         }
         else {
             this.HostTraceFolder = isCI switch {
-                false => $"C:\\home\\txnproc\\trace\\{scenarioName}",
-                _ => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
+                false => $"C:\\home\\txnproc\\trace/{scenarioName}",
+                _ => $"C:\\Users\\runneradmin\\txnproc\\trace/{scenarioName}",
             };
         }
         
-        if (FdOs.IsLinux() == false){
-            if (Directory.Exists(this.HostTraceFolder) == false){
+        if (!FdOs.IsLinux()){
+            if (!Directory.Exists(this.HostTraceFolder)){
                 this.Trace($"[{this.HostTraceFolder}] does not exist");
                 Directory.CreateDirectory(this.HostTraceFolder);
                 this.Trace($"[{this.HostTraceFolder}] created");
@@ -163,7 +163,7 @@ public abstract class DockerHelper : BaseDockerHelper
         if (this.TestNetworks.Any()) {
             foreach (INetworkService networkService in this.TestNetworks){
                 var cfg = networkService.GetConfiguration(true);
-                if (cfg.Containers.Any() == false){
+                if (!cfg.Containers.Any()) {
                     networkService.Stop();
                     networkService.Remove(true);
                 }

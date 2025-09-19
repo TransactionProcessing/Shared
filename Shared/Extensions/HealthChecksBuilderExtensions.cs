@@ -41,7 +41,7 @@
         public static IHealthChecksBuilder AddSecurityService(this IHealthChecksBuilder builder,
                                                               Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
-            Uri uri = new($"{ConfigurationReader.GetValue(\"SecurityConfiguration\", \"Authority\")}/health");
+            Uri uri = new($"{ConfigurationReader.GetValue("SecurityConfiguration", "Authority")}/health");
             return builder.AddUrlGroup(uri,
                                        HttpMethod.Get,
                                        "Security Service",

@@ -160,7 +160,7 @@ namespace Shared.EventStore.SubscriptionWorker
                     List<IDomainEventHandler> domainEventHandlers =
                         domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
 
-                    if (domainEventHandlers == null || domainEventHandlers.Any() == false)
+                    if (domainEventHandlers == null || !domainEventHandlers.Any())
                     {
                         // Log a warning out 
                         Logger.Logger.LogWarning(
