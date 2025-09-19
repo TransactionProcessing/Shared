@@ -25,17 +25,14 @@
         {
             JsonIgnoreAttributeIgnorerContractResolver jsonIgnoreAttributeIgnorerContractResolver = new();
 
-            JsonConvert.DefaultSettings = () =>
-                                          {
-                                              return new JsonSerializerSettings
-                                                     {
-                                                         ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                                                         TypeNameHandling = TypeNameHandling.All,
-                                                         Formatting = Formatting.Indented,
-                                                         DateTimeZoneHandling = DateTimeZoneHandling.Utc,
-                                                         ContractResolver = jsonIgnoreAttributeIgnorerContractResolver
-                                                     };
-                                          };
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.All,
+                Formatting = Formatting.Indented,
+                DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+                ContractResolver = jsonIgnoreAttributeIgnorerContractResolver
+            };
         }
 
         #endregion

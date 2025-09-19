@@ -222,7 +222,7 @@ namespace Shared.Tests
                 }
 
                 // Act
-                Should.Throw<Exception>(async () => { await PolicyFactory.ExecuteWithPolicyAsync(Action, policy, "TestPolicy"); });
+                Should.Throw<Exception>(async () => await PolicyFactory.ExecuteWithPolicyAsync(Action, policy, "TestPolicy"));
 
                 // Assert
                 executionCount.ShouldBe(1);

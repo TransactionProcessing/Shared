@@ -32,7 +32,7 @@ namespace Shared.Tests
         public void HostEnvironmentExtensions_IsPreProduction_IHostEnvironment_ArgumentNullExceptionThrown()
         {
             IHostEnvironment hostEnvironment = null;
-            Should.Throw<ArgumentNullException>(() => { hostEnvironment.IsPreProduction(); });
+            Should.Throw<ArgumentNullException>(() => hostEnvironment.IsPreProduction());
 
         }
     }

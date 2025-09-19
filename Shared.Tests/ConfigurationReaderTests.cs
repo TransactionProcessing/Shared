@@ -54,9 +54,7 @@ namespace Shared.Tests
 
             TestOutputHelper.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff"));
 
-            Should.Throw<InvalidOperationException>(() => {
-                                                        ConfigurationReader.GetValue("AppSettings", "TestArray");
-                                                    });
+            Should.Throw<InvalidOperationException>(() => ConfigurationReader.GetValue("AppSettings", "TestArray"));
         }
 
         [Fact]
@@ -65,9 +63,7 @@ namespace Shared.Tests
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             ConfigurationReader.Initialise(configurationBuilder.Build());
 
-            Should.Throw<KeyNotFoundException>(() => {
-                                                        ConfigurationReader.GetValue("AppSettings1", "TestArray");
-                                                    });
+            Should.Throw<KeyNotFoundException>(() => ConfigurationReader.GetValue("AppSettings1", "TestArray"));
         }
 
         [Fact]
@@ -76,9 +72,7 @@ namespace Shared.Tests
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             ConfigurationReader.Initialise(configurationBuilder.Build());
 
-            Should.Throw<KeyNotFoundException>(() => {
-                                                   ConfigurationReader.GetValue("AppSettings", "MissingKey");
-                                               });
+            Should.Throw<KeyNotFoundException>(() => ConfigurationReader.GetValue("AppSettings", "MissingKey"));
         }
 
         [Fact]
@@ -118,9 +112,7 @@ namespace Shared.Tests
             TestOutputHelper.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff"));
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             
-            Should.Throw<InvalidOperationException>(() => {
-                                                        ConfigurationReader.GetValueFromSection<List<String>>("AppSettings", "TestArray");
-                                                    });
+            Should.Throw<InvalidOperationException>(() => ConfigurationReader.GetValueFromSection<List<String>>("AppSettings", "TestArray"));
         }
 
         [Fact]
@@ -130,9 +122,7 @@ namespace Shared.Tests
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             ConfigurationReader.Initialise(configurationBuilder.Build());
 
-            Should.Throw<KeyNotFoundException>(() => {
-                                                        ConfigurationReader.GetValueFromSection<List<String>>("AppSettings1", "TestArray");
-                                                    });
+            Should.Throw<KeyNotFoundException>(() => ConfigurationReader.GetValueFromSection<List<String>>("AppSettings1", "TestArray"));
         }
 
         [Fact]
@@ -142,9 +132,7 @@ namespace Shared.Tests
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             ConfigurationReader.Initialise(configurationBuilder.Build());
 
-            Should.Throw<KeyNotFoundException>(() => {
-                                                   ConfigurationReader.GetValueFromSection<List<String>>("AppSettings", "TestArray1");
-                                               });
+            Should.Throw<KeyNotFoundException>(() => ConfigurationReader.GetValueFromSection<List<String>>("AppSettings", "TestArray1"));
         }
 
         [Fact]

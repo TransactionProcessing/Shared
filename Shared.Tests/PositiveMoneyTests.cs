@@ -24,9 +24,6 @@ public partial class SharedTests
     [InlineData(-1)]
     public void PositiveMoney_NonPositiveAmountRejected_ErrorThrown(Decimal moneyValue)
     {
-        Should.Throw<ArgumentOutOfRangeException>(() =>
-                                                  {
-                                                      PositiveMoney.Create(Money.Create(moneyValue));
-                                                  });
+        Should.Throw<ArgumentOutOfRangeException>(() => PositiveMoney.Create(Money.Create(moneyValue)));
     }
 }
