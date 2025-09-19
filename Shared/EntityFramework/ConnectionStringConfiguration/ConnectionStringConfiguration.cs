@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Shared.EntityFramework.ConnectionStringConfiguration
-{
+namespace Shared.EntityFramework.ConnectionStringConfiguration {
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Diagnostics.CodeAnalysis;
 

@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Text;
 
-namespace Shared.EventStore.EventStore
+namespace Shared.EventStore.EventStore;
+
+using System.Diagnostics;
+
+public interface IEventStoreContextManager
 {
-    using System.Diagnostics;
+    event TraceHandler TraceGenerated;
 
-    public interface IEventStoreContextManager
-    {
-        event TraceHandler TraceGenerated;
+    IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier);
 
-        IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier);
-
-        IEventStoreContext GetEventStoreContext(String connectionIdentifier);
-    }
+    IEventStoreContext GetEventStoreContext(String connectionIdentifier);
 }

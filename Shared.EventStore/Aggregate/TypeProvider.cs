@@ -1,42 +1,41 @@
-﻿namespace Shared.EventStore.Aggregate
+﻿namespace Shared.EventStore.Aggregate;
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using DomainDrivenDesign.EventSourcing;
+using General;
+
+/// <summary>
+/// 
+/// </summary>
+public static class TypeProvider
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using DomainDrivenDesign.EventSourcing;
-    using General;
+    #region Methods
 
-    /// <summary>
-    /// 
-    /// </summary>
-    public static class TypeProvider
+    public static void LoadDomainEventsTypeDynamically(Assembly[] assemblies)
     {
-        #region Methods
-
-        public static void LoadDomainEventsTypeDynamically(Assembly[] assemblies)
-        {
-            if (assemblies == null){
-                // Add a default
-                assemblies = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*DomainEvents*.dll")
-                                      .Select(x => Assembly.Load(AssemblyName.GetAssemblyName(x))).ToArray();
-            }
-
-            IEnumerable<Type> allTypes = assemblies.SelectMany(a => a.GetTypes());
-
-            List<Type> filteredTypes = allTypes
-                                       .Where(t => t.IsSubclassOf(typeof(DomainEvent)))
-                                       .OrderBy(e => e.Name).ToList();
-
-            foreach (Type type in filteredTypes)
-            {
-                TypeMap.AddType(type, type.Name);
-            }
+        if (assemblies == null){
+            // Add a default
+            assemblies = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*DomainEvents*.dll")
+                .Select(x => Assembly.Load(AssemblyName.GetAssemblyName(x))).ToArray();
         }
 
-        public static void LoadDomainEventsTypeDynamically() => LoadDomainEventsTypeDynamically(null);
+        IEnumerable<Type> allTypes = assemblies.SelectMany(a => a.GetTypes());
 
-        #endregion
+        List<Type> filteredTypes = allTypes
+            .Where(t => t.IsSubclassOf(typeof(DomainEvent)))
+            .OrderBy(e => e.Name).ToList();
+
+        foreach (Type type in filteredTypes)
+        {
+            TypeMap.AddType(type, type.Name);
+        }
     }
+
+    public static void LoadDomainEventsTypeDynamically() => LoadDomainEventsTypeDynamically(null);
+
+    #endregion
 }

@@ -7,6 +7,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Prometheus;
 using Shared.EventStore.Aggregate;
 
+namespace Shared.EventStore.Aggregate;
+
 [ExcludeFromCodeCoverage]
 public class AggregateMemoryCache {
     private readonly IMemoryCache MemoryCache;

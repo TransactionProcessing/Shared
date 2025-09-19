@@ -1,15 +1,14 @@
-﻿namespace Shared.EventStore.SubscriptionWorker
+﻿namespace Shared.EventStore.SubscriptionWorker;
+
+using System;
+using System.Diagnostics.CodeAnalysis;
+
+[ExcludeFromCodeCoverage]
+public class TraceEventArgs : EventArgs
 {
-    using System;
-    using System.Diagnostics.CodeAnalysis;
+    #region Properties
 
-    [ExcludeFromCodeCoverage]
-    public class TraceEventArgs : EventArgs
-    {
-        #region Properties
+    public String Message { get; set; }
 
-        public String Message { get; set; }
-
-        #endregion
-    }
+    #endregion
 }

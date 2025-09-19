@@ -1,20 +1,19 @@
-﻿namespace Shared.Extensions
+﻿namespace Shared.Extensions;
+
+using System;
+
+public static class DateTimeExtensions
 {
-    using System;
+    #region Methods
 
-    public static class DateTimeExtensions
+    public static Guid ToGuid(this DateTime dt)
     {
-        #region Methods
+        Byte[] bytes = BitConverter.GetBytes(dt.Ticks);
 
-        public static Guid ToGuid(this DateTime dt)
-        {
-            Byte[] bytes = BitConverter.GetBytes(dt.Ticks);
+        Array.Resize(ref bytes, 16);
 
-            Array.Resize(ref bytes, 16);
-
-            return new Guid(bytes);
-        }
-
-        #endregion
+        return new Guid(bytes);
     }
+
+    #endregion
 }

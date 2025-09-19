@@ -1,8 +1,7 @@
-﻿namespace Shared.Repositories
+﻿namespace Shared.Repositories;
+
+public enum ConnectionStringType
 {
-    public enum ConnectionStringType
-    {
-        EventStore = 1,
-        ReadModel = 2
-    }
+    EventStore = 1,
+    ReadModel = 2
 }

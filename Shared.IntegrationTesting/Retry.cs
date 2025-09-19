@@ -2,71 +2,70 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Shared.IntegrationTesting
+namespace Shared.IntegrationTesting;
+
+using System.Threading;
+using System.Threading.Tasks;
+
+public static class Retry
 {
-    using System.Threading;
-    using System.Threading.Tasks;
+    #region Fields
 
-    public static class Retry
+    /// <summary>
+    /// The default retry for
+    /// </summary>
+    private static readonly TimeSpan DefaultRetryFor = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// The default retry interval
+    /// </summary>
+    private static readonly TimeSpan DefaultRetryInterval = TimeSpan.FromSeconds(5);
+
+    #endregion
+
+    #region Methods
+
+    /// <summary>
+    /// Fors the specified action.
+    /// </summary>
+    /// <param name="action">The action.</param>
+    /// <param name="retryFor">The retry for.</param>
+    /// <param name="retryInterval">The retry interval.</param>
+    /// <returns></returns>
+    public static async Task For(Func<Task> action,
+                                 TimeSpan? retryFor = null,
+                                 TimeSpan? retryInterval = null)
     {
-        #region Fields
+        DateTime startTime = DateTime.Now;
+        Exception lastException = null;
 
-        /// <summary>
-        /// The default retry for
-        /// </summary>
-        private static readonly TimeSpan DefaultRetryFor = TimeSpan.FromSeconds(60);
-
-        /// <summary>
-        /// The default retry interval
-        /// </summary>
-        private static readonly TimeSpan DefaultRetryInterval = TimeSpan.FromSeconds(5);
-
-        #endregion
-
-        #region Methods
-
-        /// <summary>
-        /// Fors the specified action.
-        /// </summary>
-        /// <param name="action">The action.</param>
-        /// <param name="retryFor">The retry for.</param>
-        /// <param name="retryInterval">The retry interval.</param>
-        /// <returns></returns>
-        public static async Task For(Func<Task> action,
-                                     TimeSpan? retryFor = null,
-                                     TimeSpan? retryInterval = null)
+        if (retryFor == null)
         {
-            DateTime startTime = DateTime.Now;
-            Exception lastException = null;
+            retryFor = Retry.DefaultRetryFor;
+        }
 
-            if (retryFor == null)
+        while (DateTime.Now.Subtract(startTime).TotalMilliseconds < retryFor.Value.TotalMilliseconds)
+        {
+            try
             {
-                retryFor = Retry.DefaultRetryFor;
+                await action().ConfigureAwait(false);
+                lastException = null;
+                break;
             }
-
-            while (DateTime.Now.Subtract(startTime).TotalMilliseconds < retryFor.Value.TotalMilliseconds)
+            catch (Exception e)
             {
-                try
-                {
-                    await action().ConfigureAwait(false);
-                    lastException = null;
-                    break;
-                }
-                catch (Exception e)
-                {
-                    lastException = e;
+                lastException = e;
 
-                    // wait before retrying
-                    Thread.Sleep(retryInterval ?? Retry.DefaultRetryInterval);
-                }
-            }
-
-            if (lastException != null)
-            {
-                throw lastException;
+                // wait before retrying
+                Thread.Sleep(retryInterval ?? Retry.DefaultRetryInterval);
             }
         }
 
-        #endregion
+        if (lastException != null)
+        {
+            throw lastException;
+        }
     }
+
+    #endregion
 }

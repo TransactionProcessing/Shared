@@ -1,13 +1,12 @@
-﻿namespace Shared.EventStore.SubscriptionWorker
+﻿namespace Shared.EventStore.SubscriptionWorker;
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+public interface ISubscriptionRepository
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
+    Task<PersistentSubscriptions> GetSubscriptions(Boolean forceRefresh, CancellationToken cancellationToken);
 
-    public interface ISubscriptionRepository
-    {
-        Task<PersistentSubscriptions> GetSubscriptions(Boolean forceRefresh, CancellationToken cancellationToken);
-
-        Task PreWarm(CancellationToken cancellationToken);
-    }
+    Task PreWarm(CancellationToken cancellationToken);
 }

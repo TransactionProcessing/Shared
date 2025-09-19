@@ -14,8 +14,8 @@ using System.Text;
 using System.Threading.Tasks;
 using ClaimsPrincipal = System.Security.Claims.ClaimsPrincipal;
 
-namespace Shared.Middleware
-{
+namespace Shared.Middleware;
+
     public class TenantMiddleware
     {
         #region Fields
@@ -84,7 +84,6 @@ namespace Shared.Middleware
                 _ => TenantIdentifiers.Default(),
             };
     }
-}
 
 
 public static class ClaimsPrincipalExtensions
@@ -95,12 +94,9 @@ public static class ClaimsPrincipalExtensions
     }
 }
 
-public static class HttpContextExtensionMethods
-{
-    public static TenantIdentifiers GetIdentifiersFromToken(this HttpContext context)
-    {
-        if (!context.User.IsAuthenticated())
-        {
+public static class HttpContextExtensionMethods {
+    public static TenantIdentifiers GetIdentifiersFromToken(this HttpContext context) {
+        if (!context.User.IsAuthenticated()) {
             return TenantIdentifiers.Default();
         }
 
@@ -113,8 +109,7 @@ public static class HttpContextExtensionMethods
         return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, merchantId);
     }
 
-    public static TenantIdentifiers GetIdentifiersFromHeaders(this HttpContext context)
-    {
+    public static TenantIdentifiers GetIdentifiersFromHeaders(this HttpContext context) {
         // Get the org Id
         context.Request.Headers.TryGetValue("estateId", out StringValues estateIdHeader);
         Guid.TryParse(estateIdHeader, out Guid estateId);
@@ -126,10 +121,9 @@ public static class HttpContextExtensionMethods
         return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, merchantId);
     }
 
-    public static TenantIdentifiers GetIdentifiersFromRoute(this HttpContext context)
-    {
+    public static TenantIdentifiers GetIdentifiersFromRoute(this HttpContext context) {
         // Get the org Id
-        
+
         context.Request.RouteValues.TryGetValue("estateId", out object estateIdRouteValue);
         Guid.TryParse(estateIdRouteValue?.ToString(), out Guid estateId);
 

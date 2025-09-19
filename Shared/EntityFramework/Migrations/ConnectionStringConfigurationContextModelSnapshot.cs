@@ -6,76 +6,46 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Shared.EntityFramework.ConnectionStringConfiguration;
 
-namespace Shared.Migrations
-{
-    using System.Diagnostics.CodeAnalysis;
+namespace Shared.Migrations;
 
-    [ExcludeFromCodeCoverage]
-    [DbContext(typeof(ConnectionStringConfigurationContext))]
-    partial class ConnectionStringConfigurationContextModelSnapshot : ModelSnapshot
-    {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
+using System.Diagnostics.CodeAnalysis;
+
+[ExcludeFromCodeCoverage]
+[DbContext(typeof(ConnectionStringConfigurationContext))]
+partial class ConnectionStringConfigurationContextModelSnapshot : ModelSnapshot {
+    protected override void BuildModel(ModelBuilder modelBuilder) {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "3.0.0")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+        modelBuilder.HasAnnotation("ProductVersion", "3.0.0").HasAnnotation("Relational:MaxIdentifierLength", 128).HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+        modelBuilder.Entity("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration", b => {
+            b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ConnectionString")
-                        .IsRequired()
-                        .HasColumnName("connectionString")
-                        .HasColumnType("nvarchar(max)");
+            b.Property<string>("ConnectionString").IsRequired().HasColumnName("connectionString").HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ConnectionStringTypeId")
-                        .HasColumnType("int");
+            b.Property<int>("ConnectionStringTypeId").HasColumnType("int");
 
-                    b.Property<string>("ExternalIdentifier")
-                        .IsRequired()
-                        .HasColumnName("externalIdentifier")
-                        .HasColumnType("nvarchar(450)");
+            b.Property<string>("ExternalIdentifier").IsRequired().HasColumnName("externalIdentifier").HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+            b.HasKey("Id");
 
-                    b.HasIndex("ConnectionStringTypeId");
+            b.HasIndex("ConnectionStringTypeId");
 
-                    b.HasIndex("ExternalIdentifier", "ConnectionStringTypeId")
-                        .IsUnique();
+            b.HasIndex("ExternalIdentifier", "ConnectionStringTypeId").IsUnique();
 
-                    b.ToTable("ConnectionStringConfiguration");
-                });
+            b.ToTable("ConnectionStringConfiguration");
+        });
 
-            modelBuilder.Entity("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+        modelBuilder.Entity("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType", b => {
+            b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int").HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+            b.Property<string>("Description").IsRequired().HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+            b.HasKey("Id");
 
-                    b.ToTable("ConnectionStringType");
-                });
+            b.ToTable("ConnectionStringType");
+        });
 
-            modelBuilder.Entity("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration", b =>
-                {
-                    b.HasOne("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType", "ConnectionStringType")
-                        .WithMany()
-                        .HasForeignKey("ConnectionStringTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringConfiguration", b => { b.HasOne("Shared.EntityFramework.ConnectionStringConfiguration.ConnectionStringType", "ConnectionStringType").WithMany().HasForeignKey("ConnectionStringTypeId").OnDelete(DeleteBehavior.Cascade).IsRequired(); });
 #pragma warning restore 612, 618
-        }
     }
 }
