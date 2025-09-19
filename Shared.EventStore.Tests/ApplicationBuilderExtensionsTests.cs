@@ -26,7 +26,6 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new() { 
@@ -66,7 +65,6 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_NoneEnabled_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new()
@@ -100,14 +98,12 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_NoWorkers_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new()
             {
                 SubscriptionWorkers = new List<SubscriptionWorkerConfig>()
             };
-            Mock<IDomainEventHandlerResolver> deh = new();
             String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             Action<TraceEventType, String, String> traceHandler = null;
@@ -119,7 +115,6 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_OrderedOnlyWorkers_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new()
@@ -147,7 +142,6 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_OrderedOnlyWorkers_NoHandlers_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new()
@@ -161,7 +155,6 @@ namespace Shared.EventStore.Tests
                     },
                 }
             };
-            Mock<IDomainEventHandlerResolver> deh = new();
             String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
@@ -173,7 +166,6 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_MainOnlyWorkers_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new()
@@ -203,7 +195,6 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_MainOnlyWorkers_NoHandlers_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new()
@@ -219,7 +210,6 @@ namespace Shared.EventStore.Tests
                     }
                 }
             };
-            Mock<IDomainEventHandlerResolver> deh = new();
             String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
@@ -231,7 +221,6 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void ApplicationBuilderExtensions_ConfigureSubscriptions_MainOnlyWorkers_InstanceCount2_WorkerListReturned()
         {
-            Mock<IApplicationBuilder> appBuilder = new();
             Mock<ISubscriptionRepository> subscriptionRepository = new();
 
             SubscriptionWorkersRoot config = new()
