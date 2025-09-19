@@ -90,7 +90,7 @@
             // Find the record in the config repository
             using (ConnectionStringConfigurationContext context = this.ContextResolver())
             {
-                ConnectionStringConfiguration configuration = new ConnectionStringConfiguration
+                ConnectionStringConfiguration configuration = new()
                                                               {
                                                                   ExternalIdentifier = externalIdentifier,
                                                                   ConnectionString = connectionString,

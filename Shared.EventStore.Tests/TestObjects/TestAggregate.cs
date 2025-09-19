@@ -42,7 +42,7 @@ public record TestAggregate : Aggregate
 
     public void SetAggregateName(string aggregateName, Guid eventId)
     {
-        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(AggregateId, eventId, aggregateName);
+        AggregateNameSetEvent aggregateNameSetEvent = new(AggregateId, eventId, aggregateName);
 
         ApplyAndAppend(aggregateNameSetEvent);
     }

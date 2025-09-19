@@ -38,7 +38,7 @@ namespace Shared.Tests
         [InlineData("http://localhost/api", false)]
         [InlineData("http://localhost/api/health", true)]
         public void MiddlewareHelpersTests_LogMessage_IsHealthCheckLog(String url, Boolean healthCheckLog){
-            StringBuilder message = new StringBuilder();
+            StringBuilder message = new();
             message.Append("message");
 
             TestLogger logger = TestHelpers.InitialiseLogger();
@@ -60,9 +60,9 @@ namespace Shared.Tests
         {
             TestLogger logger = TestHelpers.InitialiseLogger();
             RequestResponseMiddlewareLoggingConfig configuration =
-                new RequestResponseMiddlewareLoggingConfig(LogLevel.Warning, logRequests, true);
+                new(LogLevel.Warning, logRequests, true);
             
-            DefaultHttpContext defaultContext = new DefaultHttpContext();
+            DefaultHttpContext defaultContext = new();
             if (requestBody != null){
                 defaultContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
             }
@@ -73,7 +73,7 @@ namespace Shared.Tests
             defaultContext.Request.Path = "/";
 
             // Act
-            RequestLoggingMiddleware middlewareInstance = new RequestLoggingMiddleware(next: (innerHttpContext) => {
+            RequestLoggingMiddleware middlewareInstance = new(next: (innerHttpContext) => {
                                                                                                  innerHttpContext.Response.WriteAsync("ResponseBody");
                                                                                                  return Task.CompletedTask;
                                                                                              });
@@ -104,17 +104,16 @@ namespace Shared.Tests
         [InlineData(false)]
         public async Task  ResponseLoggingMiddleware_RequestIsLogged(Boolean logResponses){
             TestLogger logger = TestHelpers.InitialiseLogger();
-            RequestResponseMiddlewareLoggingConfig configuration =
-                new RequestResponseMiddlewareLoggingConfig(LogLevel.Warning, true, logResponses);
+            RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Warning, true, logResponses);
 
             const string expectedOutput = "Request handed over to next request delegate";
 
-            DefaultHttpContext defaultContext = new DefaultHttpContext();
+            DefaultHttpContext defaultContext = new();
             defaultContext.Response.Body = new MemoryStream();
             defaultContext.Request.Path = "/";
 
             // Act
-            ResponseLoggingMiddleware middlewareInstance = new ResponseLoggingMiddleware(next: (innerHttpContext) => {
+            ResponseLoggingMiddleware middlewareInstance = new(next: (innerHttpContext) => {
                                                                                                    innerHttpContext.Response.WriteAsync(expectedOutput);
                                                                                                    return Task.CompletedTask;
                                                                                                });
@@ -140,7 +139,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                 throw TestHelpers.CreateException<ArgumentNullException>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -159,7 +158,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                                                                                        throw TestHelpers.CreateException<InvalidDataException>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -178,7 +177,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                                                                                        throw TestHelpers.CreateException<InvalidOperationException>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -197,7 +196,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                                                                                        throw TestHelpers.CreateException<FormatException>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -216,7 +215,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                                                                                        throw TestHelpers.CreateException<NotSupportedException>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -235,7 +234,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                                                                                        throw TestHelpers.CreateException<NotFoundException>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -254,7 +253,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                                                                                        throw TestHelpers.CreateException<NotImplementedException>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -273,7 +272,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) =>
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
                                                                                        throw TestHelpers.CreateException<Exception>());
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
@@ -292,7 +291,7 @@ namespace Shared.Tests
         {
             TestHelpers.InitialiseLogger();
 
-            ExceptionHandlerMiddleware middleware = new ExceptionHandlerMiddleware((innerHttpContext) => Task.CompletedTask);
+            ExceptionHandlerMiddleware middleware = new((innerHttpContext) => Task.CompletedTask);
 
             DefaultHttpContext context = TestHelpers.CreateHttpContext();
 

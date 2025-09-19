@@ -30,7 +30,7 @@ public class HealthCheckClient : IHealthCheckClient
                                                          CancellationToken cancellationToken) {
         String requestUri = this.BuildRequestUri(scheme, uri, port);
 
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        HttpRequestMessage request = new(HttpMethod.Get, requestUri);
 
         HttpResponseMessage responseMessage = await this.HttpClient.SendAsync(request);
 

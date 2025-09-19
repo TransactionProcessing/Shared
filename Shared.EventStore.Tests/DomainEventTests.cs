@@ -10,7 +10,7 @@ using Xunit;
 public class DomainEventTests{
     [Fact]
     public void DomainEvent_CanBeCreated_IsCreated(){
-        DomainEvent d = new DomainEvent(TestData.AggregateId, TestData.EventId);
+        DomainEvent d = new(TestData.AggregateId, TestData.EventId);
         d.AggregateId.ShouldBe(TestData.AggregateId);
         d.EventId.ShouldBe(TestData.EventId);
         d.EventType.ShouldBe("DomainEvent");

@@ -27,7 +27,7 @@ namespace Shared.EventStore.Tests.TestObjects
             byte[] eventData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainEvent));
             byte[] customEventMetaData = Encoding.UTF8.GetBytes(string.Empty);
 
-            Dictionary<string, string> metaData = new Dictionary<string, string>();
+            Dictionary<string, string> metaData = new();
             metaData.Add("type", domainEvent.GetType().FullName);
             metaData.Add("created", "1000000");
             metaData.Add("content-type", "application-json");
@@ -35,7 +35,7 @@ namespace Shared.EventStore.Tests.TestObjects
             if (addToMap)
                 TypeMap.AddType(typeof(T), domainEvent.GetType().FullName);
 
-            EventRecord r = new EventRecord(streamId,
+            EventRecord r = new(streamId,
                                             Uuid.FromGuid(domainEvent.EventId),
                                             0,
                                             new Position(0, 0),

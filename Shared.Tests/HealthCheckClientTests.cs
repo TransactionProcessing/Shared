@@ -20,12 +20,12 @@ namespace Shared.Tests
     {
         [Fact]
         public async Task HealthCheckClient_PerformHealthCheck_HealthCheckIsReturned(){
-            MockHttpMessageHandler mockHttp = new MockHttpMessageHandler();
+            MockHttpMessageHandler mockHttp = new();
 
             String expectedResponse = "{'name' : 'Test'}";
             mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/health").Respond("application/json", expectedResponse);
 
-            HealthCheckClient healthCheckClient = new HealthCheckClient(mockHttp.ToHttpClient());
+            HealthCheckClient healthCheckClient = new(mockHttp.ToHttpClient());
 
             var result = await healthCheckClient.PerformHealthCheck("http", "127.0.0.1", 5000, CancellationToken.None);
 
@@ -42,12 +42,12 @@ namespace Shared.Tests
         [InlineData(HttpStatusCode.BadGateway, ResultStatus.Failure)]
         public async Task HealthCheckClient_PerformHealthCheck_FailedResponses_HealthCheckIsReturned(HttpStatusCode statusCode, ResultStatus resultStatus)
         {
-            MockHttpMessageHandler mockHttp = new MockHttpMessageHandler();
+            MockHttpMessageHandler mockHttp = new();
 
             //String expectedResponse = "{'name' : 'Test'}";
             mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/health").Respond(req => new HttpResponseMessage(statusCode));
 
-            HealthCheckClient healthCheckClient = new HealthCheckClient(mockHttp.ToHttpClient());
+            HealthCheckClient healthCheckClient = new(mockHttp.ToHttpClient());
 
             Result<String> result = await healthCheckClient.PerformHealthCheck("http", "127.0.0.1", 5000, CancellationToken.None);
 
