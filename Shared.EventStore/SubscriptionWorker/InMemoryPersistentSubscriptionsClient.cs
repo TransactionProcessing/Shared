@@ -39,7 +39,7 @@
         {
 
             ReadOnlyMemory<byte> data = new(Encoding.Default.GetBytes(@event));
-            IDictionary<string, string> metadata = new();
+            IDictionary<string, string> metadata = new Dictionary<String, String>();
             ReadOnlyMemory<byte> custommetadata = new(Encoding.Default.GetBytes(@event));
 
             metadata.Add("type", @type);

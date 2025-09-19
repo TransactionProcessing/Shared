@@ -50,7 +50,7 @@ public class AggregateRepositoryTests{
     public async Task AggregateRepository_GetLatestVersion_ErrorApplyingEvents_ErrorThrown()
     {
         Mock<IEventStoreContext> context = new();
-        IDomainEventFactory<IDomainEvent> factory = new();
+        IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new(context.Object, factory);
         AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Error");
         EventRecord r = TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestAggregate");
