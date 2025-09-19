@@ -30,9 +30,9 @@ public static class IApplicationBuilderExtenstions
                 throw new Exception("No Worker configuration supplied");
             if (subscriptionRepositoryResolver == null)
                 throw new Exception("No Subscription Repository Resolver supplied");
-            if (workerConfig.InternalSubscriptionService == false)
+            if (!workerConfig.InternalSubscriptionService)
                 return;
-            if (workerConfig.SubscriptionWorkers == null || workerConfig.SubscriptionWorkers.Any() == false)
+            if (workerConfig.SubscriptionWorkers == null || !workerConfig.SubscriptionWorkers.Any())
                 throw new Exception("No SubscriptionWorkers supplied");
 
             ISubscriptionRepository subscriptionRepository = subscriptionRepositoryResolver(eventStoreConnectionString,
@@ -63,7 +63,7 @@ public static class IApplicationBuilderExtenstions
         List<SubscriptionWorker> workers = new();
 
         foreach (SubscriptionWorkerConfig configurationSubscriptionWorker in configuration.SubscriptionWorkers) {
-            if (configurationSubscriptionWorker.Enabled == false)
+            if (!configurationSubscriptionWorker.Enabled)
                 continue;
 
             if (configurationSubscriptionWorker.IsOrdered) {

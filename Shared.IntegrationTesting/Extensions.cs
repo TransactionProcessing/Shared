@@ -20,7 +20,7 @@ public static class Extensions
             }
         }
 
-        if (String.IsNullOrEmpty(hostTraceFolder) == false) {
+        if (!String.IsNullOrEmpty(hostTraceFolder)) {
             containerBuilder = containerBuilder.Mount(hostTraceFolder, containerPath, MountType.ReadWrite);
         }
 

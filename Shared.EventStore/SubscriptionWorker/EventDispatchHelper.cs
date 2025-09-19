@@ -34,7 +34,7 @@ namespace Shared.EventStore.SubscriptionWorker
             {
                 Result[] results = await all;
                 if (results.Any(r => r.IsFailed)) {
-                    var failedResults = results.Where(r => r.IsFailed && String.IsNullOrEmpty(r.Message) == false).Select(r => r.Message).ToList();
+                    var failedResults = results.Where(r => r.IsFailed && !String.IsNullOrEmpty(r.Message)).Select(r => r.Message).ToList();
                     var failedResults2 = results.Where(r => r.IsFailed).Select(r => r.Errors).ToList();
                     var masterList = new List<String>();
                     masterList.AddRange(failedResults);
