@@ -21,7 +21,7 @@
             DockerHelper dockerHelper = new TestDockerHelper();
             dockerHelper.RequiredDockerServices = DockerServices.SqlServer;
 
-            NlogLogger logger = new NlogLogger();
+            NlogLogger logger = new();
             logger.Initialise(LogManager.GetLogger("Reqnroll"), "Reqnroll");
             LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
             dockerHelper.Logger = logger;

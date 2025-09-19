@@ -46,7 +46,7 @@ namespace Shared.Middleware
 
                 responseBodyStream.Seek(0, SeekOrigin.Begin);
                 var responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
-                StringBuilder logMessage = new StringBuilder();
+                StringBuilder logMessage = new();
                 logMessage.Append($"Response: Status Code: {context.Response.StatusCode}");
                 if (!String.IsNullOrEmpty(responseBody))
                 {

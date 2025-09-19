@@ -20,7 +20,7 @@ namespace Shared.Tests
         [Fact]
         public void Guard_ThrowIfNull_NotNull_NoErrorThrown()
         {
-            Object testObject = new Object();
+            Object testObject = new();
 
             Should.NotThrow( () => Guard.ThrowIfNull(testObject, nameof(testObject)));
         }
@@ -36,7 +36,7 @@ namespace Shared.Tests
         [Fact]
         public void Guard_ThrowIfNullWithExceptionType_NotNull_NoErrorThrown()
         {
-            Object testObject = new Object();
+            Object testObject = new();
 
             Should.NotThrow(() => Guard.ThrowIfNull(testObject, typeof(Exception), nameof(testObject)));
         }
@@ -386,7 +386,7 @@ namespace Shared.Tests
         [Fact]
         public void Guard_ThrowIfInvalidDate_NoErrorThrown()
         {
-            DateTime testValue = new DateTime(2018,10,21,1,2,3);
+            DateTime testValue = new(2018,10,21,1,2,3);
 
             Should.NotThrow( () => Guard.ThrowIfInvalidDate(testValue, nameof(testValue)));
         }
@@ -402,7 +402,7 @@ namespace Shared.Tests
         [Fact]
         public void Guard_ThrowIfInvalidDateWithExceptionType_NoErrorThrown()
         {
-            DateTime testValue = new DateTime(2018, 10, 21, 1, 2, 3);
+            DateTime testValue = new(2018, 10, 21, 1, 2, 3);
 
             Should.NotThrow(() => Guard.ThrowIfInvalidDate(testValue, typeof(Exception), nameof(testValue)));
         }

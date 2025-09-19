@@ -48,7 +48,7 @@ public static class ResultExtensions
     internal static ObjectResult CreateObjectResult(Result result,
                                                     HttpStatusCode statusCode)
     {
-        ObjectResult or = new ObjectResult(result);
+        ObjectResult or = new(result);
         or.StatusCode = (Int32)statusCode;
         return or;
     }
@@ -56,7 +56,7 @@ public static class ResultExtensions
     internal static ObjectResult CreateObjectResult<T>(Result<T> result,
                                                        HttpStatusCode statusCode)
     {
-        ObjectResult or = new ObjectResult(result);
+        ObjectResult or = new(result);
         or.StatusCode = (Int32)statusCode;
         return or;
     }

@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 public static class TestHelpers{
     public static DefaultHttpContext CreateHttpContext()
     {
-        DefaultHttpContext context = new DefaultHttpContext();
+        DefaultHttpContext context = new();
         context.Request.Scheme = "http";
         context.Request.Host = new HostString("localhost");
         context.Request.Path = new PathString("/test");
@@ -26,7 +26,7 @@ public static class TestHelpers{
     public static ErrorResponse GetErrorResponse(DefaultHttpContext context)
     {
         context.Response.Body.Seek(0, SeekOrigin.Begin);
-        StreamReader reader = new StreamReader(context.Response.Body);
+        StreamReader reader = new(context.Response.Body);
         String streamText = reader.ReadToEnd();
         ErrorResponse responseData = JsonConvert.DeserializeObject<ErrorResponse>(streamText);
         return responseData;

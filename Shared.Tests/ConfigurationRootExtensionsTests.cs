@@ -36,7 +36,7 @@
 
             IConfigurationRoot configuration = builder.Build();
 
-            TestLogger testLogger = new TestLogger();
+            TestLogger testLogger = new();
             Action<String> loggerAction = message => { testLogger.LogInformation(message); };
 
             configuration.LogConfiguration(loggerAction);
@@ -59,11 +59,11 @@
         [Fact]
         public void ConfigurationRootExtensions_LogConfiguration_NoConfiguration_NoConfigurationIsLogged()
         {
-            IConfigurationBuilder builder = new ConfigurationBuilder();
+            IConfigurationBuilder builder = new();
 
             IConfigurationRoot configuration = builder.Build();
 
-            TestLogger testLogger = new TestLogger();
+            TestLogger testLogger = new();
             Action<String> loggerAction = message => { testLogger.LogInformation(message); };
 
             configuration.LogConfiguration(loggerAction);

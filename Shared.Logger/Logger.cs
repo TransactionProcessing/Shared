@@ -14,13 +14,13 @@ namespace Shared.Logger
 
         public static void Initialise(NLog.Logger loggerObject,
                                       String fileName) {
-            NlogLogger logger = new NlogLogger();
+            NlogLogger logger = new();
             logger.Initialise(loggerObject, fileName);
             Logger.Initialise(logger);
         }
 
         public static void Initialise(Microsoft.Extensions.Logging.ILogger loggerObject) {
-            MicrosoftLogger logger = new MicrosoftLogger();
+            MicrosoftLogger logger = new();
             logger.Initialise(loggerObject);
             Logger.Initialise(logger);
         }

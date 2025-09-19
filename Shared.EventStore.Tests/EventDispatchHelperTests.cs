@@ -17,8 +17,8 @@ using Xunit;
 public class EventDispatchHelperTests{
     [Fact]
     public async Task EventDispatchHelper_DispatchToHandlers_AllSuccessful(){
-        AggregateNameSetEvent @event = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
-        List<IDomainEventHandler> handlers = new List<IDomainEventHandler>();
+        AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+        List<IDomainEventHandler> handlers = new();
         handlers.Add(new TestDomainEventHandler());
         Result result = await @event.DispatchToHandlers(handlers, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -27,12 +27,12 @@ public class EventDispatchHelperTests{
     [Fact]
     public async Task EventDispatchHelper_DispatchToHandlers_HandlerThrowsException_ErrorThrown()
     {
-        AggregateNameSetEvent @event = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
-        List<IDomainEventHandler> handlers = new List<IDomainEventHandler>();
-        Mock<IDomainEventHandler> domainEventHandler = new Mock<IDomainEventHandler>();
+        AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+        List<IDomainEventHandler> handlers = new();
+        Mock<IDomainEventHandler> domainEventHandler = new();
         domainEventHandler.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure);
-        Mock<IDomainEventHandler> domainEventHandler2 = new Mock<IDomainEventHandler>();
+        Mock<IDomainEventHandler> domainEventHandler2 = new();
         domainEventHandler2.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure);
         handlers.Add(domainEventHandler.Object);
@@ -45,12 +45,12 @@ public class EventDispatchHelperTests{
     [Fact]
     public async Task EventDispatchHelper_DispatchToHandlers_HandlersFail_ErrorThrown()
     {
-        AggregateNameSetEvent @event = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
-        List<IDomainEventHandler> handlers = new List<IDomainEventHandler>();
-        Mock<IDomainEventHandler> domainEventHandler = new Mock<IDomainEventHandler>();
+        AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+        List<IDomainEventHandler> handlers = new();
+        Mock<IDomainEventHandler> domainEventHandler = new();
         domainEventHandler.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("Error Message 1"));
-        Mock<IDomainEventHandler> domainEventHandler2 = new Mock<IDomainEventHandler>();
+        Mock<IDomainEventHandler> domainEventHandler2 = new();
         domainEventHandler2.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure(new List<String>() {
                 "Error Message 2",

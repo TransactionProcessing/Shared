@@ -15,7 +15,7 @@ namespace Shared.Tests
         [Fact]
         public void QueryStringBuilder_NoParameters_EmptyQueryStringReturned()
         {
-            QueryStringBuilder builder = new QueryStringBuilder();
+            QueryStringBuilder builder = new();
 
             var queryString = builder.BuildQueryString();
 
@@ -25,7 +25,7 @@ namespace Shared.Tests
         [Fact]
         public void QueryStringBuilder_SingleParameters_CorrectQueryStringReturned()
         {
-            QueryStringBuilder builder = new QueryStringBuilder();
+            QueryStringBuilder builder = new();
 
             builder.AddParameter("param1", "testparam1");
 
@@ -37,7 +37,7 @@ namespace Shared.Tests
         [Fact]
         public void QueryStringBuilder_MultipleParameters_CorrectQueryStringReturned()
         {
-            QueryStringBuilder builder = new QueryStringBuilder();
+            QueryStringBuilder builder = new();
 
             builder.AddParameter("param1", "testparam1");
             builder.AddParameter("param2", "testparam2");
@@ -67,7 +67,7 @@ namespace Shared.Tests
         [InlineData(typeof(Int16))]
         public void QueryStringBuilder_AddParametersWithDefaultValue_NotIncludedInQueryStringReturned(Type t)
         {
-            QueryStringBuilder builder = new QueryStringBuilder();
+            QueryStringBuilder builder = new();
 
             object defaultValue = GetDefault(t);
 
@@ -86,7 +86,7 @@ namespace Shared.Tests
         [InlineData(typeof(Int16))]
         public void QueryStringBuilder_AddParametersWithDefaultValue_AlwaysInclude_ParameterIncludedInQueryStringReturned(Type t)
         {
-            QueryStringBuilder builder = new QueryStringBuilder();
+            QueryStringBuilder builder = new();
 
             object defaultValue = GetDefault(t);
 

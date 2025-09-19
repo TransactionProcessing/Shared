@@ -39,7 +39,7 @@ namespace Shared.Middleware
 
                 var url = context.Request.GetDisplayUrl();
                 var requestBodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
-                StringBuilder logMessage = new StringBuilder();
+                StringBuilder logMessage = new();
                 logMessage.Append($"Request: Method: {context.Request.Method} Url: {url}");
                 if (requestBodyText != String.Empty)
                 {

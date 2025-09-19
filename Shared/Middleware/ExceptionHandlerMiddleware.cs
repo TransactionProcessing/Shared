@@ -68,7 +68,7 @@ namespace Shared.Middleware
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             Exception newException =
-                new Exception(
+                new(
                     $"An unhandled exception has occurred while executing the request. Url: {context.Request.GetDisplayUrl()}",
                     exception);
             Logger.Logger.LogError(newException);
