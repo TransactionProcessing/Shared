@@ -241,7 +241,6 @@ namespace Shared.EventStore.Tests
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             eventHandlerResolvers.Add("Main", deh.Object);
             Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
-            Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver = (s, i) => subscriptionRepository.Object;
             var result = IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository.Object, config,
                 eventStoreConnectionString, eventHandlerResolvers, traceHandler);
             result.Count.ShouldBe(2);            

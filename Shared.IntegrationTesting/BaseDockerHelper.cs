@@ -737,19 +737,15 @@ public abstract class BaseDockerHelper{
         {
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
 
-            using (HttpClientHandler httpClientHandler = new())
-            {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-                using (HttpClient client = new(httpClientHandler))
-                {
-                    String authenticationString = $"admin:changeit";
-                    String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            using HttpClientHandler httpClientHandler = new();
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            using HttpClient client = new(httpClientHandler);
+            String authenticationString = $"admin:changeit";
+            String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
-                    HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
-                    pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-                }
-            }
+            HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
+            pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         },
 
                         TimeSpan.FromSeconds(300),
@@ -761,23 +757,19 @@ public abstract class BaseDockerHelper{
         {
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
 
-            using (HttpClientHandler httpClientHandler = new())
-            {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-                using (HttpClient client = new(httpClientHandler))
-                {
-                    String authenticationString = $"admin:changeit";
-                    String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            using HttpClientHandler httpClientHandler = new();
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            using HttpClient client = new(httpClientHandler);
+            String authenticationString = $"admin:changeit";
+            String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
-                    HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
+            HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
 
-                    infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-                    String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+            String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                    this.Trace(infoData);
-                }
-            }
+            this.Trace(infoData);
         });
     }
 
