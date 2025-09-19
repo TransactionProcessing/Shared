@@ -36,9 +36,7 @@ namespace Shared.EventStore.Tests
         public void DomainEventHandlerResolver_EventNotConfigured_NullReturned()
         {
             Dictionary<String, String[]> eventHandlerConfiguration = new();
-            Func<Type, IDomainEventHandler> createEventHandlerFunc = (t) => {
-                                                                         return new TestDomainEventHandler();
-                                                                     };
+            Func<Type, IDomainEventHandler> createEventHandlerFunc = t => new TestDomainEventHandler();
 
             DomainEventHandlerResolver r = new(eventHandlerConfiguration, createEventHandlerFunc);
             List<IDomainEventHandler> result = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
@@ -49,17 +47,13 @@ namespace Shared.EventStore.Tests
         public void DomainEventHandlerResolver_GetDomainEventHandlers_NoHandlerFound_ErrorThrown()
         {
             Dictionary<String, String[]> eventHandlerConfiguration = new Dictionary<String, String[]>();
-            Func<Type, IDomainEventHandler> createEventHandlerFunc = (t) => {
-                                                                         return new TestDomainEventHandler();
-                                                                     };
+            Func<Type, IDomainEventHandler> createEventHandlerFunc = t => new TestDomainEventHandler();
 
             List<String> handlers = new List<String>();
             handlers.Add("Shared.EventStore.Tests.TestDomainEventHandler1, Shared.EventStore.Tests");
             eventHandlerConfiguration.Add("EstateCreatedEvent", handlers.ToArray());
 
-            Should.Throw<NotSupportedException>(() => {
-                                                    new DomainEventHandlerResolver(eventHandlerConfiguration, createEventHandlerFunc);
-                                                });
+            Should.Throw<NotSupportedException>(() => new DomainEventHandlerResolver(eventHandlerConfiguration, createEventHandlerFunc));
         }
     }
 }

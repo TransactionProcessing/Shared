@@ -84,7 +84,7 @@
 
             Action<String> loggerAction = null;
 
-            Should.Throw<ArgumentNullException>(() => { configuration.LogConfiguration(loggerAction); });
+            Should.Throw<ArgumentNullException>(() => configuration.LogConfiguration(loggerAction));
         }
 
         #endregion

@@ -89,7 +89,7 @@ namespace Shared.EventStore.Tests
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             eventHandlerResolvers.Add("Ordered", deh.Object);
             eventHandlerResolvers.Add("Main", deh.Object);
-            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
+            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
             var result = IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository.Object, config,
                 eventStoreConnectionString, eventHandlerResolvers, traceHandler);
             result.Count.ShouldBe(0);
@@ -132,7 +132,7 @@ namespace Shared.EventStore.Tests
             String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             eventHandlerResolvers.Add("Ordered", deh.Object);
-            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
+            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
             var result = IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository.Object, config,
                 eventStoreConnectionString, eventHandlerResolvers, traceHandler);
             result.Count.ShouldBe(1);
@@ -157,7 +157,7 @@ namespace Shared.EventStore.Tests
             };
             String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
-            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
+            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
             var result = IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository.Object, config,
                 eventStoreConnectionString, eventHandlerResolvers, traceHandler);
             result.Count.ShouldBe(0);
@@ -212,7 +212,7 @@ namespace Shared.EventStore.Tests
             };
             String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
-            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
+            Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
             var result = IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository.Object, config,
                 eventStoreConnectionString, eventHandlerResolvers, traceHandler);
             result.Count.ShouldBe(0);            
@@ -241,7 +241,7 @@ namespace Shared.EventStore.Tests
             Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
             eventHandlerResolvers.Add("Main", deh.Object);
             Action<TraceEventType, String, String> traceHandler = (et, type, msg) => { TestOutputHelper.WriteLine(msg); };
-            Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver = (s, i) => { return subscriptionRepository.Object; };
+            Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver = (s, i) => subscriptionRepository.Object;
             var result = IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository.Object, config,
                 eventStoreConnectionString, eventHandlerResolvers, traceHandler);
             result.Count.ShouldBe(2);            

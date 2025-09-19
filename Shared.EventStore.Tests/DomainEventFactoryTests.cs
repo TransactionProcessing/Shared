@@ -32,9 +32,7 @@ namespace Shared.EventStore.Tests
             String eventData = JsonConvert.SerializeObject(aggregateNameSetEvent);
             eventData = eventData.Replace(":", "");
             DomainEventFactory factory = new();
-            Should.Throw<Exception>(() => {
-                                        factory.CreateDomainEvent(eventData, typeof(AggregateNameSetEvent));
-                                    });
+            Should.Throw<Exception>(() => factory.CreateDomainEvent(eventData, typeof(AggregateNameSetEvent)));
         }
 
         [Fact]
@@ -55,9 +53,7 @@ namespace Shared.EventStore.Tests
             ResolvedEvent resolvedEvent = new(TestData.CreateEventRecord<UnknownEvent>(unknownEvent, "TestStream", false), null, null);
             
             DomainEventFactory factory = new();
-            Should.Throw<Exception>(() => {
-                                        factory.CreateDomainEvent(TestData.AggregateId, resolvedEvent);
-                                    });
+            Should.Throw<Exception>(() => factory.CreateDomainEvent(TestData.AggregateId, resolvedEvent));
         }
 
         [Fact]
@@ -88,9 +84,7 @@ namespace Shared.EventStore.Tests
         {
             EventDataFactory factory = new();
             
-            Should.Throw<ArgumentNullException>(() => {
-                                                    factory.CreateEventData(null);
-                                                });
+            Should.Throw<ArgumentNullException>(() => factory.CreateEventData(null));
         }
 
         [Fact]

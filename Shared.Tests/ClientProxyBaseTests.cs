@@ -55,7 +55,7 @@ namespace Shared.Tests
             HttpResponseMessage response = new HttpResponseMessage(statusCode);
             response.Content = new StringContent(responseContent);
             TestClient proxybase = new TestClient(new HttpClient());
-            Should.NotThrow(async () => { await proxybase.Test_HandleResponse(response, CancellationToken.None); });
+            Should.NotThrow(async () => await proxybase.Test_HandleResponse(response, CancellationToken.None));
         }
 
         [Theory]
@@ -228,7 +228,7 @@ namespace Shared.Tests
         private async Task TestMethod_HandleResponse(HttpStatusCode statusCode,
                                                      Type expectedException) {
             var proxybase = new TestClient(new HttpClient());
-            var exception = Should.Throw<Exception>(async () => { await proxybase.Test_HandleResponse(new HttpResponseMessage(statusCode), CancellationToken.None); });
+            var exception = Should.Throw<Exception>(async () => await proxybase.Test_HandleResponse(new HttpResponseMessage(statusCode), CancellationToken.None));
             exception.ShouldBeOfType(expectedException);
         }
 

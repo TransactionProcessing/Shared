@@ -42,11 +42,7 @@ namespace Shared.Tests
 
             Guid identifer = Guid.Empty;
             String connectionStringIdentifier = "TestDatabase";
-            Func<String, DbContext> createContext = (connString) => {
-                var dbContextOptionsBuilder = new DbContextOptionsBuilder();
-                dbContextOptionsBuilder.UseSqlServer();
-                return new DbContext(dbContextOptionsBuilder.Options);
-            };
+            Func<String, DbContext> createContext = connString => new DbContext(new DbContextOptionsBuilder().UseSqlServer().Options);
             Mock<IConnectionStringConfigurationRepository> connectionStringConfigurationRepository = new Mock<IConnectionStringConfigurationRepository>();
             DbContextFactory<DbContext> factory = new DbContextFactory<DbContext>(connectionStringConfigurationRepository.Object,
                                                                                   createContext);
@@ -72,9 +68,7 @@ namespace Shared.Tests
             DbContextFactory<DbContext> factory = new DbContextFactory<DbContext>(connectionStringConfigurationRepository.Object,
                                                                                   createContext);
 
-            Should.Throw<ArgumentNullException>(async () => {
-                await factory.GetContext(identifer, connectionStringIdentifier, CancellationToken.None);
-            });
+            Should.Throw<ArgumentNullException>(async () => await factory.GetContext(identifer, connectionStringIdentifier, CancellationToken.None));
         }
     }
 }

@@ -41,9 +41,7 @@ namespace Shared.EventStore.Tests
             UnknownEvent domainEvent = new UnknownEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             ResolvedEvent resolvedEvent = new ResolvedEvent(TestData.CreateEventRecord<UnknownEvent>(domainEvent, "TestStream", false), null, null);
 
-            Should.Throw<Exception>(() => {
-                                        TypeMapConvertor.Convertor(TestData.AggregateId, resolvedEvent);
-                                    });
+            Should.Throw<Exception>(() => TypeMapConvertor.Convertor(TestData.AggregateId, resolvedEvent));
         }
     }
 

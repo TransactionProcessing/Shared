@@ -739,13 +739,7 @@ public abstract class BaseDockerHelper{
 
             using (HttpClientHandler httpClientHandler = new HttpClientHandler())
             {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
-                                                                               cert,
-                                                                               chain,
-                                                                               errors) =>
-                {
-                    return true;
-                };
+                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
                 using (HttpClient client = new HttpClient(httpClientHandler))
                 {
                     String authenticationString = $"admin:changeit";
@@ -769,13 +763,7 @@ public abstract class BaseDockerHelper{
 
             using (HttpClientHandler httpClientHandler = new HttpClientHandler())
             {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message,
-                                                                               cert,
-                                                                               chain,
-                                                                               errors) =>
-                {
-                    return true;
-                };
+                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
                 using (HttpClient client = new HttpClient(httpClientHandler))
                 {
                     String authenticationString = $"admin:changeit";
