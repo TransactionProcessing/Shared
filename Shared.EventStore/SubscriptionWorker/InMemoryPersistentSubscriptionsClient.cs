@@ -46,7 +46,7 @@
             metadata.Add("created", "1000");
             metadata.Add("content-type", "application/json");
 
-            EventRecord er = new EventRecord(this.Stream, Uuid.NewUuid(), StreamPosition.Start, Position.Start, metadata, data, custommetadata);
+            EventRecord er = new(this.Stream, Uuid.NewUuid(), StreamPosition.Start, Position.Start, metadata, data, custommetadata);
             ResolvedEvent re = new(er, null, null);
 
             this.EventAppeared(default(global::EventStore.Client.PersistentSubscription), re, 0, cancellationToken);

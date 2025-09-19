@@ -15,7 +15,7 @@ public class AggregateExtensionsTests{
     public void AggregateExtensions_Apply_EventIsApplied()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
+        AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
         t.Apply(aggregateNameSetEvent);
         t.AggregateName.ShouldBe("Test");
     }
@@ -24,7 +24,7 @@ public class AggregateExtensionsTests{
     public void AggregateExtensions_Apply_DuplicateEvent_EventIsSilentlyHandled()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
+        AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
         t.Apply(aggregateNameSetEvent);
         t.AggregateName.ShouldBe("Test");
         t.Apply(aggregateNameSetEvent);
@@ -34,7 +34,7 @@ public class AggregateExtensionsTests{
     public void AggregateExtensions_GetHistoricalEvents_EventsReturned()
     {
         TestAggregate t = TestAggregate.Create(TestData.AggregateId);
-        AggregateNameSetEvent aggregateNameSetEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, "Test");
+        AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
         t.Apply(aggregateNameSetEvent);
         t.AggregateName.ShouldBe("Test");
         IList<IDomainEvent> events = t.GetHistoricalEvents();
