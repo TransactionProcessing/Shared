@@ -18,7 +18,7 @@ namespace Shared.Tests
         public void DomainEventHelper_GetProperty_CorrectCase_PropertyNotFound()
         {
 
-            AggregateNameSetEvent domainEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            AggregateNameSetEvent domainEvent = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             String propertyValue = DomainEventHelper.GetProperty<String>(domainEvent, "AggregateName1");
             propertyValue.ShouldBe(default);
         }
@@ -30,7 +30,7 @@ namespace Shared.Tests
         public void DomainEventHelper_GetProperty_IgnoreCase_PropertyNotFound(String propertyName)
         {
 
-            AggregateNameSetEvent domainEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            AggregateNameSetEvent domainEvent = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             String propertyValue = DomainEventHelper.GetProperty<String>(domainEvent, propertyName, true);
             propertyValue.ShouldBe(default);
         }
@@ -38,7 +38,7 @@ namespace Shared.Tests
         [Fact]
         public void DomainEventHelper_GetProperty_CorrectCase_PropertyFound(){
 
-            AggregateNameSetEvent domainEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            AggregateNameSetEvent domainEvent = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             String propertyValue = DomainEventHelper.GetProperty<String>(domainEvent, "AggregateName");
             propertyValue.ShouldBe(TestData.EstateName);
         }
@@ -50,7 +50,7 @@ namespace Shared.Tests
         public void DomainEventHelper_GetProperty_IgnoreCase_PropertyFound(String propertyName)
         {
 
-            AggregateNameSetEvent domainEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            AggregateNameSetEvent domainEvent = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             String propertyValue = DomainEventHelper.GetProperty<String>(domainEvent, propertyName, true);
             propertyValue.ShouldBe(TestData.EstateName);
         }
@@ -63,7 +63,7 @@ namespace Shared.Tests
         public void DomainEventHelper_HasProperty_ExpectedResultReturned(String propertyName, Boolean expectedResult)
         {
 
-            AggregateNameSetEvent domainEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            AggregateNameSetEvent domainEvent = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             var result = DomainEventHelper.HasProperty(domainEvent, propertyName);
             result.ShouldBe(expectedResult);
         }

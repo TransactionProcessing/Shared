@@ -13,7 +13,7 @@ namespace Shared.EventStore.Tests
     {
         [Fact]
         public void DomainEventHandlerResolver_GetDomainEventHandlers_HandlerResolved(){
-            Dictionary<String, String[]> eventHandlerConfiguration= new Dictionary<String, String[]>();
+            Dictionary<String, String[]> eventHandlerConfiguration= new();
 
             IDomainEventHandler CreateEventHandlerFunc(Type t) {
                 if (t.Name == nameof(TestDomainEventHandler)) return new TestDomainEventHandler();
@@ -25,7 +25,7 @@ namespace Shared.EventStore.Tests
             eventHandlerConfiguration.Add("Shared.EventStore.Tests.TestObjects.TestDomainEventHandler, Shared.EventStore.Tests", new String[]{"EstateCreatedEvent"});
             eventHandlerConfiguration.Add("Shared.EventStore.Tests.TestObjects.TestDomainEventHandler2, Shared.EventStore.Tests", new String[] { "EstateCreatedEvent" });
 
-            DomainEventHandlerResolver r = new DomainEventHandlerResolver(eventHandlerConfiguration, CreateEventHandlerFunc);
+            DomainEventHandlerResolver r = new(eventHandlerConfiguration, CreateEventHandlerFunc);
             List<IDomainEventHandler> result  = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
             result.Count.ShouldBe(2);
             result.Count(x => x.GetType() == typeof(TestDomainEventHandler)).ShouldBe(1);
@@ -35,12 +35,12 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void DomainEventHandlerResolver_EventNotConfigured_NullReturned()
         {
-            Dictionary<String, String[]> eventHandlerConfiguration = new Dictionary<String, String[]>();
+            Dictionary<String, String[]> eventHandlerConfiguration = new();
             Func<Type, IDomainEventHandler> createEventHandlerFunc = (t) => {
                                                                          return new TestDomainEventHandler();
                                                                      };
 
-            DomainEventHandlerResolver r = new DomainEventHandlerResolver(eventHandlerConfiguration, createEventHandlerFunc);
+            DomainEventHandlerResolver r = new(eventHandlerConfiguration, createEventHandlerFunc);
             List<IDomainEventHandler> result = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
             result.ShouldBeNull();
         }

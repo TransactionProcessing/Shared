@@ -24,7 +24,7 @@ public static class IApplicationBuilderExtenstions
                                                           Action<TraceEventType, String,String> traceHandler,
                                                           Func<String, Int32, ISubscriptionRepository> subscriptionRepositoryResolver) {
 
-        using (CancellationTokenSource cts = new CancellationTokenSource())
+        using (CancellationTokenSource cts = new())
         {
             if (workerConfig == null)
                 throw new Exception("No Worker configuration supplied");

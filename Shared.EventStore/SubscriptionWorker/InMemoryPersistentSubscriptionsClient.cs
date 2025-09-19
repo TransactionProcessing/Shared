@@ -39,14 +39,14 @@
         {
 
             ReadOnlyMemory<byte> data = new(Encoding.Default.GetBytes(@event));
-            IDictionary<string, string> metadata = new Dictionary<String, String>();
+            IDictionary<string, string> metadata = new();
             ReadOnlyMemory<byte> custommetadata = new(Encoding.Default.GetBytes(@event));
 
             metadata.Add("type", @type);
             metadata.Add("created", "1000");
             metadata.Add("content-type", "application/json");
 
-            EventRecord er = new EventRecord(this.Stream, Uuid.NewUuid(), StreamPosition.Start, Position.Start, metadata, data, custommetadata);
+            EventRecord er = new(this.Stream, Uuid.NewUuid(), StreamPosition.Start, Position.Start, metadata, data, custommetadata);
             ResolvedEvent re = new(er, null, null);
 
             this.EventAppeared(default(global::EventStore.Client.PersistentSubscription), re, 0, cancellationToken);

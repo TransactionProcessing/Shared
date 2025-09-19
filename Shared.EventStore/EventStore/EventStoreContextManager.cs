@@ -40,7 +40,7 @@ namespace Shared.EventStore.EventStore
         /// <summary>
         /// The padlock
         /// </summary>
-        private readonly Object padlock = new Object();
+        private readonly Object padlock = new();
 
         #endregion
 
@@ -54,7 +54,7 @@ namespace Shared.EventStore.EventStore
         public EventStoreContextManager(Func<String, IEventStoreContext> eventStoreContextFunc,
                                         IConnectionStringConfigurationRepository connectionStringConfigurationRepository)
         {
-            this.EventStoreContexts = new Dictionary<String, IEventStoreContext>();
+            this.EventStoreContexts = new();
             this.EventStoreContextFunc = eventStoreContextFunc;
             this.ConnectionStringConfigurationRepository = connectionStringConfigurationRepository;
         }
