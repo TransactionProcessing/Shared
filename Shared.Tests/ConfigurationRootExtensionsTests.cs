@@ -59,7 +59,7 @@
         [Fact]
         public void ConfigurationRootExtensions_LogConfiguration_NoConfiguration_NoConfigurationIsLogged()
         {
-            IConfigurationBuilder builder = new();
+            IConfigurationBuilder builder = new ConfigurationBuilder();
 
             IConfigurationRoot configuration = builder.Build();
 
