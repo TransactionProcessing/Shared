@@ -7,48 +7,47 @@ using Shared.Exceptions;
 using Shouldly;
 using Xunit;
 
-namespace Shared.Tests
-{
-    public class ExceptionHelperTests {
-        [Fact]
-        public void ExceptionHelper_GetCombinedExceptionMessages_MessagesCombined() {
-            var exception = new Exception("message1", new Exception("message2"));
+namespace Shared.Tests;
 
-            var message = exception.GetCombinedExceptionMessages();
+public class ExceptionHelperTests {
+    [Fact]
+    public void ExceptionHelper_GetCombinedExceptionMessages_MessagesCombined() {
+        var exception = new Exception("message1", new Exception("message2"));
 
-            message.ShouldBe($"message1{Environment.NewLine}message2{Environment.NewLine}");
+        var message = exception.GetCombinedExceptionMessages();
 
-        }
+        message.ShouldBe($"message1{Environment.NewLine}message2{Environment.NewLine}");
 
-        [Fact]
-        public void ExceptionHelper_GetExceptionMessages_MessagesCombined()
-        {
-            var exception = new Exception("message1", new Exception("message2"));
+    }
 
-            var messages = exception.GetExceptionMessages();
+    [Fact]
+    public void ExceptionHelper_GetExceptionMessages_MessagesCombined()
+    {
+        var exception = new Exception("message1", new Exception("message2"));
 
-            messages.Count.ShouldBe(2);
-            messages[0].ShouldBe("message1");
-            messages[1].ShouldBe("message2");
-        }
+        var messages = exception.GetExceptionMessages();
 
-        [Fact]
-        public void ExceptionHelper_GetCombinedExceptionMessages_ExceptionNull_NomMessage() {
-            Exception exception = null;
+        messages.Count.ShouldBe(2);
+        messages[0].ShouldBe("message1");
+        messages[1].ShouldBe("message2");
+    }
 
-            var message = ExceptionHelper.GetCombinedExceptionMessages(exception);
+    [Fact]
+    public void ExceptionHelper_GetCombinedExceptionMessages_ExceptionNull_NomMessage() {
+        Exception exception = null;
 
-            message.ShouldBeEmpty();
-        }
+        var message = ExceptionHelper.GetCombinedExceptionMessages(exception);
 
-        [Fact]
-        public void ExceptionHelper_GetExceptionMessages_ExceptionNull_NomMessage() {
-            Exception exception = null;
+        message.ShouldBeEmpty();
+    }
 
-            var messages = ExceptionHelper.GetExceptionMessages(exception);
+    [Fact]
+    public void ExceptionHelper_GetExceptionMessages_ExceptionNull_NomMessage() {
+        Exception exception = null;
 
-            messages.ShouldBeEmpty();
+        var messages = ExceptionHelper.GetExceptionMessages(exception);
 
-        }
+        messages.ShouldBeEmpty();
+
     }
 }

@@ -1,44 +1,43 @@
-﻿namespace Shared.Logger
+﻿namespace Shared.Logger;
+
+using System;
+
+/// <summary>
+/// 
+/// </summary>
+public interface ILogger
 {
-    using System;
+    #region Properties
 
     /// <summary>
-    /// 
+    /// Gets or sets a value indicating whether this instance is initialised.
     /// </summary>
-    public interface ILogger
-    {
-        #region Properties
+    /// <value>
+    ///   <c>true</c> if this instance is initialised; otherwise, <c>false</c>.
+    /// </value>
+    Boolean IsInitialised { get; set; }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this instance is initialised.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if this instance is initialised; otherwise, <c>false</c>.
-        /// </value>
-        Boolean IsInitialised { get; set; }
+    #endregion
 
-        #endregion
+    #region Methods
 
-        #region Methods
+    void LogCritical(Exception exception);
 
-        void LogCritical(Exception exception);
+    void LogCritical(String message,
+                     Exception exception);
 
-        void LogCritical(String message,
-                         Exception exception);
+    void LogDebug(String message);
 
-        void LogDebug(String message);
+    void LogError(Exception exception);
 
-        void LogError(Exception exception);
+    void LogError(String message,
+                  Exception exception);
 
-        void LogError(String message,
-                      Exception exception);
+    void LogInformation(String message);
 
-        void LogInformation(String message);
+    void LogTrace(String message);
 
-        void LogTrace(String message);
+    void LogWarning(String message);
 
-        void LogWarning(String message);
-
-        #endregion
-    }
+    #endregion
 }

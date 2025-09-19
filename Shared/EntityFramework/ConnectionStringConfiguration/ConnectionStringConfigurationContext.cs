@@ -3,8 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Shared.EntityFramework.ConnectionStringConfiguration
-{
+namespace Shared.EntityFramework.ConnectionStringConfiguration {
     using System.Diagnostics.CodeAnalysis;
 
     [Obsolete]
@@ -104,10 +103,10 @@ namespace Shared.EntityFramework.ConnectionStringConfiguration
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ConnectionStringConfiguration>().HasIndex(c => new
-                                                                               {
-                                                                                   c.ExternalIdentifier,
-                                                                                   c.ConnectionStringIdentifier
-                                                                               }).IsUnique();
+            {
+                c.ExternalIdentifier,
+                c.ConnectionStringIdentifier
+            }).IsUnique();
         }
     }
 }

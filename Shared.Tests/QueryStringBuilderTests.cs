@@ -8,94 +8,93 @@ using Shared.Web;
 using Shouldly;
 using Xunit;
 
-namespace Shared.Tests
+namespace Shared.Tests;
+
+public class QueryStringBuilderTests
 {
-    public class QueryStringBuilderTests
+    [Fact]
+    public void QueryStringBuilder_NoParameters_EmptyQueryStringReturned()
     {
-        [Fact]
-        public void QueryStringBuilder_NoParameters_EmptyQueryStringReturned()
-        {
-            QueryStringBuilder builder = new();
+        QueryStringBuilder builder = new();
 
-            var queryString = builder.BuildQueryString();
+        var queryString = builder.BuildQueryString();
 
-            queryString.ShouldBe(String.Empty);
-        }
+        queryString.ShouldBe(String.Empty);
+    }
 
-        [Fact]
-        public void QueryStringBuilder_SingleParameters_CorrectQueryStringReturned()
-        {
-            QueryStringBuilder builder = new();
+    [Fact]
+    public void QueryStringBuilder_SingleParameters_CorrectQueryStringReturned()
+    {
+        QueryStringBuilder builder = new();
 
-            builder.AddParameter("param1", "testparam1");
+        builder.AddParameter("param1", "testparam1");
 
-            var queryString = builder.BuildQueryString();
+        var queryString = builder.BuildQueryString();
 
-            queryString.ShouldBe("param1=testparam1");
-        }
+        queryString.ShouldBe("param1=testparam1");
+    }
 
-        [Fact]
-        public void QueryStringBuilder_MultipleParameters_CorrectQueryStringReturned()
-        {
-            QueryStringBuilder builder = new();
+    [Fact]
+    public void QueryStringBuilder_MultipleParameters_CorrectQueryStringReturned()
+    {
+        QueryStringBuilder builder = new();
 
-            builder.AddParameter("param1", "testparam1");
-            builder.AddParameter("param2", "testparam2");
+        builder.AddParameter("param1", "testparam1");
+        builder.AddParameter("param2", "testparam2");
 
-            var queryString = builder.BuildQueryString();
+        var queryString = builder.BuildQueryString();
 
-            queryString.ShouldBe("param1=testparam1&param2=testparam2");
-        }
+        queryString.ShouldBe("param1=testparam1&param2=testparam2");
+    }
 
-        static T GetDefaultGeneric<T>()
-        {
-            return default(T);
-        }
+    static T GetDefaultGeneric<T>()
+    {
+        return default(T);
+    }
 
-        static object GetDefault(Type type)
-        {
-            // Create a generic method with reflection to get the default value
-            var method = typeof(QueryStringBuilderTests).GetMethod(nameof(GetDefaultGeneric), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            var genericMethod = method.MakeGenericMethod(type);
-            return genericMethod.Invoke(null, null);
-        }
+    static object GetDefault(Type type)
+    {
+        // Create a generic method with reflection to get the default value
+        var method = typeof(QueryStringBuilderTests).GetMethod(nameof(GetDefaultGeneric), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var genericMethod = method.MakeGenericMethod(type);
+        return genericMethod.Invoke(null, null);
+    }
 
-        [Theory]
-        [InlineData(typeof(Decimal))]
-        [InlineData(typeof(DateTime))]
-        [InlineData(typeof(Int32))]
-        [InlineData(typeof(Int16))]
-        public void QueryStringBuilder_AddParametersWithDefaultValue_NotIncludedInQueryStringReturned(Type t)
-        {
-            QueryStringBuilder builder = new();
+    [Theory]
+    [InlineData(typeof(Decimal))]
+    [InlineData(typeof(DateTime))]
+    [InlineData(typeof(Int32))]
+    [InlineData(typeof(Int16))]
+    public void QueryStringBuilder_AddParametersWithDefaultValue_NotIncludedInQueryStringReturned(Type t)
+    {
+        QueryStringBuilder builder = new();
 
-            object defaultValue = GetDefault(t);
+        object defaultValue = GetDefault(t);
 
-            builder.AddParameter("param1", "testparam1");
-            builder.AddParameter("param2", defaultValue);
+        builder.AddParameter("param1", "testparam1");
+        builder.AddParameter("param2", defaultValue);
 
-            var queryString = builder.BuildQueryString();
+        var queryString = builder.BuildQueryString();
 
-            queryString.Contains("param2").ShouldBeFalse();
-        }
+        queryString.Contains("param2").ShouldBeFalse();
+    }
 
-        [Theory]
-        [InlineData(typeof(Decimal))]
-        [InlineData(typeof(DateTime))]
-        [InlineData(typeof(Int32))]
-        [InlineData(typeof(Int16))]
-        public void QueryStringBuilder_AddParametersWithDefaultValue_AlwaysInclude_ParameterIncludedInQueryStringReturned(Type t)
-        {
-            QueryStringBuilder builder = new();
+    [Theory]
+    [InlineData(typeof(Decimal))]
+    [InlineData(typeof(DateTime))]
+    [InlineData(typeof(Int32))]
+    [InlineData(typeof(Int16))]
+    public void QueryStringBuilder_AddParametersWithDefaultValue_AlwaysInclude_ParameterIncludedInQueryStringReturned(Type t)
+    {
+        QueryStringBuilder builder = new();
 
-            object defaultValue = GetDefault(t);
+        object defaultValue = GetDefault(t);
 
-            builder.AddParameter("param1", "testparam1");
-            builder.AddParameter("param2", defaultValue, true);
+        builder.AddParameter("param1", "testparam1");
+        builder.AddParameter("param2", defaultValue, true);
 
-            var queryString = builder.BuildQueryString();
+        var queryString = builder.BuildQueryString();
 
-            queryString.Contains("param2").ShouldBeTrue();
-        }
+        queryString.Contains("param2").ShouldBeTrue();
     }
 }

@@ -1,93 +1,92 @@
-﻿namespace Shared.EventStore.EventHandling
+﻿namespace Shared.EventStore.EventHandling;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using DomainDrivenDesign.EventSourcing;
+
+public class DomainEventHandlerResolver : IDomainEventHandlerResolver
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using DomainDrivenDesign.EventSourcing;
+    #region Fields
 
-    public class DomainEventHandlerResolver : IDomainEventHandlerResolver
+    /// <summary>
+    /// The domain event handlers
+    /// </summary>
+    private readonly Dictionary<String, IDomainEventHandler> DomainEventHandlers;
+
+    /// <summary>
+    /// The event handler configuration
+    /// </summary>
+    private readonly Dictionary<String, String[]> EventHandlerConfiguration;
+
+    #endregion
+
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DomainEventHandlerResolver" /> class.
+    /// </summary>
+    /// <param name="eventHandlerConfiguration">The event handler configuration.</param>
+    public DomainEventHandlerResolver(Dictionary<String, String[]> eventHandlerConfiguration, Func<Type, IDomainEventHandler> createEventHandlerResolver)
     {
-        #region Fields
+        this.EventHandlerConfiguration = eventHandlerConfiguration;
 
-        /// <summary>
-        /// The domain event handlers
-        /// </summary>
-        private readonly Dictionary<String, IDomainEventHandler> DomainEventHandlers;
-
-        /// <summary>
-        /// The event handler configuration
-        /// </summary>
-        private readonly Dictionary<String, String[]> EventHandlerConfiguration;
-
-        #endregion
-
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DomainEventHandlerResolver" /> class.
-        /// </summary>
-        /// <param name="eventHandlerConfiguration">The event handler configuration.</param>
-        public DomainEventHandlerResolver(Dictionary<String, String[]> eventHandlerConfiguration, Func<Type, IDomainEventHandler> createEventHandlerResolver)
-        {
-            this.EventHandlerConfiguration = eventHandlerConfiguration;
-
-            this.DomainEventHandlers = new Dictionary<String, IDomainEventHandler>();
+        this.DomainEventHandlers = new Dictionary<String, IDomainEventHandler>();
             
-            IEnumerable<String> distinctHandlers = eventHandlerConfiguration.Keys.Select(k => k);
+        IEnumerable<String> distinctHandlers = eventHandlerConfiguration.Keys.Select(k => k);
 
-            foreach (String handlerTypeString in distinctHandlers)
-            {
-                Type handlerType = Type.GetType(handlerTypeString);
-
-                if (handlerType == null)
-                {
-                    throw new NotSupportedException("Event handler configuration is not for a valid type");
-                }
-
-                IDomainEventHandler eventHandler = createEventHandlerResolver(handlerType);
-                this.DomainEventHandlers.Add(handlerTypeString, eventHandler);
-            }
-        }
-
-        #endregion
-
-        #region Methods
-
-        /// <summary>
-        /// Gets the domain event handlers.
-        /// </summary>
-        /// <param name="domainEvent">The domain event.</param>
-        /// <returns></returns>
-        public List<IDomainEventHandler> GetDomainEventHandlers(IDomainEvent domainEvent)
+        foreach (String handlerTypeString in distinctHandlers)
         {
-            // Get the type of the event passed in
-            String typeString = domainEvent.GetType().Name;
+            Type handlerType = Type.GetType(handlerTypeString);
 
-            // Lookup the list
-            var eventIsConfigured = this.EventHandlerConfiguration.Any(kv => kv.Value.Contains(typeString));
-            if (!eventIsConfigured)
+            if (handlerType == null)
             {
-                // No handlers setup, return null and let the caller decide what to do next
-                return null;
+                throw new NotSupportedException("Event handler configuration is not for a valid type");
             }
 
-            List<String> handlers = this.EventHandlerConfiguration
-                .Where(kv => kv.Value.Contains(typeString))
-                .Select(kv => kv.Key)
-                .ToList();
+            IDomainEventHandler eventHandler = createEventHandlerResolver(handlerType);
+            this.DomainEventHandlers.Add(handlerTypeString, eventHandler);
+        }
+    }
 
-            List<IDomainEventHandler> handlersToReturn = new List<IDomainEventHandler>();
+    #endregion
 
-            foreach (String handler in handlers)
-            {
-                List<KeyValuePair<String, IDomainEventHandler>> foundHandlers = this.DomainEventHandlers.Where(h => h.Key == handler).ToList();
+    #region Methods
 
-                handlersToReturn.AddRange(foundHandlers.Select(x => x.Value));
-            }
+    /// <summary>
+    /// Gets the domain event handlers.
+    /// </summary>
+    /// <param name="domainEvent">The domain event.</param>
+    /// <returns></returns>
+    public List<IDomainEventHandler> GetDomainEventHandlers(IDomainEvent domainEvent)
+    {
+        // Get the type of the event passed in
+        String typeString = domainEvent.GetType().Name;
 
-            return handlersToReturn;
+        // Lookup the list
+        var eventIsConfigured = this.EventHandlerConfiguration.Any(kv => kv.Value.Contains(typeString));
+        if (!eventIsConfigured)
+        {
+            // No handlers setup, return null and let the caller decide what to do next
+            return null;
         }
 
-        #endregion
+        List<String> handlers = this.EventHandlerConfiguration
+            .Where(kv => kv.Value.Contains(typeString))
+            .Select(kv => kv.Key)
+            .ToList();
+
+        List<IDomainEventHandler> handlersToReturn = new List<IDomainEventHandler>();
+
+        foreach (String handler in handlers)
+        {
+            List<KeyValuePair<String, IDomainEventHandler>> foundHandlers = this.DomainEventHandlers.Where(h => h.Key == handler).ToList();
+
+            handlersToReturn.AddRange(foundHandlers.Select(x => x.Value));
+        }
+
+        return handlersToReturn;
     }
+
+    #endregion
 }

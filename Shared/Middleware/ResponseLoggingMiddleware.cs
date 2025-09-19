@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Shared.General;
 
-namespace Shared.Middleware
-{
+namespace Shared.Middleware;
+
     using Microsoft.AspNetCore.Http.Extensions;
 
     public class ResponseLoggingMiddleware
@@ -67,7 +67,7 @@ namespace Shared.Middleware
         }
         #endregion
 
-        #endregion
+         #endregion
     }
 
     [ExcludeFromCodeCoverage]
@@ -90,4 +90,3 @@ namespace Shared.Middleware
         }
 
     }
-}

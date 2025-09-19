@@ -1,5 +1,4 @@
-﻿namespace Shared.EntityFramework
-{
+﻿namespace Shared.EntityFramework {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
@@ -15,8 +14,7 @@
         private readonly IConnectionStringConfigurationRepository ConnectionStringConfigurationRepository;
 
         #endregion
-
-        #region Constructors
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DbContextFactory{T}" /> class.

@@ -4,13 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared.TraceHandler
+namespace Shared.TraceHandler;
+
+public interface ITraceHandler
 {
-    public interface ITraceHandler
-    {
-        event EventHandler<TraceEventHandlerArgs> TraceGenerated;
-        event EventHandler<ErrorEventHandlerArgs> ErrorThrown;
-    }
+    event EventHandler<TraceEventHandlerArgs> TraceGenerated;
+    event EventHandler<ErrorEventHandlerArgs> ErrorThrown;
 }
-
-
