@@ -88,7 +88,6 @@ namespace Shared.EventStore.Tests {
         public async Task Get_ShouldReturnAggregateFromRepository_GetLatestFails_FailedResultReturned() {
             // Arrange
             var aggregateId = Guid.NewGuid();
-            var aggregate = new TestAggregate { AggregateId = aggregateId };
             var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
             repositoryMock.Setup(repo => repo.GetLatestVersion(aggregateId, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Failure("Error getting latest"));
@@ -106,7 +105,6 @@ namespace Shared.EventStore.Tests {
         public async Task Get_ShouldReturnAggregateFromRepository_GetLatestThrowsException_FailedResultReturned() {
             // Arrange
             var aggregateId = Guid.NewGuid();
-            var aggregate = new TestAggregate { AggregateId = aggregateId };
             var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
             repositoryMock.Setup(repo => repo.GetLatestVersion(aggregateId, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Exception Message"));
@@ -228,7 +226,6 @@ namespace Shared.EventStore.Tests {
         public async Task GetLatest_GetFailed_ReturnsFailedResult() {
             // Arrange
             var aggregateId = Guid.NewGuid();
-            var aggregate = new TestAggregate { AggregateId = aggregateId };
             var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
             _repositoryResolverMock.Setup(resolver => resolver.Resolve<TestAggregate, DomainEvent>()).Returns(repositoryMock.Object);
@@ -246,7 +243,6 @@ namespace Shared.EventStore.Tests {
         public async Task GetLatest_GetLatestThrowsException_ReturnsFailedResult() {
             // Arrange
             var aggregateId = Guid.NewGuid();
-            var aggregate = new TestAggregate { AggregateId = aggregateId };
             var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
             _repositoryResolverMock.Setup(resolver => resolver.Resolve<TestAggregate, DomainEvent>()).Returns(repositoryMock.Object);
@@ -282,7 +278,6 @@ namespace Shared.EventStore.Tests {
         public async Task GetLatestVersionFromLastEvent_GetFailed_ReturnsFailedResult() {
             // Arrange
             var aggregateId = Guid.NewGuid();
-            var aggregate = new TestAggregate { AggregateId = aggregateId };
             var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
             _repositoryResolverMock.Setup(resolver => resolver.Resolve<TestAggregate, DomainEvent>()).Returns(repositoryMock.Object);
@@ -300,7 +295,6 @@ namespace Shared.EventStore.Tests {
         public async Task GetLatestVersionFromLastEvent_GetLatestThrowsException_ReturnsFailedResult() {
             // Arrange
             var aggregateId = Guid.NewGuid();
-            var aggregate = new TestAggregate { AggregateId = aggregateId };
             var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
             _repositoryResolverMock.Setup(resolver => resolver.Resolve<TestAggregate, DomainEvent>()).Returns(repositoryMock.Object);

@@ -147,11 +147,6 @@ public class AggregateRepositoryTests{
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new(context.Object, factory);
 
-        AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
-        EventRecord r = TestData.CreateEventRecord<AggregateNameSetEvent>(aggregateNameSetEvent, "TestAggregate");
-        List<ResolvedEvent> e = new(){
-            new ResolvedEvent(r, null, null)
-        };
         context.Setup(c => c.GetEventsBackward(It.IsAny<String>(), It.IsAny<Int32>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Failure("error"));
 
         Result<TestAggregate> result = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);

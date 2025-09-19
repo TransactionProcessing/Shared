@@ -46,7 +46,6 @@ public class ProjectionHandler<TState> : IProjectionHandler where TState : State
         }
 
         Stopwatch stopwatch = Stopwatch.StartNew();
-        StringBuilder builder = new();
 
         //Load the state from persistence
         TState state = await this.ProjectionStateRepository.Load(@event, cancellationToken);

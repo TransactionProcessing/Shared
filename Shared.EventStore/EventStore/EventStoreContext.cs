@@ -233,8 +233,6 @@ namespace Shared.EventStore.EventStore
             {
                 await this.ProjectionManagementClient.CreateTransientAsync(queryName, query, cancellationToken: source.Token);
 
-                Stopwatch stopwatch = Stopwatch.StartNew();
-
                 while (true)
                 {
                     if (cancellationToken.IsCancellationRequested)
