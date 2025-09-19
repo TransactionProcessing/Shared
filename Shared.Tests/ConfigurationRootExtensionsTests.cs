@@ -59,7 +59,7 @@
         [Fact]
         public void ConfigurationRootExtensions_LogConfiguration_NoConfiguration_NoConfigurationIsLogged()
         {
-            IConfigurationBuilder builder = new();
+            IConfigurationBuilder builder = new ConfigurationBuilder();
 
             IConfigurationRoot configuration = builder.Build();
 
@@ -84,7 +84,7 @@
 
             Action<String> loggerAction = null;
 
-            Should.Throw<ArgumentNullException>(() => { configuration.LogConfiguration(loggerAction); });
+            Should.Throw<ArgumentNullException>(() => configuration.LogConfiguration(loggerAction));
         }
 
         #endregion
