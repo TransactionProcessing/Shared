@@ -43,8 +43,6 @@ namespace Shared.EventStore.Tests{
         
         [OneTimeTearDown]
         public async Task TearDown(){
-            DockerServices sharedDockerServices = DockerServices.SqlServer;
-
             //await this.EventStoreDockerHelper.StopContainersForScenarioRun(sharedDockerServices);
         }
 
@@ -258,7 +256,6 @@ namespace Shared.EventStore.Tests{
         [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
-            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
 
@@ -305,7 +302,6 @@ namespace Shared.EventStore.Tests{
         [TestCase(false)]
         public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore){
             TimeSpan deadline = TimeSpan.FromMinutes(2);
-            TimeSpan retryTimeout = TimeSpan.FromMinutes(6);
 
             await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
 

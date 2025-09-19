@@ -546,7 +546,7 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TestHost);
         ContainerBuilder testHostContainer = new Builder().UseContainer().WithName(this.TestHostContainerName).WithEnvironment(environmentVariables.ToArray())
-                                                          .UseImageDetails(this.GetImageDetails(ContainerType.TestHost)).ExposePort(DockerPorts.TestHostPort)
+                                                          .UseImageDetails(imageDetails).ExposePort(DockerPorts.TestHostPort)
                                                           .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                           .SetDockerCredentials(this.DockerCredentials);
         
@@ -857,7 +857,6 @@ public abstract class BaseDockerHelper{
     protected virtual async Task LoadEventStoreProjections(){
         //Start our Continuous Projections - we might decide to do this at a different stage, but now lets try here
         String projectionsFolder = "projections/continuous";
-        IPAddress[] ipAddresses = Dns.GetHostAddresses("127.0.0.1");
 
         if (!String.IsNullOrWhiteSpace(projectionsFolder)){
             DirectoryInfo di = new(projectionsFolder);
@@ -1039,15 +1038,11 @@ public abstract class BaseDockerHelper{
             return default;
         }
 
-        var d = BaseDockerHelper.GetDockerHost();
-        
-
         try
         {
             return await startContainerFunc(networkServices);
         }
         catch(Exception ex){
-
             this.Error($"Error starting container [{startContainerFunc.Method.Name}]", ex);
             throw;
         }

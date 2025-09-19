@@ -46,7 +46,6 @@ public class EventStoreConnectionStringHealthCheckTests {
     public async Task EventStoreConnectionStringHealthCheck_CheckHealthAsync_NoEventsReturned_Unhealthy()
     {
         Mock<IEventStoreContext> context = new();
-        AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
         
         context.Setup(c => c.ReadLastEventsFromAll(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Success(new List<ResolvedEvent>()));
         EventStoreConnectionStringHealthCheck healthCheck = new(context.Object);
@@ -58,7 +57,6 @@ public class EventStoreConnectionStringHealthCheckTests {
     public async Task EventStoreConnectionStringHealthCheck_CheckHealthAsync_ReadLastEventsFromAll_Unhealthy()
     {
         Mock<IEventStoreContext> context = new();
-        AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
         
         context.Setup(c => c.ReadLastEventsFromAll(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Failure());
         EventStoreConnectionStringHealthCheck healthCheck = new(context.Object);
@@ -70,7 +68,6 @@ public class EventStoreConnectionStringHealthCheckTests {
     public async Task EventStoreConnectionStringHealthCheck_CheckHealthAsync_ExceptionThrown_Unhealthy()
     {
         Mock<IEventStoreContext> context = new();
-        AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
 
         context.Setup(c => c.ReadLastEventsFromAll(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception());
         EventStoreConnectionStringHealthCheck healthCheck = new(context.Object);

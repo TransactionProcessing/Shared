@@ -116,7 +116,6 @@ namespace Shared.Tests
             field.SetValue(null, false);
 
             TestOutputHelper.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff"));
-            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
             
             Should.Throw<InvalidOperationException>(() => {
                                                         ConfigurationReader.GetValueFromSection<List<String>>("AppSettings", "TestArray");
