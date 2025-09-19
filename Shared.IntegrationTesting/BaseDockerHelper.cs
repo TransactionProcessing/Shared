@@ -740,7 +740,7 @@ public abstract class BaseDockerHelper{
             using HttpClientHandler httpClientHandler = new();
             httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
             using HttpClient client = new(httpClientHandler);
-            String authenticationString = $"admin:changeit";
+            String authenticationString = "admin:changeit";
             String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
@@ -760,7 +760,7 @@ public abstract class BaseDockerHelper{
             using HttpClientHandler httpClientHandler = new();
             httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
             using HttpClient client = new(httpClientHandler);
-            String authenticationString = $"admin:changeit";
+            String authenticationString = "admin:changeit";
             String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
 
