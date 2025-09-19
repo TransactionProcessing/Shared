@@ -20,7 +20,7 @@ namespace Shared.Extensions
             try
             {
                 // Validate missing fields of object
-                JsonSerializerSettings settings = new JsonSerializerSettings();
+                JsonSerializerSettings settings = new();
                 settings.MissingMemberHandling = MissingMemberHandling.Error;
 
                 result = JsonConvert.DeserializeObject<T>(obj, settings);

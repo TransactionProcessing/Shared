@@ -21,7 +21,7 @@ public class ResultExtensionsTests {
     [InlineData(ResultStatus.Forbidden, typeof(ForbidResult))]
     [InlineData((ResultStatus)99, typeof(ObjectResult))]
     public void ToActionResultX_ActionResultIsReturned(ResultStatus status, Type expectedType) {
-        Result r = new Result {
+        Result r = new() {
             Status = status,
             IsSuccess = status == ResultStatus.Ok
         };

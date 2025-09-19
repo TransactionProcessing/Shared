@@ -19,11 +19,11 @@
                                          HealthReport healthReport) {
             context.Response.ContentType = "application/json; charset=utf-8";
 
-            JsonWriterOptions options = new JsonWriterOptions {
+            JsonWriterOptions options = new() {
                                                                   Indented = true
                                                               };
-            using MemoryStream memoryStream = new MemoryStream();
-            using(Utf8JsonWriter jsonWriter = new Utf8JsonWriter(memoryStream, options)) {
+            using MemoryStream memoryStream = new();
+            using(Utf8JsonWriter jsonWriter = new(memoryStream, options)) {
                 jsonWriter.WriteStartObject();
                 jsonWriter.WriteString("status", healthReport.Status.ToString());
                 jsonWriter.WriteString("totalDuration", healthReport.TotalDuration.ToString());

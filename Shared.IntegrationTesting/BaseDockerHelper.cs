@@ -657,7 +657,7 @@ public abstract class BaseDockerHelper{
             this.Trace($"Connection String {this.sqlTestConnString}");
         }
 
-        SqlConnection connection = new SqlConnection(this.sqlTestConnString);
+        SqlConnection connection = new(this.sqlTestConnString);
         try{
             connection.Open();
 
@@ -691,9 +691,9 @@ public abstract class BaseDockerHelper{
     }
 
     protected virtual async Task CreatePersistentSubscription((String streamName, String groupName, Int32 maxRetryCount) subscription){
-        EventStorePersistentSubscriptionsClient client = new EventStorePersistentSubscriptionsClient(this.ConfigureEventStoreSettings());
+        EventStorePersistentSubscriptionsClient client = new(this.ConfigureEventStoreSettings());
 
-        PersistentSubscriptionSettings settings = new PersistentSubscriptionSettings(resolveLinkTos:true, StreamPosition.Start, maxRetryCount:subscription.maxRetryCount);
+        PersistentSubscriptionSettings settings = new(resolveLinkTos:true, StreamPosition.Start, maxRetryCount:subscription.maxRetryCount);
         this.Trace($"Creating persistent subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] Retry Count [{subscription.maxRetryCount}]");
         await client.CreateToStreamAsync(subscription.streamName, subscription.groupName, settings);
 
@@ -737,10 +737,10 @@ public abstract class BaseDockerHelper{
         {
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
 
-            using (HttpClientHandler httpClientHandler = new HttpClientHandler())
+            using (HttpClientHandler httpClientHandler = new())
             {
                 httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-                using (HttpClient client = new HttpClient(httpClientHandler))
+                using (HttpClient client = new(httpClientHandler))
                 {
                     String authenticationString = $"admin:changeit";
                     String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
@@ -761,10 +761,10 @@ public abstract class BaseDockerHelper{
         {
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
 
-            using (HttpClientHandler httpClientHandler = new HttpClientHandler())
+            using (HttpClientHandler httpClientHandler = new())
             {
                 httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-                using (HttpClient client = new HttpClient(httpClientHandler))
+                using (HttpClient client = new(httpClientHandler))
                 {
                     String authenticationString = $"admin:changeit";
                     String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
@@ -848,13 +848,13 @@ public abstract class BaseDockerHelper{
         IPAddress[] ipAddresses = Dns.GetHostAddresses("127.0.0.1");
 
         if (!String.IsNullOrWhiteSpace(projectionsFolder)){
-            DirectoryInfo di = new DirectoryInfo(projectionsFolder);
+            DirectoryInfo di = new(projectionsFolder);
 
             if (di.Exists){
                 FileInfo[] files = di.GetFiles();
                 var requiredProjections = this.GetRequiredProjections();
-                EventStoreProjectionManagementClient projectionClient = new EventStoreProjectionManagementClient(this.ConfigureEventStoreSettings());
-                List<String> projectionNames = new List<String>();
+                EventStoreProjectionManagementClient projectionClient = new(this.ConfigureEventStoreSettings());
+                List<String> projectionNames = new();
                 
                 foreach (FileInfo file in files){
                     if (requiredProjections.Contains(file.Name) == false)

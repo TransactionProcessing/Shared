@@ -24,7 +24,7 @@ namespace Shared.Results
 
         public static async Task<T> ExecuteWithPolicyAsync<T>(Func<Task<T>> action, IAsyncPolicy<T> policy, string policyTag = "") where T : ResultBase
         {
-            Context context = new Context();
+            Context context = new();
             T result = await policy.ExecuteAsync(_ => action(), context);
 
             int retryCount = context.TryGetValue("RetryCount", out Object? retryObj) && retryObj is int r ? r : 0;

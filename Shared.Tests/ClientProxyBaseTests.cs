@@ -30,9 +30,9 @@ namespace Shared.Tests
 
         public async Task ClientProxyBase_HandleResponseX_SuccessStatus(HttpStatusCode statusCode) {
             String responseContent = $"Content - {statusCode}";
-            HttpResponseMessage response = new HttpResponseMessage(statusCode);
+            HttpResponseMessage response = new(statusCode);
             response.Content = new StringContent(responseContent);
-            TestClient proxybase = new TestClient(new HttpClient());
+            TestClient proxybase = new(new HttpClient());
             Result<String> result = await proxybase.Test_HandleResponseX(response, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             result.Data.ShouldBe(responseContent);
@@ -52,10 +52,10 @@ namespace Shared.Tests
 
         public async Task ClientProxyBase_HandleResponse_SuccessStatus(HttpStatusCode statusCode) {
             String responseContent = $"Content - {statusCode}";
-            HttpResponseMessage response = new HttpResponseMessage(statusCode);
+            HttpResponseMessage response = new(statusCode);
             response.Content = new StringContent(responseContent);
-            TestClient proxybase = new TestClient(new HttpClient());
-            Should.NotThrow(async () => await proxybase.Test_HandleResponse(response, CancellationToken.None));
+            TestClient proxybase = new(new HttpClient());
+            Should.NotThrow(async () => { await proxybase.Test_HandleResponse(response, CancellationToken.None); });
         }
 
         [Theory]
@@ -236,7 +236,7 @@ namespace Shared.Tests
         public void HandleResponseContent_NullContent_ReturnsDefaultList() {
             // Arrange
             string content = null;
-            TestClient proxybase = new TestClient(new HttpClient());
+            TestClient proxybase = new(new HttpClient());
 
             // Act
             var result = proxybase.Test_HandleResponseContent<List<ApiResourceDetails>>(content);
@@ -251,7 +251,7 @@ namespace Shared.Tests
         public void HandleResponseContent_NullContent_ReturnsDefaultObject() {
             // Arrange
             string content = null;
-            TestClient proxybase = new TestClient(new HttpClient());
+            TestClient proxybase = new(new HttpClient());
 
             // Act
             var result = proxybase.Test_HandleResponseContent<ApiResourceDetails>(content);
@@ -265,7 +265,7 @@ namespace Shared.Tests
         public void HandleResponseContent_EmptyContent_ReturnsDefaultList() {
             // Arrange
             string content = string.Empty;
-            TestClient proxybase = new TestClient(new HttpClient());
+            TestClient proxybase = new(new HttpClient());
 
             // Act
             var result = proxybase.Test_HandleResponseContent<List<ApiResourceDetails>>(content);
@@ -280,7 +280,7 @@ namespace Shared.Tests
         public void HandleResponseContent_EmptyContent_ReturnsDefaultObject() {
             // Arrange
             string content = string.Empty;
-            TestClient proxybase = new TestClient(new HttpClient());
+            TestClient proxybase = new(new HttpClient());
 
             // Act
             var result = proxybase.Test_HandleResponseContent<ApiResourceDetails>(content);
@@ -294,7 +294,7 @@ namespace Shared.Tests
         public void HandleResponseContent_ValidJsonContent_ReturnsDeserializedObject() {
             // Arrange
             string json = "{ \"Data\": { \"name\": \"test\", \"description\": \"test description\" } }";
-            TestClient proxybase = new TestClient(new HttpClient());
+            TestClient proxybase = new(new HttpClient());
 
             // Act
             var result = proxybase.Test_HandleResponseContent<ApiResourceDetails>(json);
@@ -310,7 +310,7 @@ namespace Shared.Tests
         public void HandleResponseContent_ValidJsonContent_ReturnsDeserializedList() {
             // Arrange
             string json = "{ \"Data\": [{ \"name\": \"test1\", \"description\": \"test description 1\" }, { \"name\": \"test2\", \"description\": \"test description 2\" }] }";
-            TestClient proxybase = new TestClient(new HttpClient());
+            TestClient proxybase = new(new HttpClient());
 
             // Act
             var result = proxybase.Test_HandleResponseContent<List<ApiResourceDetails>>(json);

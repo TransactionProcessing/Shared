@@ -69,7 +69,7 @@ namespace Shared.Web
                 return string.Empty;
             }
 
-            StringBuilder queryString = new StringBuilder();
+            StringBuilder queryString = new();
 
             foreach (KeyValuePair<String, Object> kvp in filtered)
             {

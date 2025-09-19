@@ -72,7 +72,7 @@
                                 String message,
                                 Exception exception = null) {
             if (this.LoggerObject != null) {
-                LogEventInfo eventInfo = new LogEventInfo(logLevel, "Logger", message);
+                LogEventInfo eventInfo = new(logLevel, "Logger", message);
                 eventInfo.Exception = exception;
                 eventInfo.Properties["FileName"] = this.FileName;
 

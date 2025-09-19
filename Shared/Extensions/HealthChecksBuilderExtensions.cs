@@ -15,7 +15,7 @@
         public static IHealthChecksBuilder AddFileProcessorService(this IHealthChecksBuilder builder,
                                                                    Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
-            Uri uri = new Uri($"{ConfigurationReader.GetValue("AppSettings", "FileProcessorApi")}/health");
+            Uri uri = new($"{ConfigurationReader.GetValue("AppSettings", "FileProcessorApi")}/health");
 
             return builder.AddUrlGroup(uri,
                                        name:"File Processor Service",
@@ -28,7 +28,7 @@
         public static IHealthChecksBuilder AddMessagingService(this IHealthChecksBuilder builder,
                                                                Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
-            Uri uri = new Uri($"{ConfigurationReader.GetValue("AppSettings", "MessagingServiceApi")}/health");
+            Uri uri = new($"{ConfigurationReader.GetValue("AppSettings", "MessagingServiceApi")}/health");
 
             return builder.AddUrlGroup(uri,
                                        HttpMethod.Get,
@@ -41,7 +41,7 @@
         public static IHealthChecksBuilder AddSecurityService(this IHealthChecksBuilder builder,
                                                               Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
-            Uri uri = new Uri($"{ConfigurationReader.GetValue("SecurityConfiguration", "Authority")}/health");
+            Uri uri = new($"{ConfigurationReader.GetValue(\"SecurityConfiguration\", \"Authority\")}/health");
             return builder.AddUrlGroup(uri,
                                        HttpMethod.Get,
                                        "Security Service",
@@ -53,7 +53,7 @@
         public static IHealthChecksBuilder AddTransactionProcessorService(this IHealthChecksBuilder builder,
                                                                           Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
         {
-            Uri uri = new Uri($"{ConfigurationReader.GetValue("AppSettings", "TransactionProcessorApi")}/health");
+            Uri uri = new($"{ConfigurationReader.GetValue("AppSettings", "TransactionProcessorApi")}/health");
 
             return builder.AddUrlGroup(uri,
                                        name:"Transaction Processor Service",

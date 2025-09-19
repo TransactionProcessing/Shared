@@ -20,7 +20,7 @@ namespace Shared.EventStore.Tests
     {
         [Fact]
         public void TypeMapConvertor_Convertor_IDomainEvent_EventDataReturned(){
-            AggregateNameSetEvent domainEvent  = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            AggregateNameSetEvent domainEvent  = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
             EventData result = TypeMapConvertor.Convertor(domainEvent);
             result.ShouldNotBeNull();
         }
@@ -28,8 +28,8 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void TypeMapConvertor_Convertor_ResolvedEvent_EventDataReturned()
         {
-            AggregateNameSetEvent domainEvent = new AggregateNameSetEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
-            ResolvedEvent resolvedEvent = new ResolvedEvent(TestData.CreateEventRecord<AggregateNameSetEvent>(domainEvent, "TestStream"), null, null);
+            AggregateNameSetEvent domainEvent = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            ResolvedEvent resolvedEvent = new(TestData.CreateEventRecord<AggregateNameSetEvent>(domainEvent, "TestStream"), null, null);
 
             IDomainEvent result = TypeMapConvertor.Convertor(TestData.AggregateId, resolvedEvent);
             result.ShouldNotBeNull();
@@ -38,8 +38,8 @@ namespace Shared.EventStore.Tests
         [Fact]
         public void TypeMapConvertor_Convertor_ResolvedEvent_UnknownEvent_EventDataReturned()
         {
-            UnknownEvent domainEvent = new UnknownEvent(TestData.AggregateId, TestData.EventId, TestData.EstateName);
-            ResolvedEvent resolvedEvent = new ResolvedEvent(TestData.CreateEventRecord<UnknownEvent>(domainEvent, "TestStream", false), null, null);
+            UnknownEvent domainEvent = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
+            ResolvedEvent resolvedEvent = new(TestData.CreateEventRecord<UnknownEvent>(domainEvent, "TestStream", false), null, null);
 
             Should.Throw<Exception>(() => TypeMapConvertor.Convertor(TestData.AggregateId, resolvedEvent));
         }
