@@ -54,7 +54,6 @@ public class DomainEventHelperTests
         String propertyValue = DomainEventHelper.GetProperty<String>(domainEvent, propertyName, true);
         propertyValue.ShouldBe(TestData.EstateName);
     }
-}
 
         [Theory]
         [InlineData("AggregateName", true)]
@@ -70,4 +69,3 @@ public class DomainEventHelperTests
         }
 
     }
-}
