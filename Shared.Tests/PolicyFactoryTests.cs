@@ -7,8 +7,8 @@ using Shared.Logger;
 using Shared.Results;
 using Shouldly;
 
-namespace Shared.Tests
-{
+namespace Shared.Tests;
+
     using global::Shared.General;
     using Moq;
     using Polly;
@@ -17,8 +17,6 @@ namespace Shared.Tests
     using System.Threading.Tasks;
     using Xunit;
 
-    namespace Shared.Results.Tests
-    {
         public class PolicyFactoryTests
         {
             [Fact]
@@ -276,6 +274,3 @@ namespace Shared.Tests
 
 
         }
-    }
-
-}
