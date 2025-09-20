@@ -87,10 +87,12 @@ public class AggregateService : IAggregateService
         this.Cache.Set<TAggregate>(key, aggregate, aggregateType.Item2);
     }
 
-    public void AddCachedAggregate(Type aggregateType, MemoryCacheEntryOptions memoryCacheEntryOptions = null) {
+    public void AddCachedAggregate(Type aggregateType, MemoryCacheEntryOptions memoryCacheEntryOptions = null)
+    {
 
         MemoryCacheEntryOptions localMemoryCacheEntryOptions = DefaultMemoryCacheEntryOptions;
-        if (memoryCacheEntryOptions != null) {
+        if (memoryCacheEntryOptions != null)
+        {
             localMemoryCacheEntryOptions = memoryCacheEntryOptions;
         }
 
@@ -183,7 +185,7 @@ public class AggregateService : IAggregateService
         IAggregateRepository<TAggregate, DomainEvent> repository = this.AggregateRepositoryResolver.Resolve<TAggregate, DomainEvent>();
 
         String g = typeof(TAggregate).Name;
-        String m = $"AggregateService";
+        String m = "AggregateService";
         Counter counterCalls = AggregateService.GetCounterMetric($"{m}_{g}_times_rehydrated");
         Histogram histogramMetric = AggregateService.GetHistogramMetric($"{m}_{g}_rehydrated");
 
