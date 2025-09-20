@@ -1,13 +1,13 @@
-﻿namespace Shared.EventStore.ProjectionEngine{
-    using System.Threading;
-    using System.Threading.Tasks;
-    using DomainDrivenDesign.EventSourcing;
+﻿namespace Shared.EventStore.ProjectionEngine;
 
-    public interface IStateDispatcher<in TState> where TState : State{
-        #region Methods
+using System.Threading;
+using System.Threading.Tasks;
+using DomainDrivenDesign.EventSourcing;
 
-        Task Dispatch(TState state, IDomainEvent @event, CancellationToken cancellationToken);
+public interface IStateDispatcher<in TState> where TState : State{
+    #region Methods
 
-        #endregion
-    }
+    Task Dispatch(TState state, IDomainEvent @event, CancellationToken cancellationToken);
+
+    #endregion
 }
