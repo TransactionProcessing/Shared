@@ -50,7 +50,7 @@ namespace Shared.Middleware;
                 logMessage.Append($"Response: Status Code: {context.Response.StatusCode}");
                 if (!String.IsNullOrEmpty(responseBody))
                 {
-                    logMessage.Append(" ");
+                    logMessage.Append(' ');
                     logMessage.Append($"Body: {responseBody}");
                 }
 

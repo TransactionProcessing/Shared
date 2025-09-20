@@ -43,7 +43,7 @@ public class RequestLoggingMiddleware
             logMessage.Append($"Request: Method: {context.Request.Method} Url: {url}");
             if (requestBodyText != String.Empty)
             {
-                logMessage.Append(" ");
+                logMessage.Append(' ');
                 logMessage.Append($"Body: {requestBodyText}");
             }
 
