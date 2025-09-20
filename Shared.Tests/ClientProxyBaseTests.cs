@@ -55,7 +55,7 @@ public partial class SharedTests {
         HttpResponseMessage response = new(statusCode);
         response.Content = new StringContent(responseContent);
         TestClient proxybase = new(new HttpClient());
-        Should.NotThrow(async () => { await proxybase.Test_HandleResponse(response, CancellationToken.None); });
+        Should.NotThrow(async () => await proxybase.Test_HandleResponse(response, CancellationToken.None));
     }
 
     [Theory]

@@ -36,12 +36,7 @@ public class AggregateMemoryCache {
             if (!AggregateMemoryCache.CallbackRegistered.TryGetValue(aggregateType, out isRegistered) || !isRegistered) // Double-check locking
             {
                 // Register a callback to remove the item from our internal tracking
-                memoryCacheEntryOptions.RegisterPostEvictionCallback((evictedKey,
-                                                                      _,
-                                                                      _,
-                                                                      _) => {
-                    this.KeyTracker.TryRemove(evictedKey.ToString(), out _);
-                });
+                memoryCacheEntryOptions.RegisterPostEvictionCallback((evictedKey, _, _, _) => this.KeyTracker.TryRemove(evictedKey.ToString(), out _));
 
                 AggregateMemoryCache.CallbackRegistered[aggregateType] = true;
             }
