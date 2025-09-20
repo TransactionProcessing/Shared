@@ -39,7 +39,7 @@ public static class TypeMapConvertor
         {
             eventType = TypeMap.GetType(@event.Event.EventType);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Nothing here
         }

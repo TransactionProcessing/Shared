@@ -88,7 +88,7 @@ public static class ConfigurationReader
 
             return (T)Convert.ChangeType(value, typeof(T));
         }
-        catch (KeyNotFoundException kex)
+        catch (KeyNotFoundException)
         {
             return defaultValue;
         }

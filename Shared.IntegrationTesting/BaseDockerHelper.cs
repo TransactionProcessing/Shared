@@ -671,7 +671,7 @@ public abstract class BaseDockerHelper{
             connection.Close();
             this.Trace("SQL Server Container Running");
         }
-        catch(SqlException ex){
+        catch(SqlException){
             if (connection.State == ConnectionState.Open){
                 connection.Close();
             }

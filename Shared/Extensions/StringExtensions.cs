@@ -26,12 +26,12 @@ public static class StringExtensions
             result = JsonConvert.DeserializeObject<T>(obj, settings);
             return true;
         }
-        catch (JsonReaderException jrex)
+        catch (JsonReaderException)
         {
             result = default(T);
             return false;
         }
-        catch (JsonSerializationException jsex)
+        catch (JsonSerializationException)
         {
             result = default(T);
             return false;
