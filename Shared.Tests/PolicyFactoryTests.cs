@@ -17,8 +17,6 @@ namespace Shared.Tests;
     using System.Threading.Tasks;
     using Xunit;
 
-    namespace Shared.Results.Tests
-    {
         public class PolicyFactoryTests
         {
             [Fact]
@@ -276,4 +274,3 @@ namespace Shared.Tests;
 
 
         }
-    }
