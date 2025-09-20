@@ -90,7 +90,7 @@ public static class ClaimsPrincipalExtensions
 {
     public static Boolean IsAuthenticated(this ClaimsPrincipal principal)
     {
-        return principal?.Identity?.IsAuthenticated ?? false;
+        return principal?.Identity?.IsAuthenticated == true;
     }
 }
 
