@@ -1,33 +1,32 @@
 using Shared.EventStore.Tests.TestObjects;
 
-namespace Shared.EventStore.Tests
+namespace Shared.EventStore.Tests;
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Shouldly;
+using SubscriptionWorker;
+using Xunit;
+
+public class SubscriptionRepositoryTests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Shouldly;
-    using SubscriptionWorker;
-    using Xunit;
+    #region Methods
 
-    public class SubscriptionRepositoryTests
+    [Fact]
+    public async Task SubscriptionRepository_GetSubscriptions_ReturnsSubscriptions()
     {
-        #region Methods
+        List<PersistentSubscriptionInfo> allSubscriptions = (TestData.GetPersistentSubscriptions_DemoEstate());
 
-        [Fact]
-        public async Task SubscriptionRepository_GetSubscriptions_ReturnsSubscriptions()
-        {
-            List<PersistentSubscriptionInfo> allSubscriptions = (TestData.GetPersistentSubscriptions_DemoEstate());
+        Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> GetAllSubscriptions = async token => allSubscriptions;
 
-            Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> GetAllSubscriptions = async token => allSubscriptions;
+        ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(GetAllSubscriptions);
 
-            ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(GetAllSubscriptions);
+        PersistentSubscriptions list = await subscriptionRepository.GetSubscriptions(true, CancellationToken.None);
 
-            PersistentSubscriptions list = await subscriptionRepository.GetSubscriptions(true, CancellationToken.None);
-
-            list.PersistentSubscriptionInfo.Count.ShouldBe(allSubscriptions.Count);
-        }
-
-        #endregion
+        list.PersistentSubscriptionInfo.Count.ShouldBe(allSubscriptions.Count);
     }
+
+    #endregion
 }
