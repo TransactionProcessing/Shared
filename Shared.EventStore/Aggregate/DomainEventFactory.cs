@@ -54,8 +54,8 @@ public class DomainEventFactory : IDomainEventFactory<DomainEvent>
         try{
             eventType = TypeMap.GetType(@event.Event.EventType);
         }
-        catch(Exception ex){
-            // Nothing here
+        catch(Exception)
+        {
         }
 
         if (eventType == null)
