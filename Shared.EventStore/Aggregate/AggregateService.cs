@@ -87,10 +87,12 @@ public class AggregateService : IAggregateService
         this.Cache.Set<TAggregate>(key, aggregate, aggregateType.Item2);
     }
 
-    public void AddCachedAggregate(Type aggregateType, MemoryCacheEntryOptions memoryCacheEntryOptions = null) {
+    public void AddCachedAggregate(Type aggregateType, MemoryCacheEntryOptions memoryCacheEntryOptions = null)
+    {
 
         MemoryCacheEntryOptions localMemoryCacheEntryOptions = DefaultMemoryCacheEntryOptions;
-        if (memoryCacheEntryOptions != null) {
+        if (memoryCacheEntryOptions != null)
+        {
             localMemoryCacheEntryOptions = memoryCacheEntryOptions;
         }
 
