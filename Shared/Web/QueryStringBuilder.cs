@@ -75,7 +75,7 @@ public class QueryStringBuilder
         {
             if (queryString.Length > 0)
             {
-                queryString.Append("&");
+                queryString.Append('&');
             }
 
             queryString.Append($"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value.ToString())}");
