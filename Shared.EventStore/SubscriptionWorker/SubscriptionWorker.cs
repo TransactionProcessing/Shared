@@ -146,7 +146,7 @@ public class SubscriptionWorker
 
         this.IsRunning = false;
 
-        var temp = this.CurrentSubscriptions.Select(r => r).ToList();
+        var temp = this.CurrentSubscriptions.ToList();
 
         for (Int32 i = 0; i < temp.Count; i++)
         {

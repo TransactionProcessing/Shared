@@ -33,7 +33,7 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
 
         this.DomainEventHandlers = new Dictionary<String, IDomainEventHandler>();
             
-        IEnumerable<String> distinctHandlers = eventHandlerConfiguration.Keys.Select(k => k);
+        IEnumerable<String> distinctHandlers = eventHandlerConfiguration.Keys;
 
         foreach (String handlerTypeString in distinctHandlers)
         {
