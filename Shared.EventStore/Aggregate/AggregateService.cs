@@ -76,10 +76,10 @@ public class AggregateService : IAggregateService
         //This approach should be safer.
         if (aggregate == null)
         {
-            Logger.Logger.LogWarning($"aggregate is null");
+            Logger.Logger.LogWarning("aggregate is null");
         }
 
-        Logger.Logger.LogWarning($"About to save to cache.");
+        Logger.Logger.LogWarning("About to save to cache.");
 
         String g = typeof(TAggregate).Name;
         String key = $"{g}-{aggregate.AggregateId}";
