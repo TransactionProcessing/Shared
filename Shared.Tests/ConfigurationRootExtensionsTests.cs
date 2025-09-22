@@ -44,7 +44,7 @@ public partial class SharedTests
         String[] loggedEntries = this.FilterLogEntries(testLogger);
         Int32 expectedCount = TestHelpers.DefaultAppSettings.Count; // 5 headers
         loggedEntries.Length.ShouldBe(expectedCount, String.Join(Environment.NewLine, loggedEntries.ToArray()));
-        loggedEntries.Where(l => l.Contains("No Value")).Count().ShouldBe(1);
+        loggedEntries.Count(l => l.Contains("No Value")).ShouldBe(1);
     }
 
     private string[] FilterLogEntries(TestLogger testLogger) {
