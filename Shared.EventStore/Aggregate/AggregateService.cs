@@ -146,11 +146,9 @@ public class AggregateService : IAggregateService
                 this.SetCache<TAggregate>(at, aggregateResult.Data);
                 return Result.Success(aggregate);
             }
-            else
-            {
-                Logger.Logger.LogWarning($"aggregateResult failed {aggregateResult.Message}");
-                return aggregateResult;
-            }
+
+            Logger.Logger.LogWarning($"aggregateResult failed {aggregateResult.Message}");
+            return aggregateResult;
         }
         finally
         {
