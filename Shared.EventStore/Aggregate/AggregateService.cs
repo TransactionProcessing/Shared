@@ -213,7 +213,7 @@ public class AggregateService : IAggregateService
         IAggregateRepository<TAggregate, DomainEvent> repository = this.AggregateRepositoryResolver.Resolve<TAggregate, DomainEvent>();
 
         String g = typeof(TAggregate).Name;
-        String m = $"AggregateService";
+        String m = "AggregateService";
         Counter counterCalls = AggregateService.GetCounterMetric($"{m}_{g}_times_saved");
         Histogram histogramMetric = AggregateService.GetHistogramMetric($"{m}_{g}_saved");
 
