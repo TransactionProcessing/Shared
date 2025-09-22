@@ -1,97 +1,121 @@
-\n﻿namespace Shared.EventStore.SubscriptionWorker;\n\nusing System;\nusing System.Collections.Generic;\nusing System.Diagnostics.CodeAnalysis;\nusing System.Net.Http;\nusing System.Threading;\nusing System.Threading.Tasks;\nusing global::EventStore.Client;\nusing Newtonsoft.Json;\n\n[ExcludeFromCodeCoverage]\npublic class SubscriptionRepository : ISubscriptionRepository\n{\n    #region Fields\n\n    private readonly Int32 CacheHits;\n\n    private readonly Int32 FullRefreshHits;\n\n    private Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> GetAllSubscriptions;\n\n    private readonly Func<Boolean, PersistentSubscriptions, Boolean> RefreshRequired;\n\n    private Int32 running;\n\n    private PersistentSubscriptions Subscriptions;\n\n    #endregion\n\n    #region Constructors\n\n    private SubscriptionRepository(Int32 cacheDuration = 120)\n    {\n        this.Subscriptions = new PersistentSubscriptions();\n\n        this.RefreshRequired = (force, s) => force || s.InitialState || SubscriptionRepository.RefreshNeeded(s.LastTimeRefreshed, cacheDuration);\n    }\n\n    #endregion\n\n    #region Events\n\n    public EventHandler<String> Trace;\n\n    #endregion\n\n    #region Methods\n\n    public static SubscriptionRepository Create(String eventStoreConnectionString,Int32 cacheDuration = 120)\n    {\n        EventStoreClientSettings settings = EventStoreClientSettings.Create(eventStoreConnectionString);\n        HttpClient httpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);\n\n        return new SubscriptionRepository(cacheDuration)\n        {\n            GetAllSubscriptions = cancellationToken => SubscriptionRepository.GetSubscriptions(httpClient, cancellationToken)\n        };\n    }\n\n    public static SubscriptionRepository Create(Task<List<PersistentSubscriptionInfo>> func,Int32 cacheDuration = 120)\n    {\n        return new(cacheDuration)\n        {\n            GetAllSubscriptions = _ => func\n        };\n    }\n\n    public static SubscriptionRepository Create(Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> func,Int32 cacheDuration = 120)
-    {
-        return new(cacheDuration)
-        {
-            GetAllSubscriptions = func
-        };
-    }
+﻿namespace Shared.EventStore.SubscriptionWorker;
+ using System;
+ using System.Collections.Generic;
+ using System.Diagnostics.CodeAnalysis;
+ using System.Net.Http;
+ using System.Threading;
+ using System.Threading.Tasks;
+ using global::EventStore.Client;
+ using Newtonsoft.Json;
 
-    public static async Task<List<PersistentSubscriptionInfo>> GetSubscriptions(HttpClient httpClient, CancellationToken cancellationToken)
-    {
-        try
-        {
-            HttpResponseMessage responseMessage = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, "subscriptions"), cancellationToken);
-            String responseBody = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
+ [ExcludeFromCodeCoverage]
+ public class SubscriptionRepository : ISubscriptionRepository {
+     private Int32 CacheHits;
+     private Int32 FullRefreshHits;
+     private Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> GetAllSubscriptions;
+     private readonly Func<Boolean, PersistentSubscriptions, Boolean> RefreshRequired;
+     private Int32 running;
+     private PersistentSubscriptions Subscriptions;
 
-            if (responseMessage.IsSuccessStatusCode)
-            {
-                List<PersistentSubscriptionInfo> list = JsonConvert.DeserializeObject<List<PersistentSubscriptionInfo>>(responseBody);
+     private SubscriptionRepository(Int32 cacheDuration = 120) {
+         this.Subscriptions = new PersistentSubscriptions();
+         this.RefreshRequired = (force,
+                                 s) => force || s.InitialState || SubscriptionRepository.RefreshNeeded(s.LastTimeRefreshed, cacheDuration);
+     }
 
-                return list;
-            }
+     public EventHandler<String> Trace;
 
-            throw new Exception($"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Unable to get persistent subscription list. [{ex}]");
-        }
-    }
+     public static SubscriptionRepository Create(String eventStoreConnectionString,
+                                                 Int32 cacheDuration = 120) {
+         EventStoreClientSettings settings = EventStoreClientSettings.Create(eventStoreConnectionString);
+         HttpClient httpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
+         return new SubscriptionRepository(cacheDuration) { GetAllSubscriptions = cancellationToken => SubscriptionRepository.GetSubscriptions(httpClient, cancellationToken) };
+     }
 
-    public async Task<PersistentSubscriptions> GetSubscriptions(Boolean forceRefresh, CancellationToken cancellationToken)
-    {
-        if (Interlocked.CompareExchange(ref this.running, 1, 0) != 0)
-        {
-            return this.GetSubscriptionsFromCache("no lock");
-        }
+     public static SubscriptionRepository Create(Task<List<PersistentSubscriptionInfo>> func,
+                                                 Int32 cacheDuration = 120) {
 
-        try
-        {
-            if (!this.RefreshRequired(forceRefresh, this.Subscriptions))
-            {
-                return this.GetSubscriptionsFromCache("refresh not required");
-            }
+         return new(cacheDuration) { GetAllSubscriptions = _ => func };
 
-            this.WriteTrace("Full refresh on repository");
+     }
 
-            List<PersistentSubscriptionInfo> list = await this.GetAllSubscriptions(cancellationToken);
+     public static SubscriptionRepository Create(Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> func,
+                                                 Int32 cacheDuration = 120) {
+         return new(cacheDuration) { GetAllSubscriptions = func };
+     }
 
-            this.FullRefreshHits++;
+     public static async Task<List<PersistentSubscriptionInfo>> GetSubscriptions(HttpClient httpClient,
+                                                                                 CancellationToken cancellationToken) {
+         try {
+             HttpResponseMessage responseMessage = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, "subscriptions"), cancellationToken);
+             String responseBody = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
-            this.Subscriptions = this.Subscriptions.Update(list);
+             if (responseMessage.IsSuccessStatusCode) {
+                 List<PersistentSubscriptionInfo> list = JsonConvert.DeserializeObject<List<PersistentSubscriptionInfo>>(responseBody);
 
-            this.WriteTrace($"Full refresh on repository completed {this.FullRefreshHits}");
+                 return list;
+             }
 
-            return this.Subscriptions;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Unable to get persistent subscription list. [{ex}]");
-        }
-        finally
-        {
-            Interlocked.Exchange(ref this.running, 0);
-        }
-    }
+             throw new Exception($"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
+         }
+         catch (Exception ex) {
+             throw new Exception($"Unable to get persistent subscription list. [{ex}]");
+         }
+     }
 
-    public async Task PreWarm(CancellationToken cancellationToken) => await this.GetSubscriptions(true, cancellationToken);
+     public async Task<PersistentSubscriptions> GetSubscriptions(Boolean forceRefresh,
+                                                                 CancellationToken cancellationToken) {
+         if (Interlocked.CompareExchange(ref this.running, 1, 0) != 0) {
+             return this.GetSubscriptionsFromCache("no lock");
+         }
 
-    public void WriteTrace(String message)
-    {
-        if (this.Trace != null)
-        {
-            this.Trace(this, message);
-        }
-    }
+         try {
+             if (!this.RefreshRequired(forceRefresh, this.Subscriptions)) {
+                 return this.GetSubscriptionsFromCache("refresh not required");
+             }
 
-    private PersistentSubscriptions GetSubscriptionsFromCache(String reason)
-    {
-        this.CacheHits++;
-        this.WriteTrace($"Cache hit {this.CacheHits} - {reason}");
-        return this.Subscriptions;
-    }
+             this.WriteTrace("Full refresh on repository");
 
-    private static Boolean RefreshNeeded(DateTime lastRefreshed, Int32 cacheDuration)
-    {
-        TimeSpan elapsed = DateTime.Now - lastRefreshed;
+             List<PersistentSubscriptionInfo> list = await this.GetAllSubscriptions(cancellationToken);
 
-        if (elapsed.TotalSeconds < cacheDuration)
-        {
-            return false;
-        }
+             this.FullRefreshHits++;
 
-        return true;
-    }
+             this.Subscriptions = this.Subscriptions.Update(list);
 
-    #endregion
-}
+             this.WriteTrace($"Full refresh on repository completed {this.FullRefreshHits}");
+
+             return this.Subscriptions;
+         }
+         catch (Exception ex) {
+             throw new Exception($"Unable to get persistent subscription list. [{ex}]");
+         }
+         finally {
+             Interlocked.Exchange(ref this.running, 0);
+         }
+     }
+
+     public async Task PreWarm(CancellationToken cancellationToken) => await this.GetSubscriptions(true, cancellationToken);
+
+     public void WriteTrace(String message) {
+         if (this.Trace != null) {
+             this.Trace(this, message);
+         }
+     }
+
+     private PersistentSubscriptions GetSubscriptionsFromCache(String reason) {
+         this.CacheHits++;
+         this.WriteTrace($"Cache hit {this.CacheHits} - {reason}");
+         return this.Subscriptions;
+     }
+
+     private static Boolean RefreshNeeded(DateTime lastRefreshed,
+                                          Int32 cacheDuration) {
+         TimeSpan elapsed = DateTime.Now - lastRefreshed;
+
+         if (elapsed.TotalSeconds < cacheDuration) {
+             return false;
+         }
+
+         return true;
+     }
+ }

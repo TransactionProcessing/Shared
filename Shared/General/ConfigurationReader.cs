@@ -12,7 +12,7 @@ public static class ConfigurationReader
     /// <summary>
     /// The configuration root
     /// </summary>
-    private static readonly IConfigurationRoot ConfigurationRoot;
+    private static IConfigurationRoot ConfigurationRoot;
 
     #endregion
 
