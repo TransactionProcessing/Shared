@@ -56,7 +56,7 @@ public record PositiveMoney
     {
         return new PositiveMoney(moneyAmount);
     }
-        
+
     /// <summary>
     /// Guards the monetary amount.
     /// </summary>
