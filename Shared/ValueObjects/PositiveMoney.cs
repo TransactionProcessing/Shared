@@ -32,10 +32,7 @@ public record PositiveMoney
     /// </value>
     public Decimal Value
     {
-        get
-        {
-            return this.Money.Value;
-        }
+        get => this.Money.Value;
     }
 
     /// <summary>
