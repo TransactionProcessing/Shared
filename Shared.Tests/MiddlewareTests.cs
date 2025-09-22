@@ -63,12 +63,7 @@ public partial class SharedTests
             new(LogLevel.Warning, logRequests, true);
             
         DefaultHttpContext defaultContext = new();
-        if (requestBody != null){
-            defaultContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
-        }
-        else{
-            defaultContext.Request.Body = new MemoryStream();
-        }
+        defaultContext.Request.Body = requestBody != null ? new MemoryStream(Encoding.UTF8.GetBytes(requestBody)) : new MemoryStream();
 
         defaultContext.Request.Path = "/";
 

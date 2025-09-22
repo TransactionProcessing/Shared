@@ -93,15 +93,9 @@ public abstract class ClientProxyBase {
     {
         if (String.IsNullOrEmpty(content))
         {
-            T data = default(T);
-            if (typeof(IEnumerable).IsAssignableFrom(typeof(T)))
-            {
-                data = (T)Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(T).GetGenericArguments()));
-            }
-            else
-            {
-                data = (T)Activator.CreateInstance(typeof(T));
-            }
+            T data = typeof(IEnumerable).IsAssignableFrom(typeof(T))
+                ? (T)Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(T).GetGenericArguments()))
+                : (T)Activator.CreateInstance(typeof(T));
 
             return new ResponseData<T> { Data = data };
         }
