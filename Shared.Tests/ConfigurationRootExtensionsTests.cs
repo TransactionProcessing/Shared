@@ -20,8 +20,8 @@ using static Azure.Core.HttpHeader;
 public partial class SharedTests
 {
     #region Properties
-        
-        
+
+
     #endregion
 
     #region Methods
@@ -47,7 +47,8 @@ public partial class SharedTests
         loggedEntries.Count(l => l.Contains("No Value")).ShouldBe(1);
     }
 
-    private string[] FilterLogEntries(TestLogger testLogger) {
+    private string[] FilterLogEntries(TestLogger testLogger)
+    {
         return testLogger.GetLogEntries().Where(l => !l.Contains("PSLockDownPolicy") && !String.IsNullOrEmpty(l))
             .Where(l => !l.Contains("Configuration Section"))
             .Where(l => !l.Contains("CF_USER_TEXT_ENCODING")).ToArray();
