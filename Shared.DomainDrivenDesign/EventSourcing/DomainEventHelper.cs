@@ -18,12 +18,7 @@ public static class DomainEventHelper{
         PropertyInfo propertyInfo = null;
         PropertyInfo[] properties = domainEvent.GetType()
                                                .GetProperties();
-        if (ignoreCase){
-            propertyInfo = properties.SingleOrDefault(p => String.Compare(p.Name, propertyName, StringComparison.CurrentCultureIgnoreCase) == 0);
-        }
-        else{
-            propertyInfo = properties.SingleOrDefault(p => p.Name == propertyName);
-        }
+        propertyInfo = ignoreCase ? properties.SingleOrDefault(p => String.Compare(p.Name, propertyName, StringComparison.CurrentCultureIgnoreCase) == 0) : properties.SingleOrDefault(p => p.Name == propertyName);
 
         if (propertyInfo != null){
             return (T)propertyInfo.GetValue(domainEvent);

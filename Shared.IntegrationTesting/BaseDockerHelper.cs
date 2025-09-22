@@ -493,12 +493,7 @@ public abstract class BaseDockerHelper{
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
         Int32? hostPort = this.GetHostPort(ContainerType.SecurityService);
-        if (hostPort == null){
-            securityServiceContainer = securityServiceContainer.ExposePort(DockerPorts.SecurityServiceDockerPort);
-        }
-        else{
-            securityServiceContainer = securityServiceContainer.ExposePort(hostPort.Value, DockerPorts.SecurityServiceDockerPort);
-        }
+        securityServiceContainer = hostPort == null ? securityServiceContainer.ExposePort(DockerPorts.SecurityServiceDockerPort) : securityServiceContainer.ExposePort(hostPort.Value, DockerPorts.SecurityServiceDockerPort);
 
         // Now build and return the container                
         return securityServiceContainer;

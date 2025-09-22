@@ -185,18 +185,9 @@ public class SubscriptionWorker
                             {
                                 InflightMessages = this.InflightMessages
                             };
-                        IPersistentSubscriptionsClient persistentSubscriptionsClient;
-
-                        if (this.InMemory)
-                        {
-                            persistentSubscriptionsClient = new InMemoryPersistentSubscriptionsClient();
-                        }
-                        else
-                        {
-                            persistentSubscriptionsClient =
-                                new EventStorePersistentSubscriptionsClient(
-                                    this.EventStorePersistentSubscriptionsClient);
-                        }
+                        IPersistentSubscriptionsClient persistentSubscriptionsClient = this.InMemory
+                            ? new InMemoryPersistentSubscriptionsClient()
+                            : new EventStorePersistentSubscriptionsClient(this.EventStorePersistentSubscriptionsClient);
 
                         PersistentSubscription subscription =
                             PersistentSubscription.Create(persistentSubscriptionsClient,

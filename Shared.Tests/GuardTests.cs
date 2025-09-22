@@ -78,17 +78,7 @@ public partial class SharedTests
     [InlineData(null)]
     public void Guard_ThrowIfNullOrEmpty_StringArrayIsNullOrEmpty_ErrorThrown(String testString)
     {
-        String[] testStringArray;
-
-        if (testString == String.Empty)
-        {
-            testStringArray = new String[]{};
-        }
-        else
-        {
-            testStringArray = null;
-        }
-                
+        String[] testStringArray = testString == String.Empty ? new String[]{} : null;
 
         Should.Throw<ArgumentNullException>( () => Guard.ThrowIfNullOrEmpty(testStringArray, nameof(testStringArray)));
     }
@@ -122,17 +112,7 @@ public partial class SharedTests
     [InlineData(null)]
     public void Guard_ThrowIfNullOrEmptyWithExceptionType_StringArrayIsNullOrEmpty_ErrorThrown(String testString)
     {
-        String[] testStringArray;
-
-        if (testString == String.Empty)
-        {
-            testStringArray = new String[] { };
-        }
-        else
-        {
-            testStringArray = null;
-        }
-
+        String[] testStringArray = testString == String.Empty ? new String[] { } : null;
 
         Should.Throw<ArgumentNullException>(() => Guard.ThrowIfNullOrEmpty(testStringArray, typeof(ArgumentNullException), nameof(testStringArray)));
     }
@@ -470,14 +450,7 @@ public partial class SharedTests
     {
         Byte[] testByteArray;
 
-        if (testString == String.Empty)
-        {
-            testByteArray = new Byte[] { };
-        }
-        else
-        {
-            testByteArray = null;
-        }
+        testByteArray = testString == String.Empty ? new Byte[] { } : null;
 
 
         Should.Throw<ArgumentNullException>(() => Guard.ThrowIfNullOrEmpty(testByteArray, nameof(testByteArray)));
