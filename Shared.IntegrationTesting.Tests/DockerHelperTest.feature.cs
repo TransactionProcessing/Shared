@@ -26,10 +26,10 @@ namespace Shared.IntegrationTesting.Tests
         
         private global::Reqnroll.ITestRunner testRunner;
         
-        private static string[] featureTags = new string[] {
+        private static readonly string[] featureTags = new string[] {
                 "base"};
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "", "DockerHelperTest", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
+        private static readonly global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "", "DockerHelperTest", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
         
 #line 1 "DockerHelperTest.feature"
 #line hidden
