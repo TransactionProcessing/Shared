@@ -136,23 +136,19 @@ public class AggregateService : IAggregateService
             {
                 return Result.Success(cachedAggregate);
             }
-            else
-            {
-                // Not found in cache so call GetLatest
-                SimpleResults.Result<TAggregate> aggregateResult = this.GetLatest<TAggregate>(aggregateId, cancellationToken).Result;
 
-                if (aggregateResult.IsSuccess)
-                {
-                    aggregate = aggregateResult.Data;
-                    this.SetCache<TAggregate>(at, aggregateResult.Data);
-                    return Result.Success(aggregate);
-                }
-                else
-                {
-                    Logger.Logger.LogWarning($"aggregateResult failed {aggregateResult.Message}");
-                    return aggregateResult;
-                }
+            // Not found in cache so call GetLatest
+            SimpleResults.Result<TAggregate> aggregateResult = this.GetLatest<TAggregate>(aggregateId, cancellationToken).Result;
+
+            if (aggregateResult.IsSuccess)
+            {
+                aggregate = aggregateResult.Data;
+                this.SetCache<TAggregate>(at, aggregateResult.Data);
+                return Result.Success(aggregate);
             }
+
+            Logger.Logger.LogWarning($"aggregateResult failed {aggregateResult.Message}");
+            return aggregateResult;
         }
         finally
         {
