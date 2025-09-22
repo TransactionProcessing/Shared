@@ -185,16 +185,15 @@ public class ResultHelpersTests {
                 ResultStatus.Forbidden => Result.Forbidden(message),
             };
         }
-        else {
-            return status switch {
-                ResultStatus.Invalid => Result.Invalid(errors),
-                ResultStatus.NotFound => Result.NotFound(errors),
-                ResultStatus.Unauthorized => Result.Unauthorized(errors),
-                ResultStatus.Conflict => Result.Conflict(errors),
-                ResultStatus.Failure => Result.Failure(errors),
-                ResultStatus.CriticalError => Result.CriticalError(errors),
-                ResultStatus.Forbidden => Result.Forbidden(errors)
-            };
-        }
+
+        return status switch {
+            ResultStatus.Invalid => Result.Invalid(errors),
+            ResultStatus.NotFound => Result.NotFound(errors),
+            ResultStatus.Unauthorized => Result.Unauthorized(errors),
+            ResultStatus.Conflict => Result.Conflict(errors),
+            ResultStatus.Failure => Result.Failure(errors),
+            ResultStatus.CriticalError => Result.CriticalError(errors),
+            ResultStatus.Forbidden => Result.Forbidden(errors)
+        };
     }
 }
