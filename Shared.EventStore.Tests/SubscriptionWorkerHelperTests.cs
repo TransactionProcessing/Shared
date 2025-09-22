@@ -15,7 +15,7 @@ public class SubscriptionWorkerHelperTests
 {
     #region Fields
 
-    private Mock<IDomainEventHandlerResolver> domainEventHandlerResolver;
+    private readonly Mock<IDomainEventHandlerResolver> domainEventHandlerResolver;
 
     #endregion
 

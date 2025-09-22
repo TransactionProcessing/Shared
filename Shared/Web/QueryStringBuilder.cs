@@ -8,7 +8,7 @@ namespace Shared.Web;
 
 public class QueryStringBuilder
 {
-    private Dictionary<string, (object value, Boolean alwaysInclude)> parameters = new Dictionary<String, (Object value, Boolean alwaysInclude)>();
+    private readonly Dictionary<string, (object value, Boolean alwaysInclude)> parameters = new Dictionary<String, (Object value, Boolean alwaysInclude)>();
 
     public QueryStringBuilder AddParameter(string key,
                                            object value) =>
