@@ -29,7 +29,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          python - <<'EOF'
+          python << 'EOF'
           import os, hashlib
           from github import Github, Auth
 
@@ -64,4 +64,14 @@ jobs:
               hash_id = hashlib.md5("\n".join(content).encode()).hexdigest()
               if hash_id in seen_ids:
                   continue
-              seen_ids.add_
+              seen_ids.add(hash_id)
+
+              title = f"Sourcery suggestion: {rule_id}"
+              body = "```\n" + "\n".join(content) + "\n```"
+              repo.create_issue(title=title, body=body)
+
+          # Save updated seen IDs
+          with open(seen_ids_file, "w") as f:
+              for i in seen_ids:
+                  f.write(i + "\n")
+          EOF
