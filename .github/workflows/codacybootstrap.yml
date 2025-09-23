@@ -77,3 +77,5 @@ jobs:
                                   });
                                 }
                               }
+                // ✅ Sleep 2 seconds between issue creations to avoid secondary rate limit
+                await new Promise(resolve => setTimeout(resolve, 2000));                              
