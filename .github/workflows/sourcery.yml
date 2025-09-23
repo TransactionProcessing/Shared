@@ -1,6 +1,6 @@
 name: Sourcery Review Per Rule
 
-# Only trigger manually
+# Trigger manually only
 on:
   workflow_dispatch:
 
@@ -17,11 +17,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Step 3: Install Sourcery + GitHub API client
+      # Step 3: Install Sourcery + PyGithub
       - run: pip install sourcery PyGithub
 
-      # Step 4: Run Sourcery and save output
-      - run: sourcery review . --diff > sourcery_output.txt || true
+      # Step 4: Run Sourcery and save output (full scan of repo)
+      - run: sourcery review . > sourcery_output.txt || true
 
       # Step 5: Create GitHub issues per suggestion
       - name: Create GitHub Issues per Rule
@@ -31,10 +31,10 @@ jobs:
         run: |
           python - <<'EOF'
           import os, hashlib
-          from github import Github
+          from github import Github, Auth
 
           repo_name = os.environ["GITHUB_REPOSITORY"]
-          g = Github(os.environ["GITHUB_TOKEN"])
+          g = Github(auth=Auth.Token(os.environ["GITHUB_TOKEN"]))
           repo = g.get_repo(repo_name)
 
           # Load previous suggestions to avoid duplicates
@@ -64,14 +64,4 @@ jobs:
               hash_id = hashlib.md5("\n".join(content).encode()).hexdigest()
               if hash_id in seen_ids:
                   continue
-              seen_ids.add(hash_id)
-              
-              title = f"Sourcery suggestion: {rule_id}"
-              body = "```\n" + "\n".join(content) + "\n```"
-              repo.create_issue(title=title, body=body)
-
-          # Save updated seen IDs
-          with open(seen_ids_file, "w") as f:
-              for i in seen_ids:
-                  f.write(i + "\n")
-          EOF
+              seen_ids.add_
