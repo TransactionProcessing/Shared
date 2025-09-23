@@ -23,6 +23,9 @@ jobs:
       # Step 4: Run Sourcery and save output (full scan of repo)
       - run: sourcery review . > sourcery_output.txt || true
 
+      - name: Debug Sourcery Output
+        run: cat sourcery_output.txt
+
       # Step 5: Create GitHub issues per suggestion
       - name: Create GitHub Issues per Rule
         env:
