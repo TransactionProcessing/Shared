@@ -1,0 +1,77 @@
+name: Sourcery Review Per Rule
+
+# Only trigger manually
+on:
+  workflow_dispatch:
+
+jobs:
+  sourcery:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - uses: actions/checkout@v4
+
+      # Step 2: Set up Python
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Step 3: Install Sourcery + GitHub API client
+      - run: pip install sourcery PyGithub
+
+      # Step 4: Run Sourcery and save output
+      - run: sourcery review . --diff > sourcery_output.txt || true
+
+      # Step 5: Create GitHub issues per suggestion
+      - name: Create GitHub Issues per Rule
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python - <<'EOF'
+          import os, hashlib
+          from github import Github
+
+          repo_name = os.environ["GITHUB_REPOSITORY"]
+          g = Github(os.environ["GITHUB_TOKEN"])
+          repo = g.get_repo(repo_name)
+
+          # Load previous suggestions to avoid duplicates
+          seen_ids_file = "sourcery_seen_ids.txt"
+          seen_ids = set()
+          if os.path.exists(seen_ids_file):
+              with open(seen_ids_file) as f:
+                  seen_ids = set(line.strip() for line in f.readlines())
+
+          # Parse Sourcery output
+          suggestions = {}
+          current_file = None
+          current_hunk = None
+          with open("sourcery_output.txt") as f:
+              for line in f:
+                  if line.startswith("--- "):
+                      current_file = line.strip()
+                  elif line.startswith("@@"):
+                      current_hunk = line.strip()
+                      key = f"{current_file}:{current_hunk}"
+                      suggestions[key] = []
+                  elif current_file and current_hunk:
+                      suggestions[key].append(line.strip())
+
+          for rule_id, content in suggestions.items():
+              # Generate a unique hash ID for this suggestion
+              hash_id = hashlib.md5("\n".join(content).encode()).hexdigest()
+              if hash_id in seen_ids:
+                  continue
+              seen_ids.add(hash_id)
+              
+              title = f"Sourcery suggestion: {rule_id}"
+              body = "```\n" + "\n".join(content) + "\n```"
+              repo.create_issue(title=title, body=body)
+
+          # Save updated seen IDs
+          with open(seen_ids_file, "w") as f:
+              for i in seen_ids:
+                  f.write(i + "\n")
+          EOF
