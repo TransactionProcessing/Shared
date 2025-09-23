@@ -1,0 +1,58 @@
+name: Codacy Bootstrap Issues
+
+on:
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch all outstanding Codacy issues
+        run: |
+          curl -s "https://app.codacy.com/api/v3/analysis/organizations/gh/TransactionProcessing/repositories/Shared/issues/search" \
+          -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
+          -o codacy_issues.json
+
+          # Keep only Medium/High/Critical
+          jq '[.data[] | select(.severity == "Medium" or .severity == "High" or .severity == "Critical")]' codacy_issues.json > filtered_issues.json
+
+      - name: Create GitHub issues for outstanding Codacy findings
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issues = JSON.parse(fs.readFileSync('filtered_issues.json', 'utf8'));
+
+            for (const issue of issues) {
+              const key = `codacy-issue-${issue.id}`;
+
+              // Skip if issue already exists
+              const search = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${context.repo.owner}/${context.repo.repo} "${key}" in:body`
+              });
+
+              if (search.data.total_count === 0) {
+                const title = `[Codacy] ${issue.severity} issue in ${issue.file}:${issue.line}`;
+                const body = `
+Codacy detected a **${issue.severity}** issue.
+
+- **Rule**: ${issue.patternId}
+- **Message**: ${issue.message}
+- **File**: \`${issue.file}\`
+- **Line**: ${issue.line}
+- **Severity**: ${issue.severity}
+
+See full details in [Codacy Issues](${`https://app.codacy.com/gh/<org>/<repo>/issues`})
+
+Unique ID: \`${key}\`
+                `;
+
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                  labels: ["codereview"]  // optional label
+                });
+              }
+            }
