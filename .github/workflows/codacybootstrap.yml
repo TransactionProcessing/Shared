@@ -13,6 +13,8 @@ jobs:
           -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
           -o codacy_issues.json
 
+          cat codacy_issues.json
+
           # Keep only Medium/High/Critical
           jq '[.data[] | select(.severity == "Medium" or .severity == "High" or .severity == "Critical")]' codacy_issues.json > filtered_issues.json
 
