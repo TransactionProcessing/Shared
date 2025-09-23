@@ -34,25 +34,25 @@ jobs:
               if (search.data.total_count === 0) {
                 const title = `[Codacy] ${issue.severity} issue in ${issue.file}:${issue.line}`;
                 const body = `
-Codacy detected a **${issue.severity}** issue.
+                Codacy detected a **${issue.severity}** issue.
 
-- **Rule**: ${issue.patternId}
-- **Message**: ${issue.message}
-- **File**: \`${issue.file}\`
-- **Line**: ${issue.line}
-- **Severity**: ${issue.severity}
+                - **Rule**: ${issue.patternId}
+                - **Message**: ${issue.message}
+                - **File**: \`${issue.file}\`
+                - **Line**: ${issue.line}
+                - **Severity**: ${issue.severity}
 
-See full details in [Codacy Issues](${`https://app.codacy.com/gh/<org>/<repo>/issues`})
+                See full details in [Codacy Issues](${`https://app.codacy.com/gh/<org>/<repo>/issues`})
 
-Unique ID: \`${key}\`
-                `;
-
-                await github.rest.issues.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title,
-                  body,
-                  labels: ["codereview"]  // optional label
-                });
-              }
-            }
+                Unique ID: \`${key}\`
+                                `;
+                
+                                await github.rest.issues.create({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  title,
+                                  body,
+                                  labels: ["codereview"]  // optional label
+                                });
+                              }
+                            }
