@@ -31,6 +31,15 @@ jobs:
             const fs = require('fs');
             const issues = JSON.parse(fs.readFileSync('filtered_issues.json', 'utf8'));
 
+            // Group Codacy issues by unique issueId
+            const grouped = {};
+            for (const issue of rawIssues) {
+              if (!grouped[issue.issueId]) {
+                grouped[issue.issueId] = [];
+              }
+              grouped[issue.issueId].push(issue);
+            }
+            
             // Fetch all open issues labeled "codacy" to prevent duplicates
             const openIssues = await github.paginate(
               github.rest.issues.listForRepo,
@@ -41,41 +50,37 @@ jobs:
                 labels: "codacy"
               }
             );
-
+            
             const existingIds = new Set();
             for (const ghIssue of openIssues) {
               const match = ghIssue.body.match(/codacy-issue-(\S+)/);
               if (match) existingIds.add(match[1]);
             }
-
-            // Create new GitHub issues only for Codacy issues not already present
-            for (const issue of issues) {
-              const issueId = issue.issueId;
+            
+            // Create new GitHub issues only for Codacy issueIds not already present
+            for (const [issueId, issues] of Object.entries(grouped)) {
               if (!existingIds.has(issueId)) {
                 const key = `codacy-issue-${issueId}`;
-                const title = `[Codacy] ${issue.patternInfo.severityLevel} issue in ${issue.filePath}:${issue.lineNumber}`;
-                const body = `
-                  Codacy detected a **${issue.patternInfo.severityLevel}** issue.
-
-                  - **Rule**: ${issue.patternInfo.id}
-                  - **Message**: ${issue.message}
-                  - **File**: \`${issue.filePath}\`
-                  - **Line**: ${issue.lineNumber}
-                  - **Severity**: ${issue.patternInfo.severityLevel}
-
-                  See full details in [Codacy Report](https://app.codacy.com/gh/<org>/<repo>/issues)
-
-                  Unique ID: \`${key}\`
-                                  `;
-
-                                  await github.rest.issues.create({
-                                    owner: context.repo.owner,
-                                    repo: context.repo.repo,
-                                    title,
-                                    body,
-                                    labels: ["codacy"]
-                                  });
-                                }
-                              }
-                // ✅ Sleep 2 seconds between issue creations to avoid secondary rate limit
-                await new Promise(resolve => setTimeout(resolve, 2000));                              
+                const first = issues[0]; // use first for title/severity
+                const title = `[Codacy] ${first.patternInfo.severityLevel} issue(s) in ${first.filePath}`;
+                let body = `Codacy detected **${issues.length}** issue(s) for rule \`${first.patternInfo.id}\`:\n\n`;
+            
+                for (const issue of issues) {
+                  body += `- **${issue.patternInfo.severityLevel}** at \`${issue.filePath}:${issue.lineNumber}\` → ${issue.message}\n`;
+                }
+            
+                body += `\nSee full details in [Codacy Report](https://app.codacy.com/gh/<org>/<repo>/issues)\n\n`;
+                body += `Unique ID: \`${key}\``;
+            
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                  labels: ["codacy"]
+                });
+            
+                // ✅ Sleep 2 seconds to avoid secondary rate limits
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              }
+            }                           
