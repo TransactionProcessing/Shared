@@ -9,8 +9,13 @@ jobs:
     steps:
       - name: Fetch all outstanding Codacy issues
         run: |
-          curl -s "https://app.codacy.com/api/v3/analysis/organizations/gh/TransactionProcessing/repositories/Shared/issues/search" \
-          -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
+          curl --request POST \
+            --url https://app.codacy.com/api/v3/analysis/organizations/gh/<org>/repositories/<repo>/issues/search \
+            --header "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
+            --header "content-type: application/json" \
+            --data '{
+            "levels": ["Error", "Warning"]
+            }' \
           -o codacy_issues.json
 
           cat codacy_issues.json
