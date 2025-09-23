@@ -31,15 +31,28 @@ jobs:
             const fs = require('fs');
             const issues = JSON.parse(fs.readFileSync('filtered_issues.json', 'utf8'));
 
+            // Fetch all open issues labeled "codacy" to prevent duplicates
+            const openIssues = await github.paginate(
+              github.rest.issues.listForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: "open",
+                labels: "codacy"
+              }
+            );
+
+            const existingIds = new Set();
+            for (const ghIssue of openIssues) {
+              const match = ghIssue.body.match(/codacy-issue-(\S+)/);
+              if (match) existingIds.add(match[1]);
+            }
+
+            // Create new GitHub issues only for Codacy issues not already present
             for (const issue of issues) {
-              const key = `codacy-issue-${issue.issueId}`;
-
-              // Check if a GitHub Issue already exists for this Codacy issue
-              const search = await github.rest.search.issuesAndPullRequests({
-                q: `repo:${context.repo.owner}/${context.repo.repo} "${key}" in:body`
-              });
-
-              if (search.data.total_count === 0) {
+              const issueId = issue.issueId;
+              if (!existingIds.has(issueId)) {
+                const key = `codacy-issue-${issueId}`;
                 const title = `[Codacy] ${issue.patternInfo.severityLevel} issue in ${issue.filePath}:${issue.lineNumber}`;
                 const body = `
                   Codacy detected a **${issue.patternInfo.severityLevel}** issue.
