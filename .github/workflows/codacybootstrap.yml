@@ -7,7 +7,10 @@ on:
         description: "Run without creating GitHub issues"
         required: false
         default: "false"
-
+  push:
+    # branches to consider in the event; optional, defaults to all
+    branches:
+      - master
 jobs:
   sync-codacy-issues:
     runs-on: ubuntu-latest
