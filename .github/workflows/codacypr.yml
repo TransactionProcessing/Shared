@@ -52,7 +52,7 @@ jobs:
                       + "\n**Line:** " + (.commitIssue.lineNumber|tostring)
                       + "\n**Severity:** " + .commitIssue.patternInfo.severityLevel
                       + "\n\n" + .commitIssue.lineText),
-                labels: ["codacy", .commitIssue.patternInfo.severityLevel]
+                labels: ["codacy"]
               }' codacy_issues.json)
       
           # Track Codacy issue IDs from this run
