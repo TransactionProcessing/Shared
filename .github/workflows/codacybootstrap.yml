@@ -24,7 +24,7 @@ jobs:
             --url "https://app.codacy.com/api/v3/analysis/organizations/gh/${{ github.repository_owner }}/repositories/${{ github.event.repository.name }}/issues/search" \
             --header "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
             --header "content-type: application/json" \
-            --data '{"levels":["Error","Warning"]}' \
+            --data '{"levels":["Error","Warning","High"]}' \
             --silent \
             --fail \
             -o issues.json
