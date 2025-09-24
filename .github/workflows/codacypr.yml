@@ -29,8 +29,8 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          curl -s -H "api-token: ${{ secrets.CODACY_TOKEN }}" \
-               "https://app.codacy.com/api/v3/analysis/organizations/${{ secrets.CODACY_ORG_ID }}/repositories/${{ secrets.CODACY_REPO_ID }}/pull-requests/${{ github.event.pull_request.number }}/issues" \
+          curl -s -H "api-token: ${{ secrets.CODACY_API_TOKEN }}" \
+               "https://api.codacy.com/api/v3/analysis/organizations/gh/$OWNER/repositories/$REPO_NAME/pull-requests/$PR_NUMBER/issues" \
               | jq '.data
               | map(select(.commitIssue.patternInfo.severityLevel == "Warning"
                       or .commitIssue.patternInfo.severityLevel == "Error"))' \
