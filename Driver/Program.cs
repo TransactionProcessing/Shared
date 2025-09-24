@@ -20,10 +20,12 @@ internal class Program
 {
     #region Methods
 
-    internal static EventStoreClientSettings ConfigureEventStoreSettings() {
+    internal static EventStoreClientSettings ConfigureEventStoreSettings()
+    {
         EventStoreClientSettings settings = new();
 
-        settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
+        settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
+        {
             SslOptions = {
                 RemoteCertificateValidationCallback = (sender,
                                                        certificate,
@@ -40,17 +42,20 @@ internal class Program
         return settings;
     }
 
-    public static void TestFunction(String param1,String param2,String param3,String param4,String param5,String param6,String param7,String param8,String param9,String param10,String param11){
+    public static void TestFunction(String param1, String param2, String param3, String param4, String param5, String param6, String param7, String param8, String param9, String param10, String param11)
+    {
     }
-    
-    private static async Task Main(String[] args) {
+
+    private static async Task Main(String[] args)
+    {
         Logger.Initialise(NullLogger.Instance);
         await Program.SubscriptionsTest();
 
         Console.ReadKey();
     }
 
-    private static async Task QueryTest(){
+    private static async Task QueryTest()
+    {
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
         EventStoreClient client = new(Program.ConfigureEventStoreSettings());
         EventStoreProjectionManagementClient projection = new(Program.ConfigureEventStoreSettings());
@@ -60,12 +65,13 @@ internal class Program
         Console.WriteLine(result);
     }
 
-    private static async Task SubscriptionsTest() {
+    private static async Task SubscriptionsTest()
+    {
         String eventStoreConnectionString = "esdb://127.0.0.1:2113?tls=false";
         Int32 inflightMessages = 50;
         Int32 persistentSubscriptionPollingInSeconds = 10;
         Int32 cacheDuration = 0;
-            
+
         ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(eventStoreConnectionString, cacheDuration);
 
         // init our SubscriptionRepository
