@@ -84,7 +84,7 @@ jobs:
                 gh_body=$(echo "$gh_issue" | jq -r .body)
                 gh_id=$(echo "$gh_body" | grep -oP 'Codacy issueId: \K[a-f0-9]{32}')
 
-                if [ -n "$gh_id" ] && ! echo "$codacy_ids" | grep -q "$gh_id"; then
+                if [ -n "$gh_id" ] && ! echo "$codacy_ids" | grep -q "$gh_id" || true; then
                   echo "Closing GitHub issue #$gh_number (PR-resolved Codacy issue $gh_id)"
                   gh issue close "$gh_number" --comment "Resolved in latest Codacy PR scan ✅"
                 fi
