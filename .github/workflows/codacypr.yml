@@ -21,19 +21,22 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Fetch Codacy issues
+      - name: Fetch Codacy issues (v3 API)
         env:
           CODACY_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
           PROJECT_UUID: ${{ secrets.CODACY_PROJECT_UUID }}
           PR_NUMBER: ${{ env.PR_NUMBER }}
+          OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
           curl -s -H "api-token: $CODACY_TOKEN" \
-            "https://api.codacy.com/api/v3/analysis/organizations/gh/${{ github.repository_owner }}/repositories/${{ github.repository }}?pullRequest=$PR_NUMBER" \
+            "https://api.codacy.com/api/v3/analysis/organizations/gh/$OWNER/repositories/$REPO_NAME/pullRequests/$PR_NUMBER/issues?severity=MEDIUM,CRITICAL" \
             -o codacy_issues.json
           echo "Found $(jq '.data.issues | length' codacy_issues.json) issues"
 
-      - name: Authenticate GitHub CLI
-        uses: cli/cli-action@v2
+      - name: Authenticate gh CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Sync Codacy issues to GitHub
         env:
@@ -64,8 +67,8 @@ jobs:
           gh issue list --repo $REPO --state open --json number,body | jq -c '.[]' | while read gh_issue; do
             ISSUE_NUMBER=$(echo "$gh_issue" | jq -r '.number')
             ISSUE_BODY=$(echo "$gh_issue" | jq -r '.body')
-            CODACY_ID=$(echo "$ISSUE_BODY" | grep -oP 'Codacy ID: \K[0-9]+')
-            if ! jq -e --arg id "$CODACY_ID" '.data.issues[] | select(.id|tostring==$id)' codacy_issues.json > /dev/null; then
+            CODACY_ID=$(echo "$ISSUE_BODY" | grep -oP 'Codacy ID: \K[0-9a-f-]+')
+            if ! jq -e --arg id "$CODACY_ID" '.data.issues[] | select(.id==$id)' codacy_issues.json > /dev/null; then
               echo "Closing resolved GitHub issue #$ISSUE_NUMBER"
               gh issue close $ISSUE_NUMBER --repo $REPO
             fi
