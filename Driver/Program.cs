@@ -44,8 +44,7 @@ internal class Program
 
     public static void TestFunction(String param1, String param2, String param3, String param4, String param5, String param6, String param7)
     {
-        // This is a test function
-        throw new NotImplementedException();
+        
     }
 
     private static async Task Main(String[] args)
