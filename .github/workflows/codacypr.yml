@@ -32,7 +32,8 @@ jobs:
           curl -s -H "api-token: $CODACY_TOKEN" \
             "https://api.codacy.com/api/v3/analysis/organizations/gh/$OWNER/repositories/$REPO_NAME/pull-requests/$PR_NUMBER/issues?severity=MEDIUM,CRITICAL" \
             -o codacy_issues.json
-          echo "Found $(jq '.data.issues | length' codacy_issues.json) issues"
+          # Validate we got issues back
+          jq '.data | length' codacy_issues.json
 
       - name: Authenticate gh CLI
         run: |
@@ -52,7 +53,7 @@ jobs:
                       + "\n**Severity:** " + .commitIssue.patternInfo.severityLevel
                       + "\n\n" + .commitIssue.lineText),
                 labels: ["codacy", .commitIssue.patternInfo.severityLevel]
-              }' codacy.json)
+              }' codacy_issues.json)
       
           # Track Codacy issue IDs from this run
           codacy_ids=$(echo "$issues" | jq -r .id)
