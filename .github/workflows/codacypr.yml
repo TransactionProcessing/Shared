@@ -39,37 +39,65 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Sync Codacy issues to GitHub
-        env:
-          REPO: ${{ github.repository }}
         run: |
-          cat codacy_issues.json | jq -c '.data.issues[]' | while read issue; do
-            ISSUE_ID=$(echo "$issue" | jq -r '.id')
-            TITLE=$(echo "$issue" | jq -r '.message' | cut -c1-250)
-            FILE=$(echo "$issue" | jq -r '.file')
-            LINE=$(echo "$issue" | jq -r '.line')
-            ISSUE_BODY="File: $FILE\nLine: $LINE\nCodacy ID: $ISSUE_ID"
-
-            # Check if GitHub issue exists
-            EXISTING=$(gh issue list --repo $REPO --search "Codacy ID: $ISSUE_ID" --json number --jq '.[].number')
-            if [ -z "$EXISTING" ]; then
-              echo "Creating issue: $TITLE"
-              gh issue create --repo $REPO --title "[Codacy] $TITLE" --body "$ISSUE_BODY"
+          # Extract current Codacy issues (Warning + Error severities only)
+          issues=$(jq -c '.data[]
+            | select(.commitIssue.patternInfo.severityLevel == "Warning"
+                  or .commitIssue.patternInfo.severityLevel == "Error")
+            | {
+                id: .commitIssue.issueId,
+                title: .commitIssue.message,
+                body: ("**File:** " + .commitIssue.filePath
+                      + "\n**Line:** " + (.commitIssue.lineNumber|tostring)
+                      + "\n**Severity:** " + .commitIssue.patternInfo.severityLevel
+                      + "\n\n" + .commitIssue.lineText),
+                labels: ["codacy", .commitIssue.patternInfo.severityLevel]
+              }' codacy.json)
+      
+          # Track Codacy issue IDs from this run
+          codacy_ids=$(echo "$issues" | jq -r .id)
+      
+          # Process each Codacy issue
+          echo "$issues" | while read -r issue; do
+            issue_id=$(echo "$issue" | jq -r .id)
+            title=$(echo "$issue" | jq -r .title)
+            body=$(echo "$issue" | jq -r .body)
+            labels=$(echo "$issue" | jq -r '.labels | join(",")')
+      
+            # Search for an existing GitHub issue with this Codacy issueId
+            existing=$(gh issue list \
+              --search "in:body $issue_id" \
+              --json number \
+              --jq '.[0].number')
+      
+            if [ -n "$existing" ]; then
+              echo "Updating issue #$existing for Codacy issue $issue_id"
+              gh issue edit "$existing" --title "$title" --body "$body\n\n_Codacy issueId: $issue_id_" --add-label "$labels"
             else
-              echo "Updating existing issue #$EXISTING: $TITLE"
-              gh issue edit $EXISTING --repo $REPO --body "$ISSUE_BODY"
+              echo "Creating new issue for Codacy issue $issue_id"
+              gh issue create \
+                --title "$title" \
+                --body "$body\n\n_Codacy issueId: $issue_id_" \
+                --label "$labels"
             fi
           done
-
-      - name: Close resolved GitHub issues
+      
+          # Now close any GitHub issues that no longer appear in Codacy
+          open_codacy_issues=$(gh issue list \
+            --label codacy \
+            --state open \
+            --json number,body \
+            --jq '.[] | {number, id: ( .body | capture("(?<id>[a-f0-9]{32})").id )}')
+      
+          echo "$open_codacy_issues" | while read -r gi; do
+            gi_number=$(echo "$gi" | jq -r .number)
+            gi_id=$(echo "$gi" | jq -r .id)
+      
+            if ! echo "$codacy_ids" | grep -q "$gi_id"; then
+              echo "Closing GitHub issue #$gi_number (Codacy issue $gi_id resolved)"
+              gh issue close "$gi_number" --comment "Resolved in latest Codacy scan ✅"
+            fi
+          done
         env:
-          REPO: ${{ github.repository }}
-        run: |
-          gh issue list --repo $REPO --state open --json number,body | jq -c '.[]' | while read gh_issue; do
-            ISSUE_NUMBER=$(echo "$gh_issue" | jq -r '.number')
-            ISSUE_BODY=$(echo "$gh_issue" | jq -r '.body')
-            CODACY_ID=$(echo "$ISSUE_BODY" | grep -oP 'Codacy ID: \K[0-9a-f-]+')
-            if ! jq -e --arg id "$CODACY_ID" '.data.issues[] | select(.id==$id)' codacy_issues.json > /dev/null; then
-              echo "Closing resolved GitHub issue #$ISSUE_NUMBER"
-              gh issue close $ISSUE_NUMBER --repo $REPO
-            fi
-          done
+          GH_TOKEN: ${{ github.token }}
+
