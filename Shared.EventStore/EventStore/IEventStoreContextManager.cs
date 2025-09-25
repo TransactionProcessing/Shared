@@ -8,8 +8,6 @@ using System.Diagnostics;
 public interface IEventStoreContextManager
 {
     event TraceHandler TraceGenerated;
-
-    IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier);
-
-    IEventStoreContext GetEventStoreContext(String connectionIdentifier);
+    
+    IEventStoreContext GetEventStoreContext(String connectionStringIdentifier);
 }

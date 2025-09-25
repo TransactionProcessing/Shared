@@ -2,119 +2,69 @@
 
 namespace Shared.EventStore.EventStore;
 
+using Microsoft.Extensions.Logging;
+using Shared.General;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Microsoft.Extensions.Logging;
-using Repositories;
 
-/// <summary>
-/// 
-/// </summary>
-/// <seealso cref="Shared.EventStore.EventStore.IEventStoreContextManager" />
 public class EventStoreContextManager : IEventStoreContextManager
 {
-    #region Fields
-
-    /// <summary>
-    /// The connection string configuration repository
-    /// </summary>
-    private readonly IConnectionStringConfigurationRepository ConnectionStringConfigurationRepository;
-
-    /// <summary>
-    /// The context
-    /// </summary>
     private readonly IEventStoreContext Context;
 
-    /// <summary>
-    /// The event store context function
-    /// </summary>
     private readonly Func<String, IEventStoreContext> EventStoreContextFunc;
 
-    /// <summary>
-    /// The event store contexts
-    /// </summary>
     private readonly Dictionary<String, IEventStoreContext> EventStoreContexts;
 
-    //TODO static?
-    /// <summary>
-    /// The padlock
-    /// </summary>
     private readonly Object padlock = new();
-
-    #endregion
-
-    #region Constructors
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="EventStoreContextManager" /> class.
-    /// </summary>
-    /// <param name="eventStoreContextFunc">The event store context function.</param>
-    /// <param name="connectionStringConfigurationRepository">The connection string configuration repository.</param>
-    public EventStoreContextManager(Func<String, IEventStoreContext> eventStoreContextFunc,
-                                    IConnectionStringConfigurationRepository connectionStringConfigurationRepository)
+    
+    public EventStoreContextManager(Func<String, IEventStoreContext> eventStoreContextFunc)
     {
         this.EventStoreContexts = new();
         this.EventStoreContextFunc = eventStoreContextFunc;
-        this.ConnectionStringConfigurationRepository = connectionStringConfigurationRepository;
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="EventStoreContextManager" /> class.
-    /// </summary>
-    /// <param name="eventStoreContext">The event store context.</param>
-    public EventStoreContextManager(IEventStoreContext eventStoreContext)
-    {
-        this.Context = eventStoreContext;
-    }
-
-    #endregion
-
-    #region Events
-
-    /// <summary>
-    /// Occurs when [trace generated].
-    /// </summary>
+    //public EventStoreContextManager(IEventStoreContext eventStoreContext)
+    //{
+        //this.Context = eventStoreContext;
+    //}
+    
     public event TraceHandler TraceGenerated;
 
-    #endregion
+    
+    //public IEventStoreContext GetEventStoreContext(String connectionIdentifier) => this.GetEventStoreContext(connectionIdentifier, "EventStoreConnectionString");
 
-    #region Methods
-
-    public IEventStoreContext GetEventStoreContext(String connectionIdentifier) => this.GetEventStoreContext(connectionIdentifier, "EventStoreConnectionString");
-
-    public IEventStoreContext GetEventStoreContext(String connectionIdentifier, String connectionStringIdentifier)
+    public IEventStoreContext GetEventStoreContext(String connectionStringIdentifier)
     {
-        if (this.Context != null)
-        {
-            return this.Context;
-        }
+        //if (this.Context != null)
+        //{
+        //    return this.Context;
+        //}
 
-        this.WriteTrace($"No resolved context found, about to resolve one using connectionIdentifier {connectionIdentifier}");
+        this.WriteTrace($"No resolved context found, about to resolve one using connectionIdentifier {connectionStringIdentifier}");
 
-        if (this.EventStoreContexts.TryGetValue(connectionIdentifier, out IEventStoreContext context))
+        if (this.EventStoreContexts.TryGetValue(connectionStringIdentifier, out IEventStoreContext context))
         {
             return context;
         }
 
-        this.WriteTrace($"Creating a new EventStoreContext for connectionIdentifier {connectionIdentifier}");
+        this.WriteTrace($"Creating a new EventStoreContext for connectionIdentifier {connectionStringIdentifier}");
 
         lock(this.padlock)
         {
-            if (!this.EventStoreContexts.ContainsKey(connectionIdentifier))
+            if (!this.EventStoreContexts.ContainsKey(connectionStringIdentifier))
             {
                 // This will need to now look up the ES Connection string from persistence
-                String connectionString = this.ConnectionStringConfigurationRepository
-                    .GetConnectionString(connectionIdentifier, connectionStringIdentifier, CancellationToken.None).Result;
+                String connectionString = ConfigurationReader.GetValue("EventStoreSettings", connectionStringIdentifier);
 
                 this.WriteTrace($"Connection String is {connectionString}");
 
                 IEventStoreContext eventStoreContext = this.EventStoreContextFunc(connectionString);
 
-                this.EventStoreContexts.Add(connectionIdentifier, eventStoreContext);
+                this.EventStoreContexts.Add(connectionStringIdentifier, eventStoreContext);
             }
 
-            return this.EventStoreContexts[connectionIdentifier];
+            return this.EventStoreContexts[connectionStringIdentifier];
         }
     }
 
@@ -126,6 +76,4 @@ public class EventStoreContextManager : IEventStoreContextManager
             this.TraceGenerated(trace, LogLevel.Information);
         }
     }
-
-    #endregion
 }

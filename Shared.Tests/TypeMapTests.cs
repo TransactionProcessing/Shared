@@ -1,19 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Shared.Tests;
 
-using System.Threading;
-using EntityFramework;
-using Extensions;
 using General;
-using Microsoft.EntityFrameworkCore;
-using Moq;
-using Repositories;
 using Shouldly;
 
 public partial class SharedTests

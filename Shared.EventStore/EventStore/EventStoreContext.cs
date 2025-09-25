@@ -32,7 +32,7 @@ public class EventStoreContext : IEventStoreContext
     /// <summary>
     /// The event store client
     /// </summary>
-    private readonly EventStoreClient EventStoreClient;
+    internal readonly EventStoreClient EventStoreClient;
 
     /// <summary>
     /// The projection management client
@@ -50,6 +50,7 @@ public class EventStoreContext : IEventStoreContext
         this.EventStoreClient = eventStoreClient;
         this.ProjectionManagementClient = projectionManagementClient;
         this.Deadline = deadline;
+        
     }
 
     #endregion

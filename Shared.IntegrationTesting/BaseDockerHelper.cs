@@ -237,7 +237,7 @@ public abstract class BaseDockerHelper{
             return DockerEnginePlatform.Unknown;
         }
         catch(Exception e){
-            throw new Exception("Unable to determine docker Engine Platform", e);
+            throw new ApplicationException("Unable to determine docker Engine Platform", e);
         }
     }
 
@@ -718,7 +718,7 @@ public abstract class BaseDockerHelper{
         if (counter >= maxRetries)
         {
             // We have got to the end and still not opened the connection
-            throw new Exception($"Database container not started in {maxRetries} retries");
+            throw new ApplicationException($"Database container not started in {maxRetries} retries");
         }
     }
     protected async Task DoEventStoreHealthCheck(){
