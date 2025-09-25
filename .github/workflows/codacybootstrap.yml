@@ -1,4 +1,4 @@
-name: Codacy Bootstrap Issues
+name: Sync Codacy Issues
 
 on:
   workflow_dispatch:
@@ -132,6 +132,14 @@ jobs:
                   if (dryRun) {
                     console.log(`[DRY RUN] Would close issue #${ghIssue.number} (Codacy issueId ${issueId})`);
                   } else {
+                    // Add comment before closing
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: ghIssue.number,
+                      body: "Auto closed as not found in last analysis"
+                    });
+                    // Close the issue
                     await github.rest.issues.update({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
@@ -142,4 +150,5 @@ jobs:
                   }
                 }
               }
-            }            
+            }
+            
