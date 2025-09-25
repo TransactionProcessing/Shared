@@ -93,12 +93,12 @@ public class EventStoreDockerHelper : DockerHelper
 
     }
 
-    public EventStoreClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null)
+    public EventStoreClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null, String userName="admin", String password="changeit")
     {
         String connectionString = secureEventStore switch
         {
-            true => $"esdb://admin:changeit@127.0.0.1:{this.EventStoreSecureHttpPort}?tls=true&tlsVerifyCert=false",
-            _ => $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}?tls=false"
+            true => $"esdb://{userName}:{password}@127.0.0.1:{this.EventStoreSecureHttpPort}?tls=true&tlsVerifyCert=false",
+            _ => $"esdb://{userName}:{password}@127.0.0.1:{this.EventStoreHttpPort}?tls=false"
         };
 
         EventStoreClientSettings settings = EventStoreClientSettings.Create(connectionString);
