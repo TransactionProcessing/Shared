@@ -19,6 +19,9 @@ public class EventStoreContextManagerTests {
     
     private readonly Mock<IEventStoreContext> Context1;
     private readonly Mock<IEventStoreContext> Context2;
+    private const String ConnectionStringIdentifier = "ConnectionString";
+    private const String ConnectionStringIdentifier1 = "ConnectionString1";
+
     public EventStoreContextManagerTests() {
         this.Context1 = new Mock<IEventStoreContext>();
         this.Context2 = new Mock<IEventStoreContext>();
@@ -39,16 +42,16 @@ public class EventStoreContextManagerTests {
 
     [Fact]
     public void EventStoreContextManager_GetContext_ByConnectionIdentifier_ContextReturned() {
-        var ctx = this.Manager.GetEventStoreContext("ConnectionString");
+        var ctx = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
         ctx.ShouldNotBeNull();
     }
 
     [Fact]
     public void EventStoreContextManager_GetContextFromResolver_UseCache_ByConnectionIdentifier_ContextReturned()
     {
-        var ctx = this.Manager.GetEventStoreContext("ConnectionString");
+        var ctx = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
         ctx.ShouldNotBeNull();
-        var ctx2 = this.Manager.GetEventStoreContext("ConnectionString");
+        var ctx2 = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
         ctx2.ShouldNotBeNull();
         ctx.GetHashCode().ShouldBe(ctx2.GetHashCode());
     }
@@ -56,10 +59,10 @@ public class EventStoreContextManagerTests {
     [Fact]
     public void EventStoreContextManager_GetContextFromResolver_MultipleContexts_ContextReturned()
     {
-        var ctx = this.Manager.GetEventStoreContext("ConnectionString");
+        var ctx = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
         ctx.ShouldNotBeNull();
 
-        var ctx2 = this.Manager.GetEventStoreContext("ConnectionString1");
+        var ctx2 = this.Manager.GetEventStoreContext(ConnectionStringIdentifier1);
         ctx2.ShouldNotBeNull();
         ctx.GetHashCode().ShouldNotBe(ctx2.GetHashCode());
     }
