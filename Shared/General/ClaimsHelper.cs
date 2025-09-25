@@ -32,7 +32,7 @@ public class ClaimsHelper
 
         if (ClaimsHelper.IsPasswordToken(user)) {
             // Get the claim from the token
-            userClaim = user.Claims.SingleOrDefault(c => c.Type.ToLower() == customClaimType.ToLower());
+            userClaim = user.Claims.SingleOrDefault(c => c.Type.Equals(customClaimType, StringComparison.CurrentCultureIgnoreCase));
 
             if (userClaim == null) {
                 return Result.NotFound($"Claim type [{customClaimType}] not found");
