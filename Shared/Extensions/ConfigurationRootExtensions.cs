@@ -21,7 +21,8 @@ public static class ConfigurationRootExtensions
     public static void LogConfiguration(this IConfigurationRoot configurationBuilder,
                                         Action<String> loggerAction)
     {
-        Guard.ThrowIfNull(loggerAction, nameof(loggerAction));
+        if (loggerAction == null)
+            throw new ArgumentNullException(nameof(loggerAction));
 
         IEnumerable<IConfigurationSection> sections = configurationBuilder.GetChildren();
         foreach (IConfigurationSection configurationSection in sections)
