@@ -808,9 +808,9 @@ public abstract class BaseDockerHelper{
             this.Logger.LogError($"{this.TestId}|{message}", ex);
         }
     }
-
-    protected virtual String GenerateEventStoreConnectionString(){
-        String eventStoreAddress = $"esdb://admin:changeit@{this.EventStoreContainerName}:{DockerPorts.EventStoreHttpDockerPort}?tls=false";
+    
+    protected virtual String GenerateEventStoreConnectionString(String userName = "admin", String password = "changeit"){
+        String eventStoreAddress = $"esdb://{userName}:{password}@{this.EventStoreContainerName}:{DockerPorts.EventStoreHttpDockerPort}?tls=false";
 
         return eventStoreAddress;
     }
