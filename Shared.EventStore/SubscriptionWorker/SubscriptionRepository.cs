@@ -81,18 +81,18 @@ namespace Shared.EventStore.SubscriptionWorker;
              this.WriteTrace("Full refresh on repository");
 
              Result<List<PersistentSubscriptionInfo>> list = await this.GetAllSubscriptions(cancellationToken);
+             if (list.IsFailed) {
+                 this.WriteTrace(list.Message);
+                 return this.Subscriptions;
+             }
 
-            // TODO: Log failure?
-            this.FullRefreshHits++;
+             this.FullRefreshHits++;
 
              this.Subscriptions = this.Subscriptions.Update(list.Data);
 
              this.WriteTrace($"Full refresh on repository completed {this.FullRefreshHits}");
 
              return this.Subscriptions;
-         }
-         catch (Exception ex) {
-             throw new ApplicationException($"Unable to get persistent subscription list. [{ex}]");
          }
          finally {
              Interlocked.Exchange(ref this.running, 0);
