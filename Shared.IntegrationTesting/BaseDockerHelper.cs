@@ -675,8 +675,8 @@ public abstract class BaseDockerHelper{
         }
     }
 
-    protected virtual EventStoreClientSettings ConfigureEventStoreSettings(){
-        String connectionString = $"esdb://admin:changeit@127.0.0.1:{this.EventStoreHttpPort}";
+    protected virtual EventStoreClientSettings ConfigureEventStoreSettings(String username = "admin", String password="changeit"){
+        String connectionString = $"esdb://{username}:{password}@127.0.0.1:{this.EventStoreHttpPort}";
         
         connectionString = this.IsSecureEventStore switch{
             true => $"{connectionString}?tls=true&tlsVerifyCert=false",
