@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $false)]
-    [SecureString]$sa_password,
+    [string]$sa_password,
 
     [Parameter(Mandatory = $false)]
     [string]$attach_dbs
