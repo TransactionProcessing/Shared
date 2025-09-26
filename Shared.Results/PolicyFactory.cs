@@ -89,16 +89,13 @@ public static class PolicyFactory
 
         string message = FormatResultMessage(result);
 
-        switch (type)
+        String logMessage = type switch
         {
-            case LogType.Retry:
-                Log(null, ($"{policyTag} - Retry {retryCount} due to error: {message}. Waiting before retrying..."));
-                break;
+            LogType.Retry => $"{policyTag} - Retry {retryCount} due to error: {message}. Waiting before retrying...",
+            LogType.Final => $"{policyTag} - {message}{(retryCount > 0 ? $" after {retryCount} retries." : "")}",
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+        };
 
-            case LogType.Final:
-                string retryMessage = retryCount > 0 ? $" after {retryCount} retries." : "";
-                Log(null, ($"{policyTag} - {message}{retryMessage}"));
-                break;
-        }
+        Log(null, logMessage);
     }
 }
