@@ -48,7 +48,7 @@ public class DomainEventFactory : IDomainEventFactory<DomainEvent>
         }
 
         if (eventType == null)
-            throw new ArgumentException(($"Failed to find a domain event with type {@event.Event.EventType}");
+            throw new ArgumentException($"Failed to find a domain event with type {@event.Event.EventType}");
 
         DomainEvent domainEvent = (DomainEvent)JsonConvert.DeserializeObject(json, eventType);
 
