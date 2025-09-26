@@ -56,10 +56,10 @@
                  return list;
              }
 
-             throw new Exception($"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
+             throw new ApplicationException($"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
          }
          catch (Exception ex) {
-             throw new Exception($"Unable to get persistent subscription list. [{ex}]");
+             throw new ApplicationException($"Unable to get persistent subscription list. [{ex}]");
          }
      }
 
@@ -87,7 +87,7 @@
              return this.Subscriptions;
          }
          catch (Exception ex) {
-             throw new Exception($"Unable to get persistent subscription list. [{ex}]");
+             throw new ApplicationException($"Unable to get persistent subscription list. [{ex}]");
          }
          finally {
              Interlocked.Exchange(ref this.running, 0);

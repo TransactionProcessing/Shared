@@ -10,7 +10,7 @@ public static class PolicyFactory
 {
     private enum LogType { Retry, Final }
 
-    public static EventHandler<String> Log;
+    public static readonly EventHandler<String> Log;
 
     public static IAsyncPolicy<T> CreatePolicy<T>(int retryCount = 5, TimeSpan? retryDelay = null, string policyTag = "",
                                                   Func<T, Boolean>? shouldRetry = null,
