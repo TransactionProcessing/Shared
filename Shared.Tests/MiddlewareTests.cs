@@ -381,7 +381,7 @@ public class TestServiceProvider : IServiceProvider{
 }
 
 public class TestHealthChecksBuilder : IHealthChecksBuilder{
-    public List<HealthCheckRegistration> Registrations = new List<HealthCheckRegistration>();
+    internal readonly List<HealthCheckRegistration> Registrations = new List<HealthCheckRegistration>();
 
     public TestHealthChecksBuilder(){
         this.Services = new ServiceCollection();

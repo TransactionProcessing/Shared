@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Headers;
+using SimpleResults;
 
 namespace Shared.IntegrationTesting;
 
@@ -134,8 +135,8 @@ public abstract class BaseDockerHelper{
                                                                                             }));
 
         // Setup the default image details
-        DockerEnginePlatform engineType = BaseDockerHelper.GetDockerEnginePlatform();
-        if (engineType == DockerEnginePlatform.Windows){
+        SimpleResults.Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform();
+        if (engineType.Data == DockerEnginePlatform.Windows){
             this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2019", true));
             this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/eventstore_windows", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservicewindows:master", true));
@@ -222,22 +223,22 @@ public abstract class BaseDockerHelper{
                                };
     }
 
-    public static DockerEnginePlatform GetDockerEnginePlatform(){
+    public static SimpleResults.Result<DockerEnginePlatform> GetDockerEnginePlatform(){
         try{
             IHostService docker = BaseDockerHelper.GetDockerHost();
 
             if (docker.Host.IsLinuxEngine()){
-                return DockerEnginePlatform.Linux;
+                return Result.Success(DockerEnginePlatform.Linux);
             }
 
             if (docker.Host.IsWindowsEngine()){
-                return DockerEnginePlatform.Windows;
+                return Result.Success(DockerEnginePlatform.Windows);
             }
 
-            return DockerEnginePlatform.Unknown;
+            return Result.Success(DockerEnginePlatform.Unknown);
         }
         catch(Exception e){
-            throw new ApplicationException("Unable to determine docker Engine Platform", e);
+            return Result.Failure($"Unable to determine docker Engine Platform. Exception [{e.Message}]");
         }
     }
 
@@ -551,11 +552,11 @@ public abstract class BaseDockerHelper{
     public virtual INetworkService SetupTestNetwork(String networkName = null,
                                                     Boolean reuseIfExists = false){
         networkName = String.IsNullOrEmpty(networkName) ? $"testnw{this.TestId:N}" : networkName;
-        DockerEnginePlatform engineType = BaseDockerHelper.GetDockerEnginePlatform();
+        SimpleResults.Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform();
 
-        if (engineType == DockerEnginePlatform.Windows){
+        if (engineType.Data == DockerEnginePlatform.Windows){
             var docker = BaseDockerHelper.GetDockerHost();
-            var network = docker.GetNetworks().Where(nw => nw.Name == networkName).SingleOrDefault();
+            var network = docker.GetNetworks().SingleOrDefault(nw => nw.Name == networkName);
             if (network == null){
                 Dictionary<String, String> driverOptions = new Dictionary<String, String>();
                 driverOptions.Add("com.docker.network.windowsshim.networkname", networkName);
@@ -571,7 +572,7 @@ public abstract class BaseDockerHelper{
             return network;
         }
 
-        if (engineType == DockerEnginePlatform.Linux){
+        if (engineType.Data == DockerEnginePlatform.Linux){
             // Build a network
             NetworkBuilder networkService = new Builder().UseNetwork(networkName).ReuseIfExist();
 

@@ -1,4 +1,5 @@
 using Shared.EventStore.Tests.TestObjects;
+using SimpleResults;
 
 namespace Shared.EventStore.Tests;
 
@@ -19,7 +20,7 @@ public class SubscriptionRepositoryTests
     {
         List<PersistentSubscriptionInfo> allSubscriptions = (TestData.GetPersistentSubscriptions_DemoEstate());
 
-        Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> GetAllSubscriptions = async token => allSubscriptions;
+        Func<CancellationToken, Task<Result<List<PersistentSubscriptionInfo>>>> GetAllSubscriptions = async token => allSubscriptions;
 
         ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(GetAllSubscriptions);
 

@@ -10,10 +10,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serialisation;
 
-/// <summary>
-/// 
-/// </summary>
-/// <seealso cref="DomainEventRecord.DomainEvent" />
 public class DomainEventFactory : IDomainEventFactory<DomainEvent>
 {
     #region Constructors
@@ -39,13 +35,6 @@ public class DomainEventFactory : IDomainEventFactory<DomainEvent>
 
     #region Methods
 
-    /// <summary>
-    /// Creates the agge aggregate snapshot.
-    /// </summary>
-    /// <param name="aggregateId"></param>
-    /// <param name="event">The event.</param>
-    /// <returns></returns>
-    /// <exception cref="System.Exception">Failed to find a domain event with type {@event.Event.EventType}</exception>
     public DomainEvent CreateDomainEvent(Guid aggregateId, ResolvedEvent @event)
     {
         String json = @event.GetResolvedEventDataAsString();
@@ -59,7 +48,7 @@ public class DomainEventFactory : IDomainEventFactory<DomainEvent>
         }
 
         if (eventType == null)
-            throw new Exception($"Failed to find a domain event with type {@event.Event.EventType}");
+            throw new ArgumentException($"Failed to find a domain event with type {@event.Event.EventType}");
 
         DomainEvent domainEvent = (DomainEvent)JsonConvert.DeserializeObject(json, eventType);
 
@@ -86,19 +75,13 @@ public class DomainEventFactory : IDomainEventFactory<DomainEvent>
         }
         catch(Exception e)
         {
-            Exception ex = new($"Failed to convert json event {json} into a domain event. EventType was {eventType.Name}", e);
+            ApplicationException ex = new($"Failed to convert json event {json} into a domain event. EventType was {eventType.Name}", e);
             throw ex;
         }
 
         return domainEvent;
     }
 
-    /// <summary>
-    /// Creates the domain events.
-    /// </summary>
-    /// <param name="aggregateId"></param>
-    /// <param name="event">The event.</param>
-    /// <returns></returns>
     public DomainEvent[] CreateDomainEvents(Guid aggregateId, IList<ResolvedEvent> @event)
     {
         return @event.Select(e => this.CreateDomainEvent(aggregateId, e)).ToArray();

@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.SubscriptionWorker;
+﻿using SimpleResults;
+
+namespace Shared.EventStore.SubscriptionWorker;
  using System;
  using System.Collections.Generic;
  using System.Diagnostics.CodeAnalysis;
@@ -12,7 +14,7 @@
  public class SubscriptionRepository : ISubscriptionRepository {
      private Int32 CacheHits;
      private Int32 FullRefreshHits;
-     private Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> GetAllSubscriptions;
+     private Func<CancellationToken, Task<Result<List<PersistentSubscriptionInfo>>>> GetAllSubscriptions;
      private readonly Func<Boolean, PersistentSubscriptions, Boolean> RefreshRequired;
      private Int32 running;
      private PersistentSubscriptions Subscriptions;
@@ -29,23 +31,25 @@
                                                  Int32 cacheDuration = 120) {
          EventStoreClientSettings settings = EventStoreClientSettings.Create(eventStoreConnectionString);
          HttpClient httpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
-         return new SubscriptionRepository(cacheDuration) { GetAllSubscriptions = cancellationToken => SubscriptionRepository.GetSubscriptions(httpClient, cancellationToken) };
+
+
+         return new SubscriptionRepository(cacheDuration) { GetAllSubscriptions = cancellationToken => GetSubscriptions(httpClient, cancellationToken) };
      }
 
-     public static SubscriptionRepository Create(Task<List<PersistentSubscriptionInfo>> func,
+     public static SubscriptionRepository Create(Task<Result<List<PersistentSubscriptionInfo>>> func,
                                                  Int32 cacheDuration = 120) {
 
          return new(cacheDuration) { GetAllSubscriptions = _ => func };
 
      }
 
-     public static SubscriptionRepository Create(Func<CancellationToken, Task<List<PersistentSubscriptionInfo>>> func,
+     public static SubscriptionRepository Create(Func<CancellationToken, Task<Result<List<PersistentSubscriptionInfo>>>> func,
                                                  Int32 cacheDuration = 120) {
          return new(cacheDuration) { GetAllSubscriptions = func };
      }
 
-     public static async Task<List<PersistentSubscriptionInfo>> GetSubscriptions(HttpClient httpClient,
-                                                                                 CancellationToken cancellationToken) {
+     public static async Task<Result<List<PersistentSubscriptionInfo>>> GetSubscriptions(HttpClient httpClient,
+                                                                                         CancellationToken cancellationToken) {
          try {
              HttpResponseMessage responseMessage = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, "subscriptions"), cancellationToken);
              String responseBody = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
@@ -53,13 +57,13 @@
              if (responseMessage.IsSuccessStatusCode) {
                  List<PersistentSubscriptionInfo> list = JsonConvert.DeserializeObject<List<PersistentSubscriptionInfo>>(responseBody);
 
-                 return list;
+                 return Result.Success(list);
              }
 
-             throw new Exception($"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
+             return Result.Failure($"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
          }
          catch (Exception ex) {
-             throw new Exception($"Unable to get persistent subscription list. [{ex}]");
+             return Result.Failure($"Unable to get persistent subscription list. [{ex}]");
          }
      }
 
@@ -76,18 +80,19 @@
 
              this.WriteTrace("Full refresh on repository");
 
-             List<PersistentSubscriptionInfo> list = await this.GetAllSubscriptions(cancellationToken);
+             Result<List<PersistentSubscriptionInfo>> list = await this.GetAllSubscriptions(cancellationToken);
+             if (list.IsFailed) {
+                 this.WriteTrace(list.Message);
+                 return this.Subscriptions;
+             }
 
              this.FullRefreshHits++;
 
-             this.Subscriptions = this.Subscriptions.Update(list);
+             this.Subscriptions = this.Subscriptions.Update(list.Data);
 
              this.WriteTrace($"Full refresh on repository completed {this.FullRefreshHits}");
 
              return this.Subscriptions;
-         }
-         catch (Exception ex) {
-             throw new Exception($"Unable to get persistent subscription list. [{ex}]");
          }
          finally {
              Interlocked.Exchange(ref this.running, 0);

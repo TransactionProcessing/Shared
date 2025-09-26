@@ -21,7 +21,7 @@ public static class ReqnrollTableHelper
     public static DateTime GetDateForDateString(String dateString,
                                                 DateTime today)
     {
-        switch(dateString.ToUpper())
+        switch(dateString.ToUpperInvariant())
         {
             case "TODAY":
                 return today.Date;
