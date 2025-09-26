@@ -45,7 +45,7 @@ public static class TypeMapConvertor
         }
 
         if (eventType == null)
-            throw new Exception($"Could not find EventType {@event.Event.EventType} in mapping list.");
+            throw new NullReferenceException($"Could not find EventType {@event.Event.EventType} in mapping list.");
 
         if (eventType.IsSubclassOf(typeof(DomainEvent)))
         {

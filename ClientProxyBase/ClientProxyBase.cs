@@ -55,9 +55,9 @@ public abstract class ClientProxyBase {
                 case HttpStatusCode.NotFound:
                     throw new KeyNotFoundException(content);
                 case HttpStatusCode.InternalServerError:
-                    throw new Exception("An internal error has occurred");
+                    throw new ClientHttpException("An internal error has occurred");
                 default:
-                    throw new Exception($"An internal error has occurred ({responseMessage.StatusCode})");
+                    throw new ClientHttpException($"An internal error has occurred ({responseMessage.StatusCode})");
             }
         }
 
@@ -103,4 +103,11 @@ public abstract class ClientProxyBase {
     }
 
     #endregion
+}
+
+public class ClientHttpException : Exception {
+    public ClientHttpException(string? message,
+                               Exception? innerException = null) : base(message, innerException) {
+
+    }
 }

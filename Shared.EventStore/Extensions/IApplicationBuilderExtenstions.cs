@@ -12,7 +12,7 @@ using global::EventStore.Client;
 using Microsoft.AspNetCore.Builder;
 using SubscriptionWorker;
 
-public static class IApplicationBuilderExtenstions
+public static class IApplicationBuilderExtensions
 {
     #region Methods
 
@@ -27,13 +27,13 @@ public static class IApplicationBuilderExtenstions
         using (CancellationTokenSource cts = new())
         {
             if (workerConfig == null)
-                throw new Exception("No Worker configuration supplied");
+                throw new ArgumentNullException("No Worker configuration supplied");
             if (subscriptionRepositoryResolver == null)
-                throw new Exception("No Subscription Repository Resolver supplied");
+                throw new ArgumentNullException("No Subscription Repository Resolver supplied");
             if (!workerConfig.InternalSubscriptionService)
                 return;
             if (workerConfig.SubscriptionWorkers == null || !workerConfig.SubscriptionWorkers.Any())
-                throw new Exception("No SubscriptionWorkers supplied");
+                throw new ArgumentNullException("No SubscriptionWorkers supplied");
 
             ISubscriptionRepository subscriptionRepository = subscriptionRepositoryResolver(eventStoreConnectionString,
                 workerConfig.InternalSubscriptionServiceCacheDuration);
@@ -46,7 +46,7 @@ public static class IApplicationBuilderExtenstions
             await subscriptionRepository.PreWarm(cts.Token);
 
             List<SubscriptionWorker> workers =
-                IApplicationBuilderExtenstions.ConfigureSubscriptions(subscriptionRepository, workerConfig,
+                IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository, workerConfig,
                     eventStoreConnectionString, eventHandlerResolvers, traceHandler);
             foreach (SubscriptionWorker subscriptionWorker in workers)
             {
