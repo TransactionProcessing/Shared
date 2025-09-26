@@ -17,7 +17,7 @@ using General;
 public class EventHandler : IDomainEventHandler{
     #region Fields
 
-    public Dictionary<String, Type> StateTypes;
+    public static Dictionary<String, Type> StateTypes = Assembly.GetAssembly(typeof(State))?.GetTypes().Where(t => t.IsSubclassOf(typeof(State)))?.ToDictionary(x => x.Name, x => x);
 
     private readonly Func<String, IDomainEventHandler> Resolver;
 
@@ -27,11 +27,6 @@ public class EventHandler : IDomainEventHandler{
 
     public EventHandler(Func<String, IDomainEventHandler> resolver){
         this.Resolver = resolver;
-        List<Type> subclassTypes = Assembly.GetAssembly(typeof(State))?.GetTypes().Where(t => t.IsSubclassOf(typeof(State))).ToList();
-
-        if (subclassTypes != null){
-            this.StateTypes = subclassTypes.ToDictionary(x => x.Name, x => x);
-        }
     }
 
     #endregion
