@@ -258,14 +258,14 @@ public abstract class BaseDockerHelper{
         return details.Value;
     }
 
-    public (String imageName, Boolean useLatest) GetImageDetails(ContainerType key){
+    public SimpleResults.Result<(String imageName, Boolean useLatest)> GetImageDetails(ContainerType key){
         KeyValuePair<ContainerType, (String imageName, Boolean useLatest)> details = this.ImageDetails.SingleOrDefault(c => c.Key == key);
         if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
             // No details found so throw an error
-            throw new Exception($"No image details found for Container Type [{key}]");
+            return Result.Failure($"No image details found for Container Type [{key}]");
         }
 
-        return details.Value;
+        return Result.Success(details.Value);
     }
     protected DockerEnginePlatform DockerPlatform;
 
@@ -302,7 +302,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder callbackHandlerContainer = new Builder().UseContainer().WithName(this.CallbackHandlerContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
-                                                                 .UseImageDetails(this.GetImageDetails(ContainerType.CallbackHandler))
+                                                                 .UseImageDetails(this.GetImageDetails(ContainerType.CallbackHandler).Data)
                                                                  .ExposePort(DockerPorts.CallbackHandlerDockerPort)
                                                                  .MountHostFolder(this.DockerPlatform,this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
@@ -339,7 +339,7 @@ public abstract class BaseDockerHelper{
             _ => "/etc/eventstore/certs"
         };
 
-        ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore))
+        ContainerBuilder eventStoreContainerBuilder = new Builder().UseContainer().UseImageDetails(this.GetImageDetails(ContainerType.EventStore).Data)
                                                                    .ExposePort(DockerPorts.EventStoreHttpDockerPort).ExposePort(DockerPorts.EventStoreTcpDockerPort)
                                                                    .WithName(this.EventStoreContainerName);
 
@@ -418,7 +418,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder fileProcessorContainer = new Builder().UseContainer().WithName(this.FileProcessorContainerName)
                                                                .WithEnvironment(environmentVariables.ToArray())
-                                                               .UseImageDetails(this.GetImageDetails(ContainerType.FileProcessor))
+                                                               .UseImageDetails(this.GetImageDetails(ContainerType.FileProcessor).Data)
                                                                .ExposePort(DockerPorts.FileProcessorDockerPort).MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                .SetDockerCredentials(this.DockerCredentials);
 
@@ -455,7 +455,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder messagingServiceContainer = new Builder().UseContainer().WithName(this.MessagingServiceContainerName)
                                                                   .WithEnvironment(environmentVariables.ToArray())
-                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.MessagingService))
+                                                                  .UseImageDetails(this.GetImageDetails(ContainerType.MessagingService).Data)
                                                                   .ExposePort(DockerPorts.MessagingServiceDockerPort)
                                                                   .MountHostFolder(this.DockerPlatform, this.HostTraceFolder).SetDockerCredentials(this.DockerCredentials);
 
@@ -489,7 +489,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder securityServiceContainer = new Builder().UseContainer().WithName(this.SecurityServiceContainerName)
                                                                  .WithEnvironment(environmentVariables.ToArray())
-                                                                 .UseImageDetails(this.GetImageDetails(ContainerType.SecurityService))
+                                                                 .UseImageDetails(this.GetImageDetails(ContainerType.SecurityService).Data)
                                                                  .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                  .SetDockerCredentials(this.DockerCredentials);
 
@@ -504,7 +504,7 @@ public abstract class BaseDockerHelper{
     {
         this.Trace("About to start SQL Server Container");
         ContainerBuilder containerService = new Builder().UseContainer().WithName(this.SqlServerContainerName)
-                                                         .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer))
+                                                         .UseImageDetails(this.GetImageDetails(ContainerType.SqlServer).Data)
                                                          .WithEnvironment("ACCEPT_EULA=Y", $"SA_PASSWORD={this.SqlCredentials.Value.password}")
                                                          .ExposePort(1433)
                                                          .KeepContainer().KeepRunning().ReuseIfExists()
@@ -515,7 +515,7 @@ public abstract class BaseDockerHelper{
 
     public virtual async Task<IContainerService> SetupSqlServerContainer(INetworkService networkService){
         if (this.SqlCredentials == default)
-            throw new Exception("Sql Credentials have not been set");
+            throw new ArgumentNullException("Sql Credentials have not been set");
 
         IContainerService databaseServerContainer = await this.StartContainer2(this.ConfigureSqlContainer,
                                                                                new List<INetworkService>{
@@ -540,7 +540,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.AddRange(additionalEnvironmentVariables);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TestHost);
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TestHost).Data;
         ContainerBuilder testHostContainer = new Builder().UseContainer().WithName(this.TestHostContainerName).WithEnvironment(environmentVariables.ToArray())
                                                           .UseImageDetails(imageDetails).ExposePort(DockerPorts.TestHostPort)
                                                           .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
@@ -596,7 +596,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder transactionProcessorACLContainer = new Builder().UseContainer().WithName(this.TransactionProcessorAclContainerName)
                                                                          .WithEnvironment(environmentVariables.ToArray())
-                                                                         .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessorAcl))
+                                                                         .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessorAcl).Data)
                                                                          .ExposePort(DockerPorts.TransactionProcessorAclDockerPort)
                                                                          .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                          .SetDockerCredentials(this.DockerCredentials);
@@ -624,7 +624,7 @@ public abstract class BaseDockerHelper{
 
         ContainerBuilder transactionProcessorContainer = new Builder().UseContainer().WithName(this.TransactionProcessorContainerName)
                                                                       .WithEnvironment(environmentVariables.ToArray())
-                                                                      .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessor))
+                                                                      .UseImageDetails(this.GetImageDetails(ContainerType.TransactionProcessor).Data)
                                                                       .ExposePort(DockerPorts.TransactionProcessorDockerPort)
                                                                       .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
                                                                       .SetDockerCredentials(this.DockerCredentials);
@@ -799,7 +799,7 @@ public abstract class BaseDockerHelper{
             }
             else {
                 this.Trace($"health check failed for {containerType}");
-                throw new Exception($"Health check failed for {containerType} [{healthCheckResult.Message}]");
+                throw new InvalidOperationException($"Health check failed for {containerType} [{healthCheckResult.Message}]");
             }
         }, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
     }
