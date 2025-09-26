@@ -71,7 +71,7 @@ public abstract class DockerHelper : BaseDockerHelper
 
     
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices){
-        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform();
+        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Data;
 
         this.DockerCredentials.ShouldNotBeNull();
         this.SqlCredentials.ShouldNotBeNull();

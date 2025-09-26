@@ -55,7 +55,7 @@ public class EventStoreDockerHelper : DockerHelper
     }
 
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services) {
-        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform();
+        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Data;
         this.TestId = Guid.NewGuid();
         INetworkService networkService = this.SetupTestNetwork("eventstoretestnetwork", true);
         this.SetupContainerNames();
