@@ -247,11 +247,11 @@ public class AggregateService : IAggregateService
     public static readonly ConcurrentDictionary<String, Histogram> DynamicHistogram = new();
 
     private static readonly Func<String, String, String> FormatMetricName = (methodName,
-                                                                             metricType) => $"{methodName}_{metricType}";
+                                                                             metricType) => $"{methodName}_{metricType.ToLowerInvariant()}";
 
     public static Histogram GetHistogramMetric(String methodName)
     {
-        String n = AggregateService.FormatMetricName(methodName, nameof(Histogram).ToLower());
+        String n = AggregateService.FormatMetricName(methodName, nameof(Histogram));
 
         HistogramConfiguration histogramConfiguration = new()
         {
@@ -268,7 +268,7 @@ public class AggregateService : IAggregateService
 
     public static Counter GetCounterMetric(String methodName)
     {
-        String n = AggregateService.FormatMetricName(methodName, nameof(Counter).ToLower());
+        String n = AggregateService.FormatMetricName(methodName, nameof(Counter));
 
         var counter = AggregateService.DynamicCounter.GetOrAdd(methodName, name => Metrics.CreateCounter(name: n, help: $"Total number times executed {n}"));
 
