@@ -51,7 +51,6 @@ public class AggregateService : IAggregateService
         this.Cache = new AggregateMemoryCache(cache);
 
         //We update this list to contain MemoryCacheEntryOptions
-        // TODO: We might make this configurable in the future
         this.AggregateTypes = new();
     }
 

@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Shared.Exceptions;
 
 namespace Shared.EventStore.Aggregate;
 
@@ -45,7 +46,7 @@ public static class TypeMapConvertor
         }
 
         if (eventType == null)
-            throw new NullReferenceException($"Could not find EventType {@event.Event.EventType} in mapping list.");
+            throw new NotFoundException($"Could not find EventType {@event.Event.EventType} in mapping list.");
 
         if (eventType.IsSubclassOf(typeof(DomainEvent)))
         {

@@ -157,10 +157,10 @@ public class PersistentSubscription
                 Logger.Logger.LogInformation(
                     $"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
                     
-                List<IDomainEventHandler> domainEventHandlers =
+                Result<List<IDomainEventHandler>> domainEventHandlersResult =
                     domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
 
-                if (domainEventHandlers == null || !domainEventHandlers.Any())
+                if (domainEventHandlersResult.IsFailed)
                 {
                     // Log a warning out 
                     Logger.Logger.LogWarning(
@@ -168,6 +168,8 @@ public class PersistentSubscription
                     await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
                     return;
                 }
+
+                List<IDomainEventHandler> domainEventHandlers = domainEventHandlersResult.Data;
 
                 Result result = await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
                 if (result.IsSuccess) {

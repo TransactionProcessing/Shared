@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Shared.EventStore.EventHandling;
 using Shared.EventStore.Tests.TestObjects;
+using SimpleResults;
 
 namespace Shared.EventStore.Tests;
 
@@ -26,10 +27,11 @@ public class DomainEventHandlerResolverTests
         eventHandlerConfiguration.Add("Shared.EventStore.Tests.TestObjects.TestDomainEventHandler2, Shared.EventStore.Tests", new String[] { "EstateCreatedEvent" });
 
         DomainEventHandlerResolver r = new(eventHandlerConfiguration, CreateEventHandlerFunc);
-        List<IDomainEventHandler> result  = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
-        result.Count.ShouldBe(2);
-        result.Count(x => x.GetType() == typeof(TestDomainEventHandler)).ShouldBe(1);
-        result.Count(x => x.GetType() == typeof(TestDomainEventHandler2)).ShouldBe(1);
+        Result<List<IDomainEventHandler>> result  = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
+        result.IsSuccess.ShouldBeTrue();
+        result.Data.Count.ShouldBe(2);
+        result.Data.Count(x => x.GetType() == typeof(TestDomainEventHandler)).ShouldBe(1);
+        result.Data.Count(x => x.GetType() == typeof(TestDomainEventHandler2)).ShouldBe(1);
     }
 
     [Fact]
@@ -39,7 +41,8 @@ public class DomainEventHandlerResolverTests
         Func<Type, IDomainEventHandler> createEventHandlerFunc = t => new TestDomainEventHandler();
 
         DomainEventHandlerResolver r = new(eventHandlerConfiguration, createEventHandlerFunc);
-        List<IDomainEventHandler> result = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
+        Result<List<IDomainEventHandler>> result = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
+        result.IsFailed.ShouldBeTrue();
         result.ShouldBeNull();
     }
 
