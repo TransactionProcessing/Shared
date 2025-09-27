@@ -43,7 +43,6 @@ public class DomainEventHandlerResolverTests
         DomainEventHandlerResolver r = new(eventHandlerConfiguration, createEventHandlerFunc);
         Result<List<IDomainEventHandler>> result = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
         result.IsFailed.ShouldBeTrue();
-        result.ShouldBeNull();
     }
 
     [Fact]
