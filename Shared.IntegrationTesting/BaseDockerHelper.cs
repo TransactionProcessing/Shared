@@ -855,7 +855,8 @@ public abstract class BaseDockerHelper{
                                         try{
                                             await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
                                         }
-                                        catch(Exception ex){
+                                        catch (Exception ex) {
+                                            // ignored
                                         }
 
                                         projectionNames.Add(projectionName);
@@ -976,35 +977,37 @@ public abstract class BaseDockerHelper{
     }
 
     private void SetHostPortForService(ContainerType type, IContainerService startedContainer){
-        switch(type){
+        Int32 GetPort(Int32 dockerPort) =>
+            startedContainer.ToHostExposedEndpoint($"{dockerPort}/tcp").Port;
+
+        switch (type) {
             case ContainerType.EventStore:
-                if (this.IsSecureEventStore) {
-                    this.EventStoreSecureHttpPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
-                }
-                this.EventStoreHttpPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.EventStoreHttpDockerPort}/tcp").Port;
+                Int32 port = GetPort(DockerPorts.EventStoreHttpDockerPort);
+                EventStoreHttpPort = port;
+                if (IsSecureEventStore)
+                    EventStoreSecureHttpPort = port;
                 break;
-            case ContainerType.MessagingService:
-                this.MessagingServicePort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.MessagingServiceDockerPort}/tcp").Port;
+
+            case ContainerType.MessagingService: 
+                MessagingServicePort = GetPort(DockerPorts.MessagingServiceDockerPort); 
                 break;
-            case ContainerType.SecurityService:
-                this.SecurityServicePort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.SecurityServiceDockerPort}/tcp").Port;
+            case ContainerType.SecurityService: 
+                SecurityServicePort = GetPort(DockerPorts.SecurityServiceDockerPort);
                 break;
-            case ContainerType.CallbackHandler:
-                this.CallbackHandlerPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.CallbackHandlerDockerPort}/tcp").Port;
+            case ContainerType.CallbackHandler: 
+                CallbackHandlerPort = GetPort(DockerPorts.CallbackHandlerDockerPort); 
                 break;
-            case ContainerType.TestHost:
-                this.TestHostServicePort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TestHostPort}/tcp").Port;
+            case ContainerType.TestHost: 
+                TestHostServicePort = GetPort(DockerPorts.TestHostPort);
                 break;
             case ContainerType.TransactionProcessor:
-                this.TransactionProcessorPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorDockerPort}/tcp").Port;
+                TransactionProcessorPort = GetPort(DockerPorts.TransactionProcessorDockerPort); 
                 break;
-            case ContainerType.FileProcessor:
-                this.FileProcessorPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.FileProcessorDockerPort}/tcp").Port;
+            case ContainerType.FileProcessor: 
+                FileProcessorPort = GetPort(DockerPorts.FileProcessorDockerPort); 
                 break;
-            case ContainerType.TransactionProcessorAcl:
-                this.TransactionProcessorAclPort = startedContainer.ToHostExposedEndpoint($"{DockerPorts.TransactionProcessorAclDockerPort}/tcp").Port;
-                break;
-            default:
+            case ContainerType.TransactionProcessorAcl: 
+                TransactionProcessorAclPort = GetPort(DockerPorts.TransactionProcessorAclDockerPort); 
                 break;
         }
     }

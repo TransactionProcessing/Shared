@@ -5,7 +5,7 @@ using System;
 /// <summary>
 /// 
 /// </summary>
-public class DomainHelper
+public static class DomainHelper
 {
     #region Methods
 

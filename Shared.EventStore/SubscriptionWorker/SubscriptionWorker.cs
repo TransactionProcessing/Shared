@@ -118,8 +118,6 @@ public class SubscriptionWorker
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        //TODO: What if we are already running?
-
         try
         {
             this.WorkerThread = new Thread(async () => await this.ExecuteAsync(cancellationToken));

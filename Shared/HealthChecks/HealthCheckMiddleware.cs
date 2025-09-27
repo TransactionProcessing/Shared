@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 [ExcludeFromCodeCoverage]
-public class HealthCheckMiddleware
+public static class HealthCheckMiddleware
 {
     #region Methods
 

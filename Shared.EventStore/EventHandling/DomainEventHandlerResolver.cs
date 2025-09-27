@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.EventHandling;
+﻿using SimpleResults;
+
+namespace Shared.EventStore.EventHandling;
 
 using System;
 using System.Collections.Generic;
@@ -58,17 +60,17 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
     /// </summary>
     /// <param name="domainEvent">The domain event.</param>
     /// <returns></returns>
-    public List<IDomainEventHandler> GetDomainEventHandlers(IDomainEvent domainEvent)
+    public Result<List<IDomainEventHandler>> GetDomainEventHandlers(IDomainEvent domainEvent)
     {
         // Get the type of the event passed in
         String typeString = domainEvent.GetType().Name;
 
         // Lookup the list
-        var eventIsConfigured = this.EventHandlerConfiguration.Any(kv => kv.Value.Contains(typeString));
+        Boolean eventIsConfigured = this.EventHandlerConfiguration.Any(kv => kv.Value.Contains(typeString));
         if (!eventIsConfigured)
         {
             // No handlers setup, return null and let the caller decide what to do next
-            return null;
+            return Result.Failure($"No handlers setup for event {domainEvent.GetType().FullName}");
         }
 
         List<String> handlers = this.EventHandlerConfiguration
@@ -85,7 +87,7 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
             handlersToReturn.AddRange(foundHandlers.Select(x => x.Value));
         }
 
-        return handlersToReturn;
+        return Result.Success(handlersToReturn);
     }
 
     #endregion
