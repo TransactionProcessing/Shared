@@ -190,22 +190,22 @@ jobs:
     - name: Run Unit Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj" 
-            /p:CollectCoverage=true 
-            /p:Exclude="[xunit*]*" 
-            /p:ExcludeByAttribute="Obsolete" 
-            /p:ExcludeByAttribute="GeneratedCodeAttribute" 
-            /p:ExcludeByAttribute="CompilerGeneratedAttribute"
-            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" 
-            /p:CoverletOutput="../lcov1.info" /maxcpucount:1 
+        dotnet test "Shared.Tests\Shared.Tests.csproj" \
+            /p:CollectCoverage=true \
+            /p:Exclude="[xunit*]*" \
+            /p:ExcludeByAttribute="Obsolete" \
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
+            /p:CoverletOutput="../lcov1.info" /maxcpucount:1 \
             /p:CoverletOutputFormat="lcov"
 
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" 
-            /p:CollectCoverage=true /p:Exclude="[xunit*]*" 
-            /p:ExcludeByAttribute="Obsolete" 
-            /p:ExcludeByAttribute="GeneratedCodeAttribute" 
-            /p:ExcludeByAttribute="CompilerGeneratedAttribute" 
-            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" 
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" z
+            /p:CollectCoverage=true /p:Exclude="[xunit*]*" \
+            /p:ExcludeByAttribute="Obsolete" \
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
             /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
     - name: Merge coverage reports
