@@ -190,15 +190,34 @@ jobs:
     - name: Run Unit Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov1.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
+        dotnet test "Shared.Tests\Shared.Tests.csproj" 
+            /p:CollectCoverage=true 
+            /p:Exclude="[xunit*]*" 
+            /p:ExcludeByAttribute="Obsolete" 
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" 
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute"
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" 
+            /p:CoverletOutput="../lcov1.info" /maxcpucount:1 
+            /p:CoverletOutputFormat="lcov"
 
-    - name: Setup Node.js for use with actions
-      uses: actions/setup-node@v1.4.4
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" 
+            /p:CollectCoverage=true /p:Exclude="[xunit*]*" 
+            /p:ExcludeByAttribute="Obsolete" 
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" 
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute" 
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" 
+            /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3  
+    - name: Merge coverage reports
+      run: |
+        dotnet tool install --global coverlet.console
+        coverlet ./lcoov1.info \
+        --format lcov \
+        --output ./merged.info \
+        --merge-with ./lcov2.info
+
+    - name: Upload merged coverage to Codacy
+      uses: codacy/codacy-coverage-reporter-action@v1
       with:
-        token: ${{ secrets.CODECOV_TOKEN }} 
-        files: ./lcov1.info,./lcov2.info
-
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: ./merged.info
