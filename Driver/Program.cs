@@ -43,7 +43,6 @@ internal class Program
     private static async Task Main(String[] args) {
         Logger.Initialise(NullLogger.Instance);
         await Program.SubscriptionsTest();
-
         Console.ReadKey();
     }
 

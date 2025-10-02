@@ -108,8 +108,15 @@ jobs:
             const dryRun = "${{ github.event.inputs.dry_run }}" === "true";
             const rawIssues = JSON.parse(fs.readFileSync('filtered_issues.json', 'utf8'));
 
-            // Build current Codacy set
-            const currentCodacyIds = new Set(rawIssues.map(i => i.issueId));
+            // Build current Codacy set (only *active* issues, not ignored)
+            const currentCodacyIds = new Set(
+              rawIssues.filter(i => !i.ignored).map(i => i.issueId)
+            );
+
+            // Build ignored Codacy set
+            const ignoredCodacyIds = new Set(
+              rawIssues.filter(i => i.ignored).map(i => i.issueId)
+            );
 
             // Fetch ALL GitHub issues with codacy label
             const allIssues = await github.paginate(
@@ -128,27 +135,35 @@ jobs:
 
               for (const match of matches) {
                 const issueId = match.replace("codacy-issue-", "");
-                if (!currentCodacyIds.has(issueId) && ghIssue.state === "open") {
+
+                // Close if not active OR explicitly ignored
+                if ((!currentCodacyIds.has(issueId) || ignoredCodacyIds.has(issueId)) 
+                    && ghIssue.state === "open") {
                   if (dryRun) {
                     console.log(`[DRY RUN] Would close issue #${ghIssue.number} (Codacy issueId ${issueId})`);
                   } else {
                     // Add comment before closing
+                    const reason = ignoredCodacyIds.has(issueId)
+                      ? "Auto closed because Codacy issue is marked as *ignored*"
+                      : "Auto closed as not found in last analysis";
+
                     await github.rest.issues.createComment({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: ghIssue.number,
-                      body: "Auto closed as not found in last analysis"
+                      body: reason
                     });
-                    // Close the issue
+
                     await github.rest.issues.update({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: ghIssue.number,
                       state: "closed"
                     });
-                    console.log(`❌ Closed GitHub issue #${ghIssue.number} for resolved Codacy issueId ${issueId}`);
+                    console.log(`❌ Closed GitHub issue #${ghIssue.number} for Codacy issueId ${issueId}`);
                   }
                 }
               }
             }
+
             
