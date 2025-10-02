@@ -200,7 +200,7 @@ jobs:
             /p:CoverletOutput="../lcov1.info" /maxcpucount:1 \
             /p:CoverletOutputFormat="lcov"
 
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" z
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" \
             /p:CollectCoverage=true /p:Exclude="[xunit*]*" \
             /p:ExcludeByAttribute="Obsolete" \
             /p:ExcludeByAttribute="GeneratedCodeAttribute" \
