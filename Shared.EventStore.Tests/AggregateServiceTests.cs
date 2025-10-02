@@ -124,6 +124,7 @@ public class AggregateServiceTests {
     public async Task Save_ShouldSaveAggregateToRepository_NoCaching() {
         // Arrange
         var aggregate = new TestAggregate { AggregateId = Guid.NewGuid() };
+        aggregate.SetAggregateName("1", Guid.NewGuid());
         var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
         repositoryMock.Setup(repo => repo.SaveChanges(aggregate, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Success());
@@ -142,6 +143,7 @@ public class AggregateServiceTests {
     public async Task Save_ShouldSaveAggregateToRepository_AndCacheIt() {
         // Arrange
         var aggregate = new TestAggregate { AggregateId = Guid.NewGuid() };
+        aggregate.SetAggregateName("1", Guid.NewGuid());
         var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
         this._aggregateService.AddCachedAggregate(typeof(TestAggregate));
 
@@ -155,6 +157,26 @@ public class AggregateServiceTests {
         // Assert
         result.IsSuccess.ShouldBeTrue();
         repositoryMock.Verify(repo => repo.SaveChanges(aggregate, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Save_ShouldSaveAggregateToRepository_NoChanges_SaveNotCalled()
+    {
+        // Arrange
+        var aggregate = new TestAggregate { AggregateId = Guid.NewGuid() };
+        var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
+        this._aggregateService.AddCachedAggregate(typeof(TestAggregate));
+
+        repositoryMock.Setup(repo => repo.SaveChanges(aggregate, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Success());
+
+        _repositoryResolverMock.Setup(resolver => resolver.Resolve<TestAggregate, DomainEvent>()).Returns(repositoryMock.Object);
+
+        // Act
+        var result = await _aggregateService.Save(aggregate, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        repositoryMock.Verify(repo => repo.SaveChanges(aggregate, It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -190,6 +212,7 @@ public class AggregateServiceTests {
     public async Task Save_ShouldSaveAggregateToRepository_SaveFails() {
         // Arrange
         var aggregate = new TestAggregate { AggregateId = Guid.NewGuid() };
+        aggregate.SetAggregateName("1", Guid.NewGuid());
         var repositoryMock = new Mock<IAggregateRepository<TestAggregate, DomainEvent>>();
 
         repositoryMock.Setup(repo => repo.SaveChanges(aggregate, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Failure);
