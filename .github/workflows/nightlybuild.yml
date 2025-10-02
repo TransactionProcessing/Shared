@@ -216,17 +216,19 @@ jobs:
     #     --output ./merged.info \
     #     --merge-with ./lcov2.info
 
-    - name: Install coverlet to tools folder
-      run: dotnet tool install --tool-path ./.tools coverlet.console
+    #- name: Install coverlet to tools folder
+    #  run: dotnet tool install --tool-path ./.tools coverlet.console
 
-    - name: Merge coverage reports
+    - name: Install LCOV merger
+      run: npm install -g lcov-result-merger
+
+    - name: Merge LCOV reports
       run: |
-        ls -la ./.tools || true
-        ./.tools/coverlet ./lcov1.info --format lcov --output ./merged.info --merge-with ./lcov2.info
-
+        mkdir -p coverage
+        lcov-result-merger "*.info" > lcov.info
 
     - name: Upload merged coverage to Codacy
       uses: codacy/codacy-coverage-reporter-action@v1
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: ./merged.info
+        coverage-reports: ./lcov.info
