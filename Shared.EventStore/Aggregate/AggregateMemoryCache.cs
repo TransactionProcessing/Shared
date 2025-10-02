@@ -59,10 +59,9 @@ public class AggregateMemoryCache {
                                                       out TAggregate aggregate) where TAggregate : Aggregate, new() {
         String g = typeof(TAggregate).Name;
 
-        var found = this.MemoryCache.TryGetValue(key, out aggregate);
+        Boolean found = this.MemoryCache.TryGetValue(key, out aggregate);
 
         if (!found) {
-            //TODO: Failed cache hit?
             Counter counterCalls = AggregateService.GetCounterMetric($"AggregateService_{g}_failed_cache_hit");
             counterCalls.Inc();
         }

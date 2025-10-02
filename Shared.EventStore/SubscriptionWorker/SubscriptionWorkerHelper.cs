@@ -42,7 +42,7 @@ public static class SubscriptionWorkerHelper
         HttpClient client = new(httpClientHandler);
 
         client.BaseAddress = new Uri(settings.ConnectivitySettings.Address.AbsoluteUri);
-        client.Timeout = TimeSpan.FromSeconds(5); //TODO: configurable? - not sure it should be tbh
+        client.Timeout = TimeSpan.FromSeconds(5);
 
         if (settings.DefaultCredentials != null)
         {

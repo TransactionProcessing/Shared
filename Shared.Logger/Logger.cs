@@ -31,6 +31,9 @@ public static class Logger {
         Logger.IsInitialised = true;
     }
 
+    private const String CorrelationIdPropertyName = "correlationId";
+    private const String TenantIdPropertyName = "tenantId";
+
     public static void LogCritical(Exception exception) {
         ValidateLoggerObject();
 
@@ -40,13 +43,13 @@ public static class Logger {
             LoggerObject.LogCritical(exception);
             return;
         }
-        using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
             // Write to the normal log
             LoggerObject.LogCritical(exception);
 
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
                 // Write to the tenant log
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     LoggerObject.LogCritical(exception);
                 }
             }
@@ -63,13 +66,13 @@ public static class Logger {
             return;
         }
 
-        using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
             // Write to the normal log
             LoggerObject.LogDebug(message);
 
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
                 // Write to the tenant log
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     LoggerObject.LogDebug(message);
                 }
             }
@@ -86,13 +89,13 @@ public static class Logger {
             return;
         }
 
-        using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
             // Write to the normal log
             LoggerObject.LogError(exception);
 
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
                 // Write to the tenant log
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     LoggerObject.LogError(exception);
                 }
             }
@@ -108,13 +111,13 @@ public static class Logger {
             LoggerObject.LogError(message, exception);
             return;
         }
-        using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
             // Write to the normal log
             LoggerObject.LogError(message, exception);
 
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
                 // Write to the tenant log
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     LoggerObject.LogError(message, exception);
                 }
             }
@@ -129,13 +132,13 @@ public static class Logger {
             Logger.LoggerObject.LogInformation(message);
             return;
         }
-        using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
             // Write to the normal log
             Logger.LoggerObject.LogInformation(message);
 
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
                 // Write to the tenant log
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     Logger.LoggerObject.LogInformation(message);
                 }
             }
@@ -150,13 +153,13 @@ public static class Logger {
             Logger.LoggerObject.LogTrace(message);
             return;
         }
-        using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
             // Write to the normal log
             Logger.LoggerObject.LogTrace(message);
 
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
                 // Write to the tenant log
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     Logger.LoggerObject.LogTrace(message);
                 }
             }
@@ -171,13 +174,13 @@ public static class Logger {
             Logger.LoggerObject.LogWarning(message);
             return;
         }
-        using (ScopeContext.PushProperty("correlationId", $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
             // Write to the normal log
             Logger.LoggerObject.LogWarning(message);
 
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
                 // Write to the tenant log
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId.ToString()}")) {
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     Logger.LoggerObject.LogWarning(message);
                 }
             }
