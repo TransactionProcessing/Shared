@@ -37,11 +37,7 @@ public static class IApplicationBuilderExtensions
 
             ISubscriptionRepository subscriptionRepository = subscriptionRepositoryResolver(eventStoreConnectionString,
                 workerConfig.InternalSubscriptionServiceCacheDuration);
-
-            // TODO: Some logging....
-            //((SubscriptionRepository)subscriptionRepository).Trace += (sender,
-            //                                                           s) => traceHandler(TraceEventType.Information, "REPOSITORY", s);
-
+            
             // init our SubscriptionRepository
             await subscriptionRepository.PreWarm(cts.Token);
 

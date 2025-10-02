@@ -9,7 +9,7 @@ using System.Security.Claims;
 using Exceptions;
 
 [ExcludeFromCodeCoverage]
-public class ClaimsHelper
+public static class ClaimsHelper
 {
     #region Methods
 

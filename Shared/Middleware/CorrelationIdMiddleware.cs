@@ -31,7 +31,7 @@ public class TenantMiddleware
         this.Next = next;
     }
 
-    public const String KeyNameCorrelationId = "correlationId";
+    public static readonly String KeyNameCorrelationId = "correlationId";
 
     #endregion
 

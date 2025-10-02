@@ -188,7 +188,7 @@ public class AggregateService : IAggregateService
         TAggregate aggregate = null;
         try
         {
-            var aggregateResult = await getLatestVersionFunc(repository, aggregateId, cancellationToken);
+            Result<TAggregate> aggregateResult = await getLatestVersionFunc(repository, aggregateId, cancellationToken);
             if (aggregateResult.IsFailed)
                 return aggregateResult;
             aggregate = aggregateResult.Data;
@@ -217,9 +217,11 @@ public class AggregateService : IAggregateService
         Histogram histogramMetric = AggregateService.GetHistogramMetric($"{m}_{g}_saved");
 
         counterCalls.Inc();
-
-        // TODO: Check the pending events so dont save blindly, this would need a change to the base aggregate ?
-        Result result = await repository.SaveChanges(aggregate, cancellationToken);
+        Result result = Result.Success();
+        // Check the pending events so dont save blindly
+        if (aggregate.PendingEvents.Any()) {
+            result = await repository.SaveChanges(aggregate, cancellationToken);
+        }
 
         stopwatch.Stop();
 

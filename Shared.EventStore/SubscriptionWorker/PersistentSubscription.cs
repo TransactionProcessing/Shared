@@ -91,7 +91,6 @@ public class PersistentSubscription
         }
         catch (Exception e)
         {
-            //TODO: Should we kill the process?
             Logger.Logger.LogError(e);
         }
     }
