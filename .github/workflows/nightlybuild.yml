@@ -208,13 +208,22 @@ jobs:
             /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
             /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
+    # - name: Merge coverage reports
+    #   run: |
+    #     dotnet tool install --global coverlet.console
+    #     coverlet ./lcoov1.info \
+    #     --format lcov \
+    #     --output ./merged.info \
+    #     --merge-with ./lcov2.info
+
+    - name: Install coverlet to tools folder
+      run: dotnet tool install --tool-path ./.tools coverlet.console
+
     - name: Merge coverage reports
       run: |
-        dotnet tool install --global coverlet.console
-        coverlet ./lcoov1.info \
-        --format lcov \
-        --output ./merged.info \
-        --merge-with ./lcov2.info
+        ls -la ./.tools || true
+        ./.tools/coverlet ./lcov1.info --format lcov --output ./merged.info --merge-with ./lcov2.info
+
 
     - name: Upload merged coverage to Codacy
       uses: codacy/codacy-coverage-reporter-action@v1
