@@ -23,24 +23,11 @@ public class EventStoreContextManager : IEventStoreContextManager
         this.EventStoreContexts = new();
         this.EventStoreContextFunc = eventStoreContextFunc;
     }
-
-    //public EventStoreContextManager(IEventStoreContext eventStoreContext)
-    //{
-        //this.Context = eventStoreContext;
-    //}
     
     public event TraceHandler TraceGenerated;
 
-    
-    //public IEventStoreContext GetEventStoreContext(String connectionIdentifier) => this.GetEventStoreContext(connectionIdentifier, "EventStoreConnectionString");
-
     public IEventStoreContext GetEventStoreContext(String connectionStringIdentifier)
     {
-        //if (this.Context != null)
-        //{
-        //    return this.Context;
-        //}
-
         this.WriteTrace($"No resolved context found, about to resolve one using connectionIdentifier {connectionStringIdentifier}");
 
         if (this.EventStoreContexts.TryGetValue(connectionStringIdentifier, out IEventStoreContext context))

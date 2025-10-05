@@ -76,7 +76,6 @@ namespace Shared.Middleware;
         public override void Close()
         {
             // Dont close by default
-            // base.Close();
         }
 
         public void ForceClose()

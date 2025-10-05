@@ -66,20 +66,8 @@ public static class IApplicationBuilderExtensions
                 KeyValuePair<String, IDomainEventHandlerResolver> ehr = eventHandlerResolvers.SingleOrDefault(e => e.Key == "Ordered");
 
                 if (ehr.Value != null) {
-                    SubscriptionWorker worker = SubscriptionWorker.CreateOrderedSubscriptionWorker(eventStoreConnectionString,
-                                                                                                   ehr.Value,
-                                                                                                   subscriptionRepository,
-                                                                                                   configuration.PersistentSubscriptionPollingInSeconds);
-                    worker.Trace += (_,
-                                     args) => traceHandler(TraceEventType.Information, "ORDERED", args.Message);
-                    worker.Warning += (_,
-                                       args) => traceHandler(TraceEventType.Warning, "ORDERED", args.Message);
-                    worker.Error += (_,
-                                     args) => traceHandler(TraceEventType.Error, "ORDERED", args.Message);
-                    worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
-                    worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
-                    worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
-                    worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
+                    SubscriptionWorker worker = ConfigureSubscriptionWorker(subscriptionRepository, configuration,
+                        eventStoreConnectionString, traceHandler, ehr, configurationSubscriptionWorker, "ORDERED");
                     workers.Add(worker);
                 }
             }
@@ -88,20 +76,9 @@ public static class IApplicationBuilderExtensions
 
                 if (ehr.Value != null)
                 {
-                    for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++)
-                    {
-                        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, ehr.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds);
-
-                        worker.Trace += (_,
-                                         args) => traceHandler(TraceEventType.Information, "DOMAIN", args.Message);
-                        worker.Warning += (_,
-                                           args) => traceHandler(TraceEventType.Warning, "DOMAIN", args.Message);
-                        worker.Error += (_,
-                                         args) => traceHandler(TraceEventType.Error, "DOMAIN", args.Message);
-                        worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
-                        worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
-                        worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
-                        worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
+                    for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++) {
+                        SubscriptionWorker worker = ConfigureSubscriptionWorker(subscriptionRepository, configuration, 
+                            eventStoreConnectionString, traceHandler, ehr, configurationSubscriptionWorker, "DOMAIN");
 
                         workers.Add(worker);
                     }
@@ -113,22 +90,8 @@ public static class IApplicationBuilderExtensions
                 {
                     for (Int32 i = 0; i < configurationSubscriptionWorker.InstanceCount; i++)
                     {
-                        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString,
-                            ehr.Value,
-                            subscriptionRepository,
-                            configurationSubscriptionWorker.InflightMessages,
-                            configuration.PersistentSubscriptionPollingInSeconds);
-
-                        worker.Trace += (_,
-                                         args) => traceHandler(TraceEventType.Information, "MAIN", args.Message);
-                        worker.Warning += (_,
-                                           args) => traceHandler(TraceEventType.Warning, "MAIN", args.Message);
-                        worker.Error += (_,
-                                         args) => traceHandler(TraceEventType.Error, "MAIN", args.Message);
-                        worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
-                        worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
-                        worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
-                        worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
+                        SubscriptionWorker worker = ConfigureSubscriptionWorker(subscriptionRepository, configuration,
+                            eventStoreConnectionString, traceHandler, ehr, configurationSubscriptionWorker, "MAIN");
 
                         workers.Add(worker);
                     }
@@ -138,5 +101,28 @@ public static class IApplicationBuilderExtensions
 
         return workers;
     }
+
+    private static SubscriptionWorker ConfigureSubscriptionWorker(ISubscriptionRepository subscriptionRepository,
+                                                                  SubscriptionWorkersRoot configuration,
+                                                                  String eventStoreConnectionString,
+                                                                  Action<TraceEventType, String, String> traceHandler,
+                                                                  KeyValuePair<String, IDomainEventHandlerResolver> ehr,
+                                                                  SubscriptionWorkerConfig configurationSubscriptionWorker,
+                                                                  String type) {
+        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, ehr.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds);
+
+        worker.Trace += (_,
+                         args) => traceHandler(TraceEventType.Information, type, args.Message);
+        worker.Warning += (_,
+                           args) => traceHandler(TraceEventType.Warning, type, args.Message);
+        worker.Error += (_,
+                         args) => traceHandler(TraceEventType.Error, type, args.Message);
+        worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
+        worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
+        worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
+        worker.SetIncludeStreams(configurationSubscriptionWorker.IncludeStreams);
+        return worker;
+    }
+
     #endregion
 }

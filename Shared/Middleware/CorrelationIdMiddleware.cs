@@ -139,38 +139,4 @@ public static class HttpContextExtensionMethods
 
         return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, merchantId);
     }
-
-    /*public static async Task<TenantIdentifiers> GetIdentifiersFromPayload(this HttpContext context)
-    {
-        HttpRequest request = context.Request;
-        String bodyAsText = null;
-
-        try
-        {
-            request.EnableBuffering();
-            bodyAsText = await new StreamReader(request.Body).ReadToEndAsync();
-            request.Body.Position = 0;
-
-            if (String.IsNullOrWhiteSpace(bodyAsText))
-            {
-                return TenantIdentifiers.Default();
-            }
-
-            JToken rootToken = JToken.Parse(bodyAsText);
-
-            JToken organisationIdToken = rootToken.SelectTokens("..organisationId").FirstOrDefault();
-            JToken storeIdToken = rootToken.SelectTokens("..storeId").FirstOrDefault();
-
-            Guid.TryParse(organisationIdToken?.Value<String>(), out Guid organisationId);
-            Guid.TryParse(storeIdToken?.Value<String>(), out Guid storeId);
-
-            return organisationId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(organisationId, storeId);
-        }
-        catch (Exception e)
-        {
-            EposityLogger.WriteWarning($"Unable to get organisationId from request body [{bodyAsText}]");
-            EposityLogger.WriteException(e);
-            return TenantIdentifiers.Default();
-        }
-    }*/
 }
