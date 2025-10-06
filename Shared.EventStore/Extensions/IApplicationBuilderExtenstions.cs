@@ -109,7 +109,11 @@ public static class IApplicationBuilderExtensions
                                                                   KeyValuePair<String, IDomainEventHandlerResolver> ehr,
                                                                   SubscriptionWorkerConfig configurationSubscriptionWorker,
                                                                   String type) {
-        SubscriptionWorker worker = SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, ehr.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds);
+
+        SubscriptionWorker worker = type switch {
+            "ORDERED" => SubscriptionWorker.CreateOrderedSubscriptionWorker(eventStoreConnectionString, ehr.Value, subscriptionRepository, configuration.PersistentSubscriptionPollingInSeconds),
+            _ => SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, ehr.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds),
+        };
 
         worker.Trace += (_,
                          args) => traceHandler(TraceEventType.Information, type, args.Message);
