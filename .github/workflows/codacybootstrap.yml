@@ -85,22 +85,28 @@ jobs:
             if [ -n "$line_text" ]; then
               # Replace literal \n from JSON and real newlines with space
               clean_line_text=$(echo "$line_text" | tr -d '\r' | tr '\n' ' ' | sed 's/\\n/ /g')
-              #code_snippet="**Code Snippet:**   $clean_line_text"
-            fi
-            
-            # Build the full body with Codacy ID at the top
-            body="**Codacy ID:** \`$id\`
-            
-            **File:** \`$file\`
-            **Line:** $line
-            **Rule:** $category ($severity)
-            **Commit:** \`$sha\`
-            if [ -n "$clean_line_text" ]; then
+              code_snippet="\`\`\`
+              $clean_line_text
+              \`\`\`"
+              else
+              code_snippet=""
+              fi
+              
+              # Build the full body with Codacy ID at the top
+              body="**Codacy ID:** \`$id\`
+              
+              **File:** \`$file\`
+              **Line:** $line
+              **Rule:** $category ($severity)
+              **Commit:** \`$sha\`"
+              
+              # Append code snippet if present
+              if [ -n "$code_snippet" ]; then
+              body+="
+              
               **Code Snippet:**
               $code_snippet"
-            elif
-              "
-            fi
+              fi
       
             # Determine labels based on message/category
             labels=()
