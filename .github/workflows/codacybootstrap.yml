@@ -81,18 +81,25 @@ jobs:
 
             title="[$category] $message"
 
-            # Clean up the snippet (remove literal \n from JSON and extra whitespace)
+            # Prepare the code snippet
             if [ -n "$line_text" ]; then
-              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr -d '\\' )
-              # Use actual newline in the string instead of \n
-              code_snippet=$'**Code Snippet:**\n```'"$clean_line_text"'```\n'
+              # Replace literal \n from JSON with spaces to make it single-line
+              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr '\n' ' ' | sed 's/\\n/ /g')
+              code_snippet="**Code Snippet:**\n\`\`\`$clean_line_text\`\`\`\n"
             else
               code_snippet=""
             fi
             
-            # Build the body with real newlines
-            body=$'**File:** `'"$file"'`\n**Line:** '"$line"'\n**Rule:** '"$category"' ('"$severity"')\n**Commit:** `'"$sha"'`\n\n'"$code_snippet"'**Codacy ID:** `'"$id"'`'
-
+            # Build the full body with Codacy ID at the top
+            body="**Codacy ID:** \`$id\`
+            
+            **File:** \`$file\`
+            **Line:** $line
+            **Rule:** $category ($severity)
+            **Commit:** \`$sha\`
+            
+            $code_snippet"
+            
             # ---- Determine labels based on message/category ----
             labels=()
             if echo "$message" | grep -iq "todo"; then
