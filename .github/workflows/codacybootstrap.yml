@@ -43,7 +43,7 @@ jobs:
             -o codacy_issues.json
 
       # 🔹 STEP 2: Ensure standard labels exist
-      - name: Ensure labels exist
+      - name: Ensure standard labels exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -55,9 +55,9 @@ jobs:
             ["performance"]="Performance optimization issues"
           )
           for label in "${!LABELS[@]}"; do
-            if ! gh label view "$label" --repo ${{ github.repository }} --token $GITHUB_TOKEN &>/dev/null; then
+            if ! gh label view "$label" --repo ${{ github.repository }} &>/dev/null; then
               echo "Creating label '$label'"
-              gh label create "$label" --description "${LABELS[$label]}" --color 0366d6 --repo ${{ github.repository }} --token $GITHUB_TOKEN
+              gh label create "$label" --description "${LABELS[$label]}" --color 0366d6 --repo ${{ github.repository }}
             fi
           done
 
