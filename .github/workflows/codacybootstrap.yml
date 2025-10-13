@@ -81,21 +81,21 @@ jobs:
 
             title="[$category] $message"
 
-            # ---- Build code snippet safely ----
+            # Build code snippet first
             if [ -n "$line_text" ]; then
               code_snippet="**Code Snippet:**\n\`\`\`csharp\n$line_text\n\`\`\`\n\n"
             else
               code_snippet=""
             fi
-
-            # Build body using single-quoted heredoc to avoid backtick issues
-            body=$(cat <<'EOF'
-            **File:** `'"$file"'`
-            **Line:** '"$line"'
-            **Rule:** '"$category"' ('"$severity"')
-            **Commit:** `'"$sha"'`
             
-            '"$code_snippet"'**Codacy ID:** `'"$id"'`
+            # Build body safely using double-quoted heredoc
+            body=$(cat <<EOF
+            **File:** \`$file\`
+            **Line:** $line
+            **Rule:** $category ($severity)
+            **Commit:** \`$sha\`
+            
+            $code_snippet**Codacy ID:** \`$id\`
             EOF
             )
 
