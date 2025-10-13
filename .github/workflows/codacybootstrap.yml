@@ -26,8 +26,7 @@ jobs:
       - name: Install jq and gh
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y jq
-          gh auth setup-git
+          sudo apt-get install -y jq gh
 
       # 🔹 STEP 1: Fetch Codacy Issues
       - name: Fetch Codacy Issues
@@ -56,9 +55,9 @@ jobs:
             ["performance"]="Performance optimization issues"
           )
           for label in "${!LABELS[@]}"; do
-            if ! gh label view "$label" --repo ${{ github.repository }} &>/dev/null; then
+            if ! gh label view "$label" --repo ${{ github.repository }} --token $GITHUB_TOKEN &>/dev/null; then
               echo "Creating label '$label'"
-              gh label create "$label" --description "${LABELS[$label]}" --color 0366d6 --repo ${{ github.repository }}
+              gh label create "$label" --description "${LABELS[$label]}" --color 0366d6 --repo ${{ github.repository }} --token $GITHUB_TOKEN
             fi
           done
 
@@ -68,7 +67,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           dry_run="${{ github.event.inputs.dry_run }}"
-          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body,labels)
+          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body --token $GITHUB_TOKEN)
 
           jq -c '.data[]' codacy_issues.json | while read -r issue; do
             id=$(echo "$issue" | jq -r '.issueId')
@@ -111,7 +110,8 @@ jobs:
                 gh issue edit "$existing_number" \
                   --body "$body" \
                   --add-label "${labels[@]}" \
-                  --repo ${{ github.repository }}
+                  --repo ${{ github.repository }} \
+                  --token $GITHUB_TOKEN
               else
                 echo "[DRY RUN] Would update issue #$existing_number with labels: ${labels[*]}"
               fi
@@ -122,7 +122,8 @@ jobs:
                   --title "$title" \
                   --body "$body" \
                   --label "${labels[*]}" \
-                  --repo ${{ github.repository }}
+                  --repo ${{ github.repository }} \
+                  --token $GITHUB_TOKEN
               else
                 echo "[DRY RUN] Would create issue '$title' with labels: ${labels[*]}"
               fi
@@ -135,14 +136,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           current_ids=$(jq -r '.data[].issueId' codacy_issues.json)
-          gh issue list --repo ${{ github.repository }} --state open --label codacy --json number,body | jq -c '.[]' | while read -r issue; do
+          gh issue list --repo ${{ github.repository }} --state open --label codacy --json number,body --token $GITHUB_TOKEN | jq -c '.[]' | while read -r issue; do
             number=$(echo "$issue" | jq -r '.number')
             body=$(echo "$issue" | jq -r '.body')
             id=$(echo "$body" | grep -oE 'Codacy ID: [a-f0-9]+' | awk '{print $3}')
             if [ -n "$id" ] && ! echo "$current_ids" | grep -q "$id"; then
               echo "Closing stale Codacy issue #$number ($id)"
               if [ "$dry_run" != "true" ]; then
-                gh issue close "$number" --comment "This issue no longer appears in Codacy reports and has been auto-closed." --repo ${{ github.repository }}
+                gh issue close "$number" --comment "This issue no longer appears in Codacy reports and has been auto-closed." --repo ${{ github.repository }} --token $GITHUB_TOKEN
               else
                 echo "[DRY RUN] Would close issue #$number"
               fi
