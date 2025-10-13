@@ -42,21 +42,23 @@ jobs:
             --fail \
             -o codacy_issues.json
 
-      # 🔹 STEP 2: Ensure standard labels exist
+      # 🔹 STEP 2: Ensure standard labels exist with your colors
       - name: Ensure standard labels exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           declare -A LABELS=(
-            ["task"]="Tasks and work items"
-            ["refactor"]="Code cleanup and best practices"
-            ["bug"]="Bugs and error-prone code"
-            ["security"]="Security-related issues"
-            ["performance"]="Performance optimization issues"
+            ["task"]="Tasks and work items|#f2551b"
+            ["refactor"]="Code cleanup and best practices|#eb69a2"
+            ["bug"]="Bugs and error-prone code|#b60205"
+            ["security"]="Security-related issues|#d93f0b"
+            ["performance"]="Performance optimization issues|#e57504"
           )
           for label in "${!LABELS[@]}"; do
-              echo "Creating label '$label'"
-              gh label create "$label" --description "${LABELS[$label]}" --color 0366d6 --repo ${{ github.repository }} --force          
+            desc=${LABELS[$label]%%|*}
+            color=${LABELS[$label]##*|}
+            echo "Creating/updating label '$label'"
+            gh label create "$label" --description "$desc" --color "$color" --repo ${{ github.repository }} --force
           done
 
       # 🔹 STEP 3: Sync issues (create/update)
@@ -66,7 +68,7 @@ jobs:
         run: |
           dry_run="${{ github.event.inputs.dry_run }}"
           current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body,labels)
-      
+
           jq -c '.data[]' codacy_issues.json | while read -r issue; do
             id=$(echo "$issue" | jq -r '.issueId')
             file=$(echo "$issue" | jq -r '.filePath')
@@ -76,26 +78,26 @@ jobs:
             category=$(echo "$issue" | jq -r '.patternInfo.category')
             severity=$(echo "$issue" | jq -r '.patternInfo.severityLevel')
             sha=$(echo "$issue" | jq -r '.commitInfo.sha')
-      
+
             title="[$category] $message"
-      
+
             # ---- Nicely formatted body ----
             body="**File:** \`$file\`  \n"
             body+="**Line:** $line  \n"
             body+="**Rule:** $category ($severity)  \n"
             body+="**Commit:** \`$sha\`  \n\n"
-      
+
             if [ -n "$line_text" ]; then
               body+="**Code Snippet:**\n\`\`\`csharp\n$line_text\n\`\`\`\n\n"
             fi
-      
+
             body+="**Codacy ID:** \`$id\`"
-      
-            # Determine labels based on message/category
+
+            # ---- Determine labels based on message/category ----
             labels=()
             if echo "$message" | grep -iq "todo"; then
               labels+=("task")
-            elif echo "$category" | grep -Eiq "best[_ ]?practice|code[_ ]?style|complexity"; then labels+=("refactor")
+            elif echo "$category" | grep -Eiq "best[_ ]?practice|code[_ ]?style|complexity"; then
               labels+=("refactor")
             elif echo "$message" | grep -iq "security"; then
               labels+=("task" "security")
@@ -104,13 +106,13 @@ jobs:
             elif echo "$message" | grep -Eiq "error[_ ]?prone"; then
               labels+=("bug")
             fi
-      
+
             # Convert array to comma-separated string
             label_string=$(IFS=,; echo "${labels[*]}")
-      
+
             # ---- Check if issue exists ----
             existing_number=$(echo "$current_issues" | jq -r --arg id "$id" '.[] | select(.body | contains($id)) | .number')
-      
+
             if [ -n "$existing_number" ]; then
               echo "Updating existing issue #$existing_number ($id)"
               if [ "$dry_run" != "true" ]; then
@@ -134,7 +136,6 @@ jobs:
               fi
             fi
           done
-
 
       # 🔹 STEP 4: Close resolved issues
       - name: Close resolved issues
