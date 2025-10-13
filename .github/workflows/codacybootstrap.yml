@@ -55,10 +55,8 @@ jobs:
             ["performance"]="Performance optimization issues"
           )
           for label in "${!LABELS[@]}"; do
-            if ! gh label view "$label" --repo ${{ github.repository }} &>/dev/null; then
               echo "Creating label '$label'"
-              gh label create "$label" --description "${LABELS[$label]}" --color 0366d6 --repo ${{ github.repository }}
-            fi
+              gh label create "$label" --description "${LABELS[$label]}" --color 0366d6 --repo ${{ github.repository }} --force          
           done
 
       # 🔹 STEP 3: Sync issues (create/update)
