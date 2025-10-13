@@ -61,14 +61,14 @@ jobs:
             gh label create "$label" --description "$desc" --color "$color" --repo ${{ github.repository }} --force
           done
 
-      # 🔹 STEP 3: Sync issues (create/update) with proper formatting
+      # 🔹 STEP 3: Sync Codacy Issues (create/update)
       - name: Sync Codacy Issues
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           dry_run="${{ github.event.inputs.dry_run }}"
           current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body,labels)
-
+      
           jq -c '.data[]' codacy_issues.json | while read -r issue; do
             id=$(echo "$issue" | jq -r '.issueId')
             file=$(echo "$issue" | jq -r '.filePath')
@@ -78,29 +78,10 @@ jobs:
             category=$(echo "$issue" | jq -r '.patternInfo.category')
             severity=$(echo "$issue" | jq -r '.patternInfo.severityLevel')
             sha=$(echo "$issue" | jq -r '.commitInfo.sha')
-
+      
             title="[$category] $message"
-
-            # Prepare the code snippet as a single-line fenced block
-            if [ -n "$line_text" ]; then
-              # Remove literal \n from JSON and real newlines
-              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr -d '\n' | sed 's/\\n/ /g')
-              code_snippet="**Code Snippet:**\n\`\`\`$clean_line_text\`\`\`"
-            else
-              code_snippet=""
-            fi
-            
-            # Build the full body with Codacy ID at the top
-            body="**Codacy ID:** \`$id\`
-            
-            **File:** \`$file\`
-            **Line:** $line
-            **Rule:** $category ($severity)
-            **Commit:** \`$sha\`
-            
-            $code_snippet"
-            
-            # ---- Determine labels based on message/category ----
+      
+            # Determine labels based on message/category
             labels=()
             if echo "$message" | grep -iq "todo"; then
               labels+=("task")
@@ -113,30 +94,47 @@ jobs:
             elif echo "$message" | grep -Eiq "error[_ ]?prone"; then
               labels+=("bug")
             fi
-
+      
             label_string=$(IFS=,; echo "${labels[*]}")
-
-            # ---- Check if issue exists ----
+      
+            # Check if issue exists
             existing_number=$(echo "$current_issues" | jq -r --arg id "$id" '.[] | select(.body | contains($id)) | .number')
-
+      
             if [ -n "$existing_number" ]; then
               echo "Updating existing issue #$existing_number ($id)"
               if [ "$dry_run" != "true" ]; then
-                gh issue edit "$existing_number" \
-                  --body "$body" \
-                  --add-label "$label_string" \
-                  --repo ${{ github.repository }}
+                gh issue edit "$existing_number" --add-label "$label_string" --repo ${{ github.repository }} <<EOF
+                **Codacy ID:** \`$id\`
+                
+                **File:** \`$file\`
+                **Line:** $line
+                **Rule:** $category ($severity)
+                **Commit:** \`$sha\`
+                
+                **Code Snippet:**
+                \`\`\`
+                $line_text
+                \`\`\`
+                EOF
               else
                 echo "[DRY RUN] Would update issue #$existing_number with labels: $label_string"
               fi
             else
               echo "Creating new issue for Codacy ID $id"
               if [ "$dry_run" != "true" ]; then
-                gh issue create \
-                  --title "$title" \
-                  --body "$body" \
-                  --label "$label_string" \
-                  --repo ${{ github.repository }}
+                gh issue create --title "$title" --label "$label_string" --repo ${{ github.repository }} <<EOF
+                **Codacy ID:** \`$id\`
+      
+                **File:** \`$file\`
+                **Line:** $line
+                **Rule:** $category ($severity)
+                **Commit:** \`$sha\`
+                
+                **Code Snippet:**
+                \`\`\`
+                $line_text
+                \`\`\`
+                EOF
               else
                 echo "[DRY RUN] Would create issue '$title' with labels: $label_string"
               fi
