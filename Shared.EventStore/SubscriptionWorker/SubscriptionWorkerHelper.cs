@@ -4,6 +4,7 @@ using EventHandling;
 using global::EventStore.Client;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
@@ -169,6 +170,13 @@ public static class SubscriptionWorkerHelper
         subscriptionWorker.InMemory = true;
 
         return subscriptionWorker;
+    }
+
+    public static void ConfigureTracing(this SubscriptionWorker worker, string type, Action<TraceEventType, string, string> traceHandler)
+    {
+        worker.Trace += (_, args) => traceHandler(TraceEventType.Information, type, args.Message);
+        worker.Warning += (_, args) => traceHandler(TraceEventType.Warning, type, args.Message);
+        worker.Error += (_, args) => traceHandler(TraceEventType.Error, type, args.Message);
     }
 
     #endregion
