@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           dry_run="${{ github.event.inputs.dry_run }}"
-          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body --token $GITHUB_TOKEN)
+          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body)
 
           jq -c '.data[]' codacy_issues.json | while read -r issue; do
             id=$(echo "$issue" | jq -r '.issueId')
@@ -134,14 +134,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           current_ids=$(jq -r '.data[].issueId' codacy_issues.json)
-          gh issue list --repo ${{ github.repository }} --state open --label codacy --json number,body --token $GITHUB_TOKEN | jq -c '.[]' | while read -r issue; do
+          gh issue list --repo ${{ github.repository }} --state open --label codacy --json number,body | jq -c '.[]' | while read -r issue; do
             number=$(echo "$issue" | jq -r '.number')
             body=$(echo "$issue" | jq -r '.body')
             id=$(echo "$body" | grep -oE 'Codacy ID: [a-f0-9]+' | awk '{print $3}')
             if [ -n "$id" ] && ! echo "$current_ids" | grep -q "$id"; then
               echo "Closing stale Codacy issue #$number ($id)"
               if [ "$dry_run" != "true" ]; then
-                gh issue close "$number" --comment "This issue no longer appears in Codacy reports and has been auto-closed." --repo ${{ github.repository }} --token $GITHUB_TOKEN
+                gh issue close "$number" --comment "This issue no longer appears in Codacy reports and has been auto-closed." --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would close issue #$number"
               fi
