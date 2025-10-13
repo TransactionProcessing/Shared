@@ -42,13 +42,13 @@ jobs:
             --fail \
             -o codacy_issues.json
 
-      # 🔹 STEP 2: Ensure standard labels exist with your colors
+      # 🔹 STEP 2: Ensure standard labels exist with updated colors
       - name: Ensure standard labels exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           declare -A LABELS=(
-            ["task"]="Tasks and work items|#f2551b"
+            ["task"]="Tasks and work items|#aefcde"
             ["refactor"]="Code cleanup and best practices|#eb69a2"
             ["bug"]="Bugs and error-prone code|#b60205"
             ["security"]="Security-related issues|#d93f0b"
@@ -60,15 +60,15 @@ jobs:
             echo "Creating/updating label '$label'"
             gh label create "$label" --description "$desc" --color "$color" --repo ${{ github.repository }} --force
           done
-
-      # 🔹 STEP 3: Sync issues (create/update)
+      
+      # 🔹 STEP 3: Sync issues (create/update) with proper formatting
       - name: Sync Codacy Issues
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           dry_run="${{ github.event.inputs.dry_run }}"
           current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body,labels)
-
+      
           jq -c '.data[]' codacy_issues.json | while read -r issue; do
             id=$(echo "$issue" | jq -r '.issueId')
             file=$(echo "$issue" | jq -r '.filePath')
@@ -78,21 +78,22 @@ jobs:
             category=$(echo "$issue" | jq -r '.patternInfo.category')
             severity=$(echo "$issue" | jq -r '.patternInfo.severityLevel')
             sha=$(echo "$issue" | jq -r '.commitInfo.sha')
-
+      
             title="[$category] $message"
-
-            # ---- Nicely formatted body ----
-            body="**File:** \`$file\`  \n"
-            body+="**Line:** $line  \n"
-            body+="**Rule:** $category ($severity)  \n"
-            body+="**Commit:** \`$sha\`  \n\n"
-
-            if [ -n "$line_text" ]; then
-              body+="**Code Snippet:**\n\`\`\`csharp\n$line_text\n\`\`\`\n\n"
-            fi
-
-            body+="**Codacy ID:** \`$id\`"
-
+      
+            # ---- Nicely formatted body using heredoc ----
+            body=$(cat <<EOF
+              **File:** \`$file\`
+              **Line:** $line
+              **Rule:** $category ($severity)
+              **Commit:** \`$sha\`
+              
+              $( [ -n "$line_text" ] && echo -e "**Code Snippet:**\n\`\`\`csharp\n$line_text\n\`\`\`" )
+              
+              **Codacy ID:** \`$id\`
+              EOF
+              )
+      
             # ---- Determine labels based on message/category ----
             labels=()
             if echo "$message" | grep -iq "todo"; then
@@ -106,13 +107,12 @@ jobs:
             elif echo "$message" | grep -Eiq "error[_ ]?prone"; then
               labels+=("bug")
             fi
-
-            # Convert array to comma-separated string
+      
             label_string=$(IFS=,; echo "${labels[*]}")
-
+      
             # ---- Check if issue exists ----
             existing_number=$(echo "$current_issues" | jq -r --arg id "$id" '.[] | select(.body | contains($id)) | .number')
-
+      
             if [ -n "$existing_number" ]; then
               echo "Updating existing issue #$existing_number ($id)"
               if [ "$dry_run" != "true" ]; then
