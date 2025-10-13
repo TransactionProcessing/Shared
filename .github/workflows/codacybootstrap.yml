@@ -65,8 +65,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           dry_run="${{ github.event.inputs.dry_run }}"
-          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body)
-
+          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body,labels --token $GITHUB_TOKEN)
+      
           jq -c '.data[]' codacy_issues.json | while read -r issue; do
             id=$(echo "$issue" | jq -r '.issueId')
             file=$(echo "$issue" | jq -r '.filePath')
@@ -76,41 +76,51 @@ jobs:
             category=$(echo "$issue" | jq -r '.patternInfo.category')
             severity=$(echo "$issue" | jq -r '.patternInfo.severityLevel')
             sha=$(echo "$issue" | jq -r '.commitInfo.sha')
-
+      
             title="[$category] $message"
-            body="**File:** \`$file\` (Line $line)\n\n**Rule:** $category ($severity)\n\n**Commit:** $sha\n\n"
-
+      
+            # ---- Nicely formatted body ----
+            body="**File:** \`$file\`  \n"
+            body+="**Line:** $line  \n"
+            body+="**Rule:** $category ($severity)  \n"
+            body+="**Commit:** \`$sha\`  \n\n"
+      
             if [ -n "$line_text" ]; then
-              body+="\`\`\`csharp\n$line_text\n\`\`\`\n"
+              body+="**Code Snippet:**\n\`\`\`csharp\n$line_text\n\`\`\`\n\n"
             fi
-
-            body+="\nCodacy ID: $id"
-
+      
+            body+="**Codacy ID:** \`$id\`"
+      
             # Determine labels based on message/category
             labels=()
             if echo "$message" | grep -iq "todo"; then
               labels+=("task")
-            elif echo "$category" | grep -Eiq "best practice|code style|complexity"; then
+            elif echo "$category" | grep -Eiq "best[_ ]?practice|code[_ ]?style|complexity"; then labels+=("refactor")
               labels+=("refactor")
             elif echo "$message" | grep -iq "security"; then
               labels+=("task" "security")
             elif echo "$category" | grep -iq "performance"; then
               labels+=("task" "performance")
-            elif echo "$message" | grep -iq "error prone"; then
+            elif echo "$message" | grep -Eiq "error[_ ]?prone"; then
               labels+=("bug")
             fi
-
-            existing_number=$(echo "$current_issues" | jq -r --arg id "$id" '.[] | select(.body | contains($id)) | .number')
+      
+            # Convert array to comma-separated string
             label_string=$(IFS=,; echo "${labels[*]}")
+      
+            # ---- Check if issue exists ----
+            existing_number=$(echo "$current_issues" | jq -r --arg id "$id" '.[] | select(.body | contains($id)) | .number')
+      
             if [ -n "$existing_number" ]; then
               echo "Updating existing issue #$existing_number ($id)"
               if [ "$dry_run" != "true" ]; then
                 gh issue edit "$existing_number" \
                   --body "$body" \
                   --add-label "$label_string" \
-                  --repo ${{ github.repository }}
+                  --repo ${{ github.repository }} \
+                  --token $GITHUB_TOKEN
               else
-                echo "[DRY RUN] Would update issue #$existing_number with labels: ${labels[*]}"
+                echo "[DRY RUN] Would update issue #$existing_number with labels: $label_string"
               fi
             else
               echo "Creating new issue for Codacy ID $id"
@@ -119,12 +129,14 @@ jobs:
                   --title "$title" \
                   --body "$body" \
                   --label "$label_string" \
-                  --repo ${{ github.repository }}
+                  --repo ${{ github.repository }} \
+                  --token $GITHUB_TOKEN
               else
-                echo "[DRY RUN] Would create issue '$title' with labels: ${labels[*]}"
+                echo "[DRY RUN] Would create issue '$title' with labels: $label_string"
               fi
             fi
           done
+
 
       # 🔹 STEP 4: Close resolved issues
       - name: Close resolved issues
