@@ -108,8 +108,7 @@ jobs:
                 gh issue edit "$existing_number" \
                   --body "$body" \
                   --add-label "${labels[@]}" \
-                  --repo ${{ github.repository }} \
-                  --token $GITHUB_TOKEN
+                  --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would update issue #$existing_number with labels: ${labels[*]}"
               fi
@@ -120,8 +119,7 @@ jobs:
                   --title "$title" \
                   --body "$body" \
                   --label "${labels[*]}" \
-                  --repo ${{ github.repository }} \
-                  --token $GITHUB_TOKEN
+                  --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would create issue '$title' with labels: ${labels[*]}"
               fi
