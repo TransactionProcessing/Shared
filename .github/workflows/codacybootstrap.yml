@@ -97,7 +97,9 @@ jobs:
             **Commit:** \`$sha\`
             if [ -n "$clean_line_text" ]; then
               **Code Snippet:**
-              $code_snippet"  
+              $code_snippet"
+            elif
+              "
             fi
       
             # Determine labels based on message/category
