@@ -115,12 +115,8 @@ public static class IApplicationBuilderExtensions
             _ => SubscriptionWorker.CreateSubscriptionWorker(eventStoreConnectionString, ehr.Value, subscriptionRepository, configurationSubscriptionWorker.InflightMessages, configuration.PersistentSubscriptionPollingInSeconds),
         };
 
-        worker.Trace += (_,
-                         args) => traceHandler(TraceEventType.Information, type, args.Message);
-        worker.Warning += (_,
-                           args) => traceHandler(TraceEventType.Warning, type, args.Message);
-        worker.Error += (_,
-                         args) => traceHandler(TraceEventType.Error, type, args.Message);
+         worker.ConfigureTracing(type, traceHandler);
+
         worker.SetIgnoreGroups(configurationSubscriptionWorker.IgnoreGroups);
         worker.SetIgnoreStreams(configurationSubscriptionWorker.IgnoreStreams);
         worker.SetIncludeGroups(configurationSubscriptionWorker.IncludeGroups);
@@ -128,5 +124,8 @@ public static class IApplicationBuilderExtensions
         return worker;
     }
 
+    
+
     #endregion
+
 }
