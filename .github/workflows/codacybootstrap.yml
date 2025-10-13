@@ -81,11 +81,11 @@ jobs:
 
             title="[$category] $message"
 
-            # Prepare the code snippet
+            # Prepare the code snippet as a single-line fenced block
             if [ -n "$line_text" ]; then
-              # Replace literal \n from JSON with spaces to make it single-line
-              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr '\n' ' ' | sed 's/\\n/ /g')
-              code_snippet="**Code Snippet:**\n\`\`\`$clean_line_text\`\`\`\n"
+              # Remove literal \n from JSON and real newlines
+              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr -d '\n' | sed 's/\\n/ /g')
+              code_snippet="**Code Snippet:**\n\`\`\`$clean_line_text\`\`\`"
             else
               code_snippet=""
             fi
