@@ -88,16 +88,13 @@ jobs:
               code_snippet=""
             fi
             
-            # Build body safely using double-quoted heredoc
-            body=$(cat <<EOF
-            **File:** \`$file\`
+            # Build body in a variable safely without using $(cat <<EOF)
+            body="**File:** \`$file\`
             **Line:** $line
             **Rule:** $category ($severity)
             **Commit:** \`$sha\`
             
-            $code_snippet**Codacy ID:** \`$id\`
-            EOF
-            )
+            $code_snippet**Codacy ID:** \`$id\`"
 
             # ---- Determine labels based on message/category ----
             labels=()
