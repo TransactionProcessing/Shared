@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           dry_run="${{ github.event.inputs.dry_run }}"
-          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body,labels --token $GITHUB_TOKEN)
+          current_issues=$(gh issue list --repo ${{ github.repository }} --state open --json number,title,body,labels)
       
           jq -c '.data[]' codacy_issues.json | while read -r issue; do
             id=$(echo "$issue" | jq -r '.issueId')
@@ -117,8 +117,7 @@ jobs:
                 gh issue edit "$existing_number" \
                   --body "$body" \
                   --add-label "$label_string" \
-                  --repo ${{ github.repository }} \
-                  --token $GITHUB_TOKEN
+                  --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would update issue #$existing_number with labels: $label_string"
               fi
@@ -129,8 +128,7 @@ jobs:
                   --title "$title" \
                   --body "$body" \
                   --label "$label_string" \
-                  --repo ${{ github.repository }} \
-                  --token $GITHUB_TOKEN
+                  --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would create issue '$title' with labels: $label_string"
               fi
