@@ -81,6 +81,25 @@ jobs:
       
             title="[$category] $message"
       
+            # Prepare the code snippet inline
+            if [ -n "$line_text" ]; then
+              # Replace literal \n from JSON and real newlines with space
+              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr '\n' ' ' | sed 's/\\n/ /g')
+              #code_snippet="**Code Snippet:**   $clean_line_text"
+            fi
+            
+            # Build the full body with Codacy ID at the top
+            body="**Codacy ID:** \`$id\`
+            
+            **File:** \`$file\`
+            **Line:** $line
+            **Rule:** $category ($severity)
+            **Commit:** \`$sha\`
+            if [ -n "$clean_line_text" ]; then
+              **Code Snippet:**
+              $code_snippet"  
+            fi
+      
             # Determine labels based on message/category
             labels=()
             if echo "$message" | grep -iq "todo"; then
@@ -103,43 +122,27 @@ jobs:
             if [ -n "$existing_number" ]; then
               echo "Updating existing issue #$existing_number ($id)"
               if [ "$dry_run" != "true" ]; then
-                gh issue edit "$existing_number" --add-label "$label_string" --repo ${{ github.repository }} <<EOF
-                **Codacy ID:** \`$id\`
-                
-                **File:** \`$file\`
-                **Line:** $line
-                **Rule:** $category ($severity)
-                **Commit:** \`$sha\`
-                
-                **Code Snippet:**
-                \`\`\`
-                $line_text
-                \`\`\`
-                EOF
+                gh issue edit "$existing_number" \
+                  --body "$body" \
+                  --add-label "$label_string" \
+                  --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would update issue #$existing_number with labels: $label_string"
               fi
             else
               echo "Creating new issue for Codacy ID $id"
               if [ "$dry_run" != "true" ]; then
-                gh issue create --title "$title" --label "$label_string" --repo ${{ github.repository }} <<EOF
-                **Codacy ID:** \`$id\`
-      
-                **File:** \`$file\`
-                **Line:** $line
-                **Rule:** $category ($severity)
-                **Commit:** \`$sha\`
-                
-                **Code Snippet:**
-                \`\`\`
-                $line_text
-                \`\`\`
-                EOF
+                gh issue create \
+                  --title "$title" \
+                  --body "$body" \
+                  --label "$label_string" \
+                  --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would create issue '$title' with labels: $label_string"
               fi
             fi
           done
+
 
       # 🔹 STEP 4: Close resolved issues
       - name: Close resolved issues
