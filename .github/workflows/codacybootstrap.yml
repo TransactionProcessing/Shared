@@ -101,13 +101,13 @@ jobs:
             fi
 
             existing_number=$(echo "$current_issues" | jq -r --arg id "$id" '.[] | select(.body | contains($id)) | .number')
-
+            label_string=$(IFS=,; echo "${labels[*]}")
             if [ -n "$existing_number" ]; then
               echo "Updating existing issue #$existing_number ($id)"
               if [ "$dry_run" != "true" ]; then
                 gh issue edit "$existing_number" \
                   --body "$body" \
-                  --add-label "${labels[@]}" \
+                  --add-label "$label_string" \
                   --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would update issue #$existing_number with labels: ${labels[*]}"
@@ -118,7 +118,7 @@ jobs:
                 gh issue create \
                   --title "$title" \
                   --body "$body" \
-                  --label "${labels[*]}" \
+                  --label "$label_string" \
                   --repo ${{ github.repository }}
               else
                 echo "[DRY RUN] Would create issue '$title' with labels: ${labels[*]}"
