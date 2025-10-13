@@ -81,14 +81,14 @@ jobs:
 
             title="[$category] $message"
 
-            # Build code snippet first
+            # Build code snippet inline
             if [ -n "$line_text" ]; then
-              code_snippet="**Code Snippet:**\n\`\`\`csharp\n$line_text\n\`\`\`\n\n"
+              code_snippet="**Code Snippet:** \`\`\`$line_text\`\`\`\n"
             else
               code_snippet=""
             fi
             
-            # Build body in a variable safely without using $(cat <<EOF)
+            # Build the full body
             body="**File:** \`$file\`
             **Line:** $line
             **Rule:** $category ($severity)
