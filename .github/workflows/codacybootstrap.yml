@@ -81,22 +81,17 @@ jobs:
 
             title="[$category] $message"
 
-            # Prepare the code snippet
+            # Clean up the snippet (remove literal \n from JSON and extra whitespace)
             if [ -n "$line_text" ]; then
-              # Replace literal \n (from JSON) with spaces to make it single-line
-              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr '\n' ' ' | sed 's/\\n/ /g')
-              code_snippet="**Code Snippet:**\n\`\`\`$clean_line_text\`\`\`\n"
+              clean_line_text=$(echo "$line_text" | tr -d '\r' | tr -d '\\' )
+              # Use actual newline in the string instead of \n
+              code_snippet=$'**Code Snippet:**\n```'"$clean_line_text"'```\n'
             else
               code_snippet=""
             fi
             
-            # Build the full body
-            body="**File:** \`$file\`
-            **Line:** $line
-            **Rule:** $category ($severity)
-            **Commit:** \`$sha\`
-            
-            $code_snippet**Codacy ID:** \`$id\`"
+            # Build the body with real newlines
+            body=$'**File:** `'"$file"'`\n**Line:** '"$line"'\n**Rule:** '"$category"' ('"$severity"')\n**Commit:** `'"$sha"'`\n\n'"$code_snippet"'**Codacy ID:** `'"$id"'`'
 
             # ---- Determine labels based on message/category ----
             labels=()
