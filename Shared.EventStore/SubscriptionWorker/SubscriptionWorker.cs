@@ -17,7 +17,7 @@ public class SubscriptionWorker
 
     internal readonly List<PersistentSubscription> CurrentSubscriptions = new();
 
-    public Func<List<PersistentSubscriptionInfo>, List<PersistentSubscriptionInfo>, List<PersistentSubscriptionInfo>> GetNewSubscriptions;
+    internal Func<List<PersistentSubscriptionInfo>, List<PersistentSubscriptionInfo>, List<PersistentSubscriptionInfo>> GetNewSubscriptions;
 
     private readonly List<IDomainEventHandler> EventHandlers;
 
