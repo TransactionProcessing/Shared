@@ -20,7 +20,7 @@ jobs:
   sync-codacy:
     uses: TransactionProcessing/org-ci-workflows/.github/workflows/sync-codacy-issues.yml@main
     with:
-      dry_run: ${{ github.event.inputs.dry_run }}
+      dry_run: ${{ github.event.inputs.dry_run || 'false' }}
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
