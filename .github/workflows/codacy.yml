@@ -6,11 +6,8 @@ on:
       dry_run:
         description: "Run without creating or modifying GitHub issues"
         required: false
-        default: "false"
-        type: choice
-        options:
-          - "true"
-          - "false"
+        default: false
+        type: boolean
   push:
     branches:
       - main
@@ -20,7 +17,7 @@ jobs:
   sync-codacy:
     uses: TransactionProcessing/org-ci-workflows/.github/workflows/sync-codacy-issues.yml@main
     with:
-      dry_run: ${{ github.event.inputs.dry_run || 'false' }}
+      dry_run: ${{ github.event.inputs.dry_run || false }}
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
