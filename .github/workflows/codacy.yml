@@ -1,0 +1,17 @@
+name: Sync Codacy Issues
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  sync-codacy:
+    uses: your-org/org-ci-workflows/.github/workflows/sync-codacy-issues.yml@main
+    with:
+      dry_run: "false"
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
