@@ -219,6 +219,6 @@ public class ClientHttpException : Exception {
     }
 }
 
-public class AuthenticationSchemes {
-    public const String Bearer = "Bearer";
+public static class AuthenticationSchemes {
+    public static readonly String Bearer = "Bearer";
 }
