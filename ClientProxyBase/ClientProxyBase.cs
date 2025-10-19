@@ -1,14 +1,17 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using SimpleResults;
+using System;
 
 namespace ClientProxyBase;
 
+using Shared.Results;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -102,6 +105,110 @@ public abstract class ClientProxyBase {
         return JsonConvert.DeserializeObject<ResponseData<T>>(content);
     }
 
+    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken)
+    {
+
+        HttpRequestMessage requestMessage = new(HttpMethod.Get, uri);
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+
+        // Make the Http Call here
+        HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
+
+        // Process the response
+        Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+        if (result.IsFailed)
+            return ResultHelpers.CreateFailure(result);
+
+        TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+
+        return Result.Success<TResponse>(responseData);
+    }
+
+    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    {
+
+        HttpRequestMessage requestMessage = new(HttpMethod.Post, uri);
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+
+        // Make the Http Call here
+        HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
+
+        // Process the response
+        Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+        if (result.IsFailed)
+            return ResultHelpers.CreateFailure(result);
+
+        TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+
+        return Result.Success<TResponse>(responseData);
+    }
+
+    protected virtual async Task<Result<TResponse>> SendPutRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    {
+
+        HttpRequestMessage requestMessage = new(HttpMethod.Put, uri);
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+
+        // Make the Http Call here
+        HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
+
+        // Process the response
+        Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+        if (result.IsFailed)
+            return ResultHelpers.CreateFailure(result);
+
+        TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+
+        return Result.Success<TResponse>(responseData);
+    }
+
+    protected virtual async Task<Result<TResponse>> SendPatchRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    {
+
+        HttpRequestMessage requestMessage = new(HttpMethod.Patch, uri);
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+
+        // Make the Http Call here
+        HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
+
+        // Process the response
+        Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+        if (result.IsFailed)
+            return ResultHelpers.CreateFailure(result);
+
+        TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+
+        return Result.Success<TResponse>(responseData);
+    }
+
+    protected virtual async Task<Result<TResponse>> SendDeleteRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken)
+    {
+
+        HttpRequestMessage requestMessage = new(HttpMethod.Delete, uri);
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+
+        // Make the Http Call here
+        HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
+
+        // Process the response
+        Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+        if (result.IsFailed)
+            return ResultHelpers.CreateFailure(result);
+
+        TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+
+        return Result.Success<TResponse>(responseData);
+    }
+
+
     #endregion
 }
 
@@ -110,4 +217,8 @@ public class ClientHttpException : Exception {
                                Exception? innerException = null) : base(message, innerException) {
 
     }
+}
+
+public static class AuthenticationSchemes {
+    public static readonly String Bearer = "Bearer";
 }
