@@ -106,8 +106,11 @@ public abstract class BaseDockerHelper{
     protected List<INetworkService> TestNetworks;
 
     protected String TransactionProcessorAclContainerName;
-
+    
     protected Int32 TransactionProcessorAclPort;
+
+    protected String KeyCloakContainerName;
+    protected Int32 KeyCloakPort;
 
     protected String TransactionProcessorContainerName;
 
@@ -146,6 +149,7 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
+            this.ImageDetails.Add(ContainerType.Keycloak, ("quay.io/keycloak/keycloak:26.4.1", true)); // Note: this may not work...
         }
         else{
             if (FdOs.IsLinux()){
@@ -163,6 +167,7 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
+            this.ImageDetails.Add(ContainerType.Keycloak, ("quay.io/keycloak/keycloak:26.4.1", true));
         }
 
         this.HostPorts = new Dictionary<ContainerType, Int32>();
@@ -320,6 +325,7 @@ public abstract class BaseDockerHelper{
         this.MessagingServiceContainerName = $"messaging{this.TestId:N}";
         this.TransactionProcessorContainerName = $"transaction{this.TestId:N}";
         this.TransactionProcessorAclContainerName = $"transactionacl{this.TestId:N}";
+        this.KeyCloakContainerName= $"keycloak{this.TestId:N}";
     }
     
     public virtual ContainerBuilder SetupEventStoreContainer(){
@@ -366,6 +372,22 @@ public abstract class BaseDockerHelper{
         }
 
         return eventStoreContainerBuilder;
+    }
+
+    public virtual ContainerBuilder SetupKeycloakContainer()
+    {
+        this.Trace("About to Start KeyCloak Container");
+
+        List<String> environmentVariables = new();
+        environmentVariables.Add("KC_BOOTSTRAP_ADMIN_USERNAME=admin");
+        environmentVariables.Add("KC_BOOTSTRAP_ADMIN_PASSWORD=admin");
+
+        ContainerBuilder keycloakContainer = new Builder().UseContainer()
+            .WithName(this.KeyCloakContainerName).WithEnvironment(environmentVariables.ToArray())
+            .UseImageDetails(this.GetImageDetails(ContainerType.Keycloak).Data).ExposePort(DockerPorts.KeyCloakDockerPort)
+            .Command("start-dev"); // 👈 equivalent to `docker run ... start-dev`
+
+        return keycloakContainer;
     }
 
     public virtual ContainerBuilder SetupFileProcessorContainer(){
@@ -934,6 +956,7 @@ public abstract class BaseDockerHelper{
                 DockerServices.TransactionProcessorAcl => ContainerType.TransactionProcessorAcl,
                 DockerServices.EventStore=> ContainerType.EventStore,
                 DockerServices.SqlServer => ContainerType.SqlServer,
+                DockerServices.KeyCloak => ContainerType.Keycloak,
                 _ => ContainerType.NotSet
             };
 
@@ -1008,6 +1031,9 @@ public abstract class BaseDockerHelper{
                 break;
             case ContainerType.TransactionProcessorAcl: 
                 TransactionProcessorAclPort = GetPort(DockerPorts.TransactionProcessorAclDockerPort); 
+                break;
+            case ContainerType.Keycloak:
+                this.KeyCloakPort = GetPort(DockerPorts.KeyCloakDockerPort);
                 break;
         }
     }

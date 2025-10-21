@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 	  <TargetFrameworks>net9.0</TargetFrameworks>
-	<DebugType>None</DebugType>
+	<DebugType>Full</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ClientProxyBase\ClientProxyBase.csproj" />
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
 

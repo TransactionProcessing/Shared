@@ -109,7 +109,8 @@ public abstract class ClientProxyBase {
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Get, uri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        if (String.IsNullOrEmpty(accessToken) == false)
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
 
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
@@ -129,8 +130,15 @@ public abstract class ClientProxyBase {
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Post, uri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
-        requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        if (String.IsNullOrEmpty(accessToken) == false)
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        if (content.GetType() == typeof(FormUrlEncodedContent)) {
+            // Treat this specially
+            requestMessage.Content = content as FormUrlEncodedContent;
+        }
+        else {
+            requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        }
 
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
@@ -150,8 +158,17 @@ public abstract class ClientProxyBase {
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Put, uri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
-        requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        if (String.IsNullOrEmpty(accessToken) == false)
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        if (content.GetType() == typeof(FormUrlEncodedContent))
+        {
+            // Treat this specially
+            requestMessage.Content = content as FormUrlEncodedContent;
+        }
+        else
+        {
+            requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        }
 
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
@@ -171,8 +188,17 @@ public abstract class ClientProxyBase {
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Patch, uri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
-        requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        if (String.IsNullOrEmpty(accessToken) == false)
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        if (content.GetType() == typeof(FormUrlEncodedContent))
+        {
+            // Treat this specially
+            requestMessage.Content = content as FormUrlEncodedContent;
+        }
+        else
+        {
+            requestMessage.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        }
 
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
@@ -192,7 +218,8 @@ public abstract class ClientProxyBase {
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Delete, uri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        if (String.IsNullOrEmpty(accessToken) == false)
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
 
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
