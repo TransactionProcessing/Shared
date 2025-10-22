@@ -1,12 +1,9 @@
-﻿namespace Shared.IntegrationTesting;
+﻿using System.Net.Http;
+using System.Text;
+using System.Threading;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+namespace Shared.IntegrationTesting;
+
 using Ductus.FluentDocker;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
@@ -16,6 +13,14 @@ using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
 using Newtonsoft.Json;
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 [Flags]
 public enum DockerServices{
@@ -27,7 +32,9 @@ public enum DockerServices{
     TestHost = 32,
     TransactionProcessor = 64,
     FileProcessor = 128,
-    TransactionProcessorAcl = 256 }
+    TransactionProcessorAcl = 256,
+    KeyCloak = 512
+}
 
 public abstract class DockerHelper : BaseDockerHelper
 {
@@ -116,7 +123,8 @@ public abstract class DockerHelper : BaseDockerHelper
         await StartContainer2(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
         await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
         await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
-        
+        await StartContainer2(this.SetupKeycloakContainer, networks, DockerServices.KeyCloak);
+
         await this.LoadEventStoreProjections();
         
         await this.CreateSubscriptions();
