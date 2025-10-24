@@ -11,6 +11,5 @@ public enum ContainerType
     TransactionProcessor,
     FileProcessor,
     TransactionProcessorAcl,
-    Keycloak,
     NotSet
 }

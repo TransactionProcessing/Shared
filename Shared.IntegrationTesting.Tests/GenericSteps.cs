@@ -46,7 +46,7 @@ public class GenericSteps
         DockerServices services = DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
                                   DockerServices.CallbackHandler | DockerServices.FileProcessor |
                                   DockerServices.TestHost | DockerServices.TransactionProcessor |
-                                  DockerServices.TransactionProcessorAcl  | DockerServices.KeyCloak;
+                                  DockerServices.TransactionProcessorAcl;
         
         this.TestingContext.Logger = logger;
         this.TestingContext.Logger.LogInformation("About to Start Containers for Scenario Run");

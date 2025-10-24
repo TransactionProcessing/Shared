@@ -32,8 +32,7 @@ public enum DockerServices{
     TestHost = 32,
     TransactionProcessor = 64,
     FileProcessor = 128,
-    TransactionProcessorAcl = 256,
-    KeyCloak = 512
+    TransactionProcessorAcl = 256
 }
 
 public abstract class DockerHelper : BaseDockerHelper
@@ -123,7 +122,6 @@ public abstract class DockerHelper : BaseDockerHelper
         await StartContainer2(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
         await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
         await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
-        await StartContainer2(this.SetupKeycloakContainer, networks, DockerServices.KeyCloak);
 
         await this.LoadEventStoreProjections();
         
