@@ -137,7 +137,7 @@ public abstract class BaseDockerHelper{
         // Setup the default image details
         SimpleResults.Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform();
         if (engineType.Data == DockerEnginePlatform.Windows){
-            this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2019", true));
+            this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2022", true));
             this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/eventstore_windows", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservicewindows:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservicewindows:master", true));
@@ -148,13 +148,7 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
         }
         else{
-            if (FdOs.IsLinux()){
-                this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2019-latest", true));
-            }
-            else{
-                this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/azure-sql-edge", true));
-            }
-
+            this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
             this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:24.10.0-jammy", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
@@ -201,7 +195,7 @@ public abstract class BaseDockerHelper{
         return result;
     }
 
-    public List<String> GetCommonEnvironmentVariables(){
+    public virtual List<String> GetCommonEnvironmentVariables(){
         Int32 securityServicePort = this.GetSecurityServicePort();
 
         String healthCheckConnString = this.SetConnectionString("ConnectionStrings:HealthCheck", "master", this.UseSecureSqlServerDatabase);

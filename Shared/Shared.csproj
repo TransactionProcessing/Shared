@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Logger\" />
-    <Folder Include="Results\" />
-    <Folder Include="TennantContext\" />
+    <Compile Remove="Logger\**" />
+    <EmbeddedResource Remove="Logger\**" />
+    <None Remove="Logger\**" />
   </ItemGroup>
 
   <ItemGroup>
