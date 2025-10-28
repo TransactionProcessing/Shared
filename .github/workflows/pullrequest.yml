@@ -69,6 +69,13 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
+    - name: Ensure Docker uses Linux containers
+      run: |
+          & "C:\Program Files\Docker\Docker\DockerCli.exe" -SwitchLinuxEngine
+          # Wait for Docker to restart
+          Start-Sleep -Seconds 15
+          docker info | Select-String "Operating System"
+
     #- name: Build Windows SQL Server
     #  run: |
     #     cd SQLDocker
