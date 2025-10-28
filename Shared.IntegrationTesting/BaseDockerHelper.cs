@@ -546,7 +546,8 @@ public abstract class BaseDockerHelper{
     public virtual INetworkService SetupTestNetwork(String networkName = null,
                                                     Boolean reuseIfExists = false){
         networkName = String.IsNullOrEmpty(networkName) ? $"testnw{this.TestId:N}" : networkName;
-        //SimpleResults.Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform();
+        SimpleResults.Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform();
+        Console.WriteLine($"Engine Type is {engineType.Data}");
 
         //if (engineType.Data == DockerEnginePlatform.Windows){
         //    var docker = BaseDockerHelper.GetDockerHost();
