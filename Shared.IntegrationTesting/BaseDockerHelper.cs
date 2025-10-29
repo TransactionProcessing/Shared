@@ -136,9 +136,10 @@ public abstract class BaseDockerHelper{
 
         // Setup the default image details
         SimpleResults.Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform();
-        if (engineType.Data == DockerEnginePlatform.Windows){
+        if (engineType.Data == DockerEnginePlatform.Windows)
+        {
             this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2022", true));
-            this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/eventstore_windows", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/kurrentdb_windows", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservicewindows:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservicewindows:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandlerwindows:master", true));
@@ -147,9 +148,10 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
         }
-        else{
+        else
+        {
             this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
-            this.ImageDetails.Add(ContainerType.EventStore, ("eventstore/eventstore:24.10.0-jammy", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:25.1", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
@@ -547,28 +549,33 @@ public abstract class BaseDockerHelper{
                                                     Boolean reuseIfExists = false){
         networkName = String.IsNullOrEmpty(networkName) ? $"testnw{this.TestId:N}" : networkName;
         SimpleResults.Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform();
+        Console.WriteLine($"Engine Type is {engineType.Data}");
 
-        if (engineType.Data == DockerEnginePlatform.Windows){
+        if (engineType.Data == DockerEnginePlatform.Windows)
+        {
             var docker = BaseDockerHelper.GetDockerHost();
             var network = docker.GetNetworks().SingleOrDefault(nw => nw.Name == networkName);
-            if (network == null){
+            if (network == null)
+            {
                 Dictionary<String, String> driverOptions = new Dictionary<String, String>();
                 driverOptions.Add("com.docker.network.windowsshim.networkname", networkName);
 
                 network = docker.CreateNetwork(networkName,
-                                               new NetworkCreateParams{
-                                                                          Driver = "nat",
-                                                                          DriverOptions = driverOptions,
-                                                                          Attachable = true,
-                                                                      });
+                                               new NetworkCreateParams
+                                               {
+                                                   Driver = "nat",
+                                                   DriverOptions = driverOptions,
+                                                   Attachable = true,
+                                               });
             }
 
             return network;
         }
 
-        if (engineType.Data == DockerEnginePlatform.Linux){
-            // Build a network
-            NetworkBuilder networkService = new Builder().UseNetwork(networkName).ReuseIfExist();
+        if (engineType.Data == DockerEnginePlatform.Linux)
+        {
+          // Build a network
+           NetworkBuilder networkService = new Builder().UseNetwork(networkName).ReuseIfExist();
 
             return networkService.Build();
         }

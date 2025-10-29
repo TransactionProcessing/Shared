@@ -54,55 +54,55 @@ jobs:
         name: tracelogslinux
         path: /home/txnproc/trace/   
 
-  # buildwindows:
-  #   name: "Build and Test Pull Requests - Windows"
-  #   env:
-  #       ASPNETCORE_ENVIRONMENT: "Production"
+  buildwindows:
+    name: "Build and Test Pull Requests - Windows"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
 
-  #   runs-on: windows-latest
+    runs-on: windows-latest
 
-  #   steps:
-  #   - uses: actions/checkout@v1
+    steps:
+    - uses: actions/checkout@v1
 
-  #   - name: Install NET 9
-  #     uses: actions/setup-dotnet@v4.0.1
-  #     with:
-  #       dotnet-version: '9.0.x'
+    - name: Install NET 9
+      uses: actions/setup-dotnet@v4.0.1
+      with:
+        dotnet-version: '9.0.x'
 
-  #   - name: Build Windows SQL Server
-  #     run: |
-  #        cd SQLDocker
-  #        docker build -t mssqlserver:2022-ltsc2022 --build-arg SQL_VERSION=2022 --build-arg WIN_VERSION=ltsc2022 .
+    - name: Build Windows SQL Server
+      run: |
+         cd SQLDocker
+         docker build -t mssqlserver:2022-ltsc2022 --build-arg SQL_VERSION=2022 --build-arg WIN_VERSION=ltsc2022 .
 
-  #   - name: Restore Nuget Packages
-  #     run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
-  #   - name: Build Code
-  #     run: dotnet build Shared.sln --configuration Release
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
 
-  #   - name: Run Unit Tests
-  #     run: |
-  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #       dotnet test "Shared.Tests\Shared.Tests.csproj"
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
 
-  #   - name: Run Event Store Tests
-  #     run: |
-  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #       dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
-  #       dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
+    - name: Run Event Store Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
-  #   - name: Run Integration Tests
-  #     env:
-  #         IsCI: true
-  #     run: |
-  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #       dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+    - name: Run Integration Tests
+      env:
+          IsCI: true
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
-  #   - uses: actions/upload-artifact@v4.4.3
-  #     #if: ${{ failure() }}
-  #     with:
-  #       name: tracelogswindows
-  #       path: C:\\Users\\runneradmin\\txnproc
+    - uses: actions/upload-artifact@v4.4.3
+      #if: ${{ failure() }}
+      with:
+        name: tracelogswindows
+        path: C:\\Users\\runneradmin\\txnproc
 
   # buildmacos:
   #   name: "Build and Test Pull Requests - Mac"
