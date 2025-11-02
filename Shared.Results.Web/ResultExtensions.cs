@@ -1,7 +1,7 @@
-﻿using System;
-using System.Net;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using SimpleResults;
+using System;
+using System.Net;
 
 namespace Shared.Results.Web;
 
