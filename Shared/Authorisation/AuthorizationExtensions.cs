@@ -10,6 +10,22 @@ using System.Threading.Tasks;
 namespace Shared.Authorisation
 {
     public static class AuthorizationExtensions {
+
+        public static class PolicyNames {
+            public const string ClientCredentialsOnlyPolicy = "ClientCredentialsOnly";
+            public const string PasswordTokenOnlyPolicy = "PasswordToken";
+            public const string AuthorisedTokenPolicy = "AnyTokenType";
+        }
+
+        public static IServiceCollection AddAuthorisedTokenPolicy(this IServiceCollection services)
+        {
+            services.AddAuthorization(options => {
+                options.AddPolicy(PolicyNames.AuthorisedTokenPolicy, policy => policy.RequireAuthenticatedUser());
+            });
+
+            return services;
+        }
+
         public static IServiceCollection AddClientCredentialsHandler(this IServiceCollection services) {
             services.AddSingleton<IAuthorizationHandler, ClientCredentialsHandler>();
             return services;
@@ -17,7 +33,7 @@ namespace Shared.Authorisation
 
         public static IServiceCollection AddClientCredentialsOnlyPolicy(this IServiceCollection services) {
             services.AddAuthorization(options => {
-                options.AddPolicy("ClientCredentialsOnly", policy => 
+                options.AddPolicy(PolicyNames.ClientCredentialsOnlyPolicy, policy => 
                     policy.Requirements.Add(new ClientCredentialsRequirement()));
             });
 
@@ -34,7 +50,7 @@ namespace Shared.Authorisation
         {
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("PasswordToken", policy =>
+                options.AddPolicy(PolicyNames.PasswordTokenOnlyPolicy, policy =>
                     policy.Requirements.Add(new PasswordTokenRequirement()));
             });
 
