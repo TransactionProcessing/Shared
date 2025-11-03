@@ -105,7 +105,7 @@ public abstract class ClientProxyBase {
         return JsonConvert.DeserializeObject<ResponseData<T>>(content);
     }
 
-    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken, (String header, String value) additionalHeaders = default)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Get, uri);
@@ -126,7 +126,7 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken, (String header, String value) additionalHeaders = default)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Post, uri);
@@ -154,7 +154,7 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendPutRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendPutRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken, (String header, String value) additionalHeaders = default)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Put, uri);
@@ -184,7 +184,7 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendPatchRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendPatchRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken, (String header, String value) additionalHeaders = default)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Patch, uri);
@@ -214,7 +214,7 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendDeleteRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendDeleteRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken, (String header, String value) additionalHeaders = default)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Delete, uri);
