@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SimpleResults;
 using System;
+using System.Linq;
 
 namespace ClientProxyBase;
 
@@ -105,13 +106,21 @@ public abstract class ClientProxyBase {
         return JsonConvert.DeserializeObject<ResponseData<T>>(content);
     }
 
-    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri,
+                                                                              String accessToken,
+                                                                              CancellationToken cancellationToken) =>
+        await this.SendGetRequest<TResponse>(uri, accessToken, cancellationToken, null);
+    
+
+    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken, List<(String header, String value)> additionalHeaders)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Get, uri);
         if (String.IsNullOrEmpty(accessToken) == false)
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
-
+        
+        AddAdditionalHeaders(requestMessage, additionalHeaders);
+        
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
 
@@ -126,12 +135,17 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken) =>         await this.SendPostRequest<TRequest, TResponse>(uri, accessToken, content, cancellationToken, null);
+
+    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken, List<(String header, String value)> additionalHeaders)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Post, uri);
         if (String.IsNullOrEmpty(accessToken) == false)
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+        
+        AddAdditionalHeaders(requestMessage, additionalHeaders);
+
         if (content.GetType() == typeof(FormUrlEncodedContent)) {
             // Treat this specially
             requestMessage.Content = content as FormUrlEncodedContent;
@@ -154,12 +168,18 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendPutRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendPutRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken) => 
+        await this.SendPutRequest<TRequest, TResponse>(uri, accessToken, content, cancellationToken, null);
+
+    protected virtual async Task<Result<TResponse>> SendPutRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken, List<(String header, String value)> additionalHeaders)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Put, uri);
         if (String.IsNullOrEmpty(accessToken) == false)
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+
+        AddAdditionalHeaders(requestMessage, additionalHeaders);
+
         if (content.GetType() == typeof(FormUrlEncodedContent))
         {
             // Treat this specially
@@ -184,12 +204,17 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendPatchRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendPatchRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken) =>         await this.SendPatchRequest<TRequest, TResponse>(uri, accessToken, content, cancellationToken, null);
+
+    protected virtual async Task<Result<TResponse>> SendPatchRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken, List<(String header, String value)> additionalHeaders)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Patch, uri);
         if (String.IsNullOrEmpty(accessToken) == false)
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
+
+        AddAdditionalHeaders(requestMessage, additionalHeaders);
+
         if (content.GetType() == typeof(FormUrlEncodedContent))
         {
             // Treat this specially
@@ -214,13 +239,17 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendDeleteRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken)
+    protected virtual async Task<Result<TResponse>> SendDeleteRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken) =>         await this.SendDeleteRequest<TResponse>(uri, accessToken, cancellationToken, null);
+
+    protected virtual async Task<Result<TResponse>> SendDeleteRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken, List<(String header, String value)> additionalHeaders)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Delete, uri);
         if (String.IsNullOrEmpty(accessToken) == false)
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
 
+        AddAdditionalHeaders(requestMessage,additionalHeaders);
+
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
 
@@ -233,6 +262,15 @@ public abstract class ClientProxyBase {
         TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
 
         return Result.Success<TResponse>(responseData);
+    }
+
+    static void AddAdditionalHeaders(HttpRequestMessage requestMessage,
+                                     List<(String header, String value)> additionalHeaders) {
+        if (additionalHeaders != null && additionalHeaders.Any()) {
+            foreach ((String header, String value) additionalHeader in additionalHeaders) {
+                requestMessage.Headers.Add(additionalHeader.header, additionalHeader.value);
+            }
+        }
     }
 
 
