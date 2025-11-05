@@ -109,10 +109,22 @@ public abstract class ClientProxyBase {
     protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri,
                                                                               String accessToken,
                                                                               CancellationToken cancellationToken) =>
-        await this.SendGetRequest<TResponse>(uri, accessToken, cancellationToken, null);
-    
+        await this.SendGetRequest<TResponse>(uri, accessToken, null, null, cancellationToken);
 
-    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken, List<(String header, String value)> additionalHeaders)
+    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri,
+                                                                              String accessToken,
+                                                                              List<(String header, String value)> additionalHeaders,
+                                                                              CancellationToken cancellationToken) =>
+        await this.SendGetRequest<TResponse>(uri, accessToken, additionalHeaders, null, cancellationToken);
+
+    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri,
+                                                                              String accessToken,
+                                                                              HttpContent content,
+                                                                              CancellationToken cancellationToken) =>
+        await this.SendGetRequest<TResponse>(uri, accessToken, null, content, cancellationToken);
+
+
+    protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri, String accessToken, List<(String header, String value)> additionalHeaders, HttpContent content, CancellationToken cancellationToken)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Get, uri);
@@ -120,7 +132,11 @@ public abstract class ClientProxyBase {
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(AuthenticationSchemes.Bearer, accessToken);
         
         AddAdditionalHeaders(requestMessage, additionalHeaders);
-        
+
+        if (content != null) {
+            requestMessage.Content = content;
+        }
+
         // Make the Http Call here
         HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
 
