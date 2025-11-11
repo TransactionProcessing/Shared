@@ -16,7 +16,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-public abstract class ClientProxyBase {
+public abstract partial class ClientProxyBase {
     #region Fields
 
     /// <summary>
@@ -106,6 +106,7 @@ public abstract class ClientProxyBase {
         return JsonConvert.DeserializeObject<ResponseData<T>>(content);
     }
 
+    /*
     protected virtual async Task<Result<TResponse>> SendGetRequest<TResponse>(String uri,
                                                                               String accessToken,
                                                                               CancellationToken cancellationToken) =>
@@ -151,9 +152,9 @@ public abstract class ClientProxyBase {
         return Result.Success<TResponse>(responseData);
     }
 
-    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken) =>         await this.SendPostRequest<TRequest, TResponse>(uri, accessToken, content, cancellationToken, null);
+    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken) => await this.SendPostRequest<TRequest, TResponse>(uri, accessToken, content, null, cancellationToken);
 
-    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken, List<(String header, String value)> additionalHeaders)
+    protected virtual async Task<Result<TResponse>> SendPostRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken)
     {
 
         HttpRequestMessage requestMessage = new(HttpMethod.Post, uri);
@@ -183,6 +184,30 @@ public abstract class ClientProxyBase {
 
         return Result.Success<TResponse>(responseData);
     }
+
+    protected virtual async Task<Result> SendPostRequest<TResponse>(string uri,
+                                                                    string accessToken,
+                                                                    List<(string header, string value)> additionalHeaders,
+                                                                    CancellationToken cancellationToken) {
+        Result result = await this.SendPostRequest<Object>(uri, accessToken, additionalHeaders, cancellationToken);
+        if (result.IsFailed)
+            return ResultHelpers.CreateFailure(result);
+        return Result.Success();
+    }
+
+    protected virtual async Task<Result> SendPostRequest<TResponse>(string uri,
+                                                                    string accessToken,
+                                                                    CancellationToken cancellationToken) =>  await this.SendPostRequest<TResponse>(uri, accessToken, null, cancellationToken);
+
+    //protected virtual async Task<Result> SendPostRequest(string uri,
+    //                                                     string accessToken = null,
+    //                                                     List<(string header, string value)> additionalHeaders = null)
+    //{
+    //    Result<String> result = await SendPostRequest<object, string>(uri, accessToken, null, cancellationToken, additionalHeaders);
+    //    if (result.IsFailed)
+    //        return ResultHelpers.CreateFailure(result);
+    //    return Result.Success();
+    //}
 
     protected virtual async Task<Result<TResponse>> SendPutRequest<TRequest, TResponse>(String uri, String accessToken, TRequest content, CancellationToken cancellationToken) => 
         await this.SendPutRequest<TRequest, TResponse>(uri, accessToken, content, cancellationToken, null);
@@ -278,7 +303,7 @@ public abstract class ClientProxyBase {
         TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
 
         return Result.Success<TResponse>(responseData);
-    }
+    }*/
 
     static void AddAdditionalHeaders(HttpRequestMessage requestMessage,
                                      List<(String header, String value)> additionalHeaders) {
@@ -288,7 +313,6 @@ public abstract class ClientProxyBase {
             }
         }
     }
-
 
     #endregion
 }
