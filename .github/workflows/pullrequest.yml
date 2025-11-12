@@ -19,7 +19,7 @@ jobs:
     - name: Install NET 9
       uses: actions/setup-dotnet@v4.0.1
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '9.0.306'
 
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
@@ -67,7 +67,7 @@ jobs:
     - name: Install NET 9
       uses: actions/setup-dotnet@v4.0.1
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '9.0.306'
 
     - name: Build Windows SQL Server
       run: |
