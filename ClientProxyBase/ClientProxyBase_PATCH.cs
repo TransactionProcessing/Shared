@@ -14,7 +14,7 @@ namespace ClientProxyBase
 {
     public abstract partial class ClientProxyBase
     {
-        protected virtual async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+        protected virtual async Task<Result> SendHttpPatchRequest<TRequest>(String uri,
                                                                                     TRequest request,
                                                                                     String accessToken,
                                                                                     List<(String header, String value)> additionalHeaders,
@@ -48,19 +48,19 @@ namespace ClientProxyBase
             return Result.Success();
         }
 
-        protected virtual async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+        protected virtual async Task<Result> SendHttpPatchRequest<TRequest>(String uri,
                                                                                       TRequest request,
                                                                                       String accessToken,
                                                                                       CancellationToken cancellationToken) =>
             await this.SendHttpPatchRequest(uri, request, accessToken, null, cancellationToken);
 
-        protected virtual async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+        protected virtual async Task<Result> SendHttpPatchRequest<TRequest>(String uri,
                                                                                       TRequest request,
                                                                                       List<(String header, String value)> additionalHeaders,
                                                                                       CancellationToken cancellationToken) =>
             await this.SendHttpPatchRequest(uri, request, null, additionalHeaders, cancellationToken);
 
-        protected virtual async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+        protected virtual async Task<Result> SendHttpPatchRequest<TRequest>(String uri,
                                                                                       TRequest request,
                                                                                       CancellationToken cancellationToken) =>
             await this.SendHttpPatchRequest(uri, request, null, null, cancellationToken);
