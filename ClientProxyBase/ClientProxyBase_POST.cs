@@ -14,7 +14,7 @@ namespace ClientProxyBase
 {
     public abstract partial class ClientProxyBase
     {
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri,
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri,
                                                   String accessToken,
                                                   List<(String header, String value)> additionalHeaders,
                                                   CancellationToken cancellationToken) {
@@ -40,17 +40,17 @@ namespace ClientProxyBase
 
         }
 
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken) =>
                     await this.SendHttpPostRequest<TResponse>(uri, accessToken, null, cancellationToken);
 
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
                             await this.SendHttpPostRequest<TResponse>(uri, null, additionalHeaders, cancellationToken);
 
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, CancellationToken cancellationToken) =>
                                         await this.SendHttpPostRequest<TResponse>(uri, null, null, cancellationToken);
 
 
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri,
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri,
                                                                                                 TRequest request,
                                                                                                 String accessToken,
                                                                                                 List<(String header, String value)> additionalHeaders,
@@ -85,16 +85,16 @@ namespace ClientProxyBase
             return Result.Success(responseData);
         }
 
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, String accessToken, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, String accessToken, CancellationToken cancellationToken) =>
             await this.SendHttpPostRequest<TRequest, TResponse>(uri,request, accessToken, null, cancellationToken);
 
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
             await this.SendHttpPostRequest<TRequest, TResponse>(uri, request, null, additionalHeaders, cancellationToken);
 
-        internal virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, CancellationToken cancellationToken) =>
             await this.SendHttpPostRequest<TRequest, TResponse>(uri, request, null, null, cancellationToken);
 
-        internal virtual async Task<Result> SendHttpPostRequest(String uri,
+        protected virtual async Task<Result> SendHttpPostRequest(String uri,
                                                                 String accessToken,
                                                                 List<(String header, String value)> additionalHeaders,
                                                                 CancellationToken cancellationToken)
@@ -117,13 +117,13 @@ namespace ClientProxyBase
             return Result.Success();
         }
 
-        internal virtual async Task<Result> SendHttpPostRequest(String uri, String accessToken, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result> SendHttpPostRequest(String uri, String accessToken, CancellationToken cancellationToken) =>
             await this.SendHttpPostRequest(uri, accessToken, null, cancellationToken);
 
-        internal virtual async Task<Result> SendHttpPostRequest(String uri, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result> SendHttpPostRequest(String uri, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
             await this.SendHttpPostRequest(uri, null, additionalHeaders, cancellationToken);
 
-        internal virtual async Task<Result> SendHttpPostRequest(String uri, CancellationToken cancellationToken) =>
+        protected virtual async Task<Result> SendHttpPostRequest(String uri, CancellationToken cancellationToken) =>
             await this.SendHttpPostRequest(uri, null, null, cancellationToken);
     }
 }

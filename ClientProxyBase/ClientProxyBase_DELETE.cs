@@ -14,10 +14,10 @@ namespace ClientProxyBase
 {
     public abstract partial class ClientProxyBase
     {
-        internal virtual async Task<Result> SendHttpDeleteRequest(String uri,
-                                                                  String accessToken,
-                                                                  List<(String header, String value)> additionalHeaders,
-                                                                  CancellationToken cancellationToken)
+        protected virtual async Task<Result> SendHttpDeleteRequest(String uri,
+                                                                   String accessToken,
+                                                                   List<(String header, String value)> additionalHeaders,
+                                                                   CancellationToken cancellationToken)
         {
             HttpRequestMessage requestMessage = new(HttpMethod.Delete, uri);
             if (String.IsNullOrEmpty(accessToken) == false)
@@ -37,17 +37,17 @@ namespace ClientProxyBase
             return Result.Success();
         }
 
-        internal virtual async Task<Result> SendHttpDeleteRequest(String uri,
-                                                                  String accessToken,
-                                                                  CancellationToken cancellationToken) =>
+        protected virtual async Task<Result> SendHttpDeleteRequest(String uri,
+                                                                   String accessToken,
+                                                                   CancellationToken cancellationToken) =>
             await this.SendHttpDeleteRequest(uri, accessToken,null, cancellationToken);
 
-        internal virtual async Task<Result> SendHttpDeleteRequest(String uri,
-                                                                  List<(String header, String value)> additionalHeaders,
-                                                                  CancellationToken cancellationToken) =>
+        protected virtual async Task<Result> SendHttpDeleteRequest(String uri,
+                                                                   List<(String header, String value)> additionalHeaders,
+                                                                   CancellationToken cancellationToken) =>
             await this.SendHttpDeleteRequest(uri, null, additionalHeaders, cancellationToken);
 
-        internal virtual async Task<Result> SendHttpDeleteRequest(String uri,
+        protected virtual async Task<Result> SendHttpDeleteRequest(String uri,
                                                                   CancellationToken cancellationToken) =>
             await this.SendHttpDeleteRequest(uri, null, null, cancellationToken);
     }

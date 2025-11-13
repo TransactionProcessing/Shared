@@ -1,15 +1,17 @@
 ﻿using Newtonsoft.Json;
 using RichardSzalay.MockHttp;
+using Shared.Results;
+using Shouldly;
+using SimpleResults;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Shouldly;
-using SimpleResults;
 using Xunit;
 
 namespace Shared.Tests
@@ -17,6 +19,143 @@ namespace Shared.Tests
     public class HttpService : ClientProxyBase.ClientProxyBase {
         public HttpService(HttpClient httpClient) : base(httpClient) {
         }
+
+        public async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+                                                                                      String accessToken,
+                                                                                      List<(String header, String value)> additionalHeaders,
+                                                                                      CancellationToken cancellationToken) =>
+            await base.SendHttpGetRequest<TResponse>(uri, accessToken, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+                                                                           String accessToken,
+                                                                           CancellationToken cancellationToken) =>
+            await base.SendHttpGetRequest<TResponse>(uri, accessToken, null, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+                                                                           List<(String header, String value)> additionalHeaders,
+                                                                           CancellationToken cancellationToken) =>
+            await base.SendHttpGetRequest<TResponse>(uri, null, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+                                                                           CancellationToken cancellationToken) =>
+            await base.SendHttpGetRequest<TResponse>(uri, null, null, cancellationToken);
+
+        public async Task<Result> SendHttpDeleteRequest(String uri,
+                                                        String accessToken,
+                                                        List<(String header, String value)> additionalHeaders,
+                                                        CancellationToken cancellationToken) =>
+            await base.SendHttpDeleteRequest(uri, accessToken, additionalHeaders, cancellationToken);
+
+        public async Task<Result> SendHttpDeleteRequest(String uri,
+                                                                String accessToken,
+                                                                CancellationToken cancellationToken) =>
+            await base.SendHttpDeleteRequest(uri, accessToken, null, cancellationToken);
+
+        public async Task<Result> SendHttpDeleteRequest(String uri,
+                                                                List<(String header, String value)> additionalHeaders,
+                                                                CancellationToken cancellationToken) =>
+            await base.SendHttpDeleteRequest(uri, null, additionalHeaders, cancellationToken);
+
+        public async Task<Result> SendHttpDeleteRequest(String uri,
+                                                                CancellationToken cancellationToken) =>
+            await base.SendHttpDeleteRequest(uri, null, null, cancellationToken);
+
+        public async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+                                                                                      TRequest request,
+                                                                                      String accessToken,
+                                                                                      List<(String header, String value)> additionalHeaders,
+                                                                                      CancellationToken cancellationToken) =>
+            await base.SendHttpPatchRequest<TRequest>(uri, request, accessToken, additionalHeaders, cancellationToken);
+
+
+        public async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+                                                                                   TRequest request,
+                                                                                   String accessToken,
+                                                                                   CancellationToken cancellationToken) =>
+            await base.SendHttpPatchRequest(uri, request, accessToken, null, cancellationToken);
+
+        public async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+                                                                                   TRequest request,
+                                                                                   List<(String header, String value)> additionalHeaders,
+                                                                                   CancellationToken cancellationToken) =>
+            await base.SendHttpPatchRequest(uri, request, null, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TRequest>> SendHttpPatchRequest<TRequest>(String uri,
+                                                                                   TRequest request,
+                                                                                   CancellationToken cancellationToken) =>
+            await base.SendHttpPatchRequest(uri, request, null, null, cancellationToken);
+
+        public async Task<Result<TRequest>> SendHttpPutRequest<TRequest>(String uri,
+                                                                         TRequest request,
+                                                                         String accessToken,
+                                                                         List<(String header, String value)> additionalHeaders,
+                                                                         CancellationToken cancellationToken) =>
+            await base.SendHttpPutRequest<TRequest>(uri, request, accessToken, additionalHeaders, cancellationToken);
+        
+        public async Task<Result<TRequest>> SendHttpPutRequest<TRequest>(String uri,
+                                                                                   TRequest request,
+                                                                                   String accessToken,
+                                                                                   CancellationToken cancellationToken) =>
+            await base.SendHttpPutRequest(uri, request, accessToken, null, cancellationToken);
+
+        public async Task<Result<TRequest>> SendHttpPutRequest<TRequest>(String uri,
+                                                                                   TRequest request,
+                                                                                   List<(String header, String value)> additionalHeaders,
+                                                                                   CancellationToken cancellationToken) =>
+            await base.SendHttpPutRequest(uri, request, null, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TRequest>> SendHttpPutRequest<TRequest>(String uri,
+                                                                                   TRequest request,
+                                                                                   CancellationToken cancellationToken) =>
+            await base.SendHttpPutRequest(uri, request, null, null, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri,
+                                                                            String accessToken,
+                                                                            List<(String header, String value)> additionalHeaders,
+                                                                            CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest<TResponse>(uri, accessToken, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, String accessToken, CancellationToken cancellationToken) =>
+                    await base.SendHttpPostRequest<TResponse>(uri, accessToken, null, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
+                            await base.SendHttpPostRequest<TResponse>(uri, null, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TResponse>(String uri, CancellationToken cancellationToken) =>
+                                        await base.SendHttpPostRequest<TResponse>(uri, null, null, cancellationToken);
+
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri,
+                                                                                      TRequest request,
+                                                                                      String accessToken,
+                                                                                      List<(String header, String value)> additionalHeaders,
+                                                                                      CancellationToken cancellationToken) 
+        =>await base.SendHttpPostRequest<TRequest, TResponse>(uri, request, accessToken, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, String accessToken, CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest<TRequest, TResponse>(uri, request, accessToken, null, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest<TRequest, TResponse>(uri, request, null, additionalHeaders, cancellationToken);
+
+        public async Task<Result<TResponse>> SendHttpPostRequest<TRequest, TResponse>(String uri, TRequest request, CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest<TRequest, TResponse>(uri, request, null, null, cancellationToken);
+
+        public async Task<Result> SendHttpPostRequest(String uri,
+                                                      String accessToken,
+                                                      List<(String header, String value)> additionalHeaders,
+                                                      CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest(uri, accessToken, additionalHeaders, cancellationToken);
+
+        public async Task<Result> SendHttpPostRequest(String uri, String accessToken, CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest(uri, accessToken, null, cancellationToken);
+
+        public async Task<Result> SendHttpPostRequest(String uri, List<(String header, String value)> additionalHeaders, CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest(uri, null, additionalHeaders, cancellationToken);
+
+        public async Task<Result> SendHttpPostRequest(String uri, CancellationToken cancellationToken) =>
+            await base.SendHttpPostRequest(uri, null, null, cancellationToken);
+
     }
     public class SampleResponse
     {

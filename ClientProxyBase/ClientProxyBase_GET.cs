@@ -14,7 +14,7 @@ namespace ClientProxyBase
 {
     public abstract partial class ClientProxyBase
     {
-        internal virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+        protected virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
                                                            String accessToken,
                                                            List<(String header, String value)> additionalHeaders,
                                                            CancellationToken cancellationToken)
@@ -39,18 +39,18 @@ namespace ClientProxyBase
             return Result.Success(responseData);
         }
 
-        internal virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
-                                                                                     String accessToken,
-                                                                                     CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+                                                                                      String accessToken,
+                                                                                      CancellationToken cancellationToken) =>
             await this.SendHttpGetRequest<TResponse>(uri, accessToken, null, cancellationToken);
 
-        internal virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
-                                                                                     List<(String header, String value)> additionalHeaders,
-                                                                                     CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+                                                                                      List<(String header, String value)> additionalHeaders,
+                                                                                      CancellationToken cancellationToken) =>
             await this.SendHttpGetRequest<TResponse>(uri, null, additionalHeaders, cancellationToken);
 
-        internal virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
-                                                                                     CancellationToken cancellationToken) =>
+        protected virtual async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
+                                                                                      CancellationToken cancellationToken) =>
             await this.SendHttpGetRequest<TResponse>(uri, null, null, cancellationToken);
     }
 }
