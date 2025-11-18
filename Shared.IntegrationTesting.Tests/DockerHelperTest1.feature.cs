@@ -105,12 +105,12 @@ namespace Shared.IntegrationTesting.Tests
         }
         
         [NUnit.Framework.TestAttribute()]
-        [NUnit.Framework.DescriptionAttribute("Test Container Startup Sequence")]
-        public async global::System.Threading.Tasks.Task TestContainerStartupSequence()
+        [NUnit.Framework.DescriptionAttribute("Test Container Startup Sequence 1")]
+        public async global::System.Threading.Tasks.Task TestContainerStartupSequence1()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Test Container Startup Sequence", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Test Container Startup Sequence 1", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 4
 this.ScenarioInitialize(scenarioInfo);
 #line hidden
