@@ -29,7 +29,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClientProxyBase\ClientProxyBase.csproj" />
-    <ProjectReference Include="..\Shared.IntegrationTesting\Shared.IntegrationTesting.csproj" />
+    <ProjectReference Include="..\Shared.IntegrationTesting.TestContainers\Shared.IntegrationTesting.TestContainers.csproj" />
+    <!--<ProjectReference Include="..\Shared.IntegrationTesting\Shared.IntegrationTesting.csproj" />-->
   </ItemGroup>
 
   <ItemGroup>
