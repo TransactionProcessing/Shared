@@ -1,4 +1,6 @@
-﻿namespace Shared.IntegrationTesting.Tests;
+﻿using Shared.IntegrationTesting.TestContainers;
+
+namespace Shared.IntegrationTesting.Tests;
 
 using Logger;
 

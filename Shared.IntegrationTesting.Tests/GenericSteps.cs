@@ -1,4 +1,7 @@
-﻿using ClientProxyBase;
+﻿using System;
+using System.Threading.Tasks;
+using ClientProxyBase;
+using Shared.IntegrationTesting.TestContainers;
 
 namespace Shared.IntegrationTesting.Tests;
 

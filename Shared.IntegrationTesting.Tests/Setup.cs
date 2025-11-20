@@ -1,6 +1,12 @@
-﻿namespace Shared.IntegrationTesting.Tests;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Networks;
+using Shared.IntegrationTesting.TestContainers;
 
-using Ductus.FluentDocker.Services;
+namespace Shared.IntegrationTesting.Tests;
+
 using NLog;
 using Reqnroll;
 using Shared.Logger;
@@ -9,13 +15,13 @@ using Shouldly;
 [Binding]
 public class Setup
 {
-    public static IContainerService DatabaseServerContainer;
-    public static INetworkService DatabaseServerNetwork;
+    public static IContainer DatabaseServerContainer;
+    public static INetwork DatabaseServerNetwork;
     public static (String usename, String password) SqlCredentials = ("sa", "thisisalongpassword123!");
     public static (String url, String username, String password) DockerCredentials = ("https://www.docker.com", "stuartferguson", "Sc0tland");
 
     [BeforeTestRun]
-    protected static void GlobalSetup(){
+    protected static async Task GlobalSetup(){
         ShouldlyConfiguration.DefaultTaskTimeout = TimeSpan.FromMinutes(1);
 
         DockerHelper dockerHelper = new TestDockerHelper();
@@ -38,14 +44,19 @@ public class Setup
         }
 
         // Only one thread can execute this block at a time
-        lock (Setup.padLock)
+        await SetupLock.WaitAsync();
+        try
         {
-            Setup.DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork");
+            Setup.DatabaseServerNetwork = await dockerHelper.SetupTestNetwork("sharednetwork");
 
             dockerHelper.Logger.LogInformation("in start SetupSqlServerContainer");
-            Setup.DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork).Result;
+            Setup.DatabaseServerContainer = await dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
+        }
+        finally
+        {
+            SetupLock.Release();
         }
     }
 
-    static object padLock = new object(); // Object to lock on
+    private static readonly SemaphoreSlim SetupLock = new SemaphoreSlim(1, 1);
 }
