@@ -560,9 +560,15 @@ public abstract class BaseDockerHelper{
     public virtual async Task<INetwork> SetupTestNetwork(String networkName = null,
                                                     Boolean reuseIfExists = false){
         networkName = String.IsNullOrEmpty(networkName) ? $"testnw{this.TestId:N}" : networkName;
+        NetworkBuilder networkService = this.DockerPlatform switch {
+            DockerEnginePlatform.Windows => new NetworkBuilder()
+                // Give it a name, or it will be generated (recommended)
+                .WithName(networkName)
+                // **Crucial step: Specify the Windows-native 'nat' driver**
+                .WithDriver("nat").WithReuse(reuseIfExists),
+            _ => new NetworkBuilder().WithName(networkName).WithReuse(reuseIfExists);
+        };
         
-        NetworkBuilder networkService = new NetworkBuilder().WithName(networkName).WithReuse(true);
-
         return networkService.Build();
     }
 
