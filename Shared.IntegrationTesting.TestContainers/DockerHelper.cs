@@ -44,30 +44,30 @@ public abstract class DockerHelper : BaseDockerHelper
         // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
         Boolean isCI = (!String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            this.HostTraceFolder = $"/home/txnproc/trace/{scenarioName}";
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-            this.HostTraceFolder = $"/Users/runner/txnproc/trace/{scenarioName}";
-        }
-        else {
-            this.HostTraceFolder = isCI switch {
-                false => $"C:\\home\\txnproc\\trace\\{scenarioName}",
-                _ => $"C:\\Users\\runneradmin\\txnproc\\trace\\{scenarioName}",
-            };
-        }
         
-        //if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        //{
-            if (Directory.Exists(this.HostTraceFolder) == false){
-                this.Trace($"[{this.HostTraceFolder}] does not exist");
-                Directory.CreateDirectory(this.HostTraceFolder);
-                this.Trace($"[{this.HostTraceFolder}] created");
-            }
-            else{
-                this.Trace($"[{this.HostTraceFolder}] already exists");
-            }
-        //}
+        OSPlatform platform = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? OSPlatform.Linux :
+                              RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? OSPlatform.OSX :
+                              OSPlatform.Windows;
+
+        this.HostTraceFolder = (isCI, platform) switch
+        {
+            (true, var p) when p == OSPlatform.Linux => $"/home/runner/trace/{scenarioName}",
+            (true, var p) when p == OSPlatform.OSX => $"/Users/runner/trace/{scenarioName}",
+            (true, var p) when p == OSPlatform.Windows => $"C:\\Users\\runneradmin\\trace\\{scenarioName}",
+
+            (false, var p) when p == OSPlatform.Linux => $"/home/txnproc/trace/{scenarioName}",
+            (false, var p) when p == OSPlatform.OSX => $"/Users/txnproc/trace/{scenarioName}",
+            (false, var p) when p == OSPlatform.Windows => $"C:\\home\\txnproc\\trace\\{scenarioName}",
+        };
+        
+        if (Directory.Exists(this.HostTraceFolder) == false){
+            this.Trace($"[{this.HostTraceFolder}] does not exist");
+            Directory.CreateDirectory(this.HostTraceFolder);
+            this.Trace($"[{this.HostTraceFolder}] created");
+        }
+        else{
+            this.Trace($"[{this.HostTraceFolder}] already exists");
+        }
         
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
