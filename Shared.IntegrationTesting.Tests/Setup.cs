@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
@@ -48,7 +49,10 @@ public class Setup
         try
         {
             Setup.DatabaseServerNetwork = await dockerHelper.SetupTestNetwork("sharednetwork");
-
+            if (dockerHelper.DockerPlatform == DockerEnginePlatform.Windows) {
+                await DatabaseServerNetwork.CreateAsync();
+            }
+            
             dockerHelper.Logger.LogInformation("in start SetupSqlServerContainer");
             Setup.DatabaseServerContainer = await dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
         }

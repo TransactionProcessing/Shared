@@ -134,8 +134,8 @@ public abstract class BaseDockerHelper{
                                                                                             }));
 
         // Setup the default image details
-        Result<DockerEnginePlatform> engineType = BaseDockerHelper.GetDockerEnginePlatform().Result;
-        if (engineType.Data == DockerEnginePlatform.Windows)
+        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Result.Data;
+        if (this.DockerPlatform == DockerEnginePlatform.Windows)
         {
             this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2022", true));
             this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/kurrentdb_windows", true));
@@ -249,7 +249,7 @@ public abstract class BaseDockerHelper{
 
         return Result.Success(details.Value);
     }
-    protected DockerEnginePlatform DockerPlatform;
+    public DockerEnginePlatform DockerPlatform { get; protected set; }
 
     public void SetHostPort(ContainerType key, Int32 hostPort){
         KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
