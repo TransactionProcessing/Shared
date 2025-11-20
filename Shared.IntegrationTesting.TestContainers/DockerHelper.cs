@@ -57,9 +57,9 @@ public abstract class DockerHelper : BaseDockerHelper
             };
         }
         
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            if (!Directory.Exists(this.HostTraceFolder)){
+        //if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        //{
+            if (Directory.Exists(this.HostTraceFolder) == false){
                 this.Trace($"[{this.HostTraceFolder}] does not exist");
                 Directory.CreateDirectory(this.HostTraceFolder);
                 this.Trace($"[{this.HostTraceFolder}] created");
@@ -67,7 +67,7 @@ public abstract class DockerHelper : BaseDockerHelper
             else{
                 this.Trace($"[{this.HostTraceFolder}] already exists");
             }
-        }
+        //}
         
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
     }
