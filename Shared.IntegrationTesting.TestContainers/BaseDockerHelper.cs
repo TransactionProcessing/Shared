@@ -349,10 +349,14 @@ public abstract class BaseDockerHelper{
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EventStore).Data;
         this.Trace($"About to Start Event Store Container using image [{imageDetails.imageName}]");
 
+        
 
         eventStoreContainer = eventStoreContainer.WithName(this.EventStoreContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
+            .WithOutputConsumer(
+                Consume.RedirectStdoutAndStderrToConsole()
+            )
             .WithPortBinding(DockerPorts.EventStoreHttpDockerPort, true);
         
         return eventStoreContainer;
@@ -1040,6 +1044,7 @@ public abstract class BaseDockerHelper{
 
         return projection;
     }
+
 
     #endregion
 }
