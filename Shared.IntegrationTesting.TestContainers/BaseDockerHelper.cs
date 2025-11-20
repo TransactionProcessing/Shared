@@ -451,13 +451,9 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.MessagingService).Data;
 
-        ContainerBuilder messagingServiceContainer = new ContainerBuilder()
-            .WithName(this.MessagingServiceContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
-            .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
-            .WithPortBinding(DockerPorts.MessagingServiceDockerPort, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(DockerPorts.MessagingServiceDockerPort));
+        ContainerBuilder messagingServiceContainer = new ContainerBuilder().WithName(this.MessagingServiceContainerName) // similar to WithName()
+            .WithImage(imageDetails.imageName).WithEnvironment(environmentVariables).MountHostFolder(this.DockerPlatform, this.HostTraceFolder).WithPortBinding(DockerPorts.MessagingServiceDockerPort, true);
+            //.WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(DockerPorts.MessagingServiceDockerPort));
         
         return messagingServiceContainer;
     }
