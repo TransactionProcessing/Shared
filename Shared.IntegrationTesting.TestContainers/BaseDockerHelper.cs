@@ -565,8 +565,8 @@ public abstract class BaseDockerHelper{
                 // Give it a name, or it will be generated (recommended)
                 .WithName(networkName)
                 // **Crucial step: Specify the Windows-native 'nat' driver**
-                .WithDriver("nat").WithReuse(reuseIfExists),
-            _ => new NetworkBuilder().WithName(networkName).WithReuse(reuseIfExists);
+                .WithDriver(NetworkDriver.Nat).WithReuse(reuseIfExists),
+            _ => new NetworkBuilder().WithName(networkName).WithReuse(reuseIfExists)
         };
         
         return networkService.Build();
