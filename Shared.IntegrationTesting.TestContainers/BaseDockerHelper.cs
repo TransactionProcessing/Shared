@@ -308,7 +308,7 @@ public abstract class BaseDockerHelper{
     }
     
     public virtual ContainerBuilder SetupEventStoreContainer(){
-        this.Trace("About to Start Event Store Container");
+        this.Trace($"About to Start Event Store Container [{this.DockerPlatform}]");
 
         Dictionary<String, String> environmentVariables = new(){
             {"EVENTSTORE_RUN_PROJECTIONS","all"},
@@ -317,17 +317,17 @@ public abstract class BaseDockerHelper{
             {"EVENTSTORE_PROJECTION_EXECUTION_TIMEOUT","5000"}
         };
         ContainerBuilder eventStoreContainer = new ContainerBuilder();
-
-        String certsPath = this.DockerPlatform switch
-        {
-            DockerEnginePlatform.Windows => "C:\\EventStoreCerts",
-            _ => "/etc/eventstore/certs"
-        };
         
         if (!this.IsSecureEventStore){
             environmentVariables.Add("EVENTSTORE_INSECURE","true");
         }
         else{
+            String certsPath = this.DockerPlatform switch
+            {
+                DockerEnginePlatform.Windows => "C:\\EventStoreCerts",
+                _ => "/etc/eventstore/certs"
+            };
+
             // Copy these to the container
             String path = Path.Combine(Directory.GetCurrentDirectory(), "certs");
 
@@ -347,6 +347,7 @@ public abstract class BaseDockerHelper{
         }
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EventStore).Data;
+        this.Trace($"About to Start Event Store Container using image [{imageDetails.imageName}]");
 
 
         eventStoreContainer = eventStoreContainer.WithName(this.EventStoreContainerName)  // similar to WithName()
