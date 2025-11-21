@@ -64,11 +64,6 @@ public abstract class DockerHelper : BaseDockerHelper
         Result<DockerEnginePlatform> result = await BaseDockerHelper.GetDockerEnginePlatform();
         this.DockerPlatform =result.Data;
 
-        this.DockerCredentials.ShouldNotBeNull();
-        this.SqlCredentials.ShouldNotBeNull();
-        this.SqlServerContainer.ShouldNotBeNull();
-        this.SqlServerNetwork.ShouldNotBeNull();
-
         this.RequiredDockerServices = dockerServices;
 
         this.IsSecureEventStore = Environment.GetEnvironmentVariable("IsSecureEventStore") switch{
@@ -90,11 +85,13 @@ public abstract class DockerHelper : BaseDockerHelper
         INetwork testNetwork = await this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
+        //INetwork testNetwork2 = await this.SetupTestNetwork($"testnw{Guid.NewGuid():N}");
         List<INetwork> networks = [
-            this.SqlServerNetwork,
-            testNetwork
+            testNetwork,
+            //testNetwork2
         ];
 
+        await StartContainer2(this.ConfigureSqlContainer, networks, DockerServices.SqlServer);
         await StartContainer2(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
         // TODO: permenant fix for this hack
         await Task.Delay(TimeSpan.FromSeconds(30));
