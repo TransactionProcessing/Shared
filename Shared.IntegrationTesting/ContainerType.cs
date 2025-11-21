@@ -19,6 +19,7 @@ public enum ContainerType
 [Flags]
 public enum DockerServices
 {
+    None = 0,
     SqlServer = 1,
     EventStore = 2,
     MessagingService = 4,

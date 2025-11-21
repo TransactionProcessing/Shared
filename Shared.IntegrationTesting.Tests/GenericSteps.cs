@@ -40,13 +40,13 @@ public class GenericSteps
 
         this.TestingContext.DockerHelper = new TestDockerHelper();
         this.TestingContext.DockerHelper.Logger = logger;
-        this.TestingContext.DockerHelper.SqlServerContainer = Setup.DatabaseServerContainer;
-        this.TestingContext.DockerHelper.SqlServerNetwork = Setup.DatabaseServerNetwork;
-        this.TestingContext.DockerHelper.DockerCredentials = Setup.DockerCredentials;
-        this.TestingContext.DockerHelper.SqlCredentials = Setup.SqlCredentials;
-        this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
+        //this.TestingContext.DockerHelper.SqlServerContainer = Setup.DatabaseServerContainer;
+        //this.TestingContext.DockerHelper.SqlServerNetwork = Setup.DatabaseServerNetwork;
+        //this.TestingContext.DockerHelper.DockerCredentials = Setup.DockerCredentials;
+        //this.TestingContext.DockerHelper.SqlCredentials = Setup.SqlCredentials;
+        //this.TestingContext.DockerHelper.SqlServerContainerName = "sharedsqlserver";
 
-        DockerServices services = DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
+        DockerServices services = DockerServices.SqlServer | DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
                                   DockerServices.CallbackHandler | DockerServices.FileProcessor |
                                   DockerServices.TestHost | DockerServices.TransactionProcessor |
                                   DockerServices.TransactionProcessorAcl;
@@ -62,7 +62,7 @@ public class GenericSteps
 
     [AfterScenario()]
     public async Task StopSystem(){
-        DockerServices sharedDockerServices = DockerServices.SqlServer;
+        DockerServices sharedDockerServices = DockerServices.None;
 
         this.TestingContext.Logger.LogInformation("About to Stop Containers for Scenario Run");
         await this.TestingContext.DockerHelper.StopContainersForScenarioRun(sharedDockerServices).ConfigureAwait(false);

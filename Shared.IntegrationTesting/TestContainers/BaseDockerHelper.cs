@@ -44,13 +44,9 @@ public abstract class BaseDockerHelper{
 
     public ILogger Logger;
 
-    public (String usename, String password)? SqlCredentials;
-
-    public IContainer SqlServerContainer;
-
+    public (String usename, String password) SqlCredentials = ("sa", "thisisalongpassword123!");
+    
     public String SqlServerContainerName;
-
-    public INetwork SqlServerNetwork;
 
     public Guid TestId;
     
@@ -75,7 +71,7 @@ public abstract class BaseDockerHelper{
 
     protected readonly IHealthCheckClient HealthCheckClient;
 
-    protected Dictionary<ContainerType, Int32> HostPorts = new Dictionary<ContainerType, Int32>();
+    protected Dictionary<ContainerType, Int32> HostPorts = new();
 
     protected String HostTraceFolder;
 
@@ -167,15 +163,7 @@ public abstract class BaseDockerHelper{
     #endregion
 
     #region Methods
-    public async Task<Boolean> DoesNetworkExist(string networkName)
-    {
-        DockerClient? client = new DockerClientConfiguration().CreateClient();
 
-        var networks = await client.Networks.ListNetworksAsync();
-        
-        return networks.Any(n =>
-            string.Equals(n.Name, networkName, StringComparison.OrdinalIgnoreCase));
-    }
     public virtual Dictionary<String,String> GetAdditionalVariables(ContainerType containerType){
         Dictionary<String, String> result = new();
 
@@ -300,6 +288,7 @@ public abstract class BaseDockerHelper{
 
     public virtual void SetupContainerNames(){
         // Setup the container names
+        this.SqlServerContainerName= $"sqlserver{this.TestId:N}";
         this.EventStoreContainerName = $"eventstore{this.TestId:N}";
         this.SecurityServiceContainerName = $"securityservice{this.TestId:N}";
         this.TestHostContainerName = $"testhosts{this.TestId:N}";
@@ -357,9 +346,6 @@ public abstract class BaseDockerHelper{
         eventStoreContainer = eventStoreContainer.WithName(this.EventStoreContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .WithOutputConsumer(
-                Consume.RedirectStdoutAndStderrToConsole()
-            )
             .WithPortBinding(DockerPorts.EventStoreHttpDockerPort, true);
         
         return eventStoreContainer;
@@ -515,25 +501,24 @@ public abstract class BaseDockerHelper{
             .WithName(this.SqlServerContainerName)  // similar to WithName()
             .WithImage(this.GetImageDetails(ContainerType.SqlServer).Data.imageName)
             .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithEnvironment("SA_PASSWORD", this.SqlCredentials.Value.password)
-            .WithPortBinding(1433, true)            
-            .WithReuse(true);
+            .WithEnvironment("SA_PASSWORD", this.SqlCredentials.password)
+            .WithPortBinding(1433, true);
 
         return containerService;
     }
 
-    public virtual async Task<IContainer> SetupSqlServerContainer(INetwork networkService){
-        if (this.SqlCredentials == default)
-            throw new ArgumentNullException("Sql Credentials have not been set");
+    //public virtual async Task<IContainer> SetupSqlServerContainer(INetwork networkService){
+    //    if (this.SqlCredentials == default)
+    //        throw new ArgumentNullException("Sql Credentials have not been set");
 
-        IContainer databaseServerContainer = await this.StartContainer2(this.ConfigureSqlContainer,
-                                                                               new List<INetwork>{
-                                                                                                            networkService
-                                                                                                        },
-                                                                               DockerServices.SqlServer);
+    //    IContainer databaseServerContainer = await this.StartContainer2(this.ConfigureSqlContainer,
+    //                                                                           new List<INetwork>{
+    //                                                                                                        networkService
+    //                                                                                                    },
+    //                                                                           DockerServices.SqlServer);
         
-        return databaseServerContainer;
-    }
+    //    return databaseServerContainer;
+    //}
 
     public virtual ContainerBuilder SetupTestHostContainer(){
         this.Trace("About to Start Test Hosts Container");
@@ -648,8 +633,8 @@ public abstract class BaseDockerHelper{
 
             String server = "127.0.0.1";
             String database = "master";
-            String user = this.SqlCredentials.Value.usename;
-            String password = this.SqlCredentials.Value.password;
+            String user = this.SqlCredentials.usename;
+            String password = this.SqlCredentials.password;
             String port = sqlServerEndpoint.ToString();
 
             this.sqlTestConnString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
@@ -897,7 +882,7 @@ public abstract class BaseDockerHelper{
         }
 
         String connectionString =
-            $"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.Value.usename};password={this.SqlCredentials.Value.password};database={databaseName}{encryptValue}";
+            $"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.usename};password={this.SqlCredentials.password};database={databaseName}{encryptValue}";
         
         return connectionString;
     }
@@ -922,7 +907,6 @@ public abstract class BaseDockerHelper{
             this.Containers.Add((dockerService, builtContainer));
 
             //  Do a health check here
-            //this.MessagingServicePort = 
             ContainerType type = dockerService switch{
                 DockerServices.CallbackHandler => ContainerType.CallbackHandler,
                 DockerServices.MessagingService => ContainerType.MessagingService,
@@ -1011,22 +995,7 @@ public abstract class BaseDockerHelper{
                 break;
         }
     }
-
-    protected async Task<IContainer> StartContainer(Func<List<INetwork>, Task<IContainer>> startContainerFunc, List<INetwork> networkServices, DockerServices dockerService){
-        if ((this.RequiredDockerServices & dockerService) != dockerService){
-            return default;
-        }
-
-        try
-        {
-            return await startContainerFunc(networkServices);
-        }
-        catch(Exception ex){
-            this.Error($"Error starting container [{startContainerFunc.Method.Name}]", ex);
-            throw;
-        }
-    }
-
+    
     public void Trace(String traceMessage){
         if (this.Logger.IsInitialised){
             this.Logger.LogInformation($"{this.TestId}|{this.ScenarioName}|{traceMessage}");
