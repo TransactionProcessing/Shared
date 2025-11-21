@@ -12,6 +12,7 @@ using Ductus.FluentDocker.Services;
 using global::EventStore.Client;
 using IntegrationTesting;
 using Newtonsoft.Json;
+using Shared.IntegrationTesting.Ductus;
 using Shouldly;
 
 public class EventStoreDockerHelper : DockerHelper

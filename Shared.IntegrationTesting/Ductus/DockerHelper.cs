@@ -1,39 +1,17 @@
-﻿using System.Net.Http;
-using System.Text;
-using System.Threading;
-
-namespace Shared.IntegrationTesting;
-
-using Ductus.FluentDocker;
-using Ductus.FluentDocker.Commands;
-using Ductus.FluentDocker.Common;
+﻿using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Extensions;
 using Ductus.FluentDocker.Model.Common;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
-using Newtonsoft.Json;
+
+namespace Shared.IntegrationTesting.Ductus;
+
 using Shouldly;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-
-[Flags]
-public enum DockerServices{
-    SqlServer = 1,
-    EventStore = 2,
-    MessagingService = 4,
-    SecurityService = 8,
-    CallbackHandler = 16,
-    TestHost = 32,
-    TransactionProcessor = 64,
-    FileProcessor = 128,
-    TransactionProcessorAcl = 256
-}
 
 public abstract class DockerHelper : BaseDockerHelper
 {

@@ -1,8 +1,9 @@
-﻿namespace Shared.IntegrationTesting;
+﻿using Ductus.FluentDocker.Builders;
+using Ductus.FluentDocker.Model.Builders;
+
+namespace Shared.IntegrationTesting.Ductus;
 
 using System;
-using Ductus.FluentDocker.Builders;
-using Ductus.FluentDocker.Model.Builders;
 
 public static class Extensions
 {

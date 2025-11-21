@@ -18,19 +18,6 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-[Flags]
-public enum DockerServices{
-    SqlServer = 1,
-    EventStore = 2,
-    MessagingService = 4,
-    SecurityService = 8,
-    CallbackHandler = 16,
-    TestHost = 32,
-    TransactionProcessor = 64,
-    FileProcessor = 128,
-    TransactionProcessorAcl = 256
-}
-
 public abstract class DockerHelper : BaseDockerHelper
 {
     protected DockerHelper(Boolean skipHealthChecks=false) :base(skipHealthChecks){

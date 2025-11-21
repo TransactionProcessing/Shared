@@ -1,16 +1,16 @@
-﻿using DotNet.Testcontainers.Builders;
+﻿using Docker.DotNet.Models;
+using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using SimpleResults;
 using System.Net.Http.Headers;
-using Docker.DotNet.Models;
-using Testcontainers.MsSql;
 
 namespace Shared.IntegrationTesting.TestContainers;
 
 using Docker.DotNet;
 using EventStore.Client;
+using global::Ductus.FluentDocker.Model.Networks;
 using HealthChecks;
 using Logger;
 using Microsoft.Data.SqlClient;
@@ -32,12 +32,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-
-public enum DockerEnginePlatform{
-    Unknown, 
-    Linux,
-    Windows
-}
 
 public abstract class BaseDockerHelper{
     #region Fields
@@ -173,7 +167,15 @@ public abstract class BaseDockerHelper{
     #endregion
 
     #region Methods
+    public async Task<Boolean> DoesNetworkExist(string networkName)
+    {
+        DockerClient? client = new DockerClientConfiguration().CreateClient();
 
+        var networks = await client.Networks.ListNetworksAsync();
+        
+        return networks.Any(n =>
+            string.Equals(n.Name, networkName, StringComparison.OrdinalIgnoreCase));
+    }
     public virtual Dictionary<String,String> GetAdditionalVariables(ContainerType containerType){
         Dictionary<String, String> result = new();
 

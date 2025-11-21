@@ -1,29 +1,26 @@
 ﻿using System.Net.Http.Headers;
-using SimpleResults;
-
-namespace Shared.IntegrationTesting;
-
 using Ductus.FluentDocker.Builders;
 using Ductus.FluentDocker.Commands;
 using Ductus.FluentDocker.Common;
 using Ductus.FluentDocker.Executors;
 using Ductus.FluentDocker.Model.Builders;
 using Ductus.FluentDocker.Model.Containers;
-using Ductus.FluentDocker.Model.Networks;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
+using SimpleResults;
+
+namespace Shared.IntegrationTesting.Ductus;
+
 using EventStore.Client;
 using HealthChecks;
 using Logger;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
+using Shared.IntegrationTesting;
 using Shouldly;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -33,11 +30,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-public enum DockerEnginePlatform{
-    Unknown, 
-    Linux,
-    Windows
-}
+
 
 public abstract class BaseDockerHelper{
     #region Fields
