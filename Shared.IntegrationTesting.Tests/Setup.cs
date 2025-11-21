@@ -46,13 +46,19 @@ public class Setup
 
         // Only one thread can execute this block at a time
         await SetupLock.WaitAsync();
-        try
-        {
-            Setup.DatabaseServerNetwork = await dockerHelper.SetupTestNetwork("sharednetwork");
-            if (dockerHelper.DockerPlatform == DockerEnginePlatform.Windows) {
-                await DatabaseServerNetwork.CreateAsync();
+        try {
+            Boolean networkExists = await dockerHelper.DoesNetworkExist("sharednetwork");
+            if (networkExists == false) {
+                Setup.DatabaseServerNetwork = await dockerHelper.SetupTestNetwork("sharednetwork", true);
+
+                if (dockerHelper.DockerPlatform == DockerEnginePlatform.Windows) {
+                    await DatabaseServerNetwork.CreateAsync();
+                }
             }
-            
+            else {
+                Setup.DatabaseServerNetwork = await dockerHelper.SetupTestNetwork("sharednetwork", true);
+            }
+
             dockerHelper.Logger.LogInformation("in start SetupSqlServerContainer");
             Setup.DatabaseServerContainer = await dockerHelper.SetupSqlServerContainer(Setup.DatabaseServerNetwork);
         }

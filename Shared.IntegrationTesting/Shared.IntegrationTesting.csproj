@@ -16,6 +16,7 @@
     <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.9" />
     <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.9" />
     <PackageReference Include="SimpleResults" Version="4.0.0" />
+    <PackageReference Include="Testcontainers" Version="4.8.1" />
   </ItemGroup>
 
   <ItemGroup>

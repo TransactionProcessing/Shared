@@ -25,9 +25,4 @@ public static class Extensions
 
         return containerBuilder;
     }
-
-    //public static ContainerBuilder UseImageDetails(this ContainerBuilder containerBuilder,
-    //                                               (String imageName, Boolean useLatestImage) imageDetails) {
-    //    return containerBuilder.UseImage(imageDetails.imageName, imageDetails.useLatestImage);
-    //}
 }
