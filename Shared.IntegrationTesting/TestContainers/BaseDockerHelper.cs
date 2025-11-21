@@ -29,6 +29,7 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -651,7 +652,7 @@ public abstract class BaseDockerHelper{
             String port = sqlServerEndpoint.ToString();
 
             this.sqlTestConnString = $"server={server},{port};user id={user}; password={password}; database={database};Encrypt=False";
-            this.Trace($"Connection String {this.sqlTestConnString}");
+            this.Trace($"Connection String {RedactConnectionString(this.sqlTestConnString)}");
         }
 
         SqlConnection connection = new(this.sqlTestConnString);
@@ -1047,6 +1048,24 @@ public abstract class BaseDockerHelper{
         return projection;
     }
 
+
+    /// <summary>
+    /// Redacts the password portion of a connection string for safe logging.
+    /// </summary>
+    /// <param name="connString">The full connection string.</param>
+    /// <returns>The connection string with the password replaced by [REDACTED]</returns>
+    private string RedactConnectionString(string connString)
+    {
+        if (string.IsNullOrEmpty(connString))
+            return connString;
+        // Regex to match password=...; (case-insensitive)
+        return System.Text.RegularExpressions.Regex.Replace(
+            connString,
+            @"(password\s*=\s*)([^;]*)(;?)",
+            "$1[REDACTED]$3",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase
+        );
+    }
 
     #endregion
 }
