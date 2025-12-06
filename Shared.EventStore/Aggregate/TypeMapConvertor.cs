@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using KurrentDB.Client;
 using Shared.Exceptions;
 
 namespace Shared.EventStore.Aggregate;

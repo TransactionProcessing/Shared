@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.SubscriptionWorker;
+﻿using KurrentDB.Client;
+
+namespace Shared.EventStore.SubscriptionWorker;
 
 using System;
 using System.Collections.Generic;
@@ -21,7 +23,7 @@ public class SubscriptionWorker
 
     private readonly List<IDomainEventHandler> EventHandlers;
 
-    private global::EventStore.Client.EventStorePersistentSubscriptionsClient EventStorePersistentSubscriptionsClient;
+    private KurrentDBPersistentSubscriptionsClient PersistentSubscriptionsClient;
 
     private readonly IDomainEventHandlerResolver DomainEventHandlerResolver;
 
@@ -46,11 +48,11 @@ public class SubscriptionWorker
     {
         this.DomainEventHandlerResolver = domainEventHandlerResolver;
         this.SubscriptionRepository = subscriptionRepository;
-        this.EventStorePersistentSubscriptionsClient = new(EventStoreClientSettings.Create(eventStoreConnectionString));
+        this.PersistentSubscriptionsClient = new(KurrentDBClientSettings.Create(eventStoreConnectionString));
 
         this.PersistentSubscriptionPollingInSeconds = persistentSubscriptionPollingInSeconds;
 
-        EventStoreClientSettings settings = EventStoreClientSettings.Create(eventStoreConnectionString);
+        KurrentDBClientSettings settings = KurrentDBClientSettings.Create(eventStoreConnectionString);
         this.HttpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
 
         this.GetNewSubscriptions = (all, current)
@@ -139,8 +141,8 @@ public class SubscriptionWorker
         // Close the ES Connection
         this.WriteTrace("About to close EventStore Connection");
 
-        await this.EventStorePersistentSubscriptionsClient.DisposeAsync();
-        this.EventStorePersistentSubscriptionsClient = null;
+        await this.PersistentSubscriptionsClient.DisposeAsync();
+        this.PersistentSubscriptionsClient = null;
 
         this.IsRunning = false;
 
@@ -185,7 +187,7 @@ public class SubscriptionWorker
                             };
                         IPersistentSubscriptionsClient persistentSubscriptionsClient = this.InMemory
                             ? new InMemoryPersistentSubscriptionsClient()
-                            : new EventStorePersistentSubscriptionsClient(this.EventStorePersistentSubscriptionsClient);
+                            : new EventStorePersistentSubscriptionsClient(this.PersistentSubscriptionsClient);
 
                         PersistentSubscription subscription =
                             PersistentSubscription.Create(persistentSubscriptionsClient,
@@ -220,13 +222,13 @@ public class SubscriptionWorker
 
         try
         {
-            if (subscription.EventStorePersistentSubscription != null)
+            if (subscription.KurrentDbPersistentSubscription != null)
             {
-                subscription.EventStorePersistentSubscription.Dispose();
+                subscription.KurrentDbPersistentSubscription.Dispose();
             }
 
             this.CurrentSubscriptions.Remove(subscription);
-            var delegates = subscription.SubscriptionHasDropped?.GetInvocationList();
+            Delegate[] delegates = subscription.SubscriptionHasDropped?.GetInvocationList();
 
             if (delegates != null)
             {

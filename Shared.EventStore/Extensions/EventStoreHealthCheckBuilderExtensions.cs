@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.Extensions;
+﻿using KurrentDB.Client;
+
+namespace Shared.EventStore.Extensions;
 
 using System;
 using System.Collections.Generic;
@@ -28,7 +30,7 @@ public static class EventStoreHealthCheckBuilderExtensions
     /// The <see cref="IHealthChecksBuilder" />.
     /// </returns>
     public static IHealthChecksBuilder AddEventStore(this IHealthChecksBuilder builder,
-                                                     EventStoreClientSettings eventStoreClientSettings,
+                                                     KurrentDBClientSettings eventStoreClientSettings,
                                                      UserCredentials userCredentials = null,
                                                      String name = default,
                                                      HealthStatus? failureStatus = default,

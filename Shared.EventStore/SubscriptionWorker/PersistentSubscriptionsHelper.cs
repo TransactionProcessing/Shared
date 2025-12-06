@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.SubscriptionWorker;
+﻿using KurrentDB.Client;
+
+namespace Shared.EventStore.SubscriptionWorker;
 
 using System;
 using System.Collections.Generic;
@@ -21,7 +23,7 @@ public static class PersistentSubscriptionsHelper
         };
     }
 
-    internal static async Task AckEvent(global::EventStore.Client.PersistentSubscription persistentSubscription, ResolvedEvent resolvedEvent)
+    internal static async Task AckEvent(KurrentDB.Client.PersistentSubscription persistentSubscription, ResolvedEvent resolvedEvent)
     {
         if (persistentSubscription != null)
         {

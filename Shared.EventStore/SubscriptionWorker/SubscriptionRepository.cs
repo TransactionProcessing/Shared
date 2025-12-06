@@ -1,4 +1,5 @@
-﻿using SimpleResults;
+﻿using KurrentDB.Client;
+using SimpleResults;
 
 namespace Shared.EventStore.SubscriptionWorker;
  using System;
@@ -29,7 +30,7 @@ namespace Shared.EventStore.SubscriptionWorker;
 
      public static SubscriptionRepository Create(String eventStoreConnectionString,
                                                  Int32 cacheDuration = 120) {
-         EventStoreClientSettings settings = EventStoreClientSettings.Create(eventStoreConnectionString);
+         KurrentDBClientSettings settings = KurrentDBClientSettings.Create(eventStoreConnectionString);
          HttpClient httpClient = SubscriptionWorkerHelper.CreateHttpClient(settings);
 
 

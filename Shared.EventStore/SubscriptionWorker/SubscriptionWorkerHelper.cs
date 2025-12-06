@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.SubscriptionWorker;
+﻿using KurrentDB.Client;
+
+namespace Shared.EventStore.SubscriptionWorker;
 
 using EventHandling;
 using global::EventStore.Client;
@@ -31,7 +33,7 @@ public static class SubscriptionWorkerHelper
         }
     }
 
-    public static HttpClient CreateHttpClient(EventStoreClientSettings settings)
+    public static HttpClient CreateHttpClient(KurrentDBClientSettings settings)
     {
         HttpClientHandler httpClientHandler = new();
 

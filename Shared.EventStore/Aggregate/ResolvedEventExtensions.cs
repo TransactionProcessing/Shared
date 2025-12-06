@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.Aggregate;
+﻿using KurrentDB.Client;
+
+namespace Shared.EventStore.Aggregate;
 
 using System;
 using System.Linq;

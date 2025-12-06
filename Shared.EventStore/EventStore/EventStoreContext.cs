@@ -1,21 +1,18 @@
-﻿using Shared.Exceptions;
+﻿using KurrentDB.Client;
+using Shared.Exceptions;
 using SimpleResults;
 
 namespace Shared.EventStore.EventStore;
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure;
-using global::EventStore.Client;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 /// <summary>
 /// Delegate TraceHandler
@@ -32,12 +29,12 @@ public class EventStoreContext : IEventStoreContext
     /// <summary>
     /// The event store client
     /// </summary>
-    internal readonly EventStoreClient EventStoreClient;
+    internal readonly KurrentDBClient KurrentDBClient;
 
     /// <summary>
     /// The projection management client
     /// </summary>
-    private readonly EventStoreProjectionManagementClient ProjectionManagementClient;
+    private readonly KurrentDBProjectionManagementClient ProjectionManagementClient;
 
     private readonly TimeSpan? Deadline;
 
@@ -45,9 +42,9 @@ public class EventStoreContext : IEventStoreContext
 
     #region Constructors
 
-    public EventStoreContext(EventStoreClient eventStoreClient, EventStoreProjectionManagementClient projectionManagementClient, TimeSpan? deadline = null)
+    public EventStoreContext(KurrentDBClient eventStoreClient, KurrentDBProjectionManagementClient projectionManagementClient, TimeSpan? deadline = null)
     {
-        this.EventStoreClient = eventStoreClient;
+        this.KurrentDBClient = eventStoreClient;
         this.ProjectionManagementClient = projectionManagementClient;
         this.Deadline = deadline;
         
@@ -70,7 +67,7 @@ public class EventStoreContext : IEventStoreContext
         List<ResolvedEvent> resolvedEvents = new();
         try
         {
-            EventStoreClient.ReadStreamResult response = this.EventStoreClient.ReadStreamAsync(Direction.Backwards,
+            KurrentDBClient.ReadStreamResult response = this.KurrentDBClient.ReadStreamAsync(Direction.Backwards,
                 streamName, StreamPosition.End, maxNumberOfEventsToRetrieve, resolveLinkTos: true,
                 deadline: this.Deadline, cancellationToken: cancellationToken);
 
@@ -165,7 +162,7 @@ public class EventStoreContext : IEventStoreContext
     {
         this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
         try {
-            await this.EventStoreClient.AppendToStreamAsync(streamName, StreamRevision.FromInt64(expectedVersion),
+            await this.KurrentDBClient.AppendToStreamAsync(streamName, StreamState.StreamRevision((ulong)expectedVersion),
                 aggregateEvents.AsEnumerable(), deadline: this.Deadline, cancellationToken: cancellationToken);
             return Result.Success();
         }
@@ -181,11 +178,11 @@ public class EventStoreContext : IEventStoreContext
         this.LogInformation($"About to read events from Stream {streamName} fromVersion is {fromVersion}");
 
         List<ResolvedEvent> resolvedEvents = new List<ResolvedEvent>();
-        EventStoreClient.ReadStreamResult response;
+        KurrentDBClient.ReadStreamResult response;
         List<ResolvedEvent> events;
         try {
             do {
-                response = this.EventStoreClient.ReadStreamAsync(Direction.Forwards, streamName,
+                response = this.KurrentDBClient.ReadStreamAsync(Direction.Forwards, streamName,
                     StreamPosition.FromInt64(fromVersion), Int32.MaxValue, resolveLinkTos: true, deadline: this.Deadline,
                     cancellationToken: cancellationToken);
 
@@ -216,7 +213,7 @@ public class EventStoreContext : IEventStoreContext
     public async Task<Result<List<ResolvedEvent>>> ReadLastEventsFromAll(Int64 numberEvents,
                                                                          CancellationToken cancellationToken) {
         try {
-            IAsyncEnumerable<ResolvedEvent> readResult = this.EventStoreClient.ReadAllAsync(Direction.Backwards, Position.End, maxCount: numberEvents, resolveLinkTos: true, cancellationToken: cancellationToken);
+            IAsyncEnumerable<ResolvedEvent> readResult = this.KurrentDBClient.ReadAllAsync(Direction.Backwards, Position.End, maxCount: numberEvents, resolveLinkTos: true, cancellationToken: cancellationToken);
 
             return Result.Success(await readResult.ToListAsync(cancellationToken));
         }

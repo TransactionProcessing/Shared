@@ -1,3 +1,4 @@
+using KurrentDB.Client;
 using Shared.General;
 
 namespace Shared.EventStore.Tests.TestObjects;

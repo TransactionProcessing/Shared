@@ -1,4 +1,5 @@
-﻿using SimpleResults;
+﻿using KurrentDB.Client;
+using SimpleResults;
 
 namespace Shared.EventStore.SubscriptionWorker;
 
@@ -24,13 +25,13 @@ public class PersistentSubscription
 
     public EventHandler<String> SubscriptionHasDropped;
 
-    private readonly Func<CancellationToken, Task<global::EventStore.Client.PersistentSubscription>> Subscribe;
+    private readonly Func<CancellationToken, Task<KurrentDB.Client.PersistentSubscription>> Subscribe;
 
     #endregion
 
     #region Constructors
 
-    private void SubscriptionDropped(global::EventStore.Client.PersistentSubscription arg1,
+    private void SubscriptionDropped(KurrentDB.Client.PersistentSubscription arg1,
                                      SubscriptionDroppedReason arg2,
                                      Exception? arg3) =>
         this.SubscriptionDropped(arg2.ToString());
@@ -57,7 +58,7 @@ public class PersistentSubscription
         this.PersistentSubscriptionDetails = persistentSubscriptionDetails;
         UserCredentials userCredentials = new(username, password);
 
-        Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared = (ps, re, retryCount, ct) => PersistentSubscription.EventAppeared(ps, re, retryCount, domainEventHandlerResolver, ct);
+        Func< KurrentDB.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared = (ps, re, retryCount, ct) => PersistentSubscription.EventAppeared(ps, re, retryCount, domainEventHandlerResolver, ct);
 
         this.Subscribe = ct => persistentSubscriptionsClient.SubscribeAsync(this.PersistentSubscriptionDetails.StreamName,
             this.PersistentSubscriptionDetails.GroupName,
@@ -73,7 +74,7 @@ public class PersistentSubscription
     #region Properties
 
     public Boolean Connected { get; private set; }
-    public global::EventStore.Client.PersistentSubscription EventStorePersistentSubscription { get; private set; }
+    public KurrentDB.Client.PersistentSubscription KurrentDbPersistentSubscription { get; private set; }
     public IPersistentSubscriptionsClient PersistentSubscriptionsClient { get; }
     public PersistentSubscriptionDetails PersistentSubscriptionDetails { get; }
 
@@ -85,7 +86,7 @@ public class PersistentSubscription
     {
         try
         {
-            this.EventStorePersistentSubscription = await this.Subscribe(cancellationToken);
+            this.KurrentDbPersistentSubscription = await this.Subscribe(cancellationToken);
 
             this.Connected = true;
         }
@@ -130,7 +131,7 @@ public class PersistentSubscription
         }
     }
 
-    internal static async Task EventAppeared(global::EventStore.Client.PersistentSubscription persistentSubscription,
+    internal static async Task EventAppeared(KurrentDB.Client.PersistentSubscription persistentSubscription,
                                              ResolvedEvent resolvedEvent,
                                              Int32? retryCount,
                                              IDomainEventHandlerResolver domainEventHandlerResolver,
@@ -138,7 +139,7 @@ public class PersistentSubscription
     {
         try
         {
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+            using (CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
             {
                 if (resolvedEvent.SilentlyHandleEvent())
                 {
