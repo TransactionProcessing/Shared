@@ -1,4 +1,5 @@
 ﻿using Ductus.FluentDocker.Builders;
+using KurrentDB.Client;
 
 namespace Shared.EventStore.Tests;
 
@@ -94,7 +95,7 @@ public class EventStoreDockerHelper : DockerHelper
 
     }
 
-    public EventStoreClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null, String userName="admin", String password="changeit")
+    public KurrentDBClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null, String userName="admin", String password="changeit")
     {
         String connectionString = secureEventStore switch
         {
@@ -102,7 +103,7 @@ public class EventStoreDockerHelper : DockerHelper
             _ => $"esdb://{userName}:{password}@127.0.0.1:{this.EventStoreHttpPort}?tls=false"
         };
 
-        EventStoreClientSettings settings = EventStoreClientSettings.Create(connectionString);
+        KurrentDBClientSettings settings = KurrentDBClientSettings.Create(connectionString);
         settings.ConnectivitySettings.Insecure = secureEventStore switch
         {
             true => false,

@@ -1,4 +1,5 @@
-﻿using SimpleResults;
+﻿using KurrentDB.Client;
+using SimpleResults;
 
 namespace Shared.EventStore.EventStore;
 
@@ -17,15 +18,15 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 /// <seealso cref="Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck" />
 public class EventStoreConnectionStringHealthCheck : IHealthCheck
 {
-    private readonly EventStoreClient Client;
-    private readonly EventStoreProjectionManagementClient ProjectionManagementClient;
+    private readonly KurrentDBClient Client;
+    private readonly KurrentDBProjectionManagementClient ProjectionManagementClient;
 
     #region Fields
 
     /// <summary>
     /// The event store client settings
     /// </summary>
-    private readonly EventStoreClientSettings EventStoreClientSettings;
+    private readonly KurrentDBClientSettings EventStoreClientSettings;
 
     /// <summary>
     /// The user credentials
@@ -43,16 +44,16 @@ public class EventStoreConnectionStringHealthCheck : IHealthCheck
     /// </summary>
     /// <param name="settings">The settings.</param>
     /// <param name="userCredentials">The user credentials.</param>
-    public EventStoreConnectionStringHealthCheck(EventStoreClientSettings settings, UserCredentials userCredentials)
+    public EventStoreConnectionStringHealthCheck(KurrentDBClientSettings settings, UserCredentials userCredentials)
     {
         this.EventStoreClientSettings = settings;
         this.UserCredentials = userCredentials;
-        this.Client = new EventStoreClient(settings);
+        this.Client = new KurrentDBClient(settings);
         this.ProjectionManagementClient = new(settings);
         this.Context = new EventStoreContext(this.Client, this.ProjectionManagementClient);
     }
 
-    public EventStoreConnectionStringHealthCheck(EventStoreClientSettings settings) : this(settings, null)
+    public EventStoreConnectionStringHealthCheck(KurrentDBClientSettings settings) : this(settings, null)
     {
             
     }

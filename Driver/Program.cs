@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using KurrentDB.Client;
 
 namespace Driver;
 
@@ -7,7 +8,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using EventStore.Client;
 using Shared.DomainDrivenDesign.EventSourcing;
 using Shared.EventStore.Aggregate;
 using Shared.EventStore.EventHandling;
@@ -20,8 +20,8 @@ internal class Program
 {
     #region Methods
 
-    internal static EventStoreClientSettings ConfigureEventStoreSettings() {
-        EventStoreClientSettings settings = new();
+    internal static KurrentDBClientSettings ConfigureEventStoreSettings() {
+        KurrentDBClientSettings settings = new();
 
         settings.CreateHttpMessageHandler = () => new SocketsHttpHandler {
             SslOptions = {
@@ -32,7 +32,7 @@ internal class Program
             }
         };
 
-        settings.ConnectivitySettings = EventStoreClientConnectivitySettings.Default;
+        settings.ConnectivitySettings = KurrentDBClientConnectivitySettings.Default;
         settings.ConnectivitySettings.Insecure = false;
         settings.DefaultCredentials = new UserCredentials("admin", "changeit");
         settings.ConnectivitySettings.Address = new Uri("esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false");
@@ -48,8 +48,8 @@ internal class Program
 
     private static async Task QueryTest(){
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
-        EventStoreClient client = new(Program.ConfigureEventStoreSettings());
-        EventStoreProjectionManagementClient projection = new(Program.ConfigureEventStoreSettings());
+        KurrentDBClient client = new(Program.ConfigureEventStoreSettings());
+        KurrentDBProjectionManagementClient projection = new(Program.ConfigureEventStoreSettings());
         EventStoreContext context = new(client, projection);
 
         var result = await context.RunTransientQuery(query, CancellationToken.None);

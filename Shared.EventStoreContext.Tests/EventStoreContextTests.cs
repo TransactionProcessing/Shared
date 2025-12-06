@@ -1,4 +1,4 @@
-﻿using EventStore.Client;
+﻿using KurrentDB.Client;
 using Newtonsoft.Json;
 using NLog;
 using Shared.DomainDrivenDesign.EventSourcing;
@@ -335,10 +335,10 @@ public class EventStoreContextTests : IDisposable{
     }
 
     private IEventStoreContext CreateContext(Boolean secureEventStore, TimeSpan? deadline = null){
-        EventStoreClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, deadline);
+        KurrentDBClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, deadline);
 
-        EventStoreClient client = new(settings);
-        EventStoreProjectionManagementClient projectionManagementClient = new(settings);
+        KurrentDBClient client = new(settings);
+        KurrentDBProjectionManagementClient projectionManagementClient = new(settings);
         IEventStoreContext context = new EventStore.EventStore.EventStoreContext(client, projectionManagementClient, deadline);
         return context;
     }

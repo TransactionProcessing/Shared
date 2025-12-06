@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using KurrentDB.Client;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Moq;
 using Shared.EventStore.EventStore;
@@ -22,7 +23,7 @@ public class EventStoreHealthCheckBuilderExtensionsTests
     [Fact]
     public void AddEventStore_HealthCheckAdded(){
         IHealthChecksBuilder builder = new TestHealthChecksBuilder();
-        builder.AddEventStore(new EventStoreClientSettings(), null, null, null);
+        builder.AddEventStore(new KurrentDBClientSettings(), null, null, null);
     }
 }
 

@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.SubscriptionWorker;
+﻿using KurrentDB.Client;
+
+namespace Shared.EventStore.SubscriptionWorker;
 
 using System;
 using System.Collections.Generic;
@@ -11,17 +13,17 @@ using global::EventStore.Client;
 [ExcludeFromCodeCoverage]
 public class InMemoryPersistentSubscriptionsClient : IPersistentSubscriptionsClient
 {
-    private Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> EventAppeared;
+    private Func<KurrentDB.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> EventAppeared;
 
     private String Stream;
     private String Group;
 
     #region Methods
 
-    public async Task<global::EventStore.Client.PersistentSubscription> SubscribeAsync(String stream,
+    public async Task<KurrentDB.Client.PersistentSubscription> SubscribeAsync(String stream,
                                                                                        String group,
-                                                                                       Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared,
-                                                                                       Action<global::EventStore.Client.PersistentSubscription, SubscriptionDroppedReason, Exception?>? subscriptionDropped,
+                                                                                       Func<KurrentDB.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared,
+                                                                                       Action<KurrentDB.Client.PersistentSubscription, SubscriptionDroppedReason, Exception?>? subscriptionDropped,
                                                                                        UserCredentials? userCredentials,
                                                                                        Int32 bufferSize,
                                                                                        CancellationToken cancellationToken)
@@ -30,7 +32,7 @@ public class InMemoryPersistentSubscriptionsClient : IPersistentSubscriptionsCli
         this.Group = group;
         this.EventAppeared = eventAppeared;
 
-        return await Task.Factory.StartNew(() => default(global::EventStore.Client.PersistentSubscription),
+        return await Task.Factory.StartNew(() => default(KurrentDB.Client.PersistentSubscription),
             cancellationToken);
     }
 
@@ -49,7 +51,7 @@ public class InMemoryPersistentSubscriptionsClient : IPersistentSubscriptionsCli
         EventRecord er = new(this.Stream, Uuid.NewUuid(), StreamPosition.Start, Position.Start, metadata, data, custommetadata);
         ResolvedEvent re = new(er, null, null);
 
-        this.EventAppeared(default(global::EventStore.Client.PersistentSubscription), re, 0, cancellationToken);
+        this.EventAppeared(default, re, 0, cancellationToken);
     }
 
     #endregion

@@ -1,4 +1,6 @@
-﻿namespace Shared.EventStore.SubscriptionWorker;
+﻿using KurrentDB.Client;
+
+namespace Shared.EventStore.SubscriptionWorker;
 
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -11,13 +13,13 @@ public class EventStorePersistentSubscriptionsClient : IPersistentSubscriptionsC
 {
     #region Fields
 
-    private readonly global::EventStore.Client.EventStorePersistentSubscriptionsClient SubscriptionsClient;
+    private readonly KurrentDBPersistentSubscriptionsClient SubscriptionsClient;
 
     #endregion
 
     #region Constructors
 
-    public EventStorePersistentSubscriptionsClient(global::EventStore.Client.EventStorePersistentSubscriptionsClient subscriptionsClient) {
+    public EventStorePersistentSubscriptionsClient(KurrentDBPersistentSubscriptionsClient subscriptionsClient) {
         this.SubscriptionsClient = subscriptionsClient;
     }
 
@@ -25,15 +27,15 @@ public class EventStorePersistentSubscriptionsClient : IPersistentSubscriptionsC
 
     #region Methods
 
-    public Task<global::EventStore.Client.PersistentSubscription> SubscribeAsync(String stream,
-                                                                                 String group,
-                                                                                 Func<global::EventStore.Client.PersistentSubscription, ResolvedEvent, Int32?,
-                                                                                     CancellationToken, Task> eventAppeared,
-                                                                                 Action<global::EventStore.Client.PersistentSubscription, SubscriptionDroppedReason,
-                                                                                     Exception?>? subscriptionDropped,
-                                                                                 UserCredentials? userCredentials,
-                                                                                 Int32 bufferSize,
-                                                                                 CancellationToken cancellationToken) {
+    public Task<KurrentDB.Client.PersistentSubscription> SubscribeAsync(String stream,
+                                                                                String group,
+                                                                                Func<KurrentDB.Client.PersistentSubscription, ResolvedEvent, Int32?,
+                                                                                    CancellationToken, Task> eventAppeared,
+                                                                                Action<KurrentDB.Client.PersistentSubscription, SubscriptionDroppedReason,
+                                                                                    Exception?>? subscriptionDropped,
+                                                                                UserCredentials? userCredentials,
+                                                                                Int32 bufferSize,
+                                                                                CancellationToken cancellationToken) {
         return this.SubscriptionsClient.SubscribeToStreamAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, cancellationToken);
     }
 

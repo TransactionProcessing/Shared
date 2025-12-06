@@ -1,4 +1,5 @@
-﻿using Shared.Exceptions;
+﻿using KurrentDB.Client;
+using Shared.Exceptions;
 using Shared.Results;
 using SimpleResults;
 

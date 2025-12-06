@@ -1,4 +1,5 @@
-﻿using SimpleResults;
+﻿using KurrentDB.Client;
+using SimpleResults;
 
 namespace Shared.EventStore.EventStore;
 
@@ -6,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using global::EventStore.Client;
 
 public interface IEventStoreContext{
     #region Events

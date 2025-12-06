@@ -1,22 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFrameworks>net9.0</TargetFrameworks>
+	  <TargetFrameworks>net10.0</TargetFrameworks>
 	<DebugType>Full</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
-    <PackageReference Include="Ductus.FluentDocker" Version="2.10.59" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="9.0.5" />
-    <PackageReference Include="Reqnroll" Version="2.4.1" />
+    <PackageReference Include="Ductus.FluentDocker" Version="2.85.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Reqnroll" Version="3.2.1" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.9" />
     <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.9" />
     <PackageReference Include="SimpleResults" Version="4.0.0" />
-    <PackageReference Include="Testcontainers" Version="4.8.1" />
+    <PackageReference Include="Testcontainers" Version="4.9.0" />
   </ItemGroup>
 
   <ItemGroup>
