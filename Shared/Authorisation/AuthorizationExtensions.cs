@@ -12,9 +12,9 @@ namespace Shared.Authorisation
     public static class AuthorizationExtensions {
 
         public static class PolicyNames {
-            public const string ClientCredentialsOnlyPolicy = "ClientCredentialsOnly";
-            public const string PasswordTokenOnlyPolicy = "PasswordToken";
-            public const string AuthorisedTokenPolicy = "AnyTokenType";
+            public static readonly string ClientCredentialsOnlyPolicy = "ClientCredentialsOnly";
+            public static readonly string PasswordTokenOnlyPolicy = "PasswordToken";
+            public static readonly string AuthorisedTokenPolicy = "AnyTokenType";
         }
 
         public static IServiceCollection AddAuthorisedTokenPolicy(this IServiceCollection services)
