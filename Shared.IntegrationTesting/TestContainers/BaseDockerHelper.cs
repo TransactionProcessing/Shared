@@ -202,6 +202,7 @@ public abstract class BaseDockerHelper{
             {"AppSettings:ClientSecret", this.ClientDetails.clientSecret},
             {"AppSettings:MessagingServiceApi", $"http://{this.MessagingServiceContainerName}:{DockerPorts.MessagingServiceDockerPort}"},
             {"AppSettings:TransactionProcessorApi", $"http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}"},
+            {"AppSettings:FileProcessorApi", $"http://{this.FileProcessorContainerName}:{DockerPorts.FileProcessorDockerPort}"},
             {"ConnectionStrings:HealthCheck", this.SetConnectionString("master", this.UseSecureSqlServerDatabase)},
             {"\"EventStoreSettings:Insecure", this.IsSecureEventStore.ToString()}
             
