@@ -21,4 +21,7 @@ public static class DockerPorts
     public static readonly Int32 TransactionProcessorAclDockerPort = 5003;
 
     public static readonly Int32 TransactionProcessorDockerPort = 5002;
+    public static readonly Int32 ConfigHostDockerPort = 9200;
+
+    public static readonly Int32 EstateManagementUIDockerPort = 5004;
 }

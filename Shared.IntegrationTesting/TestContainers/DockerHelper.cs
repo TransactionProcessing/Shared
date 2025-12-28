@@ -85,10 +85,8 @@ public abstract class DockerHelper : BaseDockerHelper
         INetwork testNetwork = await this.SetupTestNetwork();
         this.TestNetworks.Add(testNetwork);
 
-        //INetwork testNetwork2 = await this.SetupTestNetwork($"testnw{Guid.NewGuid():N}");
         List<INetwork> networks = [
             testNetwork,
-            //testNetwork2
         ];
 
         await StartContainer2(this.ConfigureSqlContainer, networks, DockerServices.SqlServer);
@@ -102,6 +100,9 @@ public abstract class DockerHelper : BaseDockerHelper
         await StartContainer2(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
         await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
         await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
+        await StartContainer2(this.SetupConfigHostContainer, networks, DockerServices.ConfigurationHost);
+        if (this.DockerPlatform == DockerEnginePlatform.Linux)
+            await StartContainer2(this.SetupEstateManagementUiContainer, networks, DockerServices.EstateManagementUI);
 
         await this.LoadEventStoreProjections();
         

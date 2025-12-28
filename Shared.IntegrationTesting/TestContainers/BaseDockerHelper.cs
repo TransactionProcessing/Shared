@@ -62,6 +62,8 @@ public abstract class BaseDockerHelper{
 
     protected String EventStoreContainerName;
 
+    public String ConfigHostContainerName;
+    public Int32 ConfigHostPort;
     protected Int32 EventStoreHttpPort;
     protected Int32 EventStoreSecureHttpPort;
 
@@ -123,7 +125,7 @@ public abstract class BaseDockerHelper{
                                                                                                                                                                                           errors) => true
                                                                                                                                                }
                                                                                             }));
-
+        
         // Setup the default image details
         this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Result.Data;
         if (this.DockerPlatform == DockerEnginePlatform.Windows)
@@ -137,6 +139,8 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
+            this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfigurationwindows:master", true));
+            //this.ImageDetails.Add(ContainerType.EstateManangementUI, ("stuartferguson/estatemanagementuiwindows:master", true));
         }
         else
         {
@@ -149,6 +153,8 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
+            this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfiguration:master", true));
+            this.ImageDetails.Add(ContainerType.EstateManangementUI, ("stuartferguson/estatemanagementui:latest", true));
         }
 
         this.HostPorts = new Dictionary<ContainerType, Int32>();
@@ -196,6 +202,7 @@ public abstract class BaseDockerHelper{
             {"AppSettings:ClientSecret", this.ClientDetails.clientSecret},
             {"AppSettings:MessagingServiceApi", $"http://{this.MessagingServiceContainerName}:{DockerPorts.MessagingServiceDockerPort}"},
             {"AppSettings:TransactionProcessorApi", $"http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}"},
+            {"AppSettings:FileProcessorApi", $"http://{this.FileProcessorContainerName}:{DockerPorts.FileProcessorDockerPort}"},
             {"ConnectionStrings:HealthCheck", this.SetConnectionString("master", this.UseSecureSqlServerDatabase)},
             {"\"EventStoreSettings:Insecure", this.IsSecureEventStore.ToString()}
             
@@ -297,8 +304,14 @@ public abstract class BaseDockerHelper{
         this.MessagingServiceContainerName = $"messaging{this.TestId:N}";
         this.TransactionProcessorContainerName = $"transaction{this.TestId:N}";
         this.TransactionProcessorAclContainerName = $"transactionacl{this.TestId:N}";
+        this.ConfigHostContainerName = $"mobileconfighost{this.TestId:N}";
+        this.EstateManagementUiContainerName = $"estateadministrationui{this.TestId:N}";
     }
-    
+
+    public Int32 EstateManagementUiPort;
+
+    protected String EstateManagementUiContainerName;
+
     public virtual ContainerBuilder SetupEventStoreContainer(){
         this.Trace($"About to Start Event Store Container [{this.DockerPlatform}]");
 
@@ -425,6 +438,60 @@ public abstract class BaseDockerHelper{
         //String containerFolder = this.DockerPlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
         //fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
         return fileProcessorContainer;
+    }
+
+    protected virtual ContainerBuilder SetupEstateManagementUiContainer()
+    {
+        Trace("About to Start Estate Management UI Container");
+
+        Dictionary<String, String> environmentVariables = this.GetCommonEnvironmentVariables();
+
+        environmentVariables.Remove("AppSettings:ClientId");
+        environmentVariables.Remove("AppSettings:ClientSecret");
+
+        environmentVariables.Add("AppSettings:Authority", $"https://{this.SecurityServiceContainerName}:0");  // The port is set to 0 to stop defaulting to 443
+        environmentVariables.Add("AppSettings:SecurityServiceLocalPort", $"{DockerPorts.SecurityServiceDockerPort}");
+        environmentVariables.Add("AppSettings:SecurityServicePort", $"{this.SecurityServicePort}");
+        environmentVariables.Add("AppSettings:HttpClientIgnoreCertificateErrors", $"true");
+        //environmentVariables.Add($"AppSettings:PermissionsBypass=true");
+        environmentVariables.Add("AppSettings:IsIntegrationTest", "true");
+        environmentVariables.Add("ASPNETCORE_ENVIRONMENT", "Development");
+        environmentVariables.Add("EstateManagementScope", "estateManagement");
+        environmentVariables.Add("urls", "https://*:5004");
+        environmentVariables.Add($"AppSettings:ClientId", "estateUIClient");
+        environmentVariables.Add($"AppSettings:ClientSecret", "Secret1");
+        environmentVariables.Add($"AppSettings:BackEndClientId", "serviceClient");
+        environmentVariables.Add($"AppSettings:BackEndClientSecret", "Secret1");
+        environmentVariables.Add($"DataReloadConfig:DefaultInSeconds", "1");
+        environmentVariables.Add("ConnectionStrings:TransactionProcessorReadModel", this.SetConnectionString("TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
+
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateManangementUI).Data;
+
+        ContainerBuilder containerBuilder = new ContainerBuilder()
+            .WithName(this.EstateManagementUiContainerName)
+            .WithImage(imageDetails.imageName)
+            .WithEnvironment(environmentVariables)
+            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .WithPortBinding(DockerPorts.EstateManagementUIDockerPort,true);
+
+        return containerBuilder;
+    }
+
+    public virtual ContainerBuilder SetupConfigHostContainer()
+    {
+        this.Trace("About to Start Config Host Container");
+        Dictionary<String, String> environmentVariables = new();
+        environmentVariables.Add("AppSettings:InMemoryDatabase", "true");
+
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.ConfigurationHost).Data;
+
+        ContainerBuilder configHostContainer = new ContainerBuilder().WithName(this.ConfigHostContainerName)
+            .WithImage(imageDetails.imageName)
+            .WithEnvironment(environmentVariables)
+            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .WithPortBinding(DockerPorts.ConfigHostDockerPort, true);
+
+        return configHostContainer;
     }
 
     public virtual ContainerBuilder SetupMessagingServiceContainer(){
@@ -766,6 +833,8 @@ public abstract class BaseDockerHelper{
             ContainerType.TransactionProcessor => ("http", this.TransactionProcessorPort),
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
+            //ContainerType.ConfigurationHost => ("http", this.ConfigHostPort),
+            ContainerType.EstateManangementUI => ("https", this.EstateManagementUiPort),
             _ => (null, 0)
         };
 
@@ -887,6 +956,7 @@ public abstract class BaseDockerHelper{
         return connectionString;
     }
 
+    
     protected async Task<IContainer> StartContainer2(Func<ContainerBuilder> buildContainerFunc, List<INetwork> networkServices, DockerServices dockerService){
         if ((this.RequiredDockerServices & dockerService) != dockerService)
         {
@@ -917,6 +987,8 @@ public abstract class BaseDockerHelper{
                 DockerServices.TransactionProcessorAcl => ContainerType.TransactionProcessorAcl,
                 DockerServices.EventStore=> ContainerType.EventStore,
                 DockerServices.SqlServer => ContainerType.SqlServer,
+                DockerServices.ConfigurationHost => ContainerType.ConfigurationHost,
+                DockerServices.EstateManagementUI => ContainerType.EstateManangementUI,
                 _ => ContainerType.NotSet
             };
 
@@ -992,6 +1064,12 @@ public abstract class BaseDockerHelper{
                 break;
             case ContainerType.TransactionProcessorAcl: 
                 TransactionProcessorAclPort = GetPort(DockerPorts.TransactionProcessorAclDockerPort); 
+                break;
+            case ContainerType.ConfigurationHost:
+                ConfigHostPort = GetPort(DockerPorts.ConfigHostDockerPort);
+                break;
+            case ContainerType.EstateManangementUI:
+                EstateManagementUiPort = GetPort(DockerPorts.EstateManagementUIDockerPort);
                 break;
         }
     }
