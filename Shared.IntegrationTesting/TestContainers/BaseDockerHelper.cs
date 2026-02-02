@@ -843,7 +843,7 @@ public abstract class BaseDockerHelper{
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
             //ContainerType.ConfigurationHost => ("http", this.ConfigHostPort),
-            ContainerType.EstateManangementUI => ("https", this.EstateManagementUiPort),
+            //ContainerType.EstateManangementUI => ("https", this.EstateManagementUiPort),
             _ => (null, 0)
         };
 
