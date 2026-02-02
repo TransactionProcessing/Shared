@@ -228,15 +228,23 @@ public abstract class BaseDockerHelper{
     public static DockerClient GetDockerHost() => new DockerClientConfiguration().CreateClient();
     
 
-    public Int32? GetHostPort(ContainerType key){
-        KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
-        if (details.Equals(default(KeyValuePair<ContainerType, Int32>))){
-            // No details found so return a null
-            return null;
-        }
-
-        return details.Value;
-    }
+    public Int32? GetHostPort(ContainerType key) =>
+        key switch {
+            ContainerType.CallbackHandler => this.CallbackHandlerPort,
+            //ContainerType.EventStore => this.EventStoreHttpPort,
+            ContainerType.ConfigurationHost => this.ConfigHostPort,
+            ContainerType.FileProcessor => this.FileProcessorPort,
+            ContainerType.MessagingService => this.MessagingServicePort,
+            ContainerType.SecurityService => this.SecurityServicePort,
+            ContainerType.TestHost => this.TestHostServicePort,
+            ContainerType.TransactionProcessor => this.TransactionProcessorPort,
+            ContainerType.TransactionProcessorAcl => this.TransactionProcessorAclPort,
+            ContainerType.SqlServer => this.SqlServerPort,
+            ContainerType.EstateManangementUI => this.EstateManagementUiPort,
+            _ when key == ContainerType.EventStore && this.IsSecureEventStore => this.EventStoreSecureHttpPort,
+            _ when key == ContainerType.EventStore && this.IsSecureEventStore == false => this.EventStoreHttpPort,
+            _ => null
+    };
 
     public SimpleResults.Result<(String imageName, Boolean useLatest)> GetImageDetails(ContainerType key){
         KeyValuePair<ContainerType, (String imageName, Boolean useLatest)> details = this.ImageDetails.SingleOrDefault(c => c.Key == key);
@@ -308,7 +316,8 @@ public abstract class BaseDockerHelper{
         this.EstateManagementUiContainerName = $"estateadministrationui{this.TestId:N}";
     }
 
-    public Int32 EstateManagementUiPort;
+    protected Int32 EstateManagementUiPort;
+    protected Int32 SqlServerPort;
 
     protected String EstateManagementUiContainerName;
 
@@ -834,7 +843,7 @@ public abstract class BaseDockerHelper{
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
             //ContainerType.ConfigurationHost => ("http", this.ConfigHostPort),
-            ContainerType.EstateManangementUI => ("https", this.EstateManagementUiPort),
+            //ContainerType.EstateManangementUI => ("https", this.EstateManagementUiPort),
             _ => (null, 0)
         };
 
@@ -1071,6 +1080,10 @@ public abstract class BaseDockerHelper{
             case ContainerType.EstateManangementUI:
                 EstateManagementUiPort = GetPort(DockerPorts.EstateManagementUIDockerPort);
                 break;
+            case ContainerType.SqlServer:
+                SqlServerPort = GetPort(DockerPorts.SqlServerDockerPort);
+                break;
+
         }
     }
     
