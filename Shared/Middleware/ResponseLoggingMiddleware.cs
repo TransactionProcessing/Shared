@@ -12,22 +12,13 @@ namespace Shared.Middleware;
 
     public class ResponseLoggingMiddleware
     {
-        #region Fields
-
         private readonly RequestDelegate next;
 
-        #endregion
-
-        #region Constructors
         public ResponseLoggingMiddleware(RequestDelegate next)
         {
             this.next = next;
         }
-        #endregion
 
-        #region Public Methods
-
-        #region public async Task Invoke(HttpContext context)        
         public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
         {
             if (!configuration.LogResponses)
@@ -48,6 +39,35 @@ namespace Shared.Middleware;
                 var responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
                 StringBuilder logMessage = new();
                 logMessage.Append($"Response: Status Code: {context.Response.StatusCode}");
+
+                // Append response headers. Redact sensitive headers like Set-Cookie and Authorization.
+                if (context.Response.Headers != null && context.Response.Headers.Count > 0)
+                {
+                    logMessage.Append(' ');
+                    logMessage.Append("Headers:");
+                    var firstHeader = true;
+                    foreach (var header in context.Response.Headers)
+                    {
+                        if (!firstHeader)
+                            logMessage.Append(',');
+                        firstHeader = false;
+
+                        var value = header.Value.ToString();
+                        if (string.Equals(header.Key, "Set-Cookie", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase))
+                        {
+                            value = "***REDACTED***";
+                        }
+
+                        // Format: Key=Value
+                        logMessage.Append(' ');
+                        logMessage.Append(header.Key);
+                        logMessage.Append('=');
+                        logMessage.Append(value);
+                    }
+                }
+
                 if (!String.IsNullOrEmpty(responseBody))
                 {
                     logMessage.Append(' ');
@@ -65,9 +85,6 @@ namespace Shared.Middleware;
                 }
             }
         }
-        #endregion
-
-         #endregion
     }
 
     [ExcludeFromCodeCoverage]
