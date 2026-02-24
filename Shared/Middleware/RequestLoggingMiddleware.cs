@@ -11,18 +11,13 @@ namespace Shared.Middleware;
 
 public class RequestLoggingMiddleware
 {
-    #region Fields
     private readonly RequestDelegate next;
-    #endregion
 
-    #region Constructors
     public RequestLoggingMiddleware(RequestDelegate next)
     {
         this.next = next;
     }
-    #endregion
 
-    #region public async Task Invoke(HttpContext context)
     public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
     {
         if (!configuration.LogRequests)
@@ -41,6 +36,34 @@ public class RequestLoggingMiddleware
             var requestBodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
             StringBuilder logMessage = new();
             logMessage.Append($"Request: Method: {context.Request.Method} Url: {url}");
+
+            // Append request headers. Redact sensitive headers like Authorization and Cookie.
+            if (context.Request.Headers != null && context.Request.Headers.Count > 0)
+            {
+                logMessage.Append(' ');
+                logMessage.Append("Headers:");
+                var firstHeader = true;
+                foreach (var header in context.Request.Headers)
+                {
+                    if (!firstHeader)
+                        logMessage.Append(',');
+                    firstHeader = false;
+
+                    var value = header.Value.ToString();
+                    if (string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = "***REDACTED***";
+                    }
+
+                    // Format: Key=Value
+                    logMessage.Append(' ');
+                    logMessage.Append(header.Key);
+                    logMessage.Append('=');
+                    logMessage.Append(value);
+                }
+            }
+
             if (requestBodyText != String.Empty)
             {
                 logMessage.Append(' ');
@@ -56,5 +79,4 @@ public class RequestLoggingMiddleware
             context.Request.Body = originalRequestBody;
         }
     }
-    #endregion
 }
