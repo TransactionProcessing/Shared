@@ -231,23 +231,34 @@ jobs:
     #    project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
     #    coverage-reports: ./lcov.info
 
-    - name: Publish test results
-      uses: microsoft/azure-devops-publish-test-results@v1
-      with:
-        testResultsFiles: '**/*.trx'
-        testRunTitle: |
-          ${{ github.repository }} |
-          ${{ github.ref_name }} |
-          ${{ github.sha }}
-        azureDevOpsOrganization: 'https://dev.azure.com/stuartferguson1'
-        azureDevOpsProject: 'TransactionProcessing'
-        azureDevOpsToken: ${{ secrets.AZDO_PAT }}
+    # --- Azure DevOps CLI publishing steps ---
+    - name: Install Azure DevOps CLI
+      run: |
+       python3 -m pip install --upgrade pip
+       pip install azure-devops
 
-    - name: Publish coverage
-      uses: microsoft/azure-devops-publish-code-coverage@v1
-      with:
-        codeCoverageTool: Cobertura
-        summaryFileLocation: coverage/Cobertura.xml
-        azureDevOpsOrganization: 'https://dev.azure.com/stuartferguson1'
-        azureDevOpsProject: 'TransactionProcessing'
-        azureDevOpsToken: ${{ secrets.AZDO_PAT }}    
+    - name: Authenticate Azure DevOps CLI
+      run: |
+        echo "${{ secrets.AZDO_PAT }}" | az devops login
+      env:
+       AZDO_PAT: ${{ secrets.AZDO_PAT }}
+
+    - name: Set default Azure DevOps organization and project
+      run: |
+        az devops configure --defaults organization=https://dev.azure.com/stuartferguson1 project=TransactionProcessing
+    
+    - name: Upload test results (.trx)
+      run: |
+        # Upload all .trx files as artifacts named per repo
+        for f in $(find . -type f -name "*.trx"); do
+          az pipelines runs artifact upload \
+            --path "$f" \
+            --name "test-results-${{ github.repository }}"
+        done
+    
+    - name: Upload coverage (Cobertura.xml)
+      run: |
+        # Coverage report uploaded as artifact per repo
+        az pipelines runs artifact upload \
+          --path coverage/Cobertura.xml \
+          --name "coverage-${{ github.repository }}"
