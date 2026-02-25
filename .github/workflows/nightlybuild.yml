@@ -219,25 +219,22 @@ jobs:
     - name: Generate coverage reports
       run: |
         dotnet tool install -g dotnet-reportgenerator-globaltool
-
-        # Find all LCOV files (your lcov1.net10.0.info, lcov2.net10.0.info, etc.)
+    
         LCOV_FILES=$(find . -type f -name "lcov*.info" | tr '\n' ';')
-
-        # Remove trailing semicolon (CRITICAL)
         LCOV_FILES="${LCOV_FILES%;}"
     
         echo "Found LCOV files: $LCOV_FILES"
-
+    
         if [ -z "$LCOV_FILES" ]; then
           echo "No LCOV files found!"
           exit 1
         fi
-
+    
         reportgenerator \
-          -reports "$LCOV_FILES" \
-          -targetdir coverage \
-          -reporttypes Cobertura;HtmlInline_AzurePipelines \
-          -title "${{ github.repository }} — Code Coverage"
+          "-reports:$LCOV_FILES" \
+          "-targetdir:coverage" \
+          "-reporttypes:Cobertura;HtmlInline_AzurePipelines" \
+          "-title:${{ github.event.repository.name }} — Code Coverage"
 
     # --- Azure DevOps CLI publishing steps ---
     - name: Install Azure DevOps CLI
