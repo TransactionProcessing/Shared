@@ -189,14 +189,19 @@ jobs:
             echo "No existing Pages content directory configured/found; deploying only the test report."
           fi
 
-    - name: Generate HTML report into subpath
+    - name: Merge TRX files into a single TRX
+      shell: bash
       run: |
-          reportgenerator \
-            "-reports:**/TestResults/*.trx" \
-            "-targetdir:public/${REPORT_SUBPATH}" \
-            "-reporttypes:HtmlInline_AzurePipelines;HtmlChart" \
-            "-title:${{ github.repository }} - Test Report" \
-            "-tag:${{ github.run_number }}"
+          set -euo pipefail
+          trx-merge "${RESULTS_DIR}"/*.trx --output "${RESULTS_DIR}/merged.trx"
+
+    - name: Convert merged TRX to a single HTML report
+      shell: bash
+      run: |
+          set -euo pipefail
+          trx2html "${RESULTS_DIR}/merged.trx"
+          # trx2html writes HTML next to the TRX; move/rename to stable Pages path
+          mv "${RESULTS_DIR}/merged.html" "public/${REPORT_SUBPATH}/index.html"
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
