@@ -187,53 +187,48 @@ jobs:
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
 
-    # 6️⃣ Run tests with JUnit XML + coverage
-    - name: Run Unit Tests Shared.Tests
+    - name: Run Unit Tests
       run: |
-        dotnet test "Shared.Tests/Shared.Tests.csproj" \
-          /p:CollectCoverage=true \
-          /p:Exclude="[xunit*]*" \
-          /p:ExcludeByAttribute="Obsolete" \
-          /p:ExcludeByAttribute="GeneratedCodeAttribute" \
-          /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
-          /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-          /p:CoverletOutputFormat=lcov \
-          /p:CoverletOutput=TestResults/Coverage/Shared.Tests.lcov \        
-          /p:CoverletOutputIncludeTargetFramework=false \
-          /maxcpucount:1
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj" \
+            /p:CollectCoverage=true \
+            /p:Exclude="[xunit*]*" \
+            /p:ExcludeByAttribute="Obsolete" \
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
+            /p:CoverletOutput="../lcov1.info" /maxcpucount:1 \
+            /p:CoverletOutputFormat="lcov"
 
-    - name: Run Unit Tests Shared.EventStore.Tests
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" \
+            /p:CollectCoverage=true /p:Exclude="[xunit*]*" \
+            /p:ExcludeByAttribute="Obsolete" \
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
+            /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
+
+    # - name: Merge coverage reports
+    #   run: |
+    #     dotnet tool install --global coverlet.console
+    #     coverlet ./lcoov1.info \
+    #     --format lcov \
+    #     --output ./merged.info \
+    #     --merge-with ./lcov2.info
+
+    #- name: Install coverlet to tools folder
+    #  run: dotnet tool install --tool-path ./.tools coverlet.console
+
+    - name: Install LCOV merger
+      run: npm install -g lcov-result-merger
+
+    - name: Merge LCOV reports
       run: |
-        dotnet test "Shared.EventStore.Tests/Shared.EventStore.Tests.csproj" \
-          /p:CollectCoverage=true \
-          /p:Exclude="[xunit*]*" \
-          /p:ExcludeByAttribute="Obsolete" \
-          /p:ExcludeByAttribute="GeneratedCodeAttribute" \
-          /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
-          /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-          /p:CoverletOutputFormat=lcov \
-          /p:CoverletOutput=TestResults/Coverage/Shared.EventStore.Tests.lcov \        
-          /p:CoverletOutputIncludeTargetFramework=false \
-          /maxcpucount:1
+        mkdir -p coverage
+        lcov-result-merger "*.info" > lcov.info
 
-    - name: Install ReportGenerator Global Tool
-      run: |
-        dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.5.1
-        export PATH="$PATH:$HOME/.dotnet/tools"
-
-    # 7️⃣ Merge coverage files
-    - name: Merge Coverage Reports
-      run: |
-        export PATH="$PATH:/home/runner/.dotnet/tools"
-        reportgenerator \
-          -reports:TestResults/Coverage/*.lcov \
-          -targetdir:TestResults/Coverage/Merged \
-          -reporttypes:lcov
-
-    # 7️⃣ Upload merged coverage to Codecov
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v4
+    - name: Upload merged coverage to Codacy
+      uses: codacy/codacy-coverage-reporter-action@v1
       with:
-        files: TestResults/Coverage/Merged/lcov.info
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: ./lcov.info
