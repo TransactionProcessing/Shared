@@ -225,50 +225,57 @@ jobs:
           "-title:${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}"
 
     # --------------------------------
-    # Install latest Azure CLI + DevOps extension
+    # Publish test results via REST API
     # --------------------------------
-    - name: Install Azure CLI + DevOps extension
+    - name: Publish TRX & coverage to Azure DevOps
+      env:
+        AZDO_ORG: "https://dev.azure.com/stuartferguson1"
+        AZDO_PROJECT: "TransactionProcessing"
+        AZDO_PAT: ${{ secrets.AZDO_PAT }}
       run: |
-        sudo apt remove -y azure-cli || true
-        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-        az extension remove --name azure-devops || true
-        az extension add --name azure-devops
-        hash -r
-      shell: bash
+        echo "Installing dependencies"
+        sudo apt-get install -y jq curl
 
-    # --------------------------------
-    # Publish TRX results and capture run ID
-    # --------------------------------
-    - name: Publish TRX test results
-      id: publish_tests
-      run: |
-        az devops configure --defaults \
-          organization=https://dev.azure.com/stuartferguson1 \
-          project=TransactionProcessing
+        ORG="$AZDO_ORG"
+        PROJECT="$AZDO_PROJECT"
+        PAT="$AZDO_PAT"
 
-        RUN_ID=$(az devops test results publish \
-          --run-title "${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}" \
-          --results "$(find . -type f -name '*.trx' | tr '\n' ' ')" \
-          --query "id" --output tsv)
+        echo "Creating new test run in Azure DevOps"
 
-        if [ -z "$RUN_ID" ]; then
-          echo "Failed to get test run id"
+        RUN_RESPONSE=$(curl -s -u ":$PAT" \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d "{\"name\":\"${GITHUB_REPOSITORY} | ${GITHUB_REF_NAME} | ${GITHUB_SHA}\",\"automated\":true}" \
+          "$ORG/$PROJECT/_apis/test/runs?api-version=7.0")
+
+        RUN_ID=$(echo "$RUN_RESPONSE" | jq -r '.id')
+        echo "Created test run ID: $RUN_ID"
+
+        if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+          echo "Failed to create test run!"
           exit 1
         fi
 
-        echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
-      env:
-        AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
+        # Upload all TRX files
+        for TRX in $(find . -type f -name "*.trx"); do
+          echo "Uploading test result: $TRX"
+          curl -s -u ":$PAT" \
+            -X POST \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$TRX" \
+            "$ORG/$PROJECT/_apis/test/runs/$RUN_ID/results?api-version=7.0"
+        done
 
-    # --------------------------------
-    # Attach Cobertura coverage to test run
-    # --------------------------------
-    - name: Attach Cobertura coverage
-      run: |
-        RUN_ID="${{ steps.publish_tests.outputs.run_id }}"
-        az devops test results attachment add \
-          --run-id "$RUN_ID" \
-          --attachment-type coverage \
-          --file coverage/Cobertura.xml
-      env:
-        AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
+        # Attach Cobertura coverage
+        if [ -f coverage/Cobertura.xml ]; then
+          echo "Attaching Cobertura coverage"
+          curl -s -u ":$PAT" \
+            -X POST \
+            -F "attachmentType=coverage" \
+            -F "file=@coverage/Cobertura.xml" \
+            "$ORG/$PROJECT/_apis/test/runs/$RUN_ID/attachments?api-version=7.0"
+        else
+          echo "Coverage file not found, skipping attachment"
+        fi
+
+        echo "Test results and coverage uploaded successfully!"
