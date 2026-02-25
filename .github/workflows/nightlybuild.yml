@@ -219,8 +219,13 @@ jobs:
     - name: Generate coverage reports
       run: |
         dotnet tool install -g dotnet-reportgenerator-globaltool
+
+        # Find all LCOV files
+        LCOV_FILES=$(find Shared/Shared -name "lcov*.info" | tr '\n' ';')
+        echo "Found LCOV files: $LCOV_FILES"
+    
         reportgenerator \
-          -reports **/lcov.info \
+          -reports "$LCOV_FILES" \
           -targetdir coverage \
           -reporttypes Cobertura;HtmlInline_AzurePipelines \
           -title "${{ github.repository }} — Code Coverage"
