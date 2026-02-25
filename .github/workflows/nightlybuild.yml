@@ -219,6 +219,9 @@ jobs:
     #- name: Install coverlet to tools folder
     #  run: dotnet tool install --tool-path ./.tools coverlet.console
 
+    - name: Use public npm registry
+      run: npm config set registry https://registry.npmjs.org/
+
     - name: Install LCOV merger
       run: npm install -g lcov-result-merger
 
