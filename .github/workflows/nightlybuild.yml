@@ -198,6 +198,7 @@ jobs:
           /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
           /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
           /p:CoverletOutput=TestResults/Coverage/lcov1.info \
+          /p:CoverletOutputIncludeTargetFramework=false
           /p:CoverletOutputFormat=lcov \
           /maxcpucount:1
 
@@ -211,6 +212,7 @@ jobs:
           /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
           /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
           /p:CoverletOutput=TestResults/Coverage/lcov2.info \
+          /p:CoverletOutputIncludeTargetFramework=false
           /p:CoverletOutputFormat=lcov \
           /maxcpucount:1
 
