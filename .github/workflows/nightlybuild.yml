@@ -146,6 +146,7 @@ jobs:
         ASPNETCORE_ENVIRONMENT: "Production"
         PAGES_ROOT_DIR: "docs"
         REPORT_SUBPATH: "test-report"
+        RESULTS_DIR: TestResults
 
     runs-on: ubuntu-latest
 
