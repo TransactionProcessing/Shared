@@ -197,8 +197,9 @@ jobs:
           /p:ExcludeByAttribute="GeneratedCodeAttribute" \
           /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
           /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-          /p:CoverletOutput=TestResults/Coverage/lcov1.info \
           /p:CoverletOutputFormat=lcov \
+          /p:CoverletOutput=TestResults/Coverage/Shared.Tests.lcov \        
+          /p:CoverletOutputIncludeTargetFramework=false \
           /maxcpucount:1
 
     - name: Run Unit Tests Shared.EventStore.Tests
@@ -210,8 +211,9 @@ jobs:
           /p:ExcludeByAttribute="GeneratedCodeAttribute" \
           /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
           /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-          /p:CoverletOutput=TestResults/Coverage/lcov2.info \
           /p:CoverletOutputFormat=lcov \
+          /p:CoverletOutput=TestResults/Coverage/Shared.EventStore.Tests.lcov \        
+          /p:CoverletOutputIncludeTargetFramework=false \
           /maxcpucount:1
 
     - name: Install ReportGenerator Global Tool
@@ -224,7 +226,7 @@ jobs:
       run: |
         export PATH="$PATH:/home/runner/.dotnet/tools"
         reportgenerator \
-          -reports:TestResults/Coverage/*.net10.0.info \
+          -reports:TestResults/Coverage/*.lcov \
           -targetdir:TestResults/Coverage/Merged \
           -reporttypes:lcov
 
