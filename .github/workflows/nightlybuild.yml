@@ -222,6 +222,10 @@ jobs:
 
         # Find all LCOV files (your lcov1.net10.0.info, lcov2.net10.0.info, etc.)
         LCOV_FILES=$(find . -type f -name "lcov*.info" | tr '\n' ';')
+
+        # Remove trailing semicolon (CRITICAL)
+        LCOV_FILES="${LCOV_FILES%;}"
+    
         echo "Found LCOV files: $LCOV_FILES"
 
         if [ -z "$LCOV_FILES" ]; then
