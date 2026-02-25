@@ -216,14 +216,14 @@ jobs:
         mkdir -p coverage
         lcov-result-merger "*.info" > lcov.info
 
-    - name: Convert coverage to Cobertura
+    - name: Generate Cobertura coverage report
       run: |
         dotnet tool install -g dotnet-reportgenerator-globaltool
         reportgenerator \
-          -reports:**/lcov.info \
-          -targetdir:coverage \          
-          -reporttypes:Cobertura;HtmlInline_AzurePipelines \
-          -title:"${{ github.repository }} — Code Coverage"
+          -reports="**/lcov.info" \
+          -targetdir="coverage" \
+          -reporttypes="Cobertura;HtmlInline_AzurePipelines" \
+          -title="${{ github.repository }} — Code Coverage"
           
     #- name: Upload merged coverage to Codacy
     #  uses: codacy/codacy-coverage-reporter-action@v1
