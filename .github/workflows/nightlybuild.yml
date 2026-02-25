@@ -163,7 +163,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: trx-results
-        path: TestResults/**/*.trx
+        path: **/TestResults/*.trx
         if-no-files-found: warn
         retention-days: 14
 
@@ -187,7 +187,7 @@ jobs:
     - name: Generate HTML report into subpath
       run: |
           reportgenerator \
-            "-reports:TestResults/**/*.trx" \
+            "-reports:**/TestResults/*.trx" \
             "-targetdir:public/${REPORT_SUBPATH}" \
             "-reporttypes:HtmlInline_AzurePipelines;HtmlChart" \
             "-title:${{ github.repository }} - Test Report" \
