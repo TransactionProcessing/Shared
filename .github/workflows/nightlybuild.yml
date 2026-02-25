@@ -208,13 +208,13 @@ jobs:
             /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
             /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
-    #- name: Install LCOV merger
-    #  run: npm install -g lcov-result-merger
+    - name: Install LCOV merger
+      run: npm install -g lcov-result-merger
 
-    #- name: Merge LCOV reports
-    #  run: |
-    #    mkdir -p coverage
-    #    lcov-result-merger "*.info" > lcov.info
+    - name: Merge LCOV reports
+      run: |
+        mkdir -p coverage
+        lcov-result-merger "*.info" > lcov.info
 
     - name: Convert coverage to Cobertura
       run: |
