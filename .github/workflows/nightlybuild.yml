@@ -252,14 +252,19 @@ jobs:
       run: |
         az devops configure --defaults organization=https://dev.azure.com/stuartferguson1 project=TransactionProcessing
     
-    - name: Upload test results (.trx)
+    - name: Publish test results to Azure DevOps
       run: |
-        # Upload all .trx files as artifacts named per repo
-        for f in $(find . -type f -name "*.trx"); do
-          az pipelines runs artifact upload \
-            --path "$f" \
-            --name "test-results-${{ github.repository }}"
-        done
+        echo "Configuring Azure DevOps CLI"
+        az devops configure --defaults \
+          organization=https://dev.azure.com/stuartferguson1 \
+          project=TransactionProcessing
+
+        echo "Publishing TRX test results"
+        az devops test-results publish \
+          --run-title "${{ github.event.repository.name }} | ${{ github.ref_name }} | ${{ github.sha }}" \
+          --results "$(find . -type f -name '*.trx' | tr '\n' ' ')"
+      env:
+        AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
     
     - name: Upload coverage (Cobertura.xml)
       run: |
