@@ -237,10 +237,17 @@ jobs:
           "-title:${{ github.event.repository.name }} — Code Coverage"
 
     # --- Azure DevOps CLI publishing steps ---
-    - name: Install Azure DevOps CLI
+    - name: Install latest Azure CLI + DevOps extension
       run: |
-       python3 -m pip install --upgrade pip
-       pip install azure-devops
+        # Remove preinstalled CLI if present (avoids version conflicts)
+        sudo apt remove -y azure-cli || true
+    
+        # Install latest Azure CLI
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    
+        # Install latest DevOps extension
+        az extension remove --name azure-devops || true
+        az extension add --name azure-devops
 
     - name: Authenticate Azure DevOps CLI
       run: |
