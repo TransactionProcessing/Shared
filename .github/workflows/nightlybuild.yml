@@ -139,6 +139,8 @@ jobs:
     name: "Nightly Build - Test Reports"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
+        PAGES_ROOT_DIR: "docs"
+        REPORT_SUBPATH: "test-report"
 
     runs-on: ubuntu-latest
 
