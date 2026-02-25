@@ -208,95 +208,64 @@ jobs:
             /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
             /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
-    #- name: Install LCOV merger
-    #  run: npm install -g lcov-result-merger
-
-    #- name: Merge LCOV reports
-    #  run: |
-    #    mkdir -p coverage
-    #    lcov-result-merger "*.info" > lcov.info
-
+    # --------------------------------
+    # Generate combined coverage report
+    # --------------------------------
     - name: Generate coverage reports
       run: |
         dotnet tool install -g dotnet-reportgenerator-globaltool
-    
+
         LCOV_FILES=$(find . -type f -name "lcov*.info" | tr '\n' ';')
         LCOV_FILES="${LCOV_FILES%;}"
-    
-        echo "Found LCOV files: $LCOV_FILES"
-    
-        if [ -z "$LCOV_FILES" ]; then
-          echo "No LCOV files found!"
-          exit 1
-        fi
-    
+
         reportgenerator \
           "-reports:$LCOV_FILES" \
           "-targetdir:coverage" \
           "-reporttypes:Cobertura;HtmlInline_AzurePipelines" \
-          "-title:${{ github.event.repository.name }} — Code Coverage"
+          "-title:${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}"
 
-    # --- Azure DevOps CLI publishing steps ---
-    - name: Install latest Azure CLI + DevOps extension
+    # --------------------------------
+    # Install latest Azure CLI + DevOps extension
+    # --------------------------------
+    - name: Install Azure CLI + DevOps extension
       run: |
-        # Remove preinstalled CLI if present (avoids version conflicts)
         sudo apt remove -y azure-cli || true
-    
-        # Install latest Azure CLI
         curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-    
-        # Install latest DevOps extension
         az extension remove --name azure-devops || true
         az extension add --name azure-devops
+        hash -r
+      shell: bash
 
-    - name: Authenticate Azure DevOps CLI
-      run: |
-        echo "${{ secrets.AZDO_PAT }}" | az devops login
-      env:
-       AZDO_PAT: ${{ secrets.AZDO_PAT }}
-
-    - name: Set default Azure DevOps organization and project
-      run: |
-        az devops configure --defaults organization=https://dev.azure.com/stuartferguson1 project=TransactionProcessing
-    
-    - name: Publish test results to Azure DevOps (capture run id)
+    # --------------------------------
+    # Publish TRX results and capture run ID
+    # --------------------------------
+    - name: Publish TRX test results
       id: publish_tests
       run: |
-        az extension add --name azure-devops || true
-    
         az devops configure --defaults \
           organization=https://dev.azure.com/stuartferguson1 \
           project=TransactionProcessing
-    
-        echo "Publishing TRX test results..."
-    
+
         RUN_ID=$(az devops test results publish \
           --run-title "${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}" \
           --results "$(find . -type f -name '*.trx' | tr '\n' ' ')" \
-          --query "id" \
-          --output tsv)
-    
+          --query "id" --output tsv)
+
         if [ -z "$RUN_ID" ]; then
           echo "Failed to get test run id"
           exit 1
         fi
-    
-        echo "Test run id: $RUN_ID"
+
         echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
       env:
         AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
-    
-    - name: Attach Cobertura coverage to Azure DevOps test run
+
+    # --------------------------------
+    # Attach Cobertura coverage to test run
+    # --------------------------------
+    - name: Attach Cobertura coverage
       run: |
         RUN_ID="${{ steps.publish_tests.outputs.run_id }}"
-    
-        if [ ! -f coverage/Cobertura.xml ]; then
-          echo "Cobertura.xml not found!"
-          exit 1
-        fi
-    
-        echo "Attaching coverage to test run $RUN_ID"
-    
         az devops test results attachment add \
           --run-id "$RUN_ID" \
           --attachment-type coverage \
