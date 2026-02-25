@@ -148,10 +148,13 @@ jobs:
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+      
     - name: Run Unit Tests
       run: |
-        dotnet test "Shared.Tests\Shared.Tests.csproj"  --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=buslogic-test-results.trx"
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=projection-test-results.trx"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"  --configuration Release --verbosity normal --logger "trx;LogFileName=shared-test-results.trx"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" --configuration Release --verbosity normal --logger "trx;LogFileName=eventstore-test-results.trx"
 
     - name: Upload TRX artifacts (optional)
       if: always()
