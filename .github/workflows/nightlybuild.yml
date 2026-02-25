@@ -189,7 +189,7 @@ jobs:
 
     # 5️⃣ Install JUnit test logger globally
     - name: Install JUnit Test Logger
-      run: dotnet tool install --global JUnitXml.TestLogger --version 3.0.0
+      run: dotnet tool install --global JUnitXml.TestLogger --version 2.1.0
 
     # 6️⃣ Run tests with JUnit XML + coverage
     - name: Run Unit Tests Shared.Tests
