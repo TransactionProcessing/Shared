@@ -75,97 +75,7 @@ jobs:
       with:
         name: tracelogslinux
         path: /home/txnproc/trace/   
-
-  # buildwindows:
-  #   name: "Nightly Build - Windows"
-  #   env:
-  #       ASPNETCORE_ENVIRONMENT: "Production"
-
-  #   runs-on: windows-latest
-    
-  #   steps:
-  #   - uses: actions/checkout@v1
-
-  #   - name: Install NET 9
-  #     uses: actions/setup-dotnet@v4.0.1
-  #     with:
-  #       dotnet-version: '9.0.x'
-
-  #   - name: Build Windows SQL Server
-  #     run: |
-  #        cd SQLDocker
-  #        docker build -t mssqlserver:2022-ltsc2022 --build-arg SQL_VERSION=2022 --build-arg WIN_VERSION=ltsc2022 .
-         
-  #   - name: Restore Nuget Packages
-  #     run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
-
-  #   - name: Build Code
-  #     run: dotnet build Shared.sln --configuration Release
-
-  #   - name: Run Event Store Tests
-  #     run: |
-  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #       dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
-
-  #   - name: Run Integration Tests
-  #     env:
-  #         IsCI: true    
-  #     run: |
-  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #       dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
-
-  #   - uses: actions/upload-artifact@v4.4.3
-  #     if: ${{ failure() }}
-  #     with:
-  #       name: tracelogswindows
-  #       path: C:\\Users\\runneradmin\\txnproc
-
-  # buildmacos:
-  #   name: "Nightly Build - Mac"
-  #   env:
-  #       ASPNETCORE_ENVIRONMENT: "Production"
-
-  #   runs-on: macos-latest
-    
-  #   steps:
-  #   - uses: actions/checkout@v1
-
-  #   - name: Setup Docker
-  #     run: |
-  #       brew install docker --cask
-  #       brew install colima
-  #       #colima start
-  #       colima start --cpu 2 --memory 8 --disk 100
-
-  #   - name: Restore Nuget Packages
-  #     run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
-
-  #   - name: Build Code
-  #     run: dotnet build Shared.sln --configuration Release
-          
-  #   - name: Run Integration Tests
-  #     run: |
-  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #       dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
-        
-  #   - name: Trust root certificate
-  #     run: |
-  #       sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt        
-  #       sudo security authorizationdb write com.apple.trust-settings.admin allow 
-  #       sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" /usr/local/share/ca-certificates/ca.crt
-  #       sudo security authorizationdb remove com.apple.trust-settings.admin
-          
-  #   - name: Run Event Store Tests
-  #     run: |
-  #       echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-  #       dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"        
-
-  #   - uses: actions/upload-artifact@v4.4.3
-  #     if: ${{ failure() }}
-  #     with:
-  #       name: tracelogsios
-  #       path: /Users/runner/txnproc/trace/
-
+  
   codecoverage:
     name: "Nightly Build - Code Coverage"
     env:
@@ -208,17 +118,6 @@ jobs:
             /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
             /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
-    # - name: Merge coverage reports
-    #   run: |
-    #     dotnet tool install --global coverlet.console
-    #     coverlet ./lcoov1.info \
-    #     --format lcov \
-    #     --output ./merged.info \
-    #     --merge-with ./lcov2.info
-
-    #- name: Install coverlet to tools folder
-    #  run: dotnet tool install --tool-path ./.tools coverlet.console
-
     - name: Use public npm registry
       run: npm config set registry https://registry.npmjs.org/
 
@@ -235,3 +134,64 @@ jobs:
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: ./lcov.info
+
+  testreports:
+    name: "Nightly Build - Test Reports"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2.3.4
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+    - name: Run Unit Tests
+      run: |
+        dotnet test "Shared.Tests\Shared.Tests.csproj"  --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=buslogic-test-results.trx"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=projection-test-results.trx"
+
+    - name: Upload TRX artifacts (optional)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: trx-results
+        path: TestResults/**/*.trx
+        if-no-files-found: warn
+        retention-days: 14
+
+    - name: Install ReportGenerator
+      run: dotnet tool update -g dotnet-reportgenerator-globaltool
+
+    - name: Prepare Pages output folder
+      shell: bash
+      run: |
+          set -euo pipefail
+          rm -rf public
+          mkdir -p public
+
+          if [ -n "${PAGES_ROOT_DIR}" ] && [ -d "${PAGES_ROOT_DIR}" ]; then
+            echo "Copying existing Pages content from '${PAGES_ROOT_DIR}' to 'public/'..."
+            rsync -a "${PAGES_ROOT_DIR}/" "public/"
+          else
+            echo "No existing Pages content directory configured/found; deploying only the test report."
+          fi
+
+    - name: Generate HTML report into subpath
+      run: |
+          reportgenerator \
+            "-reports:TestResults/**/*.trx" \
+            "-targetdir:public/${REPORT_SUBPATH}" \
+            "-reporttypes:HtmlInline_AzurePipelines;HtmlChart" \
+            "-title:${{ github.repository }} - Test Report" \
+            "-tag:${{ github.run_number }}"
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: public
+
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v4
