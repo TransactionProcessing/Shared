@@ -187,17 +187,10 @@ jobs:
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
 
-    # 5️⃣ Install JUnit test logger globally
-    - name: Install JUnit Test Logger
-      run: dotnet tool install --global JUnitXml.TestLogger --version 2.1.0
-
     # 6️⃣ Run tests with JUnit XML + coverage
     - name: Run Unit Tests Shared.Tests
       run: |
-        export PATH="$PATH:/home/runner/.dotnet/tools"
-        echo "ASPNETCORE_ENVIRONMENT is ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests/Shared.Tests.csproj" \
-          --logger:"junit;LogFilePath=TestResults/Shared.Tests-results.xml" \
           /p:CollectCoverage=true \
           /p:Exclude="[xunit*]*" \
           /p:ExcludeByAttribute="Obsolete" \
@@ -210,9 +203,7 @@ jobs:
 
     - name: Run Unit Tests Shared.EventStore.Tests
       run: |
-        export PATH="$PATH:/home/runner/.dotnet/tools"
         dotnet test "Shared.EventStore.Tests/Shared.EventStore.Tests.csproj" \
-          --logger:"junit;LogFilePath=TestResults/Shared.EventStore.Tests-results.xml" \
           /p:CollectCoverage=true \
           /p:Exclude="[xunit*]*" \
           /p:ExcludeByAttribute="Obsolete" \
@@ -222,6 +213,7 @@ jobs:
           /p:CoverletOutput=TestResults/Coverage/lcov2.info \
           /p:CoverletOutputFormat=lcov \
           /maxcpucount:1
+
 
     # 7️⃣ Merge coverage files
     - name: Merge Coverage Reports
@@ -233,13 +225,10 @@ jobs:
           -targetdir:TestResults/Coverage/Merged \
           -reporttypes:lcov
 
-    # 8️⃣ Upload coverage and test results to Codecov
-    - name: Upload Coverage & Test Reports to Codecov
+    # 7️⃣ Upload merged coverage to Codecov
+    - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
         files: TestResults/Coverage/Merged/lcov.info
-        test_report: |
-          TestResults/Shared.Tests-results.xml
-          TestResults/Shared.EventStore.Tests-results.xml
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
