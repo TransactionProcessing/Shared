@@ -252,7 +252,8 @@ jobs:
       run: |
         az devops configure --defaults organization=https://dev.azure.com/stuartferguson1 project=TransactionProcessing
     
-    - name: Publish test results to Azure DevOps
+    - name: Publish test results to Azure DevOps (capture run id)
+      id: publish_tests
       run: |
         az extension add --name azure-devops || true
     
@@ -260,23 +261,38 @@ jobs:
           organization=https://dev.azure.com/stuartferguson1 \
           project=TransactionProcessing
     
-        az devops test results publish \
-          --run-title "Shared | master | 2c5138e25a6cbb6534f183aaeb3e8f610f737533" \
-          --results "$(find . -type f -name '*.trx' | tr '\n' ' ')"
+        echo "Publishing TRX test results..."
+    
+        RUN_ID=$(az devops test results publish \
+          --run-title "${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}" \
+          --results "$(find . -type f -name '*.trx' | tr '\n' ' ')" \
+          --query "id" \
+          --output tsv)
+    
+        if [ -z "$RUN_ID" ]; then
+          echo "Failed to get test run id"
+          exit 1
+        fi
+    
+        echo "Test run id: $RUN_ID"
+        echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
       env:
         AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
     
-    - name: Publish coverage to Azure DevOps
+    - name: Attach Cobertura coverage to Azure DevOps test run
       run: |
-        az extension add --name azure-devops
+        RUN_ID="${{ steps.publish_tests.outputs.run_id }}"
     
-        az devops configure --defaults \
-          organization=https://dev.azure.com/stuartferguson1 \
-          project=TransactionProcessing
+        if [ ! -f coverage/Cobertura.xml ]; then
+          echo "Cobertura.xml not found!"
+          exit 1
+        fi
     
-        az devops test-results publish \
-          --run-title "${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}" \
-          --results "$(find . -type f -name '*.trx' | tr '\n' ' ')" \
-          --attachments coverage/Cobertura.xml
+        echo "Attaching coverage to test run $RUN_ID"
+    
+        az devops test results attachment add \
+          --run-id "$RUN_ID" \
+          --attachment-type coverage \
+          --file coverage/Cobertura.xml
       env:
         AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
