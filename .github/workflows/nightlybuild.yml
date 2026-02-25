@@ -254,6 +254,9 @@ jobs:
     
     - name: Publish test results to Azure DevOps
       run: |
+        echo "Installing Azure DevOps CLI extension"
+        az extension add --name azure-devops
+        
         echo "Configuring Azure DevOps CLI"
         az devops configure --defaults \
           organization=https://dev.azure.com/stuartferguson1 \
@@ -266,9 +269,17 @@ jobs:
       env:
         AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
     
-    - name: Upload coverage (Cobertura.xml)
+    - name: Publish coverage to Azure DevOps
       run: |
-        # Coverage report uploaded as artifact per repo
-        az pipelines runs artifact upload \
-          --path coverage/Cobertura.xml \
-          --name "coverage-${{ github.repository }}"
+        az extension add --name azure-devops
+    
+        az devops configure --defaults \
+          organization=https://dev.azure.com/stuartferguson1 \
+          project=TransactionProcessing
+    
+        az devops test-results publish \
+          --run-title "${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}" \
+          --results "$(find . -type f -name '*.trx' | tr '\n' ' ')" \
+          --attachments coverage/Cobertura.xml
+      env:
+        AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZDO_PAT }}
