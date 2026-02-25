@@ -214,6 +214,10 @@ jobs:
           /p:CoverletOutputFormat=lcov \
           /maxcpucount:1
 
+    - name: Install ReportGenerator Global Tool
+      run: |
+        dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.5.1
+        export PATH="$PATH:$HOME/.dotnet/tools"
 
     # 7️⃣ Merge coverage files
     - name: Merge Coverage Reports
