@@ -190,7 +190,7 @@ jobs:
     - name: Run Unit Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj" \
+        dotnet test "Shared.Tests\Shared.Tests.csproj" --logger trx \
             /p:CollectCoverage=true \
             /p:Exclude="[xunit*]*" \
             /p:ExcludeByAttribute="Obsolete" \
@@ -200,7 +200,7 @@ jobs:
             /p:CoverletOutput="../lcov1.info" /maxcpucount:1 \
             /p:CoverletOutputFormat="lcov"
 
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" \
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" --logger trx \
             /p:CollectCoverage=true /p:Exclude="[xunit*]*" \
             /p:ExcludeByAttribute="Obsolete" \
             /p:ExcludeByAttribute="GeneratedCodeAttribute" \
@@ -208,27 +208,46 @@ jobs:
             /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
             /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
-    # - name: Merge coverage reports
-    #   run: |
-    #     dotnet tool install --global coverlet.console
-    #     coverlet ./lcoov1.info \
-    #     --format lcov \
-    #     --output ./merged.info \
-    #     --merge-with ./lcov2.info
+    #- name: Install LCOV merger
+    #  run: npm install -g lcov-result-merger
 
-    #- name: Install coverlet to tools folder
-    #  run: dotnet tool install --tool-path ./.tools coverlet.console
+    #- name: Merge LCOV reports
+    #  run: |
+    #    mkdir -p coverage
+    #    lcov-result-merger "*.info" > lcov.info
 
-    - name: Install LCOV merger
-      run: npm install -g lcov-result-merger
-
-    - name: Merge LCOV reports
+    - name: Convert coverage to Cobertura
       run: |
-        mkdir -p coverage
-        lcov-result-merger "*.info" > lcov.info
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        reportgenerator \
+          -reports:**/lcov.info \
+          -targetdir:coverage \          
+          -reporttypes:Cobertura;HtmlInline_AzurePipelines \
+          -title:"${{ github.repository }} — Code Coverage"
+          
+    #- name: Upload merged coverage to Codacy
+    #  uses: codacy/codacy-coverage-reporter-action@v1
+    #  with:
+    #    project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+    #    coverage-reports: ./lcov.info
 
-    - name: Upload merged coverage to Codacy
-      uses: codacy/codacy-coverage-reporter-action@v1
+    - name: Publish test results
+      uses: microsoft/azure-devops-publish-test-results@v1
       with:
-        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: ./lcov.info
+        testResultsFiles: '**/*.trx'
+        testRunTitle: |
+          ${{ github.repository }} |
+          ${{ github.ref_name }} |
+          ${{ github.sha }}
+        azureDevOpsOrganization: 'https://dev.azure.com/stuartferguson1'
+        azureDevOpsProject: 'TransactionProcessing'
+        azureDevOpsToken: ${{ secrets.AZDO_PAT }}
+
+    - name: Publish coverage
+      uses: microsoft/azure-devops-publish-code-coverage@v1
+      with:
+        codeCoverageTool: Cobertura
+        summaryFileLocation: coverage/Cobertura.xml
+        azureDevOpsOrganization: 'https://dev.azure.com/stuartferguson1'
+        azureDevOpsProject: 'TransactionProcessing'
+        azureDevOpsToken: ${{ secrets.AZDO_PAT }}    
