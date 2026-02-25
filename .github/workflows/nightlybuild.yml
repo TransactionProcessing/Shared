@@ -198,7 +198,6 @@ jobs:
           /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
           /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
           /p:CoverletOutput=TestResults/Coverage/lcov1.info \
-          /p:CoverletOutputIncludeTargetFramework=false \
           /p:CoverletOutputFormat=lcov \
           /maxcpucount:1
 
@@ -212,7 +211,6 @@ jobs:
           /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
           /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
           /p:CoverletOutput=TestResults/Coverage/lcov2.info \
-          /p:CoverletOutputIncludeTargetFramework=false \
           /p:CoverletOutputFormat=lcov \
           /maxcpucount:1
 
@@ -226,7 +224,7 @@ jobs:
       run: |
         export PATH="$PATH:/home/runner/.dotnet/tools"
         reportgenerator \
-          -reports:TestResults/Coverage/*.info \
+          -reports:TestResults/Coverage/*.net10.0.info \
           -targetdir:TestResults/Coverage/Merged \
           -reporttypes:lcov
 
