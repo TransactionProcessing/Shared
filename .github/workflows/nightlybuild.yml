@@ -208,33 +208,32 @@ jobs:
             /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
             /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
 
-    - name: Install LCOV merger
-      run: npm install -g lcov-result-merger
+    #- name: Install LCOV merger
+    #  run: npm install -g lcov-result-merger
 
-    - name: Merge LCOV reports
-      run: |
-        mkdir -p coverage
-        lcov-result-merger "*.info" > lcov.info
+    #- name: Merge LCOV reports
+    #  run: |
+    #    mkdir -p coverage
+    #    lcov-result-merger "*.info" > lcov.info
 
     - name: Generate coverage reports
       run: |
         dotnet tool install -g dotnet-reportgenerator-globaltool
 
-        # Find all LCOV files
-        LCOV_FILES=$(find Shared/Shared -name "lcov*.info" | tr '\n' ';')
+        # Find all LCOV files (your lcov1.net10.0.info, lcov2.net10.0.info, etc.)
+        LCOV_FILES=$(find . -type f -name "lcov*.info" | tr '\n' ';')
         echo "Found LCOV files: $LCOV_FILES"
-    
+
+        if [ -z "$LCOV_FILES" ]; then
+          echo "No LCOV files found!"
+          exit 1
+        fi
+
         reportgenerator \
           -reports "$LCOV_FILES" \
           -targetdir coverage \
           -reporttypes Cobertura;HtmlInline_AzurePipelines \
           -title "${{ github.repository }} — Code Coverage"
-          
-    #- name: Upload merged coverage to Codacy
-    #  uses: codacy/codacy-coverage-reporter-action@v1
-    #  with:
-    #    project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-    #    coverage-reports: ./lcov.info
 
     # --- Azure DevOps CLI publishing steps ---
     - name: Install Azure DevOps CLI
