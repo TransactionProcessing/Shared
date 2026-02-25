@@ -222,7 +222,6 @@ jobs:
     # 7️⃣ Merge coverage files
     - name: Merge Coverage Reports
       run: |
-        dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.29
         export PATH="$PATH:/home/runner/.dotnet/tools"
         reportgenerator \
           -reports:TestResults/Coverage/*.info \
