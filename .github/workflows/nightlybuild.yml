@@ -187,95 +187,59 @@ jobs:
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
 
-    - name: Run Unit Tests
+    # 5️⃣ Install JUnit test logger globally
+    - name: Install JUnit Test Logger
+      run: dotnet tool install --global JUnitXml.TestLogger --version 3.0.0
+
+    # 6️⃣ Run tests with JUnit XML + coverage
+    - name: Run Unit Tests Shared.Tests
       run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj" --logger trx \
-            /p:CollectCoverage=true \
-            /p:Exclude="[xunit*]*" \
-            /p:ExcludeByAttribute="Obsolete" \
-            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
-            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
-            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-            /p:CoverletOutput="../lcov1.info" /maxcpucount:1 \
-            /p:CoverletOutputFormat="lcov"
+        export PATH="$PATH:/home/runner/.dotnet/tools"
+        echo "ASPNETCORE_ENVIRONMENT is ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests/Shared.Tests.csproj" \
+          --logger:"junit;LogFilePath=TestResults/Shared.Tests-results.xml" \
+          /p:CollectCoverage=true \
+          /p:Exclude="[xunit*]*" \
+          /p:ExcludeByAttribute="Obsolete" \
+          /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+          /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+          /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
+          /p:CoverletOutput=TestResults/Coverage/lcov1.info \
+          /p:CoverletOutputFormat=lcov \
+          /maxcpucount:1
 
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" --logger trx \
-            /p:CollectCoverage=true /p:Exclude="[xunit*]*" \
-            /p:ExcludeByAttribute="Obsolete" \
-            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
-            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
-            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-            /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
-
-    # --------------------------------
-    # Generate combined coverage report
-    # --------------------------------
-    - name: Generate coverage reports
+    - name: Run Unit Tests Shared.EventStore.Tests
       run: |
-        dotnet tool install -g dotnet-reportgenerator-globaltool
+        export PATH="$PATH:/home/runner/.dotnet/tools"
+        dotnet test "Shared.EventStore.Tests/Shared.EventStore.Tests.csproj" \
+          --logger:"junit;LogFilePath=TestResults/Shared.EventStore.Tests-results.xml" \
+          /p:CollectCoverage=true \
+          /p:Exclude="[xunit*]*" \
+          /p:ExcludeByAttribute="Obsolete" \
+          /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+          /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+          /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
+          /p:CoverletOutput=TestResults/Coverage/lcov2.info \
+          /p:CoverletOutputFormat=lcov \
+          /maxcpucount:1
 
-        LCOV_FILES=$(find . -type f -name "lcov*.info" | tr '\n' ';')
-        LCOV_FILES="${LCOV_FILES%;}"
-
+    # 7️⃣ Merge coverage files
+    - name: Merge Coverage Reports
+      run: |
+        dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.29
+        export PATH="$PATH:/home/runner/.dotnet/tools"
         reportgenerator \
-          "-reports:$LCOV_FILES" \
-          "-targetdir:coverage" \
-          "-reporttypes:Cobertura;HtmlInline_AzurePipelines" \
-          "-title:${{ github.repository }} | ${{ github.ref_name }} | ${{ github.sha }}"
+          -reports:TestResults/Coverage/*.info \
+          -targetdir:TestResults/Coverage/Merged \
+          -reporttypes:lcov
 
-    # --------------------------------
-    # Publish test results via REST API
-    # --------------------------------
-    - name: Publish TRX & coverage to Azure DevOps
-      env:
-        AZDO_ORG: "https://dev.azure.com/stuartferguson1"
-        AZDO_PROJECT: "TransactionProcessing"
-        AZDO_PAT: ${{ secrets.AZDO_PAT }}
-      run: |
-        echo "Installing dependencies"
-        sudo apt-get install -y jq curl
-
-        ORG="$AZDO_ORG"
-        PROJECT="$AZDO_PROJECT"
-        PAT="$AZDO_PAT"
-
-        echo "Creating new test run in Azure DevOps"
-
-        RUN_RESPONSE=$(curl -s -u ":$PAT" \
-          -X POST \
-          -H "Content-Type: application/json" \
-          -d "{\"name\":\"${GITHUB_REPOSITORY} | ${GITHUB_REF_NAME} | ${GITHUB_SHA}\",\"automated\":true}" \
-          "$ORG/$PROJECT/_apis/test/runs?api-version=7.0")
-
-        RUN_ID=$(echo "$RUN_RESPONSE" | jq -r '.id')
-        echo "Created test run ID: $RUN_ID"
-
-        if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
-          echo "Failed to create test run!"
-          exit 1
-        fi
-
-        # Upload all TRX files
-        for TRX in $(find . -type f -name "*.trx"); do
-          echo "Uploading test result: $TRX"
-          curl -s -u ":$PAT" \
-            -X POST \
-            -H "Content-Type: application/octet-stream" \
-            --data-binary @"$TRX" \
-            "$ORG/$PROJECT/_apis/test/runs/$RUN_ID/results?api-version=7.0"
-        done
-
-        # Attach Cobertura coverage
-        if [ -f coverage/Cobertura.xml ]; then
-          echo "Attaching Cobertura coverage"
-          curl -s -u ":$PAT" \
-            -X POST \
-            -F "attachmentType=coverage" \
-            -F "file=@coverage/Cobertura.xml" \
-            "$ORG/$PROJECT/_apis/test/runs/$RUN_ID/attachments?api-version=7.0"
-        else
-          echo "Coverage file not found, skipping attachment"
-        fi
-
-        echo "Test results and coverage uploaded successfully!"
+    # 8️⃣ Upload coverage and test results to Codecov
+    - name: Upload Coverage & Test Reports to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: TestResults/Coverage/Merged/lcov.info
+        test_report: |
+          TestResults/Shared.Tests-results.xml
+          TestResults/Shared.EventStore.Tests-results.xml
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
