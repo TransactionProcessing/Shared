@@ -670,13 +670,12 @@ public abstract class BaseDockerHelper{
     }
 
     protected virtual EventStoreClientSettings ConfigureEventStoreSettings(String username = "admin", String password="changeit"){
-        String connectionString = $"esdb://{username}:{password}@127.0.0.1:{this.EventStoreHttpPort}";
-        
-        connectionString = this.IsSecureEventStore switch{
-            true => $"{connectionString}?tls=true&tlsVerifyCert=false",
-            _ => $"{connectionString}?tls=false&tlsVerifyCert=false"
+        String connectionString = this.IsSecureEventStore switch
+        {
+            true => $"esdb://{username}:{password}@127.0.0.1:{this.EventStoreHttpPort}?tls=true&tlsVerifyCert=false",
+            _ => $"esdb://127.0.0.1:{this.EventStoreHttpPort}?tls=false&tlsVerifyCert=false"
         };
-        
+
         return EventStoreClientSettings.Create(connectionString);
     }
 
@@ -805,9 +804,13 @@ public abstract class BaseDockerHelper{
     }
     
     protected virtual String GenerateEventStoreConnectionString(String userName = "admin", String password = "changeit"){
-        String eventStoreAddress = $"esdb://{userName}:{password}@{this.EventStoreContainerName}:{DockerPorts.EventStoreHttpDockerPort}?tls=false";
+        var connectionString = this.IsSecureEventStore switch
+        {
+            true => $"esdb://{userName}:{password}@{this.EventStoreContainerName}:{DockerPorts.EventStoreHttpDockerPort}?tls=true&tlsVerifyCert=false",
+            _ => $"esdb://{this.EventStoreContainerName}:{DockerPorts.EventStoreHttpDockerPort}?tls=false&tlsVerifyCert=false"
+        };
 
-        return eventStoreAddress;
+        return connectionString;
     }
 
     protected virtual Int32 GetSecurityServicePort(){
