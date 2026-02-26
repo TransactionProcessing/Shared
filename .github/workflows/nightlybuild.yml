@@ -139,6 +139,3 @@ jobs:
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: ./lcov.info
-
-    - name: Deploy to GitHub Pages
-      uses: actions/deploy-pages@v4
