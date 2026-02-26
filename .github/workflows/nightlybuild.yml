@@ -197,8 +197,12 @@ jobs:
           $outRoot = "public/$reportSubPath"
           New-Item -ItemType Directory -Force -Path $outRoot | Out-Null
 
-          $trxFiles = Get-ChildItem -Path $resultsDir -Recurse -Filter *.trx | Sort-Object FullName
-          if (-not $trxFiles) { throw "No .trx files found under '$resultsDir'." }
+          # Find TRX anywhere in the repo (common layout: **/TestResults/**.trx)
+          $trxFiles = Get-ChildItem -Path . -Recurse -Filter *.trx |
+            Where-Object { $_.FullName -match [regex]::Escape([IO.Path]::DirectorySeparatorChar + "TestResults" + [IO.Path]::DirectorySeparatorChar) } |
+            Sort-Object FullName
+
+          if (-not $trxFiles) { throw "No .trx files found (searched under repo root)." }
 
           function HtmlEscape([string]$s) {
             if ($null -eq $s) { return "" }
