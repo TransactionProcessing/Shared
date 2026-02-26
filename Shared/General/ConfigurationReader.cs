@@ -86,6 +86,10 @@ public static class ConfigurationReader
                 return defaultValue;
             }
 
+            if (typeof(T).IsEnum) {
+                return (T)Enum.Parse(typeof(T), value, ignoreCase: true);
+            }
+
             return (T)Convert.ChangeType(value, typeof(T));
         }
         catch (KeyNotFoundException)
