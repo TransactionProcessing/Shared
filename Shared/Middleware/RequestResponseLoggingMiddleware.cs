@@ -1,35 +1,32 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
-using Shared.General;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
 
 namespace Shared.Middleware;
 
-public class RequestResponseLoggingMiddleware
-{
+public class RequestResponseLoggingMiddleware {
     private readonly RequestDelegate next;
 
-    public RequestResponseLoggingMiddleware(RequestDelegate next)
-    {
+    public RequestResponseLoggingMiddleware(RequestDelegate next) {
         this.next = next;
     }
 
-    public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
-    {
-        var url = context.Request.GetDisplayUrl();
+    public async Task Invoke(HttpContext context,
+                             RequestResponseMiddlewareLoggingConfig configuration) {
+        String url = context.Request.GetDisplayUrl();
 
         // --- Request Logging ---
         String requestBodyText = String.Empty;
         MemoryStream requestBodyStream = null;
         Stream originalRequestBody = context.Request.Body;
 
-        if (configuration.LogRequests)
-        {
+        if (configuration.LogRequests) {
             requestBodyStream = new MemoryStream();
             await context.Request.Body.CopyToAsync(requestBodyStream);
             requestBodyStream.Seek(0, SeekOrigin.Begin);
@@ -43,8 +40,7 @@ public class RequestResponseLoggingMiddleware
         Stream originalResponseBody = context.Response.Body;
         ResponseLoggingMemoryStream responseBodyStream = null;
 
-        if (configuration.LogResponses)
-        {
+        if (configuration.LogResponses) {
             responseBodyStream = new ResponseLoggingMemoryStream();
             context.Response.Body = responseBodyStream;
         }
@@ -55,26 +51,21 @@ public class RequestResponseLoggingMiddleware
         LogLevel effectiveLogLevel = isNonSuccess ? LogLevel.Warning : configuration.LoggingLevel;
 
         // --- Log Request ---
-        if (configuration.LogRequests)
-        {
+        if (configuration.LogRequests) {
             StringBuilder requestLog = new();
             requestLog.Append($"Request: Method: {context.Request.Method} Url: {url}");
 
-            if (context.Request.Headers != null && context.Request.Headers.Count > 0)
-            {
+            if (context.Request.Headers != null && context.Request.Headers.Count > 0) {
                 requestLog.Append(' ');
                 requestLog.Append("Headers:");
-                var firstHeader = true;
-                foreach (var header in context.Request.Headers)
-                {
+                Boolean firstHeader = true;
+                foreach (KeyValuePair<String, StringValues> header in context.Request.Headers) {
                     if (!firstHeader)
                         requestLog.Append(',');
                     firstHeader = false;
 
-                    var value = header.Value.ToString();
-                    if (string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase))
-                    {
+                    String value = header.Value.ToString();
+                    if (string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase) || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase)) {
                         value = "***REDACTED***";
                     }
 
@@ -85,8 +76,7 @@ public class RequestResponseLoggingMiddleware
                 }
             }
 
-            if (requestBodyText != String.Empty)
-            {
+            if (requestBodyText != String.Empty) {
                 requestLog.Append(' ');
                 requestLog.Append($"Body: {requestBodyText}");
             }
@@ -97,30 +87,24 @@ public class RequestResponseLoggingMiddleware
         }
 
         // --- Log Response ---
-        if (configuration.LogResponses)
-        {
+        if (configuration.LogResponses) {
             responseBodyStream.Seek(0, SeekOrigin.Begin);
             String responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
 
             StringBuilder responseLog = new();
             responseLog.Append($"Response: Status Code: {context.Response.StatusCode}");
 
-            if (context.Response.Headers != null && context.Response.Headers.Count > 0)
-            {
+            if (context.Response.Headers != null && context.Response.Headers.Count > 0) {
                 responseLog.Append(' ');
                 responseLog.Append("Headers:");
                 var firstHeader = true;
-                foreach (var header in context.Response.Headers)
-                {
+                foreach (KeyValuePair<String, StringValues> header in context.Response.Headers) {
                     if (!firstHeader)
                         responseLog.Append(',');
                     firstHeader = false;
 
-                    var value = header.Value.ToString();
-                    if (string.Equals(header.Key, "Set-Cookie", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase))
-                    {
+                    String value = header.Value.ToString();
+                    if (string.Equals(header.Key, "Set-Cookie", StringComparison.OrdinalIgnoreCase) || string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase) || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase)) {
                         value = "***REDACTED***";
                     }
 
@@ -131,8 +115,7 @@ public class RequestResponseLoggingMiddleware
                 }
             }
 
-            if (!String.IsNullOrEmpty(responseBody))
-            {
+            if (!String.IsNullOrEmpty(responseBody)) {
                 responseLog.Append(' ');
                 responseLog.Append($"Body: {responseBody}");
             }
@@ -142,8 +125,7 @@ public class RequestResponseLoggingMiddleware
             responseBodyStream.Seek(0, SeekOrigin.Begin);
             await responseBodyStream.CopyToAsync(originalResponseBody);
 
-            if (responseBodyStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction"))
-            {
+            if (responseBodyStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction")) {
                 responseBodyStream.ForceClose();
             }
         }
