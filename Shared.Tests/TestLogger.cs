@@ -8,6 +8,7 @@ public class TestLogger : ILogger
 {
     public TestLogger(){
         this.LogEntries = new List<String>();
+        this.WarningLogEntries = new List<String>();
     }
     public Boolean IsInitialised { get; set; }
 
@@ -56,7 +57,14 @@ public class TestLogger : ILogger
     public void LogWarning(String message)
     {
         this.LogEntries.Add(message);
+        this.WarningLogEntries.Add(message);
+    }
+
+    public String[] GetWarningLogEntries()
+    {
+        return this.WarningLogEntries.ToArray();
     }
 
     private readonly List<String> LogEntries;
+    private readonly List<String> WarningLogEntries;
 }
