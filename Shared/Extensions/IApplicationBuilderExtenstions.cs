@@ -43,4 +43,15 @@ public static class IApplicationBuilderExtenstions
         applicationBuilder.UseMiddleware<ResponseLoggingMiddleware>();
     }
     #endregion
+
+    #region public static void AddRequestResponseLogging(this IApplicationBuilder applicationBuilder)        
+    /// <summary>
+    /// Adds combined request and response logging middleware. Non-2xx responses are always logged at Warning level.
+    /// </summary>
+    /// <param name="applicationBuilder">The application builder.</param>
+    public static void AddRequestResponseLogging(this IApplicationBuilder applicationBuilder)
+    {
+        applicationBuilder.UseMiddleware<RequestResponseLoggingMiddleware>();
+    }
+    #endregion
 }

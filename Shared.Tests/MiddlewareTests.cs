@@ -365,14 +365,103 @@ public partial class SharedTests
         builder.AddRequestLogging();
     }
 
+    [Theory]
+    [InlineData(null, true, true, 200)]
+    [InlineData("RequestBody", true, true, 200)]
+    [InlineData(null, false, true, 200)]
+    [InlineData(null, true, false, 200)]
+    [InlineData(null, false, false, 200)]
+    [InlineData("RequestBody", true, true, 400)]
+    [InlineData("RequestBody", true, true, 500)]
+    public async Task RequestResponseLoggingMiddleware_LogsRequestAndResponse(String requestBody, Boolean logRequests, Boolean logResponses, Int32 statusCode)
+    {
+        TestLogger logger = TestHelpers.InitialiseLogger();
+        RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Information, logRequests, logResponses);
+
+        const String expectedResponseBody = "ResponseBody";
+
+        DefaultHttpContext defaultContext = new();
+        defaultContext.Request.Path = "/";
+        defaultContext.Request.Body = requestBody != null
+            ? new MemoryStream(Encoding.UTF8.GetBytes(requestBody))
+            : new MemoryStream();
+        defaultContext.Response.Body = new MemoryStream();
+
+        RequestResponseLoggingMiddleware middlewareInstance = new(next: (innerHttpContext) =>
+        {
+            innerHttpContext.Response.StatusCode = statusCode;
+            return innerHttpContext.Response.WriteAsync(expectedResponseBody);
+        });
+
+        await middlewareInstance.Invoke(defaultContext, configuration);
+
+        defaultContext.Response.Body.Seek(0, SeekOrigin.Begin);
+        String body = new StreamReader(defaultContext.Response.Body).ReadToEnd();
+        Assert.Equal(expectedResponseBody, body);
+
+        Int32 expectedLogCount = (logRequests ? 1 : 0) + (logResponses ? 1 : 0);
+        logger.GetLogEntries().Length.ShouldBe(expectedLogCount);
+    }
+
+    [Theory]
+    [InlineData(400)]
+    [InlineData(404)]
+    [InlineData(500)]
+    public async Task RequestResponseLoggingMiddleware_NonSuccessResponse_LogsAtWarningLevel(Int32 statusCode)
+    {
+        TestLogger logger = TestHelpers.InitialiseLogger();
+        RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Information, true, true);
+
+        DefaultHttpContext defaultContext = new();
+        defaultContext.Request.Path = "/";
+        defaultContext.Request.Body = new MemoryStream();
+        defaultContext.Response.Body = new MemoryStream();
+
+        RequestResponseLoggingMiddleware middlewareInstance = new(next: (innerHttpContext) =>
+        {
+            innerHttpContext.Response.StatusCode = statusCode;
+            return innerHttpContext.Response.WriteAsync("Error");
+        });
+
+        await middlewareInstance.Invoke(defaultContext, configuration);
+
+        logger.GetLogEntries().Length.ShouldBe(2);
+        logger.GetWarningLogEntries().Length.ShouldBe(2);
+    }
+
     [Fact]
-    public void ApplicationBuilderExtensions_AddResponseLogging_HandlerAdded()
+    public async Task RequestResponseLoggingMiddleware_SuccessResponse_LogsAtConfiguredLevel()
+    {
+        TestLogger logger = TestHelpers.InitialiseLogger();
+        RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Information, true, true);
+
+        DefaultHttpContext defaultContext = new();
+        defaultContext.Request.Path = "/";
+        defaultContext.Request.Body = new MemoryStream();
+        defaultContext.Response.Body = new MemoryStream();
+
+        RequestResponseLoggingMiddleware middlewareInstance = new(next: (innerHttpContext) =>
+        {
+            innerHttpContext.Response.StatusCode = 200;
+            return innerHttpContext.Response.WriteAsync("OK");
+        });
+
+        await middlewareInstance.Invoke(defaultContext, configuration);
+
+        logger.GetLogEntries().Length.ShouldBe(2);
+        logger.GetWarningLogEntries().Length.ShouldBe(0);
+    }
+
+
+    [Fact]
+    public void ApplicationBuilderExtensions_AddRequestResponseLogging_HandlerAdded()
     {
         IApplicationBuilder builder = new ApplicationBuilder(new TestServiceProvider());
 
-        builder.AddResponseLogging();
+        builder.AddRequestResponseLogging();
     }
 }
+
 
 public class TestServiceProvider : IServiceProvider{
     public Object GetService(Type serviceType){
