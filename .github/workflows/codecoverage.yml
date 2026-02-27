@@ -1,0 +1,60 @@
+name: Code Coverage
+
+on:
+  push:
+    # branches to consider in the event; optional, defaults to all
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:  
+  codecoverage:
+    name: "Code Coverage"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2.3.4    
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj" \
+            /p:CollectCoverage=true \
+            /p:Exclude="[xunit*]*" \
+            /p:ExcludeByAttribute="Obsolete" \
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
+            /p:CoverletOutput="../lcov1.info" /maxcpucount:1 \
+            /p:CoverletOutputFormat="lcov"
+
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" \
+            /p:CollectCoverage=true /p:Exclude="[xunit*]*" \
+            /p:ExcludeByAttribute="Obsolete" \
+            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
+            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
+            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
+            /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
+
+    - name: Install LCOV merger
+      run: npm install -g lcov-result-merger
+
+    - name: Merge LCOV reports
+      run: |
+        mkdir -p coverage
+        lcov-result-merger "*.info" > lcov.info
+
+    - name: Upload merged coverage to Codacy
+      uses: codacy/codacy-coverage-reporter-action@v1
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: ./lcov.info      
