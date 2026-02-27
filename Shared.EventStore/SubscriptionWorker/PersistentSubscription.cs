@@ -1,4 +1,5 @@
-﻿using KurrentDB.Client;
+﻿using System.Runtime.CompilerServices;
+using KurrentDB.Client;
 using SimpleResults;
 
 namespace Shared.EventStore.SubscriptionWorker;
@@ -21,15 +22,11 @@ using System.Threading.Tasks;
 [ExcludeFromCodeCoverage]
 public class PersistentSubscription
 {
-    #region Fields
-
     public EventHandler<String> SubscriptionHasDropped;
 
+    public EventHandler<String> EventHandlerMissing;
+
     private readonly Func<CancellationToken, Task<KurrentDB.Client.PersistentSubscription>> Subscribe;
-
-    #endregion
-
-    #region Constructors
 
     private void SubscriptionDropped(KurrentDB.Client.PersistentSubscription arg1,
                                      SubscriptionDroppedReason arg2,
@@ -41,8 +38,7 @@ public class PersistentSubscription
         this.Connected = false;
         Logger.Logger.LogWarning($"Subscription dropped - {reason}");
 
-        if (this.SubscriptionHasDropped != null)
-        {
+        if (this.SubscriptionHasDropped != null) {
             //Broadcast to owner
             this.SubscriptionHasDropped(this, reason);
         }
@@ -58,7 +54,7 @@ public class PersistentSubscription
         this.PersistentSubscriptionDetails = persistentSubscriptionDetails;
         UserCredentials userCredentials = new(username, password);
 
-        Func< KurrentDB.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared = (ps, re, retryCount, ct) => PersistentSubscription.EventAppeared(ps, re, retryCount, domainEventHandlerResolver, ct);
+        Func< KurrentDB.Client.PersistentSubscription, ResolvedEvent, Int32?, CancellationToken, Task> eventAppeared = (ps, re, retryCount, ct) => this.EventAppeared(ps, re, retryCount, domainEventHandlerResolver, ct);
 
         this.Subscribe = ct => persistentSubscriptionsClient.SubscribeAsync(this.PersistentSubscriptionDetails.StreamName,
             this.PersistentSubscriptionDetails.GroupName,
@@ -69,29 +65,19 @@ public class PersistentSubscription
             ct);
     }
 
-    #endregion
-
-    #region Properties
-
     public Boolean Connected { get; private set; }
     public KurrentDB.Client.PersistentSubscription KurrentDbPersistentSubscription { get; private set; }
     public IPersistentSubscriptionsClient PersistentSubscriptionsClient { get; }
     public PersistentSubscriptionDetails PersistentSubscriptionDetails { get; }
-
-    #endregion
-
-    #region Methods
-
+    
     public async Task ConnectToSubscription(CancellationToken cancellationToken)
     {
-        try
-        {
+        try {
             this.KurrentDbPersistentSubscription = await this.Subscribe(cancellationToken);
 
             this.Connected = true;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger.Logger.LogError(e);
         }
     }
@@ -131,65 +117,55 @@ public class PersistentSubscription
         }
     }
 
-    internal static async Task EventAppeared(KurrentDB.Client.PersistentSubscription persistentSubscription,
+    internal async Task EventAppeared(KurrentDB.Client.PersistentSubscription persistentSubscription,
                                              ResolvedEvent resolvedEvent,
                                              Int32? retryCount,
                                              IDomainEventHandlerResolver domainEventHandlerResolver,
                                              CancellationToken cancellationToken)
     {
-        try
-        {
-            using (CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
-            {
-                if (resolvedEvent.SilentlyHandleEvent())
-                {
-                    await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
-                    return;
-                }
-                IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
-                TenantIdentifiers tenantIdentifiers = PersistentSubscription.GetTenantIdentifiersFromDomainEvent(domainEvent);
-                Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings","LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
+        try {
+            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            if (resolvedEvent.SilentlyHandleEvent()) {
+                await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+                return;
+            }
 
-                TenantContext tenantContext = new();
-                tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
-                TenantContext.CurrentTenant = tenantContext;
+            IDomainEvent domainEvent = TypeMapConvertor.Convertor(resolvedEvent);
+            TenantIdentifiers tenantIdentifiers = PersistentSubscription.GetTenantIdentifiersFromDomainEvent(domainEvent);
+            Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings", "LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
 
-                Logger.Logger.LogInformation(
-                    $"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
-                    
-                Result<List<IDomainEventHandler>> domainEventHandlersResult =
-                    domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
+            TenantContext tenantContext = new();
+            tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
+            TenantContext.CurrentTenant = tenantContext;
 
-                if (domainEventHandlersResult.IsFailed)
-                {
-                    // Log a warning out 
-                    Logger.Logger.LogWarning(
-                        $"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
-                    await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
-                    return;
-                }
+            Logger.Logger.LogInformation($"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
 
-                List<IDomainEventHandler> domainEventHandlers = domainEventHandlersResult.Data;
+            Result<List<IDomainEventHandler>> domainEventHandlersResult = domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
 
-                Result result = await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
-                if (result.IsSuccess) {
-                    await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
-                }
-                else {
-                    Exception ex = new($"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()} Result was {result.Message}");
-                    Logger.Logger.LogError(ex);
-                }
+            if (domainEventHandlersResult.IsFailed) {
+                // Log a line of trace out 
+                if (this.EventHandlerMissing != null)
+                    this.EventHandlerMissing(this, $"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
+
+                await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+                return;
+            }
+
+            List<IDomainEventHandler> domainEventHandlers = domainEventHandlersResult.Data;
+
+            Result result = await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
+            if (result.IsSuccess) {
+                await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
+            }
+            else {
+                Exception ex = new($"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()} Result was {result.Message}");
+                Logger.Logger.LogError(ex);
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Exception ex = new($"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()}", e);
-                
+
             Logger.Logger.LogError(ex);
         }
     }
-
-
-
-    #endregion
 }
