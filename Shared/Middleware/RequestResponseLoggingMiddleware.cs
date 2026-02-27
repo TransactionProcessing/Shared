@@ -6,128 +6,131 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Primitives;
 
 namespace Shared.Middleware;
 
-public class RequestResponseLoggingMiddleware {
+public class RequestResponseLoggingMiddleware
+{
+    private static readonly HashSet<String> RequestRedactedHeaders =
+        new(StringComparer.OrdinalIgnoreCase) { "Authorization", "Cookie" };
+
+    private static readonly HashSet<String> ResponseRedactedHeaders =
+        new(StringComparer.OrdinalIgnoreCase) { "Set-Cookie", "Authorization", "Cookie" };
+
     private readonly RequestDelegate next;
 
-    public RequestResponseLoggingMiddleware(RequestDelegate next) {
+    public RequestResponseLoggingMiddleware(RequestDelegate next)
+    {
         this.next = next;
     }
 
-    public async Task Invoke(HttpContext context,
-                             RequestResponseMiddlewareLoggingConfig configuration) {
+    public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
+    {
         String url = context.Request.GetDisplayUrl();
-
-        // --- Request Logging ---
-        String requestBodyText = String.Empty;
-        MemoryStream requestBodyStream = null;
         Stream originalRequestBody = context.Request.Body;
-
-        if (configuration.LogRequests) {
-            requestBodyStream = new MemoryStream();
-            await context.Request.Body.CopyToAsync(requestBodyStream);
-            requestBodyStream.Seek(0, SeekOrigin.Begin);
-            requestBodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
-
-            requestBodyStream.Seek(0, SeekOrigin.Begin);
-            context.Request.Body = requestBodyStream;
-        }
-
-        // --- Intercept Response ---
         Stream originalResponseBody = context.Response.Body;
-        ResponseLoggingMemoryStream responseBodyStream = null;
 
-        if (configuration.LogResponses) {
-            responseBodyStream = new ResponseLoggingMemoryStream();
-            context.Response.Body = responseBodyStream;
-        }
+        String requestBodyText = await CaptureRequestBodyAsync(context, configuration.LogRequests);
+        ResponseLoggingMemoryStream responseBodyStream = SetupResponseCapture(context, configuration.LogResponses);
 
         await this.next(context);
 
-        Boolean isNonSuccess = context.Response.StatusCode < 200 || context.Response.StatusCode > 299;
-        LogLevel effectiveLogLevel = isNonSuccess ? LogLevel.Warning : configuration.LoggingLevel;
+        LogLevel effectiveLogLevel = (context.Response.StatusCode < 200 || context.Response.StatusCode > 299)
+            ? LogLevel.Warning
+            : configuration.LoggingLevel;
 
-        // --- Log Request ---
-        if (configuration.LogRequests) {
-            StringBuilder requestLog = new();
-            requestLog.Append($"Request: Method: {context.Request.Method} Url: {url}");
-
-            if (context.Request.Headers != null && context.Request.Headers.Count > 0) {
-                requestLog.Append(' ');
-                requestLog.Append("Headers:");
-                Boolean firstHeader = true;
-                foreach (KeyValuePair<String, StringValues> header in context.Request.Headers) {
-                    if (!firstHeader)
-                        requestLog.Append(',');
-                    firstHeader = false;
-
-                    String value = header.Value.ToString();
-                    if (string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase) || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase)) {
-                        value = "***REDACTED***";
-                    }
-
-                    requestLog.Append(' ');
-                    requestLog.Append(header.Key);
-                    requestLog.Append('=');
-                    requestLog.Append(value);
-                }
-            }
-
-            if (requestBodyText != String.Empty) {
-                requestLog.Append(' ');
-                requestLog.Append($"Body: {requestBodyText}");
-            }
-
-            Helpers.LogMessage(url, requestLog, effectiveLogLevel);
-
+        if (configuration.LogRequests)
+        {
+            Helpers.LogMessage(url, BuildRequestLog(context, url, requestBodyText), effectiveLogLevel);
             context.Request.Body = originalRequestBody;
         }
 
-        // --- Log Response ---
-        if (configuration.LogResponses) {
-            responseBodyStream.Seek(0, SeekOrigin.Begin);
-            String responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
+        if (configuration.LogResponses)
+        {
+            await WriteAndLogResponseAsync(context, url, responseBodyStream, originalResponseBody, effectiveLogLevel);
+        }
+    }
 
-            StringBuilder responseLog = new();
-            responseLog.Append($"Response: Status Code: {context.Response.StatusCode}");
+    private static async Task<String> CaptureRequestBodyAsync(HttpContext context, Boolean logRequests)
+    {
+        if (!logRequests)
+            return String.Empty;
 
-            if (context.Response.Headers != null && context.Response.Headers.Count > 0) {
-                responseLog.Append(' ');
-                responseLog.Append("Headers:");
-                var firstHeader = true;
-                foreach (KeyValuePair<String, StringValues> header in context.Response.Headers) {
-                    if (!firstHeader)
-                        responseLog.Append(',');
-                    firstHeader = false;
+        MemoryStream requestBodyStream = new();
+        await context.Request.Body.CopyToAsync(requestBodyStream);
+        requestBodyStream.Seek(0, SeekOrigin.Begin);
+        String bodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
+        requestBodyStream.Seek(0, SeekOrigin.Begin);
+        context.Request.Body = requestBodyStream;
+        return bodyText;
+    }
 
-                    String value = header.Value.ToString();
-                    if (string.Equals(header.Key, "Set-Cookie", StringComparison.OrdinalIgnoreCase) || string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase) || string.Equals(header.Key, "Cookie", StringComparison.OrdinalIgnoreCase)) {
-                        value = "***REDACTED***";
-                    }
+    private static ResponseLoggingMemoryStream SetupResponseCapture(HttpContext context, Boolean logResponses)
+    {
+        if (!logResponses)
+            return null;
 
-                    responseLog.Append(' ');
-                    responseLog.Append(header.Key);
-                    responseLog.Append('=');
-                    responseLog.Append(value);
-                }
-            }
+        ResponseLoggingMemoryStream responseBodyStream = new();
+        context.Response.Body = responseBodyStream;
+        return responseBodyStream;
+    }
 
-            if (!String.IsNullOrEmpty(responseBody)) {
-                responseLog.Append(' ');
-                responseLog.Append($"Body: {responseBody}");
-            }
+    private static StringBuilder BuildRequestLog(HttpContext context, String url, String requestBodyText)
+    {
+        StringBuilder log = new();
+        log.Append($"Request: Method: {context.Request.Method} Url: {url}");
+        AppendHeaders(log, context.Request.Headers, RequestRedactedHeaders);
+        if (requestBodyText != String.Empty)
+        {
+            log.Append($" Body: {requestBodyText}");
+        }
+        return log;
+    }
 
-            Helpers.LogMessage(url, responseLog, effectiveLogLevel);
+    private static async Task WriteAndLogResponseAsync(HttpContext context, String url,
+        ResponseLoggingMemoryStream responseBodyStream, Stream originalResponseBody, LogLevel logLevel)
+    {
+        responseBodyStream.Seek(0, SeekOrigin.Begin);
+        String responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
+        Helpers.LogMessage(url, BuildResponseLog(context, responseBody), logLevel);
+        responseBodyStream.Seek(0, SeekOrigin.Begin);
+        await responseBodyStream.CopyToAsync(originalResponseBody);
+        if (responseBodyStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction"))
+        {
+            responseBodyStream.ForceClose();
+        }
+    }
 
-            responseBodyStream.Seek(0, SeekOrigin.Begin);
-            await responseBodyStream.CopyToAsync(originalResponseBody);
+    private static StringBuilder BuildResponseLog(HttpContext context, String responseBody)
+    {
+        StringBuilder log = new();
+        log.Append($"Response: Status Code: {context.Response.StatusCode}");
+        AppendHeaders(log, context.Response.Headers, ResponseRedactedHeaders);
+        if (!String.IsNullOrEmpty(responseBody))
+        {
+            log.Append($" Body: {responseBody}");
+        }
+        return log;
+    }
 
-            if (responseBodyStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction")) {
-                responseBodyStream.ForceClose();
-            }
+    private static void AppendHeaders(StringBuilder log, IHeaderDictionary headers, HashSet<String> redactedHeaders)
+    {
+        if (headers == null || headers.Count == 0)
+            return;
+
+        log.Append(" Headers:");
+        Boolean firstHeader = true;
+        foreach (var header in headers)
+        {
+            if (!firstHeader)
+                log.Append(',');
+            firstHeader = false;
+
+            String value = redactedHeaders.Contains(header.Key) ? "***REDACTED***" : header.Value.ToString();
+            log.Append(' ');
+            log.Append(header.Key);
+            log.Append('=');
+            log.Append(value);
         }
     }
 }
