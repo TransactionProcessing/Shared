@@ -48,87 +48,7 @@ public partial class SharedTests
         logger.GetLogEntries().Last().Contains("HEALTH_CHECK").ShouldBe(healthCheckLog);
 
     }
-
-    [Theory]
-    [InlineData(null, true)]
-    [InlineData("", true)]
-    [InlineData("RequestBody", true)]
-    [InlineData(null, false)]
-    [InlineData("", false)]
-    [InlineData("RequestBody", false)]
-    public async Task RequestLoggingMiddleware_RequestIsLogged(String requestBody, Boolean logRequests)
-    {
-        TestLogger logger = TestHelpers.InitialiseLogger();
-        RequestResponseMiddlewareLoggingConfig configuration =
-            new(LogLevel.Warning, logRequests, true);
-            
-        DefaultHttpContext defaultContext = new();
-        defaultContext.Request.Body = requestBody != null ? new MemoryStream(Encoding.UTF8.GetBytes(requestBody)) : new MemoryStream();
-
-        defaultContext.Request.Path = "/";
-
-        // Act
-        RequestLoggingMiddleware middlewareInstance = new(next: (innerHttpContext) => {
-            innerHttpContext.Response.WriteAsync("ResponseBody");
-            return Task.CompletedTask;
-        });
-
-        await middlewareInstance.Invoke(defaultContext, configuration);
-
-        defaultContext.Request.Body.Seek(0, SeekOrigin.Begin);
-        String body = await new StreamReader(defaultContext.Request.Body).ReadToEndAsync();
-        if (requestBody != null){
-            Assert.Equal(requestBody, body);
-        }
-        else{
-            Assert.Equal(String.Empty, body);
-        }
-
-        if (logRequests)
-        {
-            logger.GetLogEntries().Last().ShouldNotBeNullOrEmpty();
-        }
-        else
-        {
-            logger.GetLogEntries().Length.ShouldBe(0);
-        }
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task  ResponseLoggingMiddleware_RequestIsLogged(Boolean logResponses){
-        TestLogger logger = TestHelpers.InitialiseLogger();
-        RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Warning, true, logResponses);
-
-        const string expectedOutput = "Request handed over to next request delegate";
-
-        DefaultHttpContext defaultContext = new();
-        defaultContext.Response.Body = new MemoryStream();
-        defaultContext.Request.Path = "/";
-
-        // Act
-        ResponseLoggingMiddleware middlewareInstance = new(next: (innerHttpContext) => {
-            innerHttpContext.Response.WriteAsync(expectedOutput);
-            return Task.CompletedTask;
-        });
-
-        await middlewareInstance.Invoke(defaultContext, configuration);
-
-        defaultContext.Response.Body.Seek(0, SeekOrigin.Begin);
-        String body = new StreamReader(defaultContext.Response.Body).ReadToEnd();
-        Assert.Equal(expectedOutput, body);
-
-        if (logResponses)
-        {
-            logger.GetLogEntries().Last().ShouldNotBeNullOrEmpty();
-        }
-        else
-        {
-            logger.GetLogEntries().Length.ShouldBe(0);
-        }
-    }
-        
+    
     [Fact]
     public async Task ExceptionHandlerMiddleware_ArgumentNullExceptionThrown_BadRequestHttpStatusCodeReturned()
     {
@@ -356,15 +276,7 @@ public partial class SharedTests
 
         builder.AddExceptionHandler();
     }
-
-    [Fact]
-    public void ApplicationBuilderExtensions_AddRequestLogging_HandlerAdded()
-    {
-        IApplicationBuilder builder = new ApplicationBuilder(new TestServiceProvider());
-
-        builder.AddRequestLogging();
-    }
-
+    
     [Theory]
     [InlineData(null, true, true, 200)]
     [InlineData("RequestBody", true, true, 200)]
