@@ -78,7 +78,7 @@ public class AggregateService : IAggregateService
             Logger.Logger.LogWarning("aggregate is null");
         }
 
-        Logger.Logger.LogWarning("About to save to cache.");
+        Logger.Logger.LogInformation("About to save to cache.");
 
         String g = typeof(TAggregate).Name;
         String key = $"{g}-{aggregate.AggregateId}";
@@ -101,7 +101,6 @@ public class AggregateService : IAggregateService
     public async Task<Result<TAggregate>> Get<TAggregate>(Guid aggregateId,
                                                           CancellationToken cancellationToken) where TAggregate : Aggregate, new()
     {
-        Debug.WriteLine("In Get");
         (Type, MemoryCacheEntryOptions, Object) at = GetAggregateType<TAggregate>();
         TAggregate aggregate = default;
         String g = typeof(TAggregate).Name;
