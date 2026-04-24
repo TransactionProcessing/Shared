@@ -1089,6 +1089,7 @@ public abstract class BaseDockerHelper{
     
     public void Trace(String traceMessage){
         if (this.Logger.IsInitialised){
+            Console.WriteLine($"{this.TestId}|{this.ScenarioName}|{traceMessage}");
             this.Logger.LogInformation($"{this.TestId}|{this.ScenarioName}|{traceMessage}");
         }
     }
