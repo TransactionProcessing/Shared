@@ -47,24 +47,12 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
-
-    - name: Copy workspace
-      run: cp -r . /tmp/workspace-copy
-
-    - name: Archive workspace
-      run: tar -czf workspace.tar.gz -C /tmp workspace-copy
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: workspace
-        path: workspace.tar.gz
-
+    
     - uses: actions/upload-artifact@v4.4.3
       #if: ${{ failure() }}
       with:
         name: tracelogslinux
-        path: /home/txnproc/trace/   
+        path: /home/runner/trace/   
 
   buildwindows:
     name: "Build and Test Pull Requests - Windows"
