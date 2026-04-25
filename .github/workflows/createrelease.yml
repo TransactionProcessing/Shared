@@ -35,13 +35,6 @@ jobs:
       run: |
         sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
         sudo update-ca-certificates
-
-    - name: Run Unit Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
-        dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
         
     - name: Build Nuget Packages
       run: |

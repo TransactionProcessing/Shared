@@ -49,10 +49,9 @@ jobs:
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v4.4.3
-      #if: ${{ failure() }}
       with:
         name: tracelogslinux
-        path: /home/txnproc/trace/   
+        path: /home/runner/trace/   
 
   buildwindows:
     name: "Build and Test Pull Requests - Windows"
@@ -99,7 +98,6 @@ jobs:
         dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
     - uses: actions/upload-artifact@v4.4.3
-      #if: ${{ failure() }}
       with:
         name: tracelogswindows
         path: C:\\Users\\runneradmin\\txnproc
