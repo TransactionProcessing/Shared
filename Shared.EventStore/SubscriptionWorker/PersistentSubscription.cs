@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using KurrentDB.Client;
+﻿using KurrentDB.Client;
 using SimpleResults;
 
 namespace Shared.EventStore.SubscriptionWorker;
@@ -7,7 +6,6 @@ namespace Shared.EventStore.SubscriptionWorker;
 using Aggregate;
 using DomainDrivenDesign.EventSourcing;
 using EventHandling;
-using global::EventStore.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Shared.General;
@@ -24,7 +22,7 @@ public class PersistentSubscription
 {
     public EventHandler<String> SubscriptionHasDropped;
 
-    public EventHandler<String> EventHandlerMissing;
+    public EventHandler<String> EventHandlerIsMissing;
 
     private readonly Func<CancellationToken, Task<KurrentDB.Client.PersistentSubscription>> Subscribe;
 
@@ -41,6 +39,18 @@ public class PersistentSubscription
         if (this.SubscriptionHasDropped != null) {
             //Broadcast to owner
             this.SubscriptionHasDropped(this, reason);
+        }
+    }
+
+    public void EventHandlerMissing(String reason)
+    {
+        this.Connected = false;
+        Logger.Logger.LogWarning($"Event handler missing - {reason}");
+
+        if (this.EventHandlerIsMissing != null)
+        {
+            //Broadcast to owner
+            this.EventHandlerIsMissing(this, reason);
         }
     }
 
@@ -144,8 +154,7 @@ public class PersistentSubscription
 
             if (domainEventHandlersResult.IsFailed) {
                 // Log a line of trace out 
-                if (this.EventHandlerMissing != null)
-                    this.EventHandlerMissing(this, $"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
+                this.EventHandlerMissing($"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
 
                 await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
                 return;

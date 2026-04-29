@@ -36,7 +36,7 @@ namespace ClientProxyBase
                 requestMessage.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
             }
 
-            // Make the Http Call here;
+            // Make the Http Call here
             HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(requestMessage, cancellationToken);
 
             // Process the response
