@@ -16,7 +16,7 @@ public class EventDataFactory : IEventDataFactory
     public EventData CreateEventData(IDomainEvent domainEvent)
     {
         this.GuardAgainstNoDomainEvent(domainEvent);    
-        var x = StringSerialiser.Serialise(domainEvent, SerialiserOptions);
+
         Byte[] data = Encoding.Default.GetBytes(StringSerialiser.Serialise(domainEvent, SerialiserOptions));
 
         EventData eventData = new(Uuid.FromGuid(domainEvent.EventId), domainEvent.EventType, data);

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace Shared.Serialisation;
 
@@ -133,6 +134,10 @@ public class SystemTextJsonSerializer : IStringSerialiser
                         return true;
                 }
                 break;
+            default:
+                found = default;
+                return false;
+                break;
         }
 
         found = default;
@@ -141,6 +146,7 @@ public class SystemTextJsonSerializer : IStringSerialiser
 }
 
 public static class StringSerialiser{
+    private const String NotInitialisedErrorMessage = "StringSerialiser is not initialised.";
     public static Boolean IsInitialised { get; set; }
     private static IStringSerialiser Serializer;
 
@@ -150,27 +156,27 @@ public static class StringSerialiser{
     }
 
     public static string Serialise<T>(T obj, SerialiserOptions serialiserOptions = null) {
-        if (!IsInitialised) throw new InvalidOperationException("StringSerialiser is not initialised.");
+        if (!IsInitialised) throw new InvalidOperationException(NotInitialisedErrorMessage);
         return Serializer.Serialize(obj, serialiserOptions);
     }
 
     public static T Deserialise<T>(string json, SerialiserOptions serialiserOptions = null) {
-        if (!IsInitialised) throw new InvalidOperationException("StringSerialiser is not initialised.");
+        if (!IsInitialised) throw new InvalidOperationException(NotInitialisedErrorMessage);
         return Serializer.Deserialize<T>(json, serialiserOptions);
     }
 
     public static T DeserialiseAnonymousType<T>(String json, T anonymousTypeObject, SerialiserOptions serialiserOptions = null) {
-        if (!IsInitialised) throw new InvalidOperationException("StringSerialiser is not initialised.");
+        if (!IsInitialised) throw new InvalidOperationException(NotInitialisedErrorMessage);
         return Serializer.DeserializeAnonymousType(json, anonymousTypeObject, serialiserOptions);
     }
 
     public static T DeserializeObject<T>(String json, Type type, SerialiserOptions serialiserOptions = null) {
-        if (!IsInitialised) throw new InvalidOperationException("StringSerialiser is not initialised.");
+        if (!IsInitialised) throw new InvalidOperationException(NotInitialisedErrorMessage);
         return Serializer.DeserializeObject<T>(json, type, serialiserOptions);
     }
 
     public static T GetValue<T>(String json, String propertyName, SerialiserOptions serialiserOptions = null) {
-        if (!IsInitialised) throw new InvalidOperationException("StringSerialiser is not initialised.");
+        if (!IsInitialised) throw new InvalidOperationException(NotInitialisedErrorMessage);
         return Serializer.GetValue<T>(json, propertyName);
     }
 }
