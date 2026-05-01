@@ -1,4 +1,7 @@
-﻿namespace Shared.Tests;
+﻿using System.Text.Json;
+using Shared.Serialisation;
+
+namespace Shared.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -6,7 +9,6 @@ using System.IO;
 using Logger;
 using Microsoft.AspNetCore.Http;
 using Middleware;
-using Newtonsoft.Json;
 
 public static class TestHelpers{
     public static DefaultHttpContext CreateHttpContext()
@@ -28,8 +30,11 @@ public static class TestHelpers{
         context.Response.Body.Seek(0, SeekOrigin.Begin);
         StreamReader reader = new(context.Response.Body);
         String streamText = reader.ReadToEnd();
-        ErrorResponse responseData = JsonConvert.DeserializeObject<ErrorResponse>(streamText);
-        return responseData;
+
+        return streamText switch {
+            null or "" => null,
+            _ => StringSerialiser.Deserialise<ErrorResponse>(streamText)
+        };
     }
 
     public static readonly String ExceptionMessage = "Test Exception Message";
@@ -42,6 +47,16 @@ public static class TestHelpers{
         TestLogger logger = new TestLogger();
         Logger.Initialise(logger);
         return logger;
+    }
+
+    public static void InitialiseStringSerialiser()
+    {
+        if (StringSerialiser.IsInitialised)
+        {
+            return;
+        }
+        var serializer = new SystemTextJsonSerializer(new JsonSerializerOptions());
+        StringSerialiser.Initialise(serializer);
     }
 
     public static IReadOnlyDictionary<String, String> DefaultAppSettings { get; } = new Dictionary<String, String>

@@ -1,4 +1,5 @@
 ﻿using KurrentDB.Client;
+using Shared.Serialisation;
 using SimpleResults;
 
 namespace Shared.EventStore.SubscriptionWorker;
@@ -6,8 +7,6 @@ namespace Shared.EventStore.SubscriptionWorker;
 using Aggregate;
 using DomainDrivenDesign.EventSourcing;
 using EventHandling;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Shared.General;
 using Shared.Logger.TennantContext;
 using System;
@@ -103,20 +102,11 @@ public class PersistentSubscription
 
     private static TenantIdentifiers GetTenantIdentifiersFromDomainEvent(IDomainEvent domainEvent)
     {
-        String domainEventAsString = JsonConvert.SerializeObject(domainEvent);
+        String domainEventAsString = StringSerialiser.Serialise(domainEvent);
 
         try
         {
-            JToken rootToken = JToken.Parse(domainEventAsString);
-
-            JToken estateIdIdToken = rootToken.SelectTokens("..estateId").FirstOrDefault() ??
-                                     rootToken.SelectTokens("..EstateId").FirstOrDefault();
-
-            JToken merchantIdToken = rootToken.SelectTokens("..merchantId").FirstOrDefault() ??
-                                     rootToken.SelectTokens("..MerchantId").FirstOrDefault();
-
-            Guid.TryParse(estateIdIdToken?.Value<String>(), out Guid estateId);
-            Guid.TryParse(merchantIdToken?.Value<String>(), out Guid merchantId);
+            Guid estateId = StringSerialiser.GetValue<Guid>(domainEventAsString, "estateId");
 
             return estateId == Guid.Empty ? TenantIdentifiers.Default() : new TenantIdentifiers(estateId, Guid.Empty);
         }

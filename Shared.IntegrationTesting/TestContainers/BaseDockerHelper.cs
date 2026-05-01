@@ -5,23 +5,19 @@ using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using SimpleResults;
 using System.Net.Http.Headers;
+using Shared.Serialisation;
 
 namespace Shared.IntegrationTesting.TestContainers;
 
 using Docker.DotNet;
 using EventStore.Client;
-using global::Ductus.FluentDocker.Model.Networks;
 using HealthChecks;
 using Logger;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Newtonsoft.Json;
 using Shouldly;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -29,7 +25,6 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -856,11 +851,11 @@ public abstract class BaseDockerHelper{
             SimpleResults.Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
             if (healthCheckResult.IsSuccess) {
-                HealthChecks.HealthCheckResult result = JsonConvert.DeserializeObject<HealthChecks.HealthCheckResult>(healthCheckResult.Data);
+                HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckResult.Data, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
 
                 this.Trace($"health check complete for {containerType} result is [{healthCheckResult.Data}]");
 
-                result.Status.ShouldBe(HealthCheckStatus.Healthy.ToString(), $"Service Type: {containerType} Details {healthCheckResult.Data}");
+                result.Status.ShouldBe(nameof(HealthCheckStatus.Healthy), $"Service Type: {containerType} Details {healthCheckResult.Data}");
                 this.Trace($"health check complete for {containerType}");
             }
             else {

@@ -1,20 +1,10 @@
 ﻿using Ductus.FluentDocker.Builders;
-using KurrentDB.Client;
-
-namespace Shared.EventStore.Tests;
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Ductus.FluentDocker.Services;
-using global::EventStore.Client;
-using IntegrationTesting;
-using Newtonsoft.Json;
+using KurrentDB.Client;
+using Shared.IntegrationTesting;
 using Shared.IntegrationTesting.Ductus;
-using Shouldly;
+
+namespace Shared.EventStoreContext.Tests;
 
 public class EventStoreDockerHelper : DockerHelper
 {

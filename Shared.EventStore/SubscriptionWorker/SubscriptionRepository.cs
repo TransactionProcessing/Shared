@@ -1,4 +1,5 @@
 ﻿using KurrentDB.Client;
+using Shared.Serialisation;
 using SimpleResults;
 
 namespace Shared.EventStore.SubscriptionWorker;
@@ -9,8 +10,7 @@ namespace Shared.EventStore.SubscriptionWorker;
  using System.Threading;
  using System.Threading.Tasks;
  using global::EventStore.Client;
- using Newtonsoft.Json;
-
+ 
  [ExcludeFromCodeCoverage]
  public class SubscriptionRepository : ISubscriptionRepository {
      private Int32 CacheHits;
@@ -56,7 +56,7 @@ namespace Shared.EventStore.SubscriptionWorker;
              String responseBody = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
              if (responseMessage.IsSuccessStatusCode) {
-                 List<PersistentSubscriptionInfo> list = JsonConvert.DeserializeObject<List<PersistentSubscriptionInfo>>(responseBody);
+                 List<PersistentSubscriptionInfo> list = StringSerialiser.Deserialise<List<PersistentSubscriptionInfo>>(responseBody);
 
                  return Result.Success(list);
              }

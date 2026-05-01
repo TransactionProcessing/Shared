@@ -2,29 +2,11 @@
 
 using System;
 using System.Globalization;
-using Newtonsoft.Json;
 
-[JsonObject]
 public struct AggregateVersion : IComparable
 {
-    #region Constructors
 
-    [Newtonsoft.Json.JsonConstructor]
-    private AggregateVersion(Int64 value) : this()
-    {
-        this.Value = value;
-    }
-
-    #endregion
-
-    #region Properties
-
-    [JsonProperty(Order = 1)]
-    public Int64 Value { get; private set; }
-
-    #endregion
-
-    #region Methods
+    public Int64 Value { get; init; }
 
     public Int32 CompareTo(Object obj)
     {
@@ -34,12 +16,12 @@ public struct AggregateVersion : IComparable
 
     public static AggregateVersion CreateFrom(Int64 value)
     {
-        return new AggregateVersion(value);
+        return new AggregateVersion { Value = value };
     }
 
     public static AggregateVersion CreateNew()
     {
-        return new AggregateVersion(0);
+        return new AggregateVersion { Value = 0 };
     }
 
     public Boolean Equals(AggregateVersion other)
@@ -105,6 +87,4 @@ public struct AggregateVersion : IComparable
 
     public static bool operator >=(AggregateVersion left, AggregateVersion right) =>
         left.Value >= right.Value;
-
-    #endregion
 }

@@ -7,6 +7,7 @@ using Ductus.FluentDocker.Model.Builders;
 using Ductus.FluentDocker.Model.Containers;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
+using Shared.Serialisation;
 using SimpleResults;
 
 namespace Shared.IntegrationTesting.Ductus;
@@ -15,7 +16,6 @@ using EventStore.Client;
 using HealthChecks;
 using Logger;
 using Microsoft.Data.SqlClient;
-using Newtonsoft.Json;
 using Shared.IntegrationTesting;
 using Shouldly;
 using System;
@@ -783,7 +783,7 @@ public abstract class BaseDockerHelper{
             SimpleResults.Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
             if (healthCheckResult.IsSuccess) {
-                HealthChecks.HealthCheckResult result = JsonConvert.DeserializeObject<HealthChecks.HealthCheckResult>(healthCheckResult.Data);
+                HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthChecks.HealthCheckResult>(healthCheckResult.Data);
 
                 this.Trace($"health check complete for {containerType} result is [{healthCheckResult.Data}]");
 

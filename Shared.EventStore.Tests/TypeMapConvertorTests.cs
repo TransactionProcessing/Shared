@@ -1,24 +1,30 @@
-﻿using System;
+﻿using KurrentDB.Client;
+using Shared.EventStore.Aggregate;
+using Shared.EventStore.Tests.TestObjects;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KurrentDB.Client;
-using Shared.EventStore.Aggregate;
-using Shared.EventStore.Tests.TestObjects;
 
 namespace Shared.EventStore.Tests;
 
-using System.Reflection;
-using System.Xml.Serialization;
 using DomainDrivenDesign.EventSourcing;
 using General;
 using global::EventStore.Client;
+using Shared.Serialisation;
 using Shouldly;
+using System.Reflection;
+using System.Text.Json;
+using System.Xml.Serialization;
 using Xunit;
 
 public class TypeMapConvertorTests
 {
+    public TypeMapConvertorTests() {
+        StringSerialiser.Initialise(new SystemTextJsonSerializer(new JsonSerializerOptions()));
+    }
+
     [Fact]
     public void TypeMapConvertor_Convertor_IDomainEvent_EventDataReturned(){
         AggregateNameSetEvent domainEvent  = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);

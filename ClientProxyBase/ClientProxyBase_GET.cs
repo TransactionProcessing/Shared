@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Shared.Results;
+﻿using Shared.Results;
 using SimpleResults;
 using System;
 using System.Collections.Generic;
@@ -34,7 +33,7 @@ namespace ClientProxyBase
             if (result.IsFailed)
                 return ResultHelpers.CreateFailure(result);
 
-            TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+            TResponse responseData = this.DeserialiseContent<TResponse>(result.Data);
 
             return Result.Success(responseData);
         }

@@ -53,6 +53,7 @@ public partial class SharedTests
     public async Task ExceptionHandlerMiddleware_ArgumentNullExceptionThrown_BadRequestHttpStatusCodeReturned()
     {
         TestHelpers.InitialiseLogger();
+        TestHelpers.InitialiseStringSerialiser();
 
         ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
             throw TestHelpers.CreateException<ArgumentNullException>());
@@ -129,7 +130,7 @@ public partial class SharedTests
     public async Task ExceptionHandlerMiddleware_NotSupportedExceptionThrown_BadRequestHttpStatusCodeReturned()
     {
         TestHelpers.InitialiseLogger();
-
+        TestHelpers.InitialiseStringSerialiser();
         ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
             throw TestHelpers.CreateException<NotSupportedException>());
 
@@ -148,7 +149,7 @@ public partial class SharedTests
     public async Task ExceptionHandlerMiddleware_NotFoundExceptionThrown_NotFoundHttpStatusCodeReturned()
     {
         TestHelpers.InitialiseLogger();
-
+        TestHelpers.InitialiseStringSerialiser();
         ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
             throw TestHelpers.CreateException<NotFoundException>());
 
@@ -167,7 +168,7 @@ public partial class SharedTests
     public async Task ExceptionHandlerMiddleware_NotImplementedExceptionThrown_NotImplementedHttpStatusCodeReturned()
     {
         TestHelpers.InitialiseLogger();
-
+        TestHelpers.InitialiseStringSerialiser();
         ExceptionHandlerMiddleware middleware = new((innerHttpContext) =>
             throw TestHelpers.CreateException<NotImplementedException>());
 
@@ -205,7 +206,7 @@ public partial class SharedTests
     public async Task ExceptionHandlerMiddleware_NoExceptionThrown_OKResponseReturned()
     {
         TestHelpers.InitialiseLogger();
-
+        TestHelpers.InitialiseStringSerialiser();
         ExceptionHandlerMiddleware middleware = new((innerHttpContext) => Task.CompletedTask);
 
         DefaultHttpContext context = TestHelpers.CreateHttpContext();

@@ -4,7 +4,6 @@ using System.Text;
 
 namespace Driver;
 
-using Newtonsoft.Json;
 using Shared.DomainDrivenDesign.EventSourcing;
 using Shared.EventStore.Aggregate;
 using Shared.EventStore.EventStore;
@@ -54,7 +53,6 @@ public record TestAggregate1 : Aggregate
 
 public record AggregateNameSetEvent : DomainEvent
 {
-    [JsonProperty]
     public String AggregateName { get; private set; }
 
     private AggregateNameSetEvent(Guid aggregateId,

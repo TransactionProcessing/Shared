@@ -1,5 +1,7 @@
-﻿using KurrentDB.Client;
+﻿using System.Text.Json;
+using KurrentDB.Client;
 using Shared.EventStore.Tests.TestObjects;
+using Shared.Serialisation;
 using SimpleResults;
 
 namespace Shared.EventStore.Tests;
@@ -17,6 +19,11 @@ using Shouldly;
 using Xunit;
 
 public class AggregateRepositoryTests{
+
+    public AggregateRepositoryTests() {
+        StringSerialiser.Initialise(new SystemTextJsonSerializer(new JsonSerializerOptions()));
+    }
+
     [Fact]
     public async Task AggregateRepository_GetLatestVersion_AggregateReturned(){
         Mock<IEventStoreContext> context = new();

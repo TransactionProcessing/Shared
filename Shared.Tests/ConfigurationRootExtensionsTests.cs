@@ -1,29 +1,17 @@
 ﻿namespace Shared.Tests;
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using Castle.Components.DictionaryAdapter;
 using Extensions;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Hosting.Internal;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Shouldly;
 using Xunit;
-using static Azure.Core.HttpHeader;
 
 /// <summary>
 /// 
 /// </summary>
 public partial class SharedTests
 {
-    #region Properties
-
-
-    #endregion
-
     #region Methods
 
     /// <summary>
