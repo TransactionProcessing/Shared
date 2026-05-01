@@ -8,6 +8,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,6 +25,39 @@ public abstract partial class ClientProxyBase {
         this.Serialise = Serialise;
         this.Deserialise = Deserialise;
     }
+
+    // This ctor will be removed once all the client proxies have been updated to use the new ctor above. It is kept for backwards compatibility.
+    protected ClientProxyBase(HttpClient httpClient) {
+        this.HttpClient = httpClient;
+
+        JsonSerializerOptions JsonSerializerOptions = new()
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            WriteIndented = true,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver
+            {
+                Modifiers =
+                {
+                    typeInfo =>
+                    {
+                        String[] names = new[] { "AggregateId", "AggregateVersion", "EventId", "EventNumber", "EventTimestamp", "EventType" };
+                        List<JsonPropertyInfo> matches = typeInfo.Properties
+                            .Where(p => names.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)))
+                            .ToList();
+
+                        foreach (JsonPropertyInfo match in matches) {
+                            match.ShouldSerialize = (_, _) => false;
+                        }
+                    }
+                }
+            }
+        };
+
+        this.Serialise = (obj) => System.Text.Json.JsonSerializer.Serialize(obj, JsonSerializerOptions);
+        this.Deserialise = (json, type) => System.Text.Json.JsonSerializer.Deserialize(json, type, JsonSerializerOptions);
+    }
+
 
     #region Methods
 
