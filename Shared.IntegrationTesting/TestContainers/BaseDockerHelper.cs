@@ -851,7 +851,7 @@ public abstract class BaseDockerHelper{
             SimpleResults.Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
 
             if (healthCheckResult.IsSuccess) {
-                HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckResult.Data);
+                HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckResult.Data, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
 
                 this.Trace($"health check complete for {containerType} result is [{healthCheckResult.Data}]");
 
