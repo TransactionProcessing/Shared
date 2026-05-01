@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
+using Shared.Serialisation;
 using SimpleResults;
 
 namespace Shared.IntegrationTesting.TestContainers;
@@ -15,6 +16,7 @@ using System.Threading.Tasks;
 public abstract class DockerHelper : BaseDockerHelper
 {
     protected DockerHelper(Boolean skipHealthChecks=false) :base(skipHealthChecks){
+        StringSerialiser.Initialise(new SystemTextJsonSerializer(new System.Text.Json.JsonSerializerOptions()));
     }
     
     protected  virtual void SetHostTraceFolder(String scenarioName) {
