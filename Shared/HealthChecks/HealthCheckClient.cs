@@ -1,28 +1,19 @@
-﻿using System.Collections.Generic;
-using System.Net;
+﻿using System.Net;
 using SimpleResults;
-
-namespace Shared.HealthChecks;
-
 using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+
+namespace Shared.HealthChecks;
 
 public class HealthCheckClient : IHealthCheckClient
 {
     private readonly HttpClient HttpClient;
 
-    #region Constructors
-
     public HealthCheckClient(HttpClient httpClient) {
         this.HttpClient = httpClient;
     }
-
-    #endregion
-
-    #region Methods
 
     public async Task<Result<String>> PerformHealthCheck(String scheme, 
                                                          String uri,
@@ -64,6 +55,4 @@ public class HealthCheckClient : IHealthCheckClient
                                    Int32 port) {
         return $"{scheme}://{uri}:{port}/health";
     }
-
-    #endregion
 }

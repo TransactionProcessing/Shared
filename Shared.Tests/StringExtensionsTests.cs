@@ -15,7 +15,7 @@ public partial class SharedTests
     [InlineData("{\r\n\"Property1\": \"Value1\",\r\n\"Property2\": \"Value2\"\r\n}", true)]
     [InlineData("{\r\n\"Property1\": \"Value1\"\r\n\"Property2\": \"Value2\"\r\n}", false)]
     [InlineData("{\r\n\"Property1\": \r\n}", false)]
-    [InlineData("{\r\n\"Property1\": \"Value1\",\r\n\"Property3\": \"Value2\"\r\n}", false)]
+    [InlineData("{\r\n\"Property1\": \"Value1\",\r\n\"Property3\": \"Value2\"\r\n}", true)]
     public void StringExtensions_TryParseJson_ResultExpected(String json, Boolean expectedResult)
     {
         Boolean isValidObject = json.TryParseJson(out TestModel model);

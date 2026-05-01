@@ -1,21 +1,15 @@
-﻿using System.Net.Http;
-using System.Text;
-using System.Threading;
+﻿using System.Threading;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using SimpleResults;
 
 namespace Shared.IntegrationTesting.TestContainers;
 
-using Newtonsoft.Json;
-using Shouldly;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 public abstract class DockerHelper : BaseDockerHelper

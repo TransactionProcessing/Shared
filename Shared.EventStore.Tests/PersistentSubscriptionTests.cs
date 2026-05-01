@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Shared.EventStore.Tests.TestObjects;
+using Shared.Serialisation;
 
 namespace Shared.EventStore.Tests;
 
@@ -24,6 +26,7 @@ public class PersistentSubscriptionTests
         ConfigurationReader.Initialise(new ConfigurationRoot(new List<IConfigurationProvider>()));
 
         TypeMap.AddType<EstateCreatedEvent>("EstateCreatedEvent");
+        StringSerialiser.Initialise(new SystemTextJsonSerializer(new JsonSerializerOptions()));
     }
 
     [Fact]

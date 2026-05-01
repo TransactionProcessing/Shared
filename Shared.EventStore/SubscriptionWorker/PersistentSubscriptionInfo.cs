@@ -2,7 +2,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using Newtonsoft.Json;
 
 [ExcludeFromCodeCoverage]
 public class PersistentSubscriptionInfo
@@ -11,7 +10,6 @@ public class PersistentSubscriptionInfo
 
     public String GroupName { get; set; }
 
-    [JsonProperty("eventStreamId")]
     public String StreamName { get; set; }
 
     #endregion

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using RichardSzalay.MockHttp;
+﻿using RichardSzalay.MockHttp;
 using Shared.Results;
 using Shouldly;
 using SimpleResults;
@@ -12,12 +11,14 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Shared.Serialisation;
 using Xunit;
 
 namespace Shared.Tests
 {
     public class HttpService : ClientProxyBase.ClientProxyBase {
-        public HttpService(HttpClient httpClient) : base(httpClient) {
+        public HttpService(HttpClient httpClient, Func<Object, String> Serialise, Func<String, Type, Object> Deserialise) : base(httpClient,Serialise, Deserialise) {
         }
 
         public async Task<Result<TResponse>> SendHttpGetRequest<TResponse>(String uri,
@@ -174,11 +175,22 @@ namespace Shared.Tests
         private readonly MockHttpMessageHandler _mockHttp;
         private readonly HttpService _service;
 
+        String Serialise(Object arg)
+        {
+            return StringSerialiser.Serialise<Object>(arg);
+        }
+
+        Object Deserialise(String arg, Type type)
+        {
+            return StringSerialiser.DeserializeObject<Object>(arg, type);
+        }
+
         public HttpServiceTests()
         {
             _mockHttp = new MockHttpMessageHandler();
             var client = _mockHttp.ToHttpClient();
-            _service = new HttpService(client);
+            _service = new HttpService(client, Serialise, Deserialise);
+            TestHelpers.InitialiseStringSerialiser();
         }
 
         [Fact]
@@ -186,7 +198,7 @@ namespace Shared.Tests
         {
             var payload = new SampleResponse { Message = "Hello", Value = 42 };
             _mockHttp.When(HttpMethod.Get, "https://api/success")
-                     .Respond("application/json", JsonConvert.SerializeObject(payload));
+                     .Respond("application/json", StringSerialiser.Serialise(payload));
 
             var result = await _service.SendHttpGetRequest<SampleResponse>(
                 "https://api/success", "token", CancellationToken.None);

@@ -1,17 +1,13 @@
 using KurrentDB.Client;
 using Shared.General;
+using Shared.Serialisation;
 
 namespace Shared.EventStore.Tests.TestObjects;
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using global::EventStore.Client;
-using Newtonsoft.Json;
 using System.Text;
 using DomainDrivenDesign.EventSourcing;
-using NLog.LayoutRenderers.Wrappers;
-using SubscriptionWorker;
 using PersistentSubscriptionInfo = SubscriptionWorker.PersistentSubscriptionInfo;
 
 public class TestData
@@ -25,7 +21,7 @@ public class TestData
 
     public static EventRecord CreateEventRecord<T>(T domainEvent, string streamId, bool addToMap) where T : DomainEvent
     {
-        byte[] eventData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainEvent));
+        byte[] eventData = Encoding.UTF8.GetBytes(StringSerialiser.Serialise(domainEvent, new SerialiserOptions(SerialiserPropertyFormat.CamelCase, IgnoreNullValues: true, WriteIndented: true)));
         byte[] customEventMetaData = Encoding.UTF8.GetBytes(string.Empty);
 
         Dictionary<string, string> metaData = new();

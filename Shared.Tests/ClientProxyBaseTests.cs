@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ClientProxyBase;
+using Shared.Serialisation;
 using SimpleResults;
 
 namespace Shared.Tests;
@@ -16,6 +17,15 @@ using Shouldly;
 using Xunit;
 
 public partial class SharedTests {
+
+    String Serialise(Object arg) {
+        return StringSerialiser.Serialise<Object>(arg);
+    }
+
+    Object Deserialise(String arg, Type type) {
+        return StringSerialiser.DeserializeObject<Object>(arg, type);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.OK)]
     [InlineData(HttpStatusCode.Created)]
@@ -32,7 +42,8 @@ public partial class SharedTests {
         String responseContent = $"Content - {statusCode}";
         HttpResponseMessage response = new(statusCode);
         response.Content = new StringContent(responseContent);
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
+
         Result<String> result = await proxybase.Test_HandleResponseX(response, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         result.Data.ShouldBe(responseContent);
@@ -54,7 +65,7 @@ public partial class SharedTests {
         String responseContent = $"Content - {statusCode}";
         HttpResponseMessage response = new(statusCode);
         response.Content = new StringContent(responseContent);
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
         Should.NotThrow(async () => await proxybase.Test_HandleResponse(response, CancellationToken.None));
     }
 
@@ -220,14 +231,14 @@ public partial class SharedTests {
 
     private async Task TestMethod_HandleResponseX(HttpStatusCode statusCode,
                                                   ResultStatus resultStatus) {
-        var proxybase = new TestClient(new HttpClient());
+        var proxybase = new TestClient(new HttpClient(), Serialise, Deserialise);
         var result = await proxybase.Test_HandleResponseX(new HttpResponseMessage(statusCode), CancellationToken.None);
         result.Status.ShouldBe(resultStatus);
     }
 
     private async Task TestMethod_HandleResponse(HttpStatusCode statusCode,
                                                  Type expectedException) {
-        var proxybase = new TestClient(new HttpClient());
+        var proxybase = new TestClient(new HttpClient(), Serialise, Deserialise);
         var exception = Should.Throw<Exception>(async () => await proxybase.Test_HandleResponse(new HttpResponseMessage(statusCode), CancellationToken.None));
         exception.ShouldBeOfType(expectedException);
     }
@@ -236,7 +247,7 @@ public partial class SharedTests {
     public void HandleResponseContent_NullContent_ReturnsDefaultList() {
         // Arrange
         string content = null;
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
 
         // Act
         var result = proxybase.Test_HandleResponseContent<List<ApiResourceDetails>>(content);
@@ -251,7 +262,7 @@ public partial class SharedTests {
     public void HandleResponseContent_NullContent_ReturnsDefaultObject() {
         // Arrange
         string content = null;
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
 
         // Act
         var result = proxybase.Test_HandleResponseContent<ApiResourceDetails>(content);
@@ -265,7 +276,7 @@ public partial class SharedTests {
     public void HandleResponseContent_EmptyContent_ReturnsDefaultList() {
         // Arrange
         string content = string.Empty;
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
 
         // Act
         var result = proxybase.Test_HandleResponseContent<List<ApiResourceDetails>>(content);
@@ -280,7 +291,7 @@ public partial class SharedTests {
     public void HandleResponseContent_EmptyContent_ReturnsDefaultObject() {
         // Arrange
         string content = string.Empty;
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
 
         // Act
         var result = proxybase.Test_HandleResponseContent<ApiResourceDetails>(content);
@@ -294,7 +305,7 @@ public partial class SharedTests {
     public void HandleResponseContent_ValidJsonContent_ReturnsDeserializedObject() {
         // Arrange
         string json = "{ \"Data\": { \"name\": \"test\", \"description\": \"test description\" } }";
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
 
         // Act
         var result = proxybase.Test_HandleResponseContent<ApiResourceDetails>(json);
@@ -310,7 +321,7 @@ public partial class SharedTests {
     public void HandleResponseContent_ValidJsonContent_ReturnsDeserializedList() {
         // Arrange
         string json = "{ \"Data\": [{ \"name\": \"test1\", \"description\": \"test description 1\" }, { \"name\": \"test2\", \"description\": \"test description 2\" }] }";
-        TestClient proxybase = new(new HttpClient());
+        TestClient proxybase = new(new HttpClient(), Serialise, Deserialise);
 
         // Act
         var result = proxybase.Test_HandleResponseContent<List<ApiResourceDetails>>(json);
@@ -327,7 +338,7 @@ public partial class SharedTests {
 }
 
 public class TestClient : ClientProxyBase.ClientProxyBase{
-    public TestClient(HttpClient httpClient) : base(httpClient){
+    public TestClient(HttpClient httpClient, Func<Object, String> Serialise, Func<String, Type, Object> Deserialise) : base(httpClient, Serialise, Deserialise){
     }
     public async Task Test_HandleResponse(HttpResponseMessage responseMessage, CancellationToken cancellationToken)
     {

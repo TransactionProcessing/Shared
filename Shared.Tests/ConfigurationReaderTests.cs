@@ -19,6 +19,7 @@ public partial class SharedTests
 
     public SharedTests(ITestOutputHelper testOutputHelper){
         this.TestOutputHelper = testOutputHelper;
+        TestHelpers.InitialiseStringSerialiser();
     }
 
     [Fact]

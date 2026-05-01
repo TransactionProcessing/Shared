@@ -1,42 +1,27 @@
-﻿using Newtonsoft.Json;
 using SimpleResults;
 using System;
 using System.Linq;
 
 namespace ClientProxyBase;
 
-using Shared.Results;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 public abstract partial class ClientProxyBase {
-    #region Fields
 
-    /// <summary>
-    /// The HTTP client
-    /// </summary>
     protected readonly HttpClient HttpClient;
+    private readonly Func<Object, String> Serialise;
+    private readonly Func<String, Type, Object> Deserialise;
 
-    #endregion
-
-    #region Constructors
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ClientProxyBase"/> class.
-    /// </summary>
-    /// <param name="httpClient">The HTTP client.</param>
-    protected ClientProxyBase(HttpClient httpClient) {
+    protected ClientProxyBase(HttpClient httpClient, Func<Object, String> Serialise, Func<String, Type, Object> Deserialise) {
         this.HttpClient = httpClient;
+        this.Serialise = Serialise;
+        this.Deserialise = Deserialise;
     }
-
-    #endregion
 
     #region Methods
 
@@ -103,8 +88,12 @@ public abstract partial class ClientProxyBase {
 
             return new ResponseData<T> { Data = data };
         }
-        return JsonConvert.DeserializeObject<ResponseData<T>>(content);
+
+        return this.DeserialiseContent<ResponseData<T>>(content);
     }
+
+    protected virtual T DeserialiseContent<T>(String content) =>
+        (T)this.Deserialise(content, typeof(T));
 
     static void AddAdditionalHeaders(HttpRequestMessage requestMessage,
                                      List<(String header, String value)> additionalHeaders) {

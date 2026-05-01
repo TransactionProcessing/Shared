@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json;
-using Shared.Results;
+﻿using Shared.Results;
 using SimpleResults;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -34,7 +32,7 @@ namespace ClientProxyBase
             if (result.IsFailed)
                 return ResultHelpers.CreateFailure(result);
 
-            TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+            TResponse responseData = this.DeserialiseContent<TResponse>(result.Data);
 
             return Result.Success(responseData);
 
@@ -68,7 +66,7 @@ namespace ClientProxyBase
             }
             else
             {
-                requestMessage.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+                requestMessage.Content = new StringContent(this.Serialise(request), Encoding.UTF8, "application/json");
             }
 
             // Make the Http Call here
@@ -80,7 +78,7 @@ namespace ClientProxyBase
             if (result.IsFailed)
                 return ResultHelpers.CreateFailure(result);
 
-            TResponse responseData = JsonConvert.DeserializeObject<TResponse>(result.Data);
+            TResponse responseData = this.DeserialiseContent<TResponse>(result.Data);
 
             return Result.Success(responseData);
         }

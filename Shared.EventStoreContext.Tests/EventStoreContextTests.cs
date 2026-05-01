@@ -1,12 +1,13 @@
-﻿using KurrentDB.Client;
-using Newtonsoft.Json;
+﻿using System.Text.Json;
+using KurrentDB.Client;
 using NLog;
 using Shared.DomainDrivenDesign.EventSourcing;
 using Shared.EventStore.Aggregate;
 using Shared.EventStore.EventStore;
-using Shared.EventStore.Tests;
+using Shared.General;
 using Shared.Logger;
 using Shared.Middleware;
+using Shared.Serialisation;
 using Shouldly;
 using SimpleResults;
 
@@ -30,6 +31,7 @@ public class EventStoreContextTests : IDisposable{
         logger.Initialise(LogManager.GetLogger("Reqnroll"), "Reqnroll");
 
         this.EventStoreDockerHelper = new() { Logger = logger };
+        StringSerialiser.Initialise(new SystemTextJsonSerializer(new JsonSerializerOptions()));
     }
 
     #endregion
@@ -123,17 +125,19 @@ public class EventStoreContextTests : IDisposable{
     [TestCase(true)]
     [TestCase(false)]
     public async Task EventStoreContext_ReadEvents_EventsAreRead(Boolean secureEventStore){
+        
+        TypeMap.AddType<EstateCreatedEvent>("EstateCreatedEvent");
         TimeSpan deadline = TimeSpan.FromMinutes(2);
 
         await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
             
         IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
-        Guid aggreggateId = Guid.NewGuid();
-        String streamName = $"TestStream-{aggreggateId:N}";
+        Guid aggregateId = Guid.NewGuid();
+        String streamName = $"TestStream-{aggregateId:N}";
 
-        EstateCreatedEvent event1 = new(aggreggateId, "Test Estate 1");
-        EstateCreatedEvent event2 = new(aggreggateId, "Test Estate 2");
+        EstateCreatedEvent event1 = new(aggregateId, "Test Estate 1");
+        EstateCreatedEvent event2 = new(aggregateId, "Test Estate 2");
         List<IDomainEvent> domainEvents = new(){
             event1,
             event2
@@ -149,6 +153,17 @@ public class EventStoreContextTests : IDisposable{
 
         resolvedEventsResult.IsSuccess.ShouldBeTrue();
         resolvedEventsResult.Data.Count.ShouldBe(events.Length);
+
+        IDomainEventFactory<IDomainEvent> domainEventFactory = new DomainEventFactory();
+
+        foreach (ResolvedEvent resolvedEvent in resolvedEventsResult.Data) {
+            EstateCreatedEvent domainEvent =
+                TypeMapConvertor.Convertor(domainEventFactory, aggregateId, resolvedEvent) as EstateCreatedEvent;
+            domainEvent.EstateId.ShouldBe(aggregateId);
+            domainEvent.EventType.ShouldBe("EstateCreatedEvent");
+            domainEvent.EstateName.ShouldStartWith("Test Estate");
+        }
+
     }
 
     [Test]
@@ -290,7 +305,7 @@ public class EventStoreContextTests : IDisposable{
         var definition = new{
             estates = new List<String>()
         };
-        var result = JsonConvert.DeserializeAnonymousType(queryResult.Data, definition);
+        var result = StringSerialiser.DeserialiseAnonymousType(queryResult.Data, definition);
 
         result.estates.Contains(event1.EstateName).ShouldBeTrue();
         result.estates.Contains(event2.EstateName).ShouldBeTrue();

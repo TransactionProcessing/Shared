@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Shared.Results;
+﻿using Shared.Results;
 using SimpleResults;
 using System;
 using System.Collections.Generic;
@@ -7,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,7 +33,7 @@ namespace ClientProxyBase
             }
             else
             {
-                requestMessage.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+                requestMessage.Content = new StringContent(this.Serialise(request), Encoding.UTF8, "application/json");
             }
 
             // Make the Http Call here

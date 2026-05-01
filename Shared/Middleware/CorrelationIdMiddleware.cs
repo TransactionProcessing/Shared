@@ -1,16 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-using Microsoft.VisualBasic;
-using Newtonsoft.Json.Linq;
 using Shared.General;
 using Shared.Logger.TennantContext;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using ClaimsPrincipal = System.Security.Claims.ClaimsPrincipal;
 
@@ -18,13 +13,7 @@ namespace Shared.Middleware;
 
 public class TenantMiddleware
 {
-    #region Fields
-
     private readonly RequestDelegate Next;
-
-    #endregion
-
-    #region Constructors
 
     public TenantMiddleware(RequestDelegate next)
     {
@@ -32,9 +21,7 @@ public class TenantMiddleware
     }
 
     public static readonly String KeyNameCorrelationId = "correlationId";
-
-    #endregion
-
+    
     public async Task InvokeAsync(HttpContext context, TenantContext tenantContext)
     {
         Stopwatch watch = Stopwatch.StartNew();
