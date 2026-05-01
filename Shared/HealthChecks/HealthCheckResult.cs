@@ -8,6 +8,6 @@ using System.Diagnostics.CodeAnalysis;
 public class HealthCheckResult
 {
     #region Properties
-    public String Status { get; set; }
+    public String status { get; set; }
     #endregion
 }
