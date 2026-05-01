@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
@@ -32,6 +34,30 @@ public interface IStringSerialiser {
 public class SystemTextJsonSerializer : IStringSerialiser
 {
     private readonly JsonSerializerOptions Options;
+
+    public static JsonSerializerOptions GetDefaultJsonSerializerOptions() => new JsonSerializerOptions
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        WriteIndented = true,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers =
+            {
+                typeInfo =>
+                {
+                    String[] names = new[] { "AggregateId", "AggregateVersion", "EventId", "EventNumber", "EventTimestamp", "EventType" };
+                    List<JsonPropertyInfo> matches = typeInfo.Properties
+                        .Where(p => names.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)))
+                        .ToList();
+
+                    foreach (JsonPropertyInfo match in matches) {
+                        match.ShouldSerialize = (_, _) => false;
+                    }
+                }
+            }
+        }
+    };
 
     public SystemTextJsonSerializer(JsonSerializerOptions options) {
         Options = options;
