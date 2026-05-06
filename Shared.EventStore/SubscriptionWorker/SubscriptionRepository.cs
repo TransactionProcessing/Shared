@@ -56,7 +56,7 @@ namespace Shared.EventStore.SubscriptionWorker;
              String responseBody = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
              if (responseMessage.IsSuccessStatusCode) {
-                 List<PersistentSubscriptionInfo> list = StringSerialiser.Deserialise<List<PersistentSubscriptionInfo>>(responseBody);
+                 List<PersistentSubscriptionInfo> list = StringSerialiser.Deserialise<List<PersistentSubscriptionInfo>>(responseBody, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
 
                  return Result.Success(list);
              }
