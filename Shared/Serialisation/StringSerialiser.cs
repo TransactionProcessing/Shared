@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -15,6 +16,9 @@ public enum SerialiserPropertyFormat
 {
     CamelCase,
     SnakeCase,
+    CamelCaseUpper,
+    KebabCase,
+    KeabCaseUpper,
 }
 public record SerialiserOptions(SerialiserPropertyFormat PropertyFormat, Boolean IgnoreNullValues = true, Boolean WriteIndented = false);
 
@@ -34,29 +38,30 @@ public class SystemTextJsonSerializer : IStringSerialiser
 {
     private readonly JsonSerializerOptions Options;
 
-    public static JsonSerializerOptions GetDefaultJsonSerializerOptions() => new JsonSerializerOptions
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        WriteIndented = true,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers =
-            {
-                typeInfo =>
-                {
-                    String[] names = new[] { "AggregateId", "AggregateVersion", "EventId", "EventNumber", "EventTimestamp", "EventType" };
-                    List<JsonPropertyInfo> matches = typeInfo.Properties
-                        .Where(p => names.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)))
-                        .ToList();
+    public static JsonSerializerOptions GetDefaultJsonSerializerOptions() {
+        JsonSerializerOptions options = new JsonSerializerOptions() {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            WriteIndented = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver {
+                Modifiers = {
+                    typeInfo => {
+                        String[] names = new[] { "AggregateId", "AggregateVersion", "EventId", "EventNumber", "EventTimestamp", "EventType" };
+                        List<JsonPropertyInfo> matches = typeInfo.Properties.Where(p => names.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase))).ToList();
 
-                    foreach (JsonPropertyInfo match in matches) {
-                        match.ShouldSerialize = (_, _) => false;
+                        foreach (JsonPropertyInfo match in matches) {
+                            match.ShouldSerialize = (_,
+                                                     _) => false;
+                        }
                     }
                 }
             }
-        }
-    };
+        };
+        options.Converters.Add(new DateTimeSpaceConverter());
+
+        return options;
+    }
 
     public SystemTextJsonSerializer(JsonSerializerOptions options) {
         Options = options;
@@ -81,6 +86,9 @@ public class SystemTextJsonSerializer : IStringSerialiser
         {
             SerialiserPropertyFormat.CamelCase => JsonNamingPolicy.CamelCase,
             SerialiserPropertyFormat.SnakeCase => JsonNamingPolicy.SnakeCaseLower,
+            SerialiserPropertyFormat.CamelCaseUpper => JsonNamingPolicy.SnakeCaseUpper,
+            SerialiserPropertyFormat.KebabCase => JsonNamingPolicy.KebabCaseLower,
+            SerialiserPropertyFormat.KeabCaseUpper => JsonNamingPolicy.KebabCaseUpper,
             _ => options.PropertyNamingPolicy
         };
         return options;
@@ -203,5 +211,50 @@ public static class StringSerialiser{
     public static T GetValue<T>(String json, String propertyName, SerialiserOptions serialiserOptions = null) {
         if (!IsInitialised) throw new InvalidOperationException(NotInitialisedErrorMessage);
         return Serializer.GetValue<T>(json, propertyName);
+    }
+}
+
+public class DateTimeSpaceConverter : JsonConverter<DateTime>
+{
+    private static readonly string[] AcceptedFormats = new[] {
+                "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd H:mm:ss", "yyyy-MM-ddTHH:mm:ss", "yyyy-MM-ddTHH:mm:ss.FFFFFFFK", "o" // ISO 8601 round-trip
+                                                                                                                                                                                };
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+        {
+            return default;
+        }
+
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var s = reader.GetString();
+            if (string.IsNullOrWhiteSpace(s))
+                return default;
+
+            // Try exact known formats first (handles "2026-05-07 06:03:18")
+            if (DateTime.TryParseExact(s, AcceptedFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal | DateTimeStyles.AllowWhiteSpaces, out var dtExact))
+                return dtExact;
+
+            // Fall back to general parse
+            if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var dt))
+                return dt;
+
+            throw new JsonException($"Unable to parse DateTime: '{s}'.");
+        }
+
+        // If JSON contains a number, attempt to treat it as Unix seconds (optional)
+        if (reader.TokenType == JsonTokenType.Number && reader.TryGetInt64(out long seconds))
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(seconds).LocalDateTime;
+        }
+
+        throw new JsonException($"Unexpected token parsing DateTime. Token: {reader.TokenType}");
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    {
+        // Write in the same "space" format so round-trip matches your input
+        writer.WriteStringValue(value.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
     }
 }
