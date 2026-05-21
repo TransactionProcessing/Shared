@@ -745,12 +745,13 @@ public abstract class ClientProxyBase {
                 foreach (var item in element.EnumerateArray()) {
                     AppendErrors(item, errors);
                 }
-
                 break;
 
             case JsonValueKind.String:
                 AddIfPresent(errors, element.GetString());
                 break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(element.ValueKind), element.ValueKind, null);
         }
     }
 
@@ -786,13 +787,13 @@ public abstract class ClientProxyBase {
         }
     }
 
-    private static string BuildPrimaryMessage(HttpResponseMessage response,
-                                              IReadOnlyList<string> errors) {
+    private static string BuildPrimaryMessage(HttpResponseMessage response, IReadOnlyList<string> errors)
+    {
+        if (errors.Count > 0)
+        {
+            return errors[0];
+        }
 
-        return errors switch {
-            [] => response.ReasonPhrase ?? $"Request failed with status code {(int)response.StatusCode}.",
-            [var singleError] => singleError,
-            _ => $"Request failed with status code {(int)response.StatusCode}. Errors: {string.Join("; ", errors)}"
-        };
+        return response.ReasonPhrase ?? $"Request failed with status code {(int)response.StatusCode}.";
     }
 }
