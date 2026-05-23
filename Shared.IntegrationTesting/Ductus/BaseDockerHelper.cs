@@ -144,7 +144,7 @@ public abstract class BaseDockerHelper{
         else
         {
             this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
-            this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:25.1", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.1", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));

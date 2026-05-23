@@ -140,7 +140,7 @@ public abstract class BaseDockerHelper{
         else
         {
             this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
-            this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:25.1", true));
+            this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.1", true));
             this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
             this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
             this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
@@ -206,7 +206,9 @@ public abstract class BaseDockerHelper{
 
     public static async Task<SimpleResults.Result<DockerEnginePlatform>> GetDockerEnginePlatform(){
         try{
-            DockerClient? docker = new DockerClientConfiguration().CreateClient();
+            Docker.DotNet.DockerClientBuilder b = new DockerClientBuilder();
+            DockerClient docker = b.Build();
+            
             SystemInfoResponse? info = await docker.System.GetSystemInfoAsync();
 
             return info.OSType switch {
@@ -220,7 +222,11 @@ public abstract class BaseDockerHelper{
         }
     }
 
-    public static DockerClient GetDockerHost() => new DockerClientConfiguration().CreateClient();
+    public static DockerClient GetDockerHost() {
+        Docker.DotNet.DockerClientBuilder b = new DockerClientBuilder();
+        DockerClient docker = b.Build();
+        return docker;
+    }
     
 
     public Int32? GetHostPort(ContainerType key) =>
