@@ -6,18 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
-    <PackageReference Include="Ductus.FluentDocker" Version="2.85.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.8" />
-    <PackageReference Include="Reqnroll" Version="3.3.4" />
-    <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.9" />
-    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.9" />
-    <PackageReference Include="SimpleResults" Version="4.0.0" />
-    <PackageReference Include="Testcontainers" Version="4.12.0" />
-    <PackageReference Include="Docker.DotNet" Version="3.125.15" />
+    <PackageReference Include="AspNetCore.HealthChecks.Uris" />
+    <PackageReference Include="Ductus.FluentDocker" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" />
+    <PackageReference Include="Reqnroll" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" />
+    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" />
+    <PackageReference Include="SimpleResults" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Docker.DotNet" />
   </ItemGroup>
 
   <ItemGroup>

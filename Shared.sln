@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{FF85F59D-BE70-438E-9A69-5CE7E50B2E0E}"
 EndProject
@@ -25,13 +25,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.EventStore.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.IntegrationTesting.Tests", "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj", "{77D4A6AC-1DEF-4F6D-88C8-35763A1FD9B5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2F43E6CC-A4C5-4C18-8674-FF5E2E6C1604}"
-	ProjectSection(SolutionItems) = preProject
-		.github\workflows\createrelease.yml = .github\workflows\createrelease.yml
-		nightlybuild.yml = nightlybuild.yml
-		.github\workflows\pullrequest.yml = .github\workflows\pullrequest.yml
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.EventStoreContext.Tests", "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj", "{A7909DC1-12F9-42F8-B665-E8A2C63B1481}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.IntegrationTesting.UnitTests", "Shared.IntegrationTesting.UnitTests\Shared.IntegrationTesting.UnitTests.csproj", "{5E23CBBB-8484-4F7F-81D9-308957783695}"
@@ -41,6 +34,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Results.Web", "Shared.Results.Web\Shared.Results.Web.csproj", "{5A8811D2-46B8-4E92-E6DF-B482185EA211}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Logger", "Shared.Logger\Shared.Logger.csproj", "{9A7AF486-C3B6-463D-812E-DD6D5517C7F3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AAF925EC-8E2D-40EA-BA77-87B097A949D8}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Packages.props = Directory.Packages.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

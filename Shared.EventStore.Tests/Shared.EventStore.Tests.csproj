@@ -12,20 +12,20 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
-	  <PackageReference Include="coverlet.msbuild" Version="10.0.1">
+    <PackageReference Include="AspNetCore.HealthChecks.Uris" />
+      <PackageReference Include="coverlet.msbuild">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
-	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
-	  <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
-    <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="Pose" Version="1.2.1" />
-    <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="SimpleResults" Version="4.0.0" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+      <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Pose" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="SimpleResults" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
