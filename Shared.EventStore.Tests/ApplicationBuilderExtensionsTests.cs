@@ -11,7 +11,7 @@ using Shared.EventStore.Extensions;
 using Shared.EventStore.SubscriptionWorker;
 using Shouldly;
 using Xunit;
-using Xunit.Abstractions;
+//using Xunit.Abstractions;
 
 namespace Shared.EventStore.Tests;
 
