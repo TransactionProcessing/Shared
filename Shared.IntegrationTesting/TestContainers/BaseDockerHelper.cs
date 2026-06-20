@@ -48,8 +48,10 @@ public abstract class BaseDockerHelper{
     public String ScenarioName;
 
     protected String CallbackHandlerContainerName;
+    protected String EstateReportingContainerName;
 
     protected Int32 CallbackHandlerPort;
+    protected Int32 EstateReportingPort;
 
     protected (String clientId, String clientSecret) ClientDetails;
 
@@ -149,7 +151,8 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
             this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfiguration:master", true));
-            this.ImageDetails.Add(ContainerType.EstateManangementUI, ("stuartferguson/estatemanagementui:latest", true));
+            this.ImageDetails.Add(ContainerType.EstateManagementUI, ("stuartferguson/estatemanagementui:latest", true));
+            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingapi:latest", true));
         }
 
         this.HostPorts = new Dictionary<ContainerType, Int32>();
@@ -241,7 +244,8 @@ public abstract class BaseDockerHelper{
             ContainerType.TransactionProcessor => this.TransactionProcessorPort,
             ContainerType.TransactionProcessorAcl => this.TransactionProcessorAclPort,
             ContainerType.SqlServer => this.SqlServerPort,
-            ContainerType.EstateManangementUI => this.EstateManagementUiPort,
+            ContainerType.EstateManagementUI => this.EstateManagementUiPort,
+            ContainerType.EstateReporting => this.EstateReportingPort,
             _ when key == ContainerType.EventStore && this.IsSecureEventStore => this.EventStoreSecureHttpPort,
             _ when key == ContainerType.EventStore && this.IsSecureEventStore == false => this.EventStoreHttpPort,
             _ => null
@@ -315,6 +319,7 @@ public abstract class BaseDockerHelper{
         this.TransactionProcessorAclContainerName = $"transactionacl{this.TestId:N}";
         this.ConfigHostContainerName = $"mobileconfighost{this.TestId:N}";
         this.EstateManagementUiContainerName = $"estateadministrationui{this.TestId:N}";
+        this.EstateReportingContainerName = $"estatereporting{this.TestId:N}";
     }
 
     protected Int32 EstateManagementUiPort;
@@ -475,7 +480,7 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add($"DataReloadConfig:DefaultInSeconds", "1");
         environmentVariables.Add("ConnectionStrings:TransactionProcessorReadModel", this.SetConnectionString("TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateManangementUI).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateManagementUI).Data;
 
         ContainerBuilder containerBuilder = new ContainerBuilder()
             .WithName(this.EstateManagementUiContainerName)
@@ -621,6 +626,31 @@ public abstract class BaseDockerHelper{
             .WithPortBinding(DockerPorts.TestHostPort, true);
         
         return testHostContainer;
+    }
+
+    public virtual ContainerBuilder SetupEstateReportingContainer()
+    {
+        this.Trace("About to Start Estate Reporting Container");
+
+        Dictionary<String, String> environmentVariables = this.GetCommonEnvironmentVariables();
+
+        Dictionary<String, String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.EstateReporting);
+
+        foreach (KeyValuePair<String, String> additionalEnvironmentVariable in additionalEnvironmentVariables)
+        {
+            environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
+        }
+
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateReporting).Data;
+
+        ContainerBuilder estateReportingContainer = new ContainerBuilder()
+            .WithName(this.EstateReportingContainerName)  // similar to WithName()
+            .WithImage(imageDetails.imageName)
+            .WithEnvironment(environmentVariables)
+            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .WithPortBinding(DockerPorts.EstateReportingDockerPort, true);
+
+        return estateReportingContainer;
     }
 
     public virtual async Task<INetwork> SetupTestNetwork(String networkName = null,
@@ -844,7 +874,8 @@ public abstract class BaseDockerHelper{
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
             //ContainerType.ConfigurationHost => ("http", this.ConfigHostPort),
-            //ContainerType.EstateManangementUI => ("https", this.EstateManagementUiPort),
+            //ContainerType.EstateManagementUI => ("https", this.EstateManagementUiPort),
+            ContainerType.EstateReporting => ("http", this.EstateReportingPort),
             _ => (null, 0)
         };
 
@@ -998,7 +1029,8 @@ public abstract class BaseDockerHelper{
                 DockerServices.EventStore=> ContainerType.EventStore,
                 DockerServices.SqlServer => ContainerType.SqlServer,
                 DockerServices.ConfigurationHost => ContainerType.ConfigurationHost,
-                DockerServices.EstateManagementUI => ContainerType.EstateManangementUI,
+                DockerServices.EstateManagementUI => ContainerType.EstateManagementUI,
+                DockerServices.EstateReporting => ContainerType.EstateReporting,
                 _ => ContainerType.NotSet
             };
 
@@ -1078,11 +1110,14 @@ public abstract class BaseDockerHelper{
             case ContainerType.ConfigurationHost:
                 ConfigHostPort = GetPort(DockerPorts.ConfigHostDockerPort);
                 break;
-            case ContainerType.EstateManangementUI:
+            case ContainerType.EstateManagementUI:
                 EstateManagementUiPort = GetPort(DockerPorts.EstateManagementUIDockerPort);
                 break;
             case ContainerType.SqlServer:
                 SqlServerPort = GetPort(DockerPorts.SqlServerDockerPort);
+                break;
+            case ContainerType.EstateReporting:
+                EstateReportingPort = GetPort(DockerPorts.EstateReportingDockerPort);
                 break;
 
         }
