@@ -14,7 +14,8 @@ public enum ContainerType
     FileProcessor,
     TransactionProcessorAcl,
     ConfigurationHost,
-    EstateManangementUI,
+    EstateManagementUI,
+    EstateReporting,
     NotSet
 }
 
@@ -33,6 +34,7 @@ public enum DockerServices
     TransactionProcessorAcl = 256,
     ConfigurationHost = 512,
     EstateManagementUI = 1024,
+    EstateReporting = 2048
 }
 
 public enum DockerEnginePlatform

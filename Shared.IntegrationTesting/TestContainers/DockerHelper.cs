@@ -97,8 +97,10 @@ public abstract class DockerHelper : BaseDockerHelper
         await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
         await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
         await StartContainer2(this.SetupConfigHostContainer, networks, DockerServices.ConfigurationHost);
-        if (this.DockerPlatform == DockerEnginePlatform.Linux)
+        if (this.DockerPlatform == DockerEnginePlatform.Linux) {
             await StartContainer2(this.SetupEstateManagementUiContainer, networks, DockerServices.EstateManagementUI);
+            await StartContainer2(this.SetupEstateReportingContainer, networks, DockerServices.EstateReporting);
+        }
 
         await this.LoadEventStoreProjections();
         
