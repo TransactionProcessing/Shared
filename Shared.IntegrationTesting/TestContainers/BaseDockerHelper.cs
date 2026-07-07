@@ -151,8 +151,8 @@ public abstract class BaseDockerHelper{
             this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
             this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
             this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfiguration:master", true));
-            this.ImageDetails.Add(ContainerType.EstateManagementUI, ("stuartferguson/estatemanagementui:latest", true));
-            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingapi:latest", true));
+            this.ImageDetails.Add(ContainerType.EstateManagementUI, ("stuartferguson/estatemanagementui:master", true));
+            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingapi:master", true));
         }
 
         this.HostPorts = new Dictionary<ContainerType, Int32>();
