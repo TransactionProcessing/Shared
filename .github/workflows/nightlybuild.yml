@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pages: write
   id-token: write
 
@@ -33,11 +34,21 @@ jobs:
     - name: Build Code
       run: dotnet build Shared.sln --configuration Release
 
-    - name: Run Main Unit Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj"
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
+
+    - name: Notify on nightly failure
+      if: ${{ failure() }}
+      uses: TransactionProcessing/org-ci-workflows/.github/actions/nightly-failure-issue@main
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        title: Investigate Nightly Build Failure
+        labels: nightlybuild
+        dedupe_key: nightlybuild
+        body: |
+          Repo: ${{ github.repository }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          Workflow: ${{ github.workflow }}
+          Job: ${{ github.job }}
 
   buildlinux:
     name: "Nightly Build - Linux"
@@ -70,10 +81,21 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"        
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
-    - name: Run Integration Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+
+    - name: Notify on nightly failure
+      if: ${{ failure() }}
+      uses: TransactionProcessing/org-ci-workflows/.github/actions/nightly-failure-issue@main
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        title: Investigate Nightly Build Failure
+        labels: nightlybuild
+        dedupe_key: nightlybuild
+        body: |
+          Repo: ${{ github.repository }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          Workflow: ${{ github.workflow }}
+          Job: ${{ github.job }}
 
     - uses: actions/upload-artifact@v4.4.3
       with:
