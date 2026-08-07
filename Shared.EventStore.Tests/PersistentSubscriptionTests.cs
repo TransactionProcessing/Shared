@@ -160,7 +160,6 @@ public class PersistentSubscriptionTests : IDisposable
                 message.Contains("Failed to process the event type") &&
                 message.Contains("Result was One or more event handlers have failed. Error Messages []"))), Times.Once);
             loggerMock.Verify(l => l.LogError(It.IsAny<Exception>()), Times.Never);
-            loggerMock.Verify(l => l.LogError(It.IsAny<Exception>()), Times.Never);
         }
         finally
         {

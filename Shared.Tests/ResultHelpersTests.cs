@@ -47,7 +47,13 @@ public class ResultHelpersTests {
     [Fact]
     public void ResultHelpers_CreateFailure_NonGeneric_EmptyErrors_UsesFallbackMessage()
     {
-        Result result = Result.Invalid(new List<String>());
+        Result result = new Result
+        {
+            IsSuccess = false,
+            Status = ResultStatus.Invalid,
+            Message = null,
+            Errors = new List<String>()
+        };
 
         Result newresult = ResultHelpers.CreateFailure(result);
 
@@ -140,6 +146,15 @@ public class ResultHelpersTests {
                 ResultStatus.Failure => Result.Failure(message),
                 ResultStatus.CriticalError => Result.CriticalError(message),
                 ResultStatus.Forbidden => Result.Forbidden(message),
+            };
+        }
+
+        if (errors is { Count: 0 }) {
+            return new Result {
+                IsSuccess = false,
+                Status = status,
+                Message = null,
+                Errors = errors
             };
         }
 
