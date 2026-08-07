@@ -119,12 +119,12 @@ public class EventStoreDockerHelper : DockerHelper
 
     public Task PauseEventStoreContainer()
     {
-        return this.RunDockerCommand($"pause {this.EventStoreContainerName}");
+        return this.RunTransportOutageCommand($"pause {this.EventStoreContainerName}", $"stop -t 0 {this.EventStoreContainerName}");
     }
 
     public Task UnpauseEventStoreContainer()
     {
-        return this.RunDockerCommand($"unpause {this.EventStoreContainerName}");
+        return this.RunTransportRecoveryCommand($"unpause {this.EventStoreContainerName}", $"start {this.EventStoreContainerName}");
     }
 
     public Task StopEventStoreContainer()
@@ -140,6 +140,21 @@ public class EventStoreDockerHelper : DockerHelper
     public async Task RestartEventStoreContainer()
     {
         await this.StartEventStoreContainer();
+    }
+
+    private Task RunTransportOutageCommand(String linuxCommand, String windowsCommand)
+    {
+        return this.IsWindowsContainerHost() ? this.RunDockerCommand(windowsCommand) : this.RunDockerCommand(linuxCommand);
+    }
+
+    private Task RunTransportRecoveryCommand(String linuxCommand, String windowsCommand)
+    {
+        return this.IsWindowsContainerHost() ? this.RunDockerCommand(windowsCommand) : this.RunDockerCommand(linuxCommand);
+    }
+
+    private Boolean IsWindowsContainerHost()
+    {
+        return this.DockerPlatform == DockerEnginePlatform.Windows;
     }
 
     private async Task RunDockerCommand(String arguments)
