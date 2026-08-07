@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using Shared.EventStore;
 
 /// <summary>
 /// Delegate TraceHandler
@@ -29,12 +30,17 @@ public class EventStoreContext : IEventStoreContext
     /// <summary>
     /// The event store client
     /// </summary>
-    internal readonly KurrentDBClient KurrentDBClient;
+    internal readonly KurrentDBClient? KurrentDBClient;
+
+    /// <summary>
+    /// The event store client settings
+    /// </summary>
+    private readonly KurrentDBClientSettings? ClientSettings;
 
     /// <summary>
     /// The projection management client
     /// </summary>
-    private readonly KurrentDBProjectionManagementClient ProjectionManagementClient;
+    private readonly KurrentDBProjectionManagementClient? ProjectionManagementClient;
 
     private readonly TimeSpan? Deadline;
 
@@ -47,7 +53,12 @@ public class EventStoreContext : IEventStoreContext
         this.KurrentDBClient = eventStoreClient;
         this.ProjectionManagementClient = projectionManagementClient;
         this.Deadline = deadline;
-        
+    }
+
+    public EventStoreContext(KurrentDBClientSettings clientSettings, TimeSpan? deadline = null)
+    {
+        this.ClientSettings = clientSettings;
+        this.Deadline = deadline;
     }
 
     #endregion
@@ -60,29 +71,78 @@ public class EventStoreContext : IEventStoreContext
 
     #region Methods
 
+    private async Task<T> UseClientAsync<T>(Func<KurrentDBClient, Task<T>> action)
+    {
+        if (this.ClientSettings != null)
+        {
+            using KurrentDBClient client = new(this.ClientSettings);
+            return await action(client);
+        }
+
+        return await action(this.KurrentDBClient!);
+    }
+
+    private async Task UseClientAsync(Func<KurrentDBClient, Task> action)
+    {
+        if (this.ClientSettings != null)
+        {
+            using KurrentDBClient client = new(this.ClientSettings);
+            await action(client);
+            return;
+        }
+
+        await action(this.KurrentDBClient!);
+    }
+
+    private async Task<T> UseProjectionManagementClientAsync<T>(Func<KurrentDBProjectionManagementClient, Task<T>> action)
+    {
+        if (this.ClientSettings != null)
+        {
+            using KurrentDBProjectionManagementClient client = new(this.ClientSettings);
+            return await action(client);
+        }
+
+        return await action(this.ProjectionManagementClient!);
+    }
+
+    private async Task UseProjectionManagementClientAsync(Func<KurrentDBProjectionManagementClient, Task> action)
+    {
+        if (this.ClientSettings != null)
+        {
+            using KurrentDBProjectionManagementClient client = new(this.ClientSettings);
+            await action(client);
+            return;
+        }
+
+        await action(this.ProjectionManagementClient!);
+    }
+
     public async Task<Result<List<ResolvedEvent>>> GetEventsBackward(String streamName,
                                                                      Int32 maxNumberOfEventsToRetrieve,
                                                                      CancellationToken cancellationToken)
     {
-        List<ResolvedEvent> resolvedEvents = new();
         try
         {
-            KurrentDBClient.ReadStreamResult response = this.KurrentDBClient.ReadStreamAsync(Direction.Backwards,
-                streamName, StreamPosition.End, maxNumberOfEventsToRetrieve, resolveLinkTos: true,
-                deadline: this.Deadline, cancellationToken: cancellationToken);
-
-            if (await response.ReadState == ReadState.StreamNotFound)
+            return await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
             {
-                return Result.NotFound($"Stream name {streamName} not found");
-            }
+                return await this.UseClientAsync(async client =>
+                {
+                    KurrentDBClient.ReadStreamResult response = client.ReadStreamAsync(Direction.Backwards,
+                        streamName, StreamPosition.End, maxNumberOfEventsToRetrieve, resolveLinkTos: true,
+                        deadline: this.Deadline, cancellationToken: cancellationToken);
 
-            List<ResolvedEvent> events = await response.ToListAsync(cancellationToken);
+                    if (await response.ReadState == ReadState.StreamNotFound)
+                    {
+                        return Result.NotFound($"Stream name {streamName} not found");
+                    }
 
-            resolvedEvents.AddRange(events);
-
-            return Result.Success(resolvedEvents);
+                    List<ResolvedEvent> resolvedEvents = await response.ToListAsync(cancellationToken);
+                    return Result.Success(resolvedEvents);
+                });
+            }, nameof(this.GetEventsBackward), $"stream {streamName}", this.LogRetry);
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             return Result.Failure(e.GetExceptionMessages());
         }
     }
@@ -92,8 +152,14 @@ public class EventStoreContext : IEventStoreContext
                                                                        CancellationToken cancellationToken)
     {
         try {
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(
-                projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
+            JsonElement jsonElement = await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+            {
+                return await this.UseProjectionManagementClientAsync(async client =>
+                {
+                    return (JsonElement)await client.GetResultAsync<dynamic>(
+                        projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
+                });
+            }, nameof(this.GetPartitionResultFromProjection), $"projection {projectionName} partition {partitionId}", this.LogRetry);
 
             return Result.Success<String>(jsonElement.GetRawText());
         }
@@ -107,8 +173,14 @@ public class EventStoreContext : IEventStoreContext
                                                                       CancellationToken cancellationToken)
     {
         try {
-            JsonElement jsonElement = (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(
-                projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
+            JsonElement jsonElement = await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+            {
+                return await this.UseProjectionManagementClientAsync(async client =>
+                {
+                    return (JsonElement)await client.GetStateAsync<dynamic>(
+                        projectionName, partitionId, deadline: this.Deadline, cancellationToken: cancellationToken);
+                });
+            }, nameof(this.GetPartitionStateFromProjection), $"projection {projectionName} partition {partitionId}", this.LogRetry);
 
             return Result.Success<String>(jsonElement.GetRawText());
         }
@@ -122,8 +194,11 @@ public class EventStoreContext : IEventStoreContext
     {
         try {
             JsonElement jsonElement =
-                (JsonElement)await this.ProjectionManagementClient.GetResultAsync<dynamic>(projectionName,
-                    deadline: this.Deadline, cancellationToken: cancellationToken);
+                await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+                    await this.UseProjectionManagementClientAsync(async client =>
+                        (JsonElement)await client.GetResultAsync<dynamic>(projectionName,
+                            deadline: this.Deadline, cancellationToken: cancellationToken)),
+                    nameof(this.GetResultFromProjection), $"projection {projectionName}", this.LogRetry);
 
             return Result.Success<String>(jsonElement.GetRawText());
         }
@@ -136,8 +211,11 @@ public class EventStoreContext : IEventStoreContext
                                                              CancellationToken cancellationToken) {
         try {
             JsonElement jsonElement =
-                (JsonElement)await this.ProjectionManagementClient.GetStateAsync<dynamic>(projectionName,
-                    deadline: this.Deadline, cancellationToken: cancellationToken);
+                await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+                    await this.UseProjectionManagementClientAsync(async client =>
+                        (JsonElement)await client.GetStateAsync<dynamic>(projectionName,
+                            deadline: this.Deadline, cancellationToken: cancellationToken)),
+                    nameof(this.GetStateFromProjection), $"projection {projectionName}", this.LogRetry);
 
             return Result.Success<String>(jsonElement.GetRawText());
         }
@@ -162,8 +240,11 @@ public class EventStoreContext : IEventStoreContext
     {
         this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
         try {
-            await this.KurrentDBClient.AppendToStreamAsync(streamName, StreamState.StreamRevision((ulong)expectedVersion),
-                aggregateEvents.AsEnumerable(), deadline: this.Deadline, cancellationToken: cancellationToken);
+            await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
+                    this.UseClientAsync(client =>
+                        client.AppendToStreamAsync(streamName, StreamState.StreamRevision((ulong)expectedVersion),
+                            aggregateEvents.AsEnumerable(), deadline: this.Deadline, cancellationToken: cancellationToken)),
+                nameof(this.InsertEvents), $"stream {streamName}", this.LogRetry);
             return Result.Success();
         }
         catch (Exception e) {
@@ -178,28 +259,38 @@ public class EventStoreContext : IEventStoreContext
         this.LogInformation($"About to read events from Stream {streamName} fromVersion is {fromVersion}");
 
         List<ResolvedEvent> resolvedEvents = new List<ResolvedEvent>();
-        KurrentDBClient.ReadStreamResult response;
-        List<ResolvedEvent> events;
         try {
-            do {
-                response = this.KurrentDBClient.ReadStreamAsync(Direction.Forwards, streamName,
-                    StreamPosition.FromInt64(fromVersion), Int32.MaxValue, resolveLinkTos: true, deadline: this.Deadline,
-                    cancellationToken: cancellationToken);
+            while (true) {
+                (ReadState ReadState, List<ResolvedEvent> Events) page = await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+                {
+                    return await this.UseClientAsync(async client =>
+                    {
+                        KurrentDBClient.ReadStreamResult response = client.ReadStreamAsync(Direction.Forwards, streamName,
+                            StreamPosition.FromInt64(fromVersion), Int32.MaxValue, resolveLinkTos: true, deadline: this.Deadline,
+                            cancellationToken: cancellationToken);
 
-                // Check the read state
-                ReadState readState = await response.ReadState;
+                        ReadState readState = await response.ReadState;
+                        if (readState == ReadState.StreamNotFound) {
+                            return (readState, new List<ResolvedEvent>());
+                        }
 
-                if (readState == ReadState.StreamNotFound) {
-                    this.LogInformation($"Read State from Stream {streamName} is {readState}");
+                        List<ResolvedEvent> events = await response.ToListAsync(cancellationToken);
+                        return (readState, events);
+                    });
+                }, nameof(this.ReadEvents), $"stream {streamName} fromVersion {fromVersion}", this.LogRetry);
+
+                if (page.ReadState == ReadState.StreamNotFound) {
+                    this.LogInformation($"Read State from Stream {streamName} is {page.ReadState}");
                     return Result.NotFound($"Stream name {streamName} not found");
                 }
 
-                events = await response.ToListAsync(cancellationToken);
+                resolvedEvents.AddRange(page.Events);
+                fromVersion += page.Events.Count;
 
-                resolvedEvents.AddRange(events);
-
-                fromVersion += events.Count;
-            } while (events.Any());
+                if (!page.Events.Any()) {
+                    break;
+                }
+            }
 
             this.LogInformation($"About to return {resolvedEvents.Count} events from Stream {streamName}");
             return Result.Success(resolvedEvents);
@@ -213,9 +304,14 @@ public class EventStoreContext : IEventStoreContext
     public async Task<Result<List<ResolvedEvent>>> ReadLastEventsFromAll(Int64 numberEvents,
                                                                          CancellationToken cancellationToken) {
         try {
-            IAsyncEnumerable<ResolvedEvent> readResult = this.KurrentDBClient.ReadAllAsync(Direction.Backwards, Position.End, maxCount: numberEvents, resolveLinkTos: true, cancellationToken: cancellationToken);
-
-            return Result.Success(await readResult.ToListAsync(cancellationToken));
+            return Result.Success(await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+            {
+                return await this.UseClientAsync(async client =>
+                {
+                    IAsyncEnumerable<ResolvedEvent> readResult = client.ReadAllAsync(Direction.Backwards, Position.End, maxCount: numberEvents, resolveLinkTos: true, cancellationToken: cancellationToken);
+                    return await readResult.ToListAsync(cancellationToken);
+                });
+            }, nameof(this.ReadLastEventsFromAll), $"last {numberEvents} events", this.LogRetry));
         }
         catch (Exception ex) {
             return Result.Failure(ex.GetExceptionMessages());
@@ -229,7 +325,10 @@ public class EventStoreContext : IEventStoreContext
 
         try
         {
-            await this.ProjectionManagementClient.CreateTransientAsync(queryName, query, cancellationToken: source.Token);
+            await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
+                    this.UseProjectionManagementClientAsync(client =>
+                        client.CreateTransientAsync(queryName, query, cancellationToken: source.Token)),
+                nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
 
             while (true)
             {
@@ -238,7 +337,10 @@ public class EventStoreContext : IEventStoreContext
                     source.Token.ThrowIfCancellationRequested();
                 }
 
-                ProjectionDetails projectionDetails = await this.ProjectionManagementClient.GetStatusAsync(queryName, deadline: this.Deadline, cancellationToken: source.Token);
+                ProjectionDetails projectionDetails = await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+                    await this.UseProjectionManagementClientAsync(client =>
+                        client.GetStatusAsync(queryName, deadline: this.Deadline, cancellationToken: source.Token)),
+                    nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
 
                 ProjectionRunningStatus status = EventStoreContext.GetStatusFrom(projectionDetails);
 
@@ -248,7 +350,10 @@ public class EventStoreContext : IEventStoreContext
                 // We need to wait until the query has been run before we continue.
                 if (status == ProjectionRunningStatus.Completed)
                 {
-                    JsonDocument jsonDocument = await this.ProjectionManagementClient.GetResultAsync(queryName, deadline: this.Deadline, cancellationToken: source.Token);
+                    JsonDocument jsonDocument = await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+                        await this.UseProjectionManagementClientAsync(client =>
+                            client.GetResultAsync(queryName, deadline: this.Deadline, cancellationToken: source.Token)),
+                        nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
 
                     if (jsonDocument.RootElement.ToString() == "{}")
                     {
@@ -269,7 +374,10 @@ public class EventStoreContext : IEventStoreContext
         }
         finally
         {
-            await this.ProjectionManagementClient.DisableAsync(queryName, deadline: this.Deadline, cancellationToken: cancellationToken);
+            await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
+                    this.UseProjectionManagementClientAsync(client =>
+                        client.DisableAsync(queryName, deadline: this.Deadline, cancellationToken: cancellationToken)),
+                nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
         }
     }
 
@@ -315,6 +423,15 @@ public class EventStoreContext : IEventStoreContext
         if (this.TraceGenerated != null)
         {
             this.TraceGenerated(trace, LogLevel.Information);
+        }
+    }
+
+    private void LogRetry(LogLevel logLevel,
+                          String message)
+    {
+        if (this.TraceGenerated != null)
+        {
+            this.TraceGenerated(message, logLevel);
         }
     }
 

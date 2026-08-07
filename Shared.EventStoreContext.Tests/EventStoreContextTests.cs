@@ -352,9 +352,7 @@ public class EventStoreContextTests : IDisposable{
     private IEventStoreContext CreateContext(Boolean secureEventStore, TimeSpan? deadline = null){
         KurrentDBClientSettings settings = this.EventStoreDockerHelper.CreateEventStoreClientSettings(secureEventStore, deadline);
 
-        KurrentDBClient client = new(settings);
-        KurrentDBProjectionManagementClient projectionManagementClient = new(settings);
-        IEventStoreContext context = new EventStore.EventStore.EventStoreContext(client, projectionManagementClient, deadline);
+        IEventStoreContext context = new EventStore.EventStore.EventStoreContext(settings, deadline);
         return context;
     }
 

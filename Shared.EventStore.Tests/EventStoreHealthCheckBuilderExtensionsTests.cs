@@ -5,7 +5,6 @@ namespace Shared.EventStore.Tests;
 using Extensions;
 using global::EventStore.Client;
 using Microsoft.Extensions.DependencyInjection;
-using Pose;
 using TestObjects;
 using Xunit;
 

@@ -15,6 +15,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Shared.EventStore;
 
 [ExcludeFromCodeCoverage]
 public class PersistentSubscription
@@ -81,14 +83,23 @@ public class PersistentSubscription
     
     public async Task ConnectToSubscription(CancellationToken cancellationToken)
     {
-        try {
-            this.KurrentDbPersistentSubscription = await this.Subscribe(cancellationToken);
+        this.KurrentDbPersistentSubscription = await EventStoreGrpcRetryPolicy.ExecuteAsync(
+            () => this.Subscribe(cancellationToken),
+            nameof(this.ConnectToSubscription),
+            this.ToString(),
+            (level, message) =>
+            {
+                if (level == LogLevel.Warning)
+                {
+                    Logger.Logger.LogWarning(message);
+                }
+                else
+                {
+                    Logger.Logger.LogError(new Exception(message));
+                }
+            });
 
-            this.Connected = true;
-        }
-        catch (Exception e) {
-            Logger.Logger.LogError(e);
-        }
+        this.Connected = true;
     }
 
     public static PersistentSubscription Create(IPersistentSubscriptionsClient persistentSubscriptionsClient,
