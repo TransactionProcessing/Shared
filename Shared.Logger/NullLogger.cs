@@ -1,4 +1,4 @@
-﻿namespace Shared.Logger;
+namespace Shared.Logger;
 
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -38,6 +38,10 @@ public class NullLogger : ILogger
     }
 
     public void LogError(Exception exception) {
+        // This is a null logger so needs to actual implementation
+    }
+
+    public void LogError(String message) {
         // This is a null logger so needs to actual implementation
     }
 

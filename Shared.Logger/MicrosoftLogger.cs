@@ -1,4 +1,4 @@
-﻿namespace Shared.Logger;
+namespace Shared.Logger;
 
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -41,6 +41,10 @@ public class MicrosoftLogger : ILogger
 
     public void LogError(Exception exception) {
         this.LogMessage(LogLevel.Error, exception.Message, exception);
+    }
+
+    public void LogError(String message) {
+        this.LogMessage(LogLevel.Error, message);
     }
 
     public void LogError(String message,

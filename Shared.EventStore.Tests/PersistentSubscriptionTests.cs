@@ -12,13 +12,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using DomainDrivenDesign.EventSourcing;
-using EventHandling;
-using General;
-using Logger;
+using Shared.DomainDrivenDesign.EventSourcing;
+using Shared.EventStore.EventHandling;
+using SimpleResults;
+using Shared.EventStore.SubscriptionWorker;
+using Shared.General;
+using Shared.Logger;
 using Moq;
 using Shouldly;
-using SubscriptionWorker;
 using Xunit;
 
 public class PersistentSubscriptionTests : IDisposable
@@ -124,6 +125,47 @@ public class PersistentSubscriptionTests : IDisposable
         eventHandler2.DomainEvents.Count.ShouldBe(1);
     }
 
+
+    [Fact]
+    public async Task PersistentSubscription_FailedHandlerWithEmptyMessage_LogsUsefulMessageWithoutSyntheticException()
+    {
+        Mock<ILogger> loggerMock = new();
+        Logger.Initialise(loggerMock.Object);
+
+        try
+        {
+            PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
+            Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new();
+            Mock<IDomainEventHandler> domainEventHandler = new();
+            domainEventHandler.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure(new List<String>()));
+
+            domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>()))
+                .Returns(new List<IDomainEventHandler>()
+                {
+                    domainEventHandler.Object
+                });
+
+            InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
+            PersistentSubscription persistentSubscription =
+                PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
+
+            await persistentSubscription.ConnectToSubscription(CancellationToken.None);
+
+            String @event = "{\r\n  \"estateId\": \"4fc2692f-067a-443e-8006-335bf2732248\",\r\n  \"estateName\": \"Demo Estate\"\r\n}\t";
+
+            persistentSubscriptionsClient.WriteEvent(@event, "EstateCreatedEvent", CancellationToken.None);
+
+            loggerMock.Verify(l => l.LogError(It.Is<String>(message =>
+                message.Contains("Failed to process the event type") &&
+                message.Contains("Result was One or more event handlers have failed. Error Messages []"))), Times.Once);
+            loggerMock.Verify(l => l.LogError(It.IsAny<Exception>()), Times.Never);
+        }
+        finally
+        {
+            Logger.Initialise(NullLogger.Instance);
+        }
+    }
     [Fact]
     public async Task PersistentSubscription_ConnectToSubscription_RetriesTransientUnavailableFailures()
     {

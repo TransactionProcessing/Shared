@@ -1,4 +1,4 @@
-﻿using Shared.Logger.TennantContext;
+using Shared.Logger.TennantContext;
 
 namespace Shared.Logger;
 
@@ -97,6 +97,27 @@ public static class Logger {
                 // Write to the tenant log
                 using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
                     LoggerObject.LogError(exception);
+                }
+            }
+        }
+    }
+
+    public static void LogError(String message) {
+        ValidateLoggerObject();
+
+        TenantContext tenantContext = TenantContext.CurrentTenant;
+        if (tenantContext == null) {
+            LoggerObject.LogError(message);
+            return;
+        }
+        using (ScopeContext.PushProperty(CorrelationIdPropertyName, $"Correlation ID: {tenantContext.CorrelationId.ToString()}")) {
+            // Write to the normal log
+            LoggerObject.LogError(message);
+
+            if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                // Write to the tenant log
+                using (ScopeContext.PushProperty(TenantIdPropertyName, $"_{tenantContext.EstateId.ToString()}")) {
+                    LoggerObject.LogError(message);
                 }
             }
         }

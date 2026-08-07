@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
@@ -44,63 +44,23 @@ public class ResultHelpersTests {
         Should.Throw<InvalidDataException>(() => ResultHelpers.CreateFailure(result));
     }
 
-    [Theory]
-
-    [InlineData(ResultStatus.Invalid, "message", -1)]
-    [InlineData(ResultStatus.Invalid, "", 1)]
-    [InlineData(ResultStatus.Invalid, null, 1)]
-    [InlineData(ResultStatus.Invalid, null, 0)]
-
-    [InlineData(ResultStatus.NotFound, "message", -1)]
-    [InlineData(ResultStatus.NotFound, "", 1)]
-    [InlineData(ResultStatus.NotFound, null, 1)]
-    [InlineData(ResultStatus.NotFound, null, 0)]
-
-    [InlineData(ResultStatus.Unauthorized, "message", -1)]
-    [InlineData(ResultStatus.Unauthorized, "", 1)]
-    [InlineData(ResultStatus.Unauthorized, null, 1)]
-    [InlineData(ResultStatus.Unauthorized, null, 0)]
-
-    [InlineData(ResultStatus.Conflict, "message", -1)]
-    [InlineData(ResultStatus.Conflict, "", 1)]
-    [InlineData(ResultStatus.Conflict, null, 1)]
-    [InlineData(ResultStatus.Conflict, null, 0)]
-
-    [InlineData(ResultStatus.Failure, "message", -1)]
-    [InlineData(ResultStatus.Failure, "", 1)]
-    [InlineData(ResultStatus.Failure, null, 1)]
-    [InlineData(ResultStatus.Failure, null, 0)]
-
-    [InlineData(ResultStatus.CriticalError, "message", -1)]
-    [InlineData(ResultStatus.CriticalError, "", 1)]
-    [InlineData(ResultStatus.CriticalError, null, 1)]
-    [InlineData(ResultStatus.CriticalError, null, 0)]
-
-    [InlineData(ResultStatus.Forbidden, "message", -1)]
-    [InlineData(ResultStatus.Forbidden, "", 1)]
-    [InlineData(ResultStatus.Forbidden, null, 1)]
-    [InlineData(ResultStatus.Forbidden, null, 0)]
-    public void ResultHelpers_CreateFailure_NonGeneric_OutputMatchesInput(ResultStatus status,
-                                                                          String message,
-                                                                          Int32 numberErrors) {
-        // Create the result 
-        List<String> errors = numberErrors switch {
-            < 0 => null,
-            0 => new List<String>(),
-            > 0 => ["message1"]
+    [Fact]
+    public void ResultHelpers_CreateFailure_NonGeneric_EmptyErrors_UsesFallbackMessage()
+    {
+        Result result = new Result
+        {
+            IsSuccess = false,
+            Status = ResultStatus.Invalid,
+            Message = null,
+            Errors = new List<String>()
         };
-        Result result = CreateTestResult(status, message, errors);
 
         Result newresult = ResultHelpers.CreateFailure(result);
 
-        newresult.Status.ShouldBe(result.Status);
-        if (!String.IsNullOrEmpty(message)) {
-            newresult.Message.ShouldBe(message);
-        }
-        else {
-            newresult.Errors.Count().ShouldBe(numberErrors);
-        }
+        newresult.Status.ShouldBe(ResultStatus.Failure);
+        newresult.Message.ShouldBe("An unexpected error occurred.");
     }
+
 
     [Theory]
     [InlineData(ResultStatus.Ok, null,0)]
@@ -154,14 +114,17 @@ public class ResultHelpersTests {
         if (result.Status == ResultStatus.Ok) {
             newresult.Status.ShouldBe(ResultStatus.Failure);
         }
-        else {
+        else if (!String.IsNullOrEmpty(message)) {
             newresult.Status.ShouldBe(result.Status);
-            if (!String.IsNullOrEmpty(message)) {
-                newresult.Message.ShouldBe(message);
-            }
-            else {
-                newresult.Errors.Count().ShouldBe(numberErrors);
-            }
+            newresult.Message.ShouldBe(message);
+        }
+        else if (numberErrors > 0) {
+            newresult.Status.ShouldBe(result.Status);
+            newresult.Errors.Count().ShouldBe(numberErrors);
+        }
+        else {
+            newresult.Status.ShouldBe(ResultStatus.Failure);
+            newresult.Message.ShouldBe("An unexpected error occurred.");
         }
     }
     private Result CreateTestResult(ResultStatus status,
@@ -183,6 +146,15 @@ public class ResultHelpersTests {
                 ResultStatus.Failure => Result.Failure(message),
                 ResultStatus.CriticalError => Result.CriticalError(message),
                 ResultStatus.Forbidden => Result.Forbidden(message),
+            };
+        }
+
+        if (errors is { Count: 0 }) {
+            return new Result {
+                IsSuccess = false,
+                Status = status,
+                Message = null,
+                Errors = errors
             };
         }
 

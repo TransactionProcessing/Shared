@@ -1,4 +1,4 @@
-﻿using KurrentDB.Client;
+using KurrentDB.Client;
 using Shared.Serialisation;
 using SimpleResults;
 
@@ -111,6 +111,20 @@ public class PersistentSubscription
 
     public override String ToString() => $"{this.PersistentSubscriptionDetails.StreamName}-{this.PersistentSubscriptionDetails.GroupName}";
 
+    private static String BuildFailureMessage(ResolvedEvent resolvedEvent,
+                                             Result result)
+    {
+        String errors = result.Errors?.Any() == true
+            ? String.Join(Environment.NewLine, result.Errors.Where(error => !String.IsNullOrWhiteSpace(error)))
+            : String.Empty;
+
+        String resultDetails = String.IsNullOrWhiteSpace(result.Message)
+            ? $"Result status [{result.Status}]. Errors [{errors}]"
+            : $"Result was {result.Message}";
+
+        return $"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()} {resultDetails}";
+    }
+
     private static TenantIdentifiers GetTenantIdentifiersFromDomainEvent(IDomainEvent domainEvent)
     {
         String domainEventAsString = StringSerialiser.Serialise(domainEvent);
@@ -168,8 +182,7 @@ public class PersistentSubscription
                 await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
             }
             else {
-                Exception ex = new($"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()} Result was {result.Message}");
-                Logger.Logger.LogError(ex);
+                Logger.Logger.LogError(BuildFailureMessage(resolvedEvent, result));
             }
         }
         catch (Exception e) {
