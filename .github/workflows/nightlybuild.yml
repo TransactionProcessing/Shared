@@ -13,45 +13,8 @@ permissions:
   id-token: write
 
 jobs:
-  buildandunittests:
-    name: "Nightly Build - Main"
-    env:
-        ASPNETCORE_ENVIRONMENT: "Production"
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v1
-
-    - name: Install NET 9
-      uses: actions/setup-dotnet@v4.0.1
-      with:
-        dotnet-version: '9.0.x'
-
-    - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
-
-    - name: Build Code
-      run: dotnet build Shared.sln --configuration Release
-
-
-    - name: Notify on nightly failure
-      if: ${{ failure() }}
-      uses: TransactionProcessing/org-ci-workflows/.github/actions/nightly-failure-issue@main
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        title: Investigate Nightly Build Failure
-        labels: nightlybuild
-        dedupe_key: nightlybuild
-        body: |
-          Repo: ${{ github.repository }}
-          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          Commit: ${{ github.sha }}
-          Workflow: ${{ github.workflow }}
-          Job: ${{ github.job }}
-
   buildlinux:
-    name: "Nightly Build - Linux"
+    name: "Build and Test Pull Requests - Linux"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
 
@@ -59,11 +22,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-
+    
     - name: Install NET 9
       uses: actions/setup-dotnet@v4.0.1
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '9.0.306'
 
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
@@ -76,18 +39,33 @@ jobs:
         sudo cp ./Shared.EventStoreContext.Tests/certs/ca/ca.crt /usr/local/share/ca-certificates/ca.crt
         sudo update-ca-certificates
 
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.Tests\Shared.Tests.csproj"
+
     - name: Run Event Store Tests
       run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"        
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj"
         dotnet test "Shared.EventStoreContext.Tests\Shared.EventStoreContext.Tests.csproj"
 
+    - name: Run Integration Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
 
+    - uses: actions/upload-artifact@v4.4.3
+      with:
+        name: tracelogslinux
+        path: /home/runner/trace/
+      
     - name: Notify on nightly failure
       if: ${{ failure() }}
       uses: TransactionProcessing/org-ci-workflows/.github/actions/nightly-failure-issue@main
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        title: Investigate Nightly Build Failure
+        title: Investigate Nightly Build Failure - Linux
         labels: nightlybuild
         dedupe_key: nightlybuild
         body: |
@@ -97,7 +75,55 @@ jobs:
           Workflow: ${{ github.workflow }}
           Job: ${{ github.job }}
 
+  buildwindows:
+    name: "Build and Test Pull Requests - Windows"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install NET 9
+      uses: actions/setup-dotnet@v4.0.1
+      with:
+        dotnet-version: '9.0.306'
+
+    - name: Build Windows SQL Server
+      run: |
+         cd SQLDocker
+         docker build -t mssqlserver:2022-ltsc2022 --build-arg SQL_VERSION=2022 --build-arg WIN_VERSION=ltsc2022 .
+
+    - name: Restore Nuget Packages
+      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+    - name: Build Code
+      run: dotnet build Shared.sln --configuration Release
+
+    - name: Run Integration Tests
+      env:
+          IsCI: true
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
+
     - uses: actions/upload-artifact@v4.4.3
       with:
-        name: tracelogslinux
-        path: /home/runner/trace/   
+        name: tracelogswindows
+        path: C:\\Users\\runneradmin\\txnproc
+
+    - name: Notify on nightly failure
+      if: ${{ failure() }}
+      uses: TransactionProcessing/org-ci-workflows/.github/actions/nightly-failure-issue@main
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        title: Investigate Nightly Build Failure - Windows
+        labels: nightlybuild
+        dedupe_key: nightlybuild
+        body: |
+          Repo: ${{ github.repository }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          Workflow: ${{ github.workflow }}
+          Job: ${{ github.job }}
