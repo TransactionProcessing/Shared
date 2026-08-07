@@ -913,10 +913,18 @@ public abstract class BaseDockerHelper{
                 IContainerService builtContainer = containerBuilder.Build();
 
                 consoleLogs = builtContainer.Logs(true);
-                startedContainer = builtContainer.Start();
-                foreach (INetworkService networkService in networkServices)
+                try
                 {
-                    networkService.Attach(startedContainer, false);
+                    startedContainer = builtContainer.Start();
+                    foreach (INetworkService networkService in networkServices)
+                    {
+                        networkService.Attach(startedContainer, false);
+                    }
+                }
+                catch
+                {
+                    builtContainer.Dispose();
+                    throw;
                 }
             });
 

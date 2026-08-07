@@ -1016,7 +1016,15 @@ public abstract class BaseDockerHelper{
                 }
 
                 builtContainer = containerBuilder.Build();
-                await builtContainer.StartAsync();
+                try
+                {
+                    await builtContainer.StartAsync();
+                }
+                catch
+                {
+                    await builtContainer.DisposeAsync();
+                    throw;
+                }
             });
 
             this.Trace($"{dockerService} Container Started");
