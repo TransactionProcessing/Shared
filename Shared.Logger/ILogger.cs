@@ -1,4 +1,4 @@
-﻿namespace Shared.Logger;
+namespace Shared.Logger;
 
 using System;
 
@@ -29,6 +29,8 @@ public interface ILogger
     void LogDebug(String message);
 
     void LogError(Exception exception);
+
+    void LogError(String message);
 
     void LogError(String message,
                   Exception exception);

@@ -1,4 +1,4 @@
-﻿namespace Shared.Tests;
+namespace Shared.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -36,6 +36,11 @@ public class TestLogger : ILogger
     public void LogError(Exception exception)
     {
         this.LogEntries.Add(exception.ToString());
+    }
+
+    public void LogError(String message)
+    {
+        this.LogEntries.Add(message);
     }
 
     public void LogError(String message, Exception exception)
