@@ -21,7 +21,6 @@
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
       <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Moq" />
-    <PackageReference Include="Pose" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="SimpleResults" />
     <PackageReference Include="xunit.v3" />

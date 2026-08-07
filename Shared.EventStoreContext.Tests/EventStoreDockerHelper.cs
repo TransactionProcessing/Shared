@@ -1,4 +1,5 @@
-﻿using Ductus.FluentDocker.Builders;
+using System.Diagnostics;
+using Ductus.FluentDocker.Builders;
 using Ductus.FluentDocker.Services;
 using KurrentDB.Client;
 using Shared.IntegrationTesting;
@@ -8,9 +9,8 @@ namespace Shared.EventStoreContext.Tests;
 
 public class EventStoreDockerHelper : DockerHelper
 {
-    
-
-    public async Task StartContainers(Boolean isSecureEventStore, String testName) {
+    public async Task StartContainers(Boolean isSecureEventStore, String testName)
+    {
         //this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder(testName);
         this.ScenarioName = testName;
@@ -42,19 +42,22 @@ public class EventStoreDockerHelper : DockerHelper
         }
     }
 
-    public override async Task CreateSubscriptions(){
+    public override async Task CreateSubscriptions()
+    {
         // Nothing actually needed here
     }
 
-    public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services) {
+    public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services)
+    {
         this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Data;
         this.TestId = Guid.NewGuid();
         INetworkService networkService = this.SetupTestNetwork("eventstoretestnetwork", true);
         this.SetupContainerNames();
-        
+
         this.RequiredDockerServices = services;
-        
-        ContainerBuilder SetupSecureEventStoreContainerLocal() {
+
+        ContainerBuilder SetupSecureEventStoreContainerLocal()
+        {
             this.IsSecureEventStore = true;
 
             this.EventStoreContainerName = "UnitTestEventStore_Secure";
@@ -82,10 +85,9 @@ public class EventStoreDockerHelper : DockerHelper
                 networkService
             },
             DockerServices.EventStore);
-
     }
 
-    public KurrentDBClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null, String userName="admin", String password="changeit")
+    public KurrentDBClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null, String userName = "admin", String password = "changeit")
     {
         String connectionString = secureEventStore switch
         {
@@ -100,17 +102,81 @@ public class EventStoreDockerHelper : DockerHelper
             _ => true
         };
         settings.DefaultDeadline = deadline;
-        
+
         if (!secureEventStore)
         {
             settings.CreateHttpMessageHandler = () => new SocketsHttpHandler
-                                                      {
-                                                          SslOptions = {
-                                                                           RemoteCertificateValidationCallback = (_, _, _, _) => true,
-                                                                       }
-                                                      };
+            {
+                SslOptions =
+                {
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true,
+                }
+            };
         }
 
         return settings;
+    }
+
+    public Task PauseEventStoreContainer()
+    {
+        return this.RunTransportOutageCommand($"pause {this.EventStoreContainerName}", $"stop -t 0 {this.EventStoreContainerName}");
+    }
+
+    public Task UnpauseEventStoreContainer()
+    {
+        return this.RunTransportRecoveryCommand($"unpause {this.EventStoreContainerName}", $"start {this.EventStoreContainerName}");
+    }
+
+    public Task StopEventStoreContainer()
+    {
+        return this.RunDockerCommand($"stop -t 0 {this.EventStoreContainerName}");
+    }
+
+    public Task StartEventStoreContainer()
+    {
+        return this.RunDockerCommand($"start {this.EventStoreContainerName}");
+    }
+
+    public async Task RestartEventStoreContainer()
+    {
+        await this.StartEventStoreContainer();
+    }
+
+    private Task RunTransportOutageCommand(String linuxCommand, String windowsCommand)
+    {
+        return this.IsWindowsContainerHost() ? this.RunDockerCommand(windowsCommand) : this.RunDockerCommand(linuxCommand);
+    }
+
+    private Task RunTransportRecoveryCommand(String linuxCommand, String windowsCommand)
+    {
+        return this.IsWindowsContainerHost() ? this.RunDockerCommand(windowsCommand) : this.RunDockerCommand(linuxCommand);
+    }
+
+    private Boolean IsWindowsContainerHost()
+    {
+        return this.DockerPlatform == DockerEnginePlatform.Windows;
+    }
+
+    private async Task RunDockerCommand(String arguments)
+    {
+        ProcessStartInfo startInfo = new()
+        {
+            FileName = "docker",
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using Process process = Process.Start(startInfo) ?? throw new InvalidOperationException("Unable to start docker command.");
+        String standardOutput = await process.StandardOutput.ReadToEndAsync();
+        String standardError = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"Docker command failed: {arguments}. Stdout: {standardOutput}. Stderr: {standardError}");
+        }
     }
 }

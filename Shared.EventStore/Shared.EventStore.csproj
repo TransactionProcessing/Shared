@@ -12,6 +12,7 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" />
 		<PackageReference Include="NLog.Extensions.Logging" />
+		<PackageReference Include="Polly" />
 		<PackageReference Include="SimpleResults" />
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<PackageReference Include="prometheus-net" />

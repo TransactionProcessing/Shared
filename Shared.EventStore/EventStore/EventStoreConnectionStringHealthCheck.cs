@@ -18,9 +18,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 /// <seealso cref="Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck" />
 public class EventStoreConnectionStringHealthCheck : IHealthCheck
 {
-    private readonly KurrentDBClient Client;
-    private readonly KurrentDBProjectionManagementClient ProjectionManagementClient;
-
     #region Fields
 
     /// <summary>
@@ -48,9 +45,7 @@ public class EventStoreConnectionStringHealthCheck : IHealthCheck
     {
         this.EventStoreClientSettings = settings;
         this.UserCredentials = userCredentials;
-        this.Client = new KurrentDBClient(settings);
-        this.ProjectionManagementClient = new(settings);
-        this.Context = new EventStoreContext(this.Client, this.ProjectionManagementClient);
+        this.Context = new EventStoreContext(settings);
     }
 
     public EventStoreConnectionStringHealthCheck(KurrentDBClientSettings settings) : this(settings, null)
