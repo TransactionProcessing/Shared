@@ -528,10 +528,16 @@ public abstract class BaseDockerHelper{
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.MessagingService).Data;
 
         ContainerBuilder messagingServiceContainer = new ContainerBuilder().WithName(this.MessagingServiceContainerName) // similar to WithName()
-            .WithImage(imageDetails.imageName).WithEnvironment(environmentVariables).MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .WithImage(imageDetails.imageName)
+            .WithEnvironment(environmentVariables)
+            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder);
+
+        messagingServiceContainer = this.DockerPlatform == DockerEnginePlatform.Windows
             // Windows runners can fail creating a published port mapping here with "The specified port already exists".
-            // Exposing the container port keeps the container reachable while letting Docker assign the host-side mapping.
-            .WithExposedPort(DockerPorts.MessagingServiceDockerPort);
+            // Exposing the container port avoids the host-port collision while keeping the container reachable.
+            ? messagingServiceContainer.WithExposedPort(DockerPorts.MessagingServiceDockerPort)
+            // Linux uses the published port mapping path that the rest of this harness expects.
+            : messagingServiceContainer.WithPortBinding(DockerPorts.MessagingServiceDockerPort, true);
             //.WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(DockerPorts.MessagingServiceDockerPort));
         
         return messagingServiceContainer;
