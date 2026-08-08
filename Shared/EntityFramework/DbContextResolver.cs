@@ -47,7 +47,7 @@ public class DbContextResolver<TContext> : IDbContextResolver<TContext> where TC
 
             // Create an isolated service collection and provider
             ServiceCollection services = new();
-            services.AddDbContext<TContext>(options => { options.UseSqlServer(connectionString); });
+            services.AddDbContext<TContext>(options => { options.UseSharedSqlServer<TContext>(connectionString); });
 
             ServiceProvider provider = services.BuildServiceProvider();
             scope = provider.CreateScope();
