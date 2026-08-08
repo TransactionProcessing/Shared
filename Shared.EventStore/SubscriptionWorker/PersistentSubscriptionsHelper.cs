@@ -5,6 +5,7 @@ namespace Shared.EventStore.SubscriptionWorker;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 using global::EventStore.Client;
 
@@ -19,7 +20,7 @@ public static class PersistentSubscriptionsHelper
         {
             LastTimeRefreshed = DateTime.Now,
             InitialState = false,
-            PersistentSubscriptionInfo = subscriptions
+            PersistentSubscriptionInfo = subscriptions.Where(SubscriptionWorkerHelper.HasValidSubscriptionInfo).ToList()
         };
     }
 

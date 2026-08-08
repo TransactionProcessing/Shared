@@ -139,5 +139,54 @@ public class SubscriptionWorkerHelperTests
         actual.Count.ShouldBe(1);
     }
 
+    [Theory]
+    [InlineData(null, "Group", "StreamName was missing.")]
+    [InlineData("", "Group", "StreamName was missing.")]
+    [InlineData("   ", "Group", "StreamName was missing.")]
+    [InlineData("Stream", null, "GroupName was missing.")]
+    [InlineData("Stream", "", "GroupName was missing.")]
+    [InlineData("Stream", "   ", "GroupName was missing.")]
+    public void SubscriptionWorkerHelper_TryCreatePersistentSubscriptionDetails_InvalidValuesAreRejected(String streamName,
+                                                                                                         String groupName,
+                                                                                                         String expectedMessage)
+    {
+        PersistentSubscriptionInfo subscription = new()
+        {
+            StreamName = streamName,
+            GroupName = groupName
+        };
+
+        Boolean actual = SubscriptionWorkerHelper.TryCreatePersistentSubscriptionDetails(subscription,
+            42,
+            out PersistentSubscriptionDetails persistentSubscriptionDetails,
+            out String validationError);
+
+        actual.ShouldBeFalse();
+        persistentSubscriptionDetails.ShouldBeNull();
+        validationError.ShouldBe(expectedMessage);
+    }
+
+    [Fact]
+    public void SubscriptionWorkerHelper_TryCreatePersistentSubscriptionDetails_ValidValuesAreAccepted()
+    {
+        PersistentSubscriptionInfo subscription = new()
+        {
+            StreamName = "Stream",
+            GroupName = "Group"
+        };
+
+        Boolean actual = SubscriptionWorkerHelper.TryCreatePersistentSubscriptionDetails(subscription,
+            42,
+            out PersistentSubscriptionDetails persistentSubscriptionDetails,
+            out String validationError);
+
+        actual.ShouldBeTrue();
+        persistentSubscriptionDetails.ShouldNotBeNull();
+        persistentSubscriptionDetails.StreamName.ShouldBe("Stream");
+        persistentSubscriptionDetails.GroupName.ShouldBe("Group");
+        persistentSubscriptionDetails.InflightMessages.ShouldBe(42);
+        validationError.ShouldBeNull();
+    }
+
     #endregion
 }
