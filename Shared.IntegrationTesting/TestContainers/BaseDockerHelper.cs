@@ -1005,15 +1005,28 @@ public abstract class BaseDockerHelper{
         }
 
         try{
-            ContainerBuilder containerBuilder = buildContainerFunc();
-            
-            foreach (INetwork networkService in networkServices) {
-                containerBuilder = containerBuilder.WithNetwork(networkService);
-            }
+            IContainer builtContainer = default;
 
-            IContainer builtContainer = containerBuilder.Build();
-                
-            await builtContainer.StartAsync();
+            await Retry.For(async () =>
+            {
+                ContainerBuilder containerBuilder = buildContainerFunc();
+
+                foreach (INetwork networkService in networkServices) {
+                    containerBuilder = containerBuilder.WithNetwork(networkService);
+                }
+
+                builtContainer = containerBuilder.Build();
+                try
+                {
+                    await builtContainer.StartAsync();
+                }
+                catch
+                {
+                    await builtContainer.DisposeAsync();
+                    throw;
+                }
+            });
+
             this.Trace($"{dockerService} Container Started");
             this.Containers.Add((dockerService, builtContainer));
 
