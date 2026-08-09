@@ -85,21 +85,31 @@ public abstract class DockerHelper : BaseDockerHelper
             testNetwork,
         ];
 
-        await StartContainer2(this.ConfigureSqlContainer, networks, DockerServices.SqlServer);
-        await StartContainer2(this.SetupEventStoreContainer, networks, DockerServices.EventStore);
-        // TODO: permenant fix for this hack
+        async Task StartWithTrace(Func<DotNet.Testcontainers.Builders.ContainerBuilder> setupContainer, DockerServices service)
+        {
+            DateTimeOffset startedAt = DateTimeOffset.UtcNow;
+            this.Trace($"Starting container [{service}]");
+            await StartContainer2(setupContainer, networks, service);
+            TimeSpan elapsed = DateTimeOffset.UtcNow - startedAt;
+            this.Trace($"Container [{service}] started in {elapsed.TotalSeconds:N1}s");
+        }
+
+        await StartWithTrace(this.ConfigureSqlContainer, DockerServices.SqlServer);
+        await StartWithTrace(this.SetupEventStoreContainer, DockerServices.EventStore);
+        // TODO: permanent fix for this hack
+        this.Trace("Waiting 30s before starting MessagingService");
         await Task.Delay(TimeSpan.FromSeconds(30));
-        await StartContainer2(this.SetupMessagingServiceContainer, networks, DockerServices.MessagingService);
-        await StartContainer2(this.SetupSecurityServiceContainer, networks, DockerServices.SecurityService);
-        await StartContainer2(this.SetupCallbackHandlerContainer, networks, DockerServices.CallbackHandler);
-        await StartContainer2(this.SetupTestHostContainer, networks, DockerServices.TestHost);
-        await StartContainer2(this.SetupTransactionProcessorContainer, networks, DockerServices.TransactionProcessor);
-        await StartContainer2(this.SetupFileProcessorContainer, networks, DockerServices.FileProcessor);
-        await StartContainer2(this.SetupTransactionProcessorAclContainer, networks, DockerServices.TransactionProcessorAcl);
-        await StartContainer2(this.SetupConfigHostContainer, networks, DockerServices.ConfigurationHost);
+        await StartWithTrace(this.SetupMessagingServiceContainer, DockerServices.MessagingService);
+        await StartWithTrace(this.SetupSecurityServiceContainer, DockerServices.SecurityService);
+        await StartWithTrace(this.SetupCallbackHandlerContainer, DockerServices.CallbackHandler);
+        await StartWithTrace(this.SetupTestHostContainer, DockerServices.TestHost);
+        await StartWithTrace(this.SetupTransactionProcessorContainer, DockerServices.TransactionProcessor);
+        await StartWithTrace(this.SetupFileProcessorContainer, DockerServices.FileProcessor);
+        await StartWithTrace(this.SetupTransactionProcessorAclContainer, DockerServices.TransactionProcessorAcl);
+        await StartWithTrace(this.SetupConfigHostContainer, DockerServices.ConfigurationHost);
         if (this.DockerPlatform == DockerEnginePlatform.Linux) {
-            await StartContainer2(this.SetupEstateManagementUiContainer, networks, DockerServices.EstateManagementUI);
-            await StartContainer2(this.SetupEstateReportingContainer, networks, DockerServices.EstateReporting);
+            await StartWithTrace(this.SetupEstateManagementUiContainer, DockerServices.EstateManagementUI);
+            await StartWithTrace(this.SetupEstateReportingContainer, DockerServices.EstateReporting);
         }
 
         await this.LoadEventStoreProjections();

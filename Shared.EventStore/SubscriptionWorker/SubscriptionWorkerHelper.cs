@@ -65,6 +65,7 @@ public static class SubscriptionWorkerHelper
                                                                        String streamsToIgnore = null)
     {
         List<PersistentSubscriptionInfo> result = all
+            .Where(SubscriptionWorkerHelper.HasValidSubscriptionInfo)
             .Where(p => currentSubscriptions.All(p2 => $"{p2.StreamName}-{p2.GroupName}" != $"{p.StreamName}-{p.GroupName}"))
             .Where(p => SubscriptionWorkerHelper.IgnoreSubscriptionGroup(p, groupsToIgnore))
             .Where(p => SubscriptionWorkerHelper.IncludeSubscriptionGroup(p, groupsToInclude))
@@ -80,6 +81,45 @@ public static class SubscriptionWorkerHelper
         subscriptionWorker.IgnoreGroups = ignoreGroups;
 
         return subscriptionWorker;
+    }
+
+    internal static Boolean HasValidSubscriptionInfo(PersistentSubscriptionInfo subscription)
+    {
+        return GetSubscriptionValidationError(subscription) == null;
+    }
+
+    internal static Boolean TryCreatePersistentSubscriptionDetails(PersistentSubscriptionInfo subscription,
+                                                                   Int32 inflightMessages,
+                                                                   out PersistentSubscriptionDetails persistentSubscriptionDetails,
+                                                                   out String validationError)
+    {
+        validationError = GetSubscriptionValidationError(subscription);
+
+        if (validationError != null)
+        {
+            persistentSubscriptionDetails = null;
+            return false;
+        }
+
+        persistentSubscriptionDetails = new PersistentSubscriptionDetails(subscription.StreamName, subscription.GroupName)
+        {
+            InflightMessages = inflightMessages
+        };
+
+        return true;
+    }
+
+    internal static String DescribeSubscription(PersistentSubscriptionInfo subscription)
+    {
+        if (subscription == null)
+        {
+            return "<null>";
+        }
+
+        String streamName = String.IsNullOrWhiteSpace(subscription.StreamName) ? "<null-or-whitespace-stream>" : subscription.StreamName;
+        String groupName = String.IsNullOrWhiteSpace(subscription.GroupName) ? "<null-or-whitespace-group>" : subscription.GroupName;
+
+        return $"{streamName}-{groupName}";
     }
 
     public static SubscriptionWorker SetIncludeGroups(this SubscriptionWorker subscriptionWorker, String includeGroups)
@@ -164,6 +204,26 @@ public static class SubscriptionWorkerHelper
         }
 
         return true;
+    }
+
+    private static String GetSubscriptionValidationError(PersistentSubscriptionInfo subscription)
+    {
+        if (subscription == null)
+        {
+            return "Subscription entry was null.";
+        }
+
+        if (String.IsNullOrWhiteSpace(subscription.StreamName))
+        {
+            return "StreamName was missing.";
+        }
+
+        if (String.IsNullOrWhiteSpace(subscription.GroupName))
+        {
+            return "GroupName was missing.";
+        }
+
+        return null;
     }
 
     public static SubscriptionWorker UseInMemory(this SubscriptionWorker subscriptionWorker)

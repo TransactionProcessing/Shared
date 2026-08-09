@@ -180,11 +180,16 @@ public class SubscriptionWorker
                         this.WriteWarning(
                             $"Creating subscription [{subscriptionDto.StreamName}-{subscriptionDto.GroupName}]");
 
-                        PersistentSubscriptionDetails persistentSubscriptionDetails =
-                            new(subscriptionDto.StreamName, subscriptionDto.GroupName)
-                            {
-                                InflightMessages = this.InflightMessages
-                            };
+                        if (!SubscriptionWorkerHelper.TryCreatePersistentSubscriptionDetails(subscriptionDto,
+                                this.InflightMessages,
+                                out PersistentSubscriptionDetails persistentSubscriptionDetails,
+                                out String validationError))
+                        {
+                            this.WriteWarning(
+                                $"Skipping invalid subscription [{SubscriptionWorkerHelper.DescribeSubscription(subscriptionDto)}] because {validationError}");
+                            continue;
+                        }
+
                         IPersistentSubscriptionsClient persistentSubscriptionsClient = this.InMemory
                             ? new InMemoryPersistentSubscriptionsClient()
                             : new EventStorePersistentSubscriptionsClient(this.PersistentSubscriptionsClient);
