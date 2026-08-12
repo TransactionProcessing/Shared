@@ -36,6 +36,31 @@ public static class ConfigurationReader
         return ConfigurationReader.GetTypedValueFromSection<T>(sectionName, keyName);
     }
 
+    public static T GetSection<T>(String sectionPath) {
+        if (!ConfigurationReader.IsInitialised) {
+            throw new InvalidOperationException("Configuration Reader has not been initialised");
+        }
+
+        IConfigurationSection section;
+        try
+        {
+            section = ConfigurationReader.ConfigurationRoot.GetRequiredSection(sectionPath);
+        }
+        catch (InvalidOperationException)
+        {
+            throw new KeyNotFoundException($"Section [{sectionPath}] not found.");
+        }
+
+        T value = section.Get<T>();
+
+        if (value is null)
+        {
+            throw new InvalidOperationException($"Configuration section [{sectionPath}] could not be bound to type [{typeof(T).Name}]");
+        }
+
+        return value;
+    }
+
     public static T GetValueOrDefault<T>(String sectionName,
                                          String keyName,
                                          T defaultValue) {
