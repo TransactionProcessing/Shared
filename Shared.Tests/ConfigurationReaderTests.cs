@@ -135,6 +135,42 @@ public partial class SharedTests
     }
 
     [Fact]
+    public void ConfigurationReader_GetSection_NestedSectionValueIsReturned()
+    {
+        IReadOnlyDictionary<String, String> appSettings = new Dictionary<String, String>(TestHelpers.DefaultAppSettings)
+        {
+            ["AppSettings:SecurityConfig:Authority"] = "https://example.com",
+            ["AppSettings:SecurityConfig:ClientId"] = "my-client"
+        };
+
+        IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(appSettings).AddEnvironmentVariables();
+        ConfigurationReader.Initialise(configurationBuilder.Build());
+
+        SecurityConfig value = ConfigurationReader.GetSection<SecurityConfig>("AppSettings:SecurityConfig");
+
+        value.Authority.ShouldBe("https://example.com");
+        value.ClientId.ShouldBe("my-client");
+    }
+
+    [Fact]
+    public void ConfigurationReader_GetSection_SectionNotFound_ErrorThrown()
+    {
+        IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
+        ConfigurationReader.Initialise(configurationBuilder.Build());
+
+        Should.Throw<KeyNotFoundException>(() => ConfigurationReader.GetSection<SecurityConfig>("AppSettings:MissingSecurityConfig"));
+    }
+
+    [Fact]
+    public void ConfigurationReader_GetSection_NotInitialised_ErrorThrown()
+    {
+        var field = typeof(ConfigurationReader).GetProperty("IsInitialised", BindingFlags.Static | BindingFlags.Public | BindingFlags.GetProperty);
+        field.SetValue(null, false);
+
+        Should.Throw<InvalidOperationException>(() => ConfigurationReader.GetSection<SecurityConfig>("AppSettings:SecurityConfig"));
+    }
+
+    [Fact]
     public void ConfigurationReader_GetConnectionString_ValueIsReturned()
     {
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(TestHelpers.DefaultAppSettings).AddEnvironmentVariables();
@@ -174,4 +210,10 @@ public partial class SharedTests
         value.ShouldBe("http://127.0.0.1:5001");
     }
 
+    private sealed class SecurityConfig
+    {
+        public String Authority { get; set; }
+
+        public String ClientId { get; set; }
+    }
 }
