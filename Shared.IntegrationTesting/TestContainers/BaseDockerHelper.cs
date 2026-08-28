@@ -57,6 +57,8 @@ public abstract class BaseDockerHelper{
 
     protected List<(DockerServices, IContainer)> Containers;
 
+    protected readonly Object ContainerStateLock = new();
+
     protected String EventStoreContainerName;
 
     public String ConfigHostContainerName;
@@ -205,6 +207,34 @@ public abstract class BaseDockerHelper{
             {"\"EventStoreSettings:Insecure", this.IsSecureEventStore.ToString()}
             
         };
+    }
+
+    protected virtual IReadOnlyList<IReadOnlyList<DockerServices>> GetStartupGroups()
+    {
+        List<IReadOnlyList<DockerServices>> startupGroups = [
+            [DockerServices.SqlServer],
+            [DockerServices.EventStore],
+            [
+                DockerServices.MessagingService,
+                DockerServices.SecurityService,
+                DockerServices.CallbackHandler,
+                DockerServices.TestHost,
+                DockerServices.TransactionProcessor,
+                DockerServices.FileProcessor,
+                DockerServices.TransactionProcessorAcl,
+                DockerServices.ConfigurationHost
+            ]
+        ];
+
+        if (this.DockerPlatform == DockerEnginePlatform.Linux)
+        {
+            List<DockerServices> parallelGroup = startupGroups[2].ToList();
+            parallelGroup.Add(DockerServices.EstateReporting);
+            startupGroups[2] = parallelGroup;
+            startupGroups.Add([DockerServices.EstateManagementUI]);
+        }
+
+        return startupGroups;
     }
 
     public static async Task<SimpleResults.Result<DockerEnginePlatform>> GetDockerEnginePlatform(){
@@ -1052,7 +1082,10 @@ public abstract class BaseDockerHelper{
                 _ => ContainerType.NotSet
             };
 
-            this.SetHostPortForService(type, builtContainer);
+            lock (this.ContainerStateLock)
+            {
+                this.SetHostPortForService(type, builtContainer);
+            }
 
             if (this.SkipHealthChecks) {
                 this.Trace($"Container [{buildContainerFunc.Method.Name}] health check skipped");
@@ -1074,8 +1107,13 @@ public abstract class BaseDockerHelper{
                 }
             }
 
+            lock (this.ContainerStateLock)
+            {
+                this.Containers.Add((dockerService, builtContainer));
+            }
+
             this.Trace($"Container [{buildContainerFunc.Method.Name}] started");
-            
+
             return builtContainer;
         }
         catch (Exception ex){
