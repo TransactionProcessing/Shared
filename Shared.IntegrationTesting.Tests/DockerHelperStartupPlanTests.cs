@@ -15,6 +15,11 @@ public class DockerHelperStartupPlanTests
             this.DockerPlatform = DockerEnginePlatform.Linux;
         }
 
+        public void UseWindowsPlatform()
+        {
+            this.DockerPlatform = DockerEnginePlatform.Windows;
+        }
+
         public IReadOnlyList<IReadOnlyList<DockerServices>> GetStartupGroupsForTesting()
         {
             return base.GetStartupGroups();
@@ -22,7 +27,7 @@ public class DockerHelperStartupPlanTests
     }
 
     [Test]
-    public void StartupGroups_place_foundation_services_first_and_estate_management_ui_last()
+    public void StartupGroups_place_foundation_services_first_and_estate_management_ui_last_on_linux()
     {
         InspectableDockerHelper helper = new();
         helper.UseLinuxPlatform();
@@ -44,6 +49,32 @@ public class DockerHelperStartupPlanTests
                 DockerServices.EstateReporting
             ],
             [DockerServices.EstateManagementUI]
+        ]);
+    }
+
+    [Test]
+    public void StartupGroups_split_messaging_and_security_on_windows()
+    {
+        InspectableDockerHelper helper = new();
+        helper.UseWindowsPlatform();
+
+        IReadOnlyList<IReadOnlyList<DockerServices>> startupGroups = helper.GetStartupGroupsForTesting();
+
+        startupGroups.Select(group => group.ToArray()).ShouldBe([
+            [DockerServices.SqlServer],
+            [DockerServices.EventStore],
+            [DockerServices.MessagingService],
+            [DockerServices.SecurityService],
+            [
+                DockerServices.CallbackHandler,
+                DockerServices.TestHost,
+                DockerServices.ConfigurationHost
+            ],
+            [DockerServices.TransactionProcessor],
+            [
+                DockerServices.FileProcessor,
+                DockerServices.TransactionProcessorAcl
+            ]
         ]);
     }
 }

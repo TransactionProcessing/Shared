@@ -211,12 +211,33 @@ public abstract class BaseDockerHelper{
 
     protected virtual IReadOnlyList<IReadOnlyList<DockerServices>> GetStartupGroups()
     {
+        if (this.DockerPlatform == DockerEnginePlatform.Windows)
+        {
+            return [
+                [DockerServices.SqlServer],
+                [DockerServices.EventStore],
+                [DockerServices.MessagingService],
+                [DockerServices.SecurityService],
+                [
+                    DockerServices.CallbackHandler,
+                    DockerServices.TestHost,
+                    DockerServices.ConfigurationHost
+                ],
+                [DockerServices.TransactionProcessor],
+                [
+                    DockerServices.FileProcessor,
+                    DockerServices.TransactionProcessorAcl
+                ]
+            ];
+        }
+
         List<IReadOnlyList<DockerServices>> startupGroups = [
             [DockerServices.SqlServer],
             [DockerServices.EventStore],
             [
                 DockerServices.MessagingService,
                 DockerServices.SecurityService,
+                DockerServices.EstateReporting
             ],
             [
                 DockerServices.CallbackHandler,
@@ -229,16 +250,11 @@ public abstract class BaseDockerHelper{
             [
                 DockerServices.FileProcessor,
                 DockerServices.TransactionProcessorAcl
+            ],
+            [
+                DockerServices.EstateManagementUI
             ]
         ];
-
-        if (this.DockerPlatform == DockerEnginePlatform.Linux)
-        {
-            List<DockerServices> parallelGroup = startupGroups[2].ToList();
-            parallelGroup.Add(DockerServices.EstateReporting);
-            startupGroups[2] = parallelGroup;
-            startupGroups.Add([DockerServices.EstateManagementUI]);
-        }
 
         return startupGroups;
     }
