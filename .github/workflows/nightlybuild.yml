@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   buildlinux:
-    name: "Build and Test Pull Requests - Linux"
+    name: "Nightly Build"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
 
@@ -23,11 +23,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     
-    - name: Install NET 9
-      uses: actions/setup-dotnet@v4.0.1
-      with:
-        dotnet-version: '9.0.306'
-
     - name: Restore Nuget Packages
       run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
@@ -66,84 +61,6 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         title: Investigate Nightly Build Failure - Linux
-        labels: nightlybuild
-        dedupe_key: nightlybuild
-        body: |
-          Repo: ${{ github.repository }}
-          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          Commit: ${{ github.sha }}
-          Workflow: ${{ github.workflow }}
-          Job: ${{ github.job }}
-
-  buildwindows:
-    name: "Build and Test Pull Requests - Windows"
-    env:
-        ASPNETCORE_ENVIRONMENT: "Production"
-
-    runs-on: windows-2022
-
-    steps:
-    - uses: actions/checkout@v1
-
-    - name: Install NET 9
-      uses: actions/setup-dotnet@v4.0.1
-      with:
-        dotnet-version: '9.0.306'
-
-    - name: Wait for Docker
-      shell: pwsh
-      run: |
-        Get-Service -Name *docker* -ErrorAction SilentlyContinue | ForEach-Object {
-          if ($_.Status -ne 'Running') {
-            Write-Host "Starting Docker service [$($_.Name)]."
-            Start-Service $_.Name
-          }
-        }
-
-        $maxAttempts = 30
-        for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-          try {
-            docker info | Out-Null
-            Write-Host "Docker is ready."
-            exit 0
-          }
-          catch {
-            Write-Host "Docker is not ready yet on attempt $attempt of $maxAttempts. Waiting..."
-            Start-Sleep -Seconds 10
-          }
-        }
-
-        throw "Docker daemon did not become ready in time."
-
-    - name: Build Windows SQL Server
-      run: |
-         cd SQLDocker
-         docker build -t mssqlserver:2022-ltsc2022 --build-arg SQL_VERSION=2022 --build-arg WIN_VERSION=ltsc2022 .
-
-    - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
-
-    - name: Build Code
-      run: dotnet build Shared.sln --configuration Release
-
-    - name: Run Integration Tests
-      env:
-          IsCI: true
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.IntegrationTesting.Tests\Shared.IntegrationTesting.Tests.csproj"
-
-    - uses: actions/upload-artifact@v4.4.3
-      with:
-        name: tracelogswindows
-        path: C:\\Users\\runneradmin\\txnproc
-
-    - name: Notify on nightly failure
-      if: ${{ failure() }}
-      uses: TransactionProcessing/org-ci-workflows/.github/actions/nightly-failure-issue@main
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        title: Investigate Nightly Build Failure - Windows
         labels: nightlybuild
         dedupe_key: nightlybuild
         body: |
