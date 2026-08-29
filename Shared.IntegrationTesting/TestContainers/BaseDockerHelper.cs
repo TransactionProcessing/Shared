@@ -217,12 +217,18 @@ public abstract class BaseDockerHelper{
             [
                 DockerServices.MessagingService,
                 DockerServices.SecurityService,
+            ],
+            [
                 DockerServices.CallbackHandler,
                 DockerServices.TestHost,
-                DockerServices.TransactionProcessor,
-                DockerServices.FileProcessor,
-                DockerServices.TransactionProcessorAcl,
                 DockerServices.ConfigurationHost
+            ],
+            [
+                DockerServices.TransactionProcessor
+            ],
+            [
+                DockerServices.FileProcessor,
+                DockerServices.TransactionProcessorAcl
             ]
         ];
 
