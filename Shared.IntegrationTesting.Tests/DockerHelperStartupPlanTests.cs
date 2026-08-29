@@ -35,13 +35,17 @@ public class DockerHelperStartupPlanTests
             [
                 DockerServices.MessagingService,
                 DockerServices.SecurityService,
+                DockerServices.EstateReporting
+            ],
+            [
                 DockerServices.CallbackHandler,
                 DockerServices.TestHost,
-                DockerServices.TransactionProcessor,
+                DockerServices.ConfigurationHost
+            ],
+            [DockerServices.TransactionProcessor],
+            [
                 DockerServices.FileProcessor,
-                DockerServices.TransactionProcessorAcl,
-                DockerServices.ConfigurationHost,
-                DockerServices.EstateReporting
+                DockerServices.TransactionProcessorAcl
             ],
             [DockerServices.EstateManagementUI]
         ]);
