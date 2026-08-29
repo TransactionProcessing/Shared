@@ -1,17 +1,17 @@
 using System.Diagnostics;
-using Ductus.FluentDocker.Builders;
-using Ductus.FluentDocker.Services;
 using KurrentDB.Client;
 using Shared.IntegrationTesting;
-using Shared.IntegrationTesting.Ductus;
+using Shared.IntegrationTesting.TestContainers;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Networks;
 
 namespace Shared.EventStoreContext.Tests;
 
-public class EventStoreDockerHelper : DockerHelper
+public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.DockerHelper
 {
     public async Task StartContainers(Boolean isSecureEventStore, String testName)
     {
-        //this.IsSecureEventStore = isSecureEventStore;
         this.SetHostTraceFolder(testName);
         this.ScenarioName = testName;
         await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
@@ -23,21 +23,21 @@ public class EventStoreDockerHelper : DockerHelper
         {
             this.Containers.Reverse();
 
-            foreach ((DockerServices, IContainerService) containerService in this.Containers)
+            foreach ((DockerServices, IContainer) containerService in this.Containers)
             {
                 this.Trace($"Stopping container [{containerService.Item2.Name}]");
-                containerService.Item2.Stop();
-                containerService.Item2.Remove(true);
+                await containerService.Item2.StopAsync(CancellationToken.None);
+                await containerService.Item2.DisposeAsync();
                 this.Trace($"Container [{containerService.Item2.Name}] stopped");
             }
         }
 
         if (this.TestNetworks.Any())
         {
-            foreach (INetworkService networkService in this.TestNetworks)
+            foreach (INetwork networkService in this.TestNetworks)
             {
-                networkService.Stop();
-                networkService.Remove(true);
+                await networkService.DeleteAsync(CancellationToken.None);
+                await networkService.DisposeAsync();
             }
         }
     }
@@ -49,9 +49,9 @@ public class EventStoreDockerHelper : DockerHelper
 
     public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services)
     {
-        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Data;
         this.TestId = Guid.NewGuid();
-        INetworkService networkService = this.SetupTestNetwork("eventstoretestnetwork", true);
+        String networkName = $"eventstoretestnetwork{this.TestId:N}";
+        INetwork networkService = await this.SetupTestNetwork(networkName, true);
         this.SetupContainerNames();
 
         this.RequiredDockerServices = services;
@@ -62,7 +62,7 @@ public class EventStoreDockerHelper : DockerHelper
 
             this.EventStoreContainerName = "UnitTestEventStore_Secure";
 
-            return this.SetupEventStoreContainer().ReuseIfExists();
+            return this.SetupEventStoreContainer().WithReuse(true);
         }
 
         ContainerBuilder SetupInsecureEventStoreContainerLocal()
@@ -71,17 +71,17 @@ public class EventStoreDockerHelper : DockerHelper
 
             this.EventStoreContainerName = "UnitTestEventStore_Insecure";
 
-            return this.SetupEventStoreContainer().ReuseIfExists();
+            return this.SetupEventStoreContainer().WithReuse(true);
         }
 
         await this.StartContainer2(SetupSecureEventStoreContainerLocal,
-                                  new List<INetworkService> {
+                                  new List<INetwork> {
                                                                 networkService
                                                             },
                                   DockerServices.EventStore);
 
         await this.StartContainer2(SetupInsecureEventStoreContainerLocal,
-            new List<INetworkService> {
+            new List<INetwork> {
                 networkService
             },
             DockerServices.EventStore);
@@ -119,12 +119,12 @@ public class EventStoreDockerHelper : DockerHelper
 
     public Task PauseEventStoreContainer()
     {
-        return this.RunTransportOutageCommand($"pause {this.EventStoreContainerName}", $"stop -t 0 {this.EventStoreContainerName}");
+        return this.RunDockerCommand($"pause {this.EventStoreContainerName}");
     }
 
     public Task UnpauseEventStoreContainer()
     {
-        return this.RunTransportRecoveryCommand($"unpause {this.EventStoreContainerName}", $"start {this.EventStoreContainerName}");
+        return this.RunDockerCommand($"unpause {this.EventStoreContainerName}");
     }
 
     public Task StopEventStoreContainer()
@@ -135,26 +135,6 @@ public class EventStoreDockerHelper : DockerHelper
     public Task StartEventStoreContainer()
     {
         return this.RunDockerCommand($"start {this.EventStoreContainerName}");
-    }
-
-    public async Task RestartEventStoreContainer()
-    {
-        await this.StartEventStoreContainer();
-    }
-
-    private Task RunTransportOutageCommand(String linuxCommand, String windowsCommand)
-    {
-        return this.IsWindowsContainerHost() ? this.RunDockerCommand(windowsCommand) : this.RunDockerCommand(linuxCommand);
-    }
-
-    private Task RunTransportRecoveryCommand(String linuxCommand, String windowsCommand)
-    {
-        return this.IsWindowsContainerHost() ? this.RunDockerCommand(windowsCommand) : this.RunDockerCommand(linuxCommand);
-    }
-
-    private Boolean IsWindowsContainerHost()
-    {
-        return this.DockerPlatform == DockerEnginePlatform.Windows;
     }
 
     private async Task RunDockerCommand(String arguments)

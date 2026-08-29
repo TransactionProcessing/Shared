@@ -33,7 +33,6 @@
     <PackageVersion Include="Reqnroll.NUnit" Version="3.3.4" />
     <PackageVersion Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.9" />
     <PackageVersion Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.9" />
-    <PackageVersion Include="Ductus.FluentDocker" Version="2.85.0" />
     <PackageVersion Include="Testcontainers" Version="4.12.0" />
     <PackageVersion Include="Docker.DotNet" Version="3.125.15" />
     <PackageVersion Include="KurrentDB.Client" Version="1.4.0" />

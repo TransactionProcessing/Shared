@@ -22,27 +22,12 @@ public abstract class DockerHelper : BaseDockerHelper
     
     protected  virtual void SetHostTraceFolder(String scenarioName) {
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        
-        // We are running on linux (CI or local ok)
-        // We are running windows local (can use "C:\\home\\txnproc\\trace\\{scenarioName}")
-        // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
         Boolean isCI = (!String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
-        
-        OSPlatform platform = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? OSPlatform.Linux :
-                              RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? OSPlatform.OSX :
-                              OSPlatform.Windows;
 
-        this.HostTraceFolder = (isCI, platform) switch
-        {
-            (true, var p) when p == OSPlatform.Linux => $"/home/runner/trace/{scenarioName}",
-            (true, var p) when p == OSPlatform.OSX => $"/Users/runner/trace/{scenarioName}",
-            (true, var p) when p == OSPlatform.Windows => $"C:\\Users\\runneradmin\\trace\\{scenarioName}",
-
-            (false, var p) when p == OSPlatform.Linux => $"/home/txnproc/trace/{scenarioName}",
-            (false, var p) when p == OSPlatform.OSX => $"/Users/txnproc/trace/{scenarioName}",
-            (false, var p) when p == OSPlatform.Windows => $"C:\\home\\txnproc\\trace\\{scenarioName}",
-        };
+        this.HostTraceFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? (isCI ? $@"C:\Users\runneradmin\trace\{scenarioName}" : $@"C:\home\txnproc\trace\{scenarioName}")
+            : (isCI ? $"/home/runner/trace/{scenarioName}" : $"/home/txnproc/trace/{scenarioName}");
         
         if (Directory.Exists(this.HostTraceFolder) == false){
             this.Trace($"[{this.HostTraceFolder}] does not exist");
@@ -122,23 +107,6 @@ public abstract class DockerHelper : BaseDockerHelper
         await this.CreateSubscriptions();
     }
 
-    //protected virtual async Task CopyEventStoreLogs(IContainer eventStoreContainerService){
-    //    try
-    //    {
-    //        if (this.DockerPlatform == DockerEnginePlatform.Windows)
-    //            return;
-
-    //        String logfilePath = "/var/log/kurrentdb";
-
-    //        await eventStoreContainerService.CopyFolderAsync(this.HostTraceFolder, logfilePath);
-            
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        this.Trace($"copy failed [{ex.Message}]");
-    //    }
-    //}
-    
     public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices) {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
@@ -160,10 +128,6 @@ public abstract class DockerHelper : BaseDockerHelper
                     continue;
                 }
                 this.Trace($"Stopping container [{name}]");
-                //if (name.Contains("eventstore"))
-                //{
-                //    CopyEventStoreLogs(containerService.Item2);
-                //}
                 await containerService.Item2.StopAsync(CancellationToken.None);
                 await containerService.Item2.DisposeAsync();
                 this.Trace($"Container [{name}] stopped");

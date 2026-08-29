@@ -125,37 +125,25 @@ public abstract class BaseDockerHelper{
                                                                                                                                                }
                                                                                             }));
         
-        // Setup the default image details
+        // Linux-only integration containers.
         this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Result.Data;
-        if (this.DockerPlatform == DockerEnginePlatform.Windows)
+        if (this.DockerPlatform != DockerEnginePlatform.Linux)
         {
-            this.ImageDetails.Add(ContainerType.SqlServer, ("iamrjindal/sqlserverexpress:2022", true));
-            this.ImageDetails.Add(ContainerType.EventStore, ("stuartferguson/kurrentdb_windows", true));
-            this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservicewindows:master", true));
-            this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservicewindows:master", true));
-            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandlerwindows:master", true));
-            this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhostswindows:master", true));
-            this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessorwindows:master", true));
-            this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessorwindows:master", true));
-            this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoraclwindows:master", true));
-            this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfigurationwindows:master", true));
-            //this.ImageDetails.Add(ContainerType.EstateManangementUI, ("stuartferguson/estatemanagementuiwindows:master", true));
+            throw new NotSupportedException("Integration test containers are only supported on Linux Docker engines.");
         }
-        else
-        {
-            this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
-            this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.1", true));
-            this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
-            this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
-            this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
-            this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
-            this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
-            this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
-            this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
-            this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfiguration:master", true));
-            this.ImageDetails.Add(ContainerType.EstateManagementUI, ("stuartferguson/estatemanagementui:master", true));
-            this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingapi:master", true));
-        }
+
+        this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
+        this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.1", true));
+        this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
+        this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
+        this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
+        this.ImageDetails.Add(ContainerType.TestHost, ("stuartferguson/testhosts:master", true));
+        this.ImageDetails.Add(ContainerType.TransactionProcessor, ("stuartferguson/transactionprocessor:master", true));
+        this.ImageDetails.Add(ContainerType.FileProcessor, ("stuartferguson/fileprocessor:master", true));
+        this.ImageDetails.Add(ContainerType.TransactionProcessorAcl, ("stuartferguson/transactionprocessoracl:master", true));
+        this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfiguration:master", true));
+        this.ImageDetails.Add(ContainerType.EstateManagementUI, ("stuartferguson/estatemanagementui:master", true));
+        this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingapi:master", true));
 
         this.HostPorts = new Dictionary<ContainerType, Int32>();
     }
@@ -211,26 +199,6 @@ public abstract class BaseDockerHelper{
 
     protected virtual IReadOnlyList<IReadOnlyList<DockerServices>> GetStartupGroups()
     {
-        if (this.DockerPlatform == DockerEnginePlatform.Windows)
-        {
-            return [
-                [DockerServices.SqlServer],
-                [DockerServices.EventStore],
-                [DockerServices.MessagingService],
-                [DockerServices.SecurityService],
-                [
-                    DockerServices.CallbackHandler,
-                    DockerServices.TestHost,
-                    DockerServices.ConfigurationHost
-                ],
-                [DockerServices.TransactionProcessor],
-                [
-                    DockerServices.FileProcessor,
-                    DockerServices.TransactionProcessorAcl
-                ]
-            ];
-        }
-
         List<IReadOnlyList<DockerServices>> startupGroups = [
             [DockerServices.SqlServer],
             [DockerServices.EventStore],
@@ -268,7 +236,6 @@ public abstract class BaseDockerHelper{
 
             return info.OSType switch {
                 "linux" => Result.Success(DockerEnginePlatform.Linux),
-                "windows" => Result.Success(DockerEnginePlatform.Windows),
                 _ => Result.Success(DockerEnginePlatform.Unknown)
             };
         }
@@ -394,11 +361,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add("EVENTSTORE_INSECURE","true");
         }
         else{
-            String certsPath = this.DockerPlatform switch
-            {
-                DockerEnginePlatform.Windows => "C:\\EventStoreCerts",
-                _ => "/etc/eventstore/certs"
-            };
+            String certsPath = "/etc/eventstore/certs";
 
             // Copy these to the container
             String path = Path.Combine(Directory.GetCurrentDirectory(), "certs");
@@ -434,46 +397,20 @@ public abstract class BaseDockerHelper{
     public virtual ContainerBuilder SetupFileProcessorContainer(){
         this.Trace("About to Start File Processor Container");
 
+        String ciEnvVar = Environment.GetEnvironmentVariable("CI");
+        Boolean isCi = !String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
+
         Dictionary<String, String> environmentVariables = this.GetCommonEnvironmentVariables();
         environmentVariables.Add("urls",$"http://*:{DockerPorts.FileProcessorDockerPort}");
         environmentVariables.Add("ConnectionStrings:TransactionProcessorReadModel", this.SetConnectionString("TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
-        String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        Boolean isCi = !String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0;
+        String bulkFilesRoot = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? (isCi ? @"C:\Users\runneradmin\txnproc\bulkfiles" : @"C:\home\txnproc\bulkfiles")
+            : (isCi ? "/home/runner/bulkfiles" : "/home/txnproc/bulkfiles");
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            // we are running in CI Linux
-            environmentVariables.Add("AppSettings:TemporaryFileLocation","/home/runner/bulkfiles/temporary");
-
-            environmentVariables.Add("AppSettings:FileProfiles:0:ListeningDirectory","/home/runner/bulkfiles/safaricom");
-            environmentVariables.Add($"AppSettings:FileProfiles:1:ListeningDirectory","/home/runner/bulkfiles/voucher");
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            // we are running in CI Mac OS
-            environmentVariables.Add("AppSettings:TemporaryFileLocation","/Users/runner/bulkfiles/temporary");
-
-            environmentVariables.Add("AppSettings:FileProfiles:0:ListeningDirectory","/Users/runner/bulkfiles/safaricom");
-            environmentVariables.Add("AppSettings:FileProfiles:1:ListeningDirectory","/Users/runner/bulkfiles/voucher");
-        }
-        else{
-            // We know this is now windows
-            if (isCi){
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
-                Directory.CreateDirectory("C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
-
-                environmentVariables.Add("AppSettings:TemporaryFileLocation", "C:\\Users\\runneradmin\\txnproc\\bulkfiles\\temporary");
-                environmentVariables.Add("AppSettings:FileProfiles:0:ListeningDirectory","C:\\Users\\runneradmin\\txnproc\\bulkfiles\\safaricom");
-                environmentVariables.Add("AppSettings:FileProfiles:1:ListeningDirectory","C:\\Users\\runneradmin\\txnproc\\bulkfiles\\voucher");
-            }
-            else{
-                environmentVariables.Add("AppSettings:TemporaryFileLocation","C:\\home\\txnproc\\bulkfiles\\temporary");
-                environmentVariables.Add("AppSettings:FileProfiles:0:ListeningDirectory","C:\\Users\\txnproc\\bulkfiles\\safaricom");
-                environmentVariables.Add("AppSettings:FileProfiles:1:ListeningDirectory","C:\\Users\\txnproc\\bulkfiles\\voucher");
-            }
-        }
+        environmentVariables.Add("AppSettings:TemporaryFileLocation",Path.Combine(bulkFilesRoot, "temporary"));
+        environmentVariables.Add("AppSettings:FileProfiles:0:ListeningDirectory",Path.Combine(bulkFilesRoot, "safaricom"));
+        environmentVariables.Add("AppSettings:FileProfiles:1:ListeningDirectory",Path.Combine(bulkFilesRoot, "voucher"));
 
         Dictionary<String, String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.FileProcessor);
 
@@ -492,18 +429,13 @@ public abstract class BaseDockerHelper{
             .WithPortBinding(DockerPorts.FileProcessorDockerPort, true);
         
         // Mount the folder to upload files
-        String uploadFolder = (this.DockerPlatform, isCi) switch{
-            (DockerEnginePlatform.Windows, false) => "C:\\home\\txnproc\\reqnroll",
-            (DockerEnginePlatform.Windows, true) => "C:\\Users\\runneradmin\\txnproc\\reqnroll",
-            _ => "/home/txnproc/reqnroll"
-        };
+        String uploadFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? (isCi ? @"C:\Users\runneradmin\txnproc\reqnroll" : @"C:\home\txnproc\reqnroll")
+            : (isCi ? "/home/runner/reqnroll" : "/home/txnproc/reqnroll");
 
-        if (this.DockerPlatform == DockerEnginePlatform.Windows && isCi){
-            Directory.CreateDirectory(uploadFolder);
-        }
-
-        //String containerFolder = this.DockerPlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\bulkfiles" : "/home/txnproc/bulkfiles";
-        //fileProcessorContainer.Mount(uploadFolder, containerFolder, MountType.ReadWrite);
+        String containerFolder = "/home/txnproc/bulkfiles";
+        Directory.CreateDirectory(uploadFolder);
+        fileProcessorContainer.WithBindMount(uploadFolder, containerFolder, AccessMode.ReadWrite);
         return fileProcessorContainer;
     }
 
@@ -713,15 +645,7 @@ public abstract class BaseDockerHelper{
     public virtual async Task<INetwork> SetupTestNetwork(String networkName = null,
                                                     Boolean reuseIfExists = false){
         networkName = String.IsNullOrEmpty(networkName) ? $"testnw{this.TestId:N}" : networkName;
-        NetworkBuilder networkService = this.DockerPlatform switch {
-            DockerEnginePlatform.Windows => new NetworkBuilder()
-                // Give it a name, or it will be generated (recommended)
-                .WithName(networkName)
-                // **Crucial step: Specify the Windows-native 'nat' driver**
-                .WithDriver(NetworkDriver.Nat).WithReuse(reuseIfExists)
-                .WithLabel("reuse-id", networkName),
-            _ => new NetworkBuilder().WithName(networkName).WithReuse(reuseIfExists).WithLabel("reuse-id", networkName)
-        };
+        NetworkBuilder networkService = new NetworkBuilder().WithName(networkName).WithReuse(reuseIfExists).WithLabel("reuse-id", networkName);
         
         return networkService.Build();
     }

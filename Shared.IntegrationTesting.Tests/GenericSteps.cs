@@ -41,15 +41,6 @@ public class GenericSteps
         this.TestingContext.DockerHelper = new TestDockerHelper();
         this.TestingContext.DockerHelper.Logger = logger;
 
-        String? isCi = Environment.GetEnvironmentVariable("IsCI");
-        if (this.TestingContext.DockerHelper.DockerPlatform == DockerEnginePlatform.Windows &&
-            String.Equals(isCi, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase))
-        {
-            this.TestingContext.DockerHelper.SetImageDetails(
-                Shared.IntegrationTesting.ContainerType.SqlServer,
-                ("mssqlserver:2022-ltsc2022", false));
-        }
-
         DockerServices services = DockerServices.SqlServer | DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
                                   DockerServices.CallbackHandler | DockerServices.FileProcessor |
                                   DockerServices.TestHost | DockerServices.TransactionProcessor |
