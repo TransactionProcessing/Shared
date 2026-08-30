@@ -930,10 +930,6 @@
               "target": "Package",
               "version": "[9.0.0, )"
             },
-            "Ductus.FluentDocker": {
-              "target": "Package",
-              "version": "[2.10.59, )"
-            },
             "EventStore.Client.Grpc.PersistentSubscriptions": {
               "target": "Package",
               "version": "[23.3.9, )"

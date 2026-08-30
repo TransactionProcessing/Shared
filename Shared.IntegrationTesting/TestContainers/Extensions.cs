@@ -15,7 +15,7 @@ public static class Extensions
     {
         if (containerPath == null)
         {
-            containerPath = dockerEnginePlatform == DockerEnginePlatform.Windows ? "C:\\home\\txnproc\\trace" : "/home/txnproc/trace";
+            containerPath = "/home/txnproc/trace";
         }
 
         if (!String.IsNullOrEmpty(hostTraceFolder))

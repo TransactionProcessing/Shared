@@ -3,6 +3,7 @@ using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using Shared.Serialisation;
 using SimpleResults;
+using System.Linq;
 
 namespace Shared.IntegrationTesting.TestContainers;
 
@@ -21,27 +22,12 @@ public abstract class DockerHelper : BaseDockerHelper
     
     protected  virtual void SetHostTraceFolder(String scenarioName) {
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
-        
-        // We are running on linux (CI or local ok)
-        // We are running windows local (can use "C:\\home\\txnproc\\trace\\{scenarioName}")
-        // We are running windows CI (can use "C:\\Users\\runneradmin\\trace\\{scenarioName}")
 
         Boolean isCI = (!String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
-        
-        OSPlatform platform = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? OSPlatform.Linux :
-                              RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? OSPlatform.OSX :
-                              OSPlatform.Windows;
 
-        this.HostTraceFolder = (isCI, platform) switch
-        {
-            (true, var p) when p == OSPlatform.Linux => $"/home/runner/trace/{scenarioName}",
-            (true, var p) when p == OSPlatform.OSX => $"/Users/runner/trace/{scenarioName}",
-            (true, var p) when p == OSPlatform.Windows => $"C:\\Users\\runneradmin\\trace\\{scenarioName}",
-
-            (false, var p) when p == OSPlatform.Linux => $"/home/txnproc/trace/{scenarioName}",
-            (false, var p) when p == OSPlatform.OSX => $"/Users/txnproc/trace/{scenarioName}",
-            (false, var p) when p == OSPlatform.Windows => $"C:\\home\\txnproc\\trace\\{scenarioName}",
-        };
+        this.HostTraceFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? (isCI ? $@"C:\Users\runneradmin\trace\{scenarioName}" : $@"C:\home\txnproc\trace\{scenarioName}")
+            : (isCI ? $"/home/runner/trace/{scenarioName}" : $"/home/txnproc/trace/{scenarioName}");
         
         if (Directory.Exists(this.HostTraceFolder) == false){
             this.Trace($"[{this.HostTraceFolder}] does not exist");
@@ -94,22 +80,26 @@ public abstract class DockerHelper : BaseDockerHelper
             this.Trace($"Container [{service}] started in {elapsed.TotalSeconds:N1}s");
         }
 
-        await StartWithTrace(this.ConfigureSqlContainer, DockerServices.SqlServer);
-        await StartWithTrace(this.SetupEventStoreContainer, DockerServices.EventStore);
-        // TODO: permanent fix for this hack
-        this.Trace("Waiting 30s before starting MessagingService");
-        await Task.Delay(TimeSpan.FromSeconds(30));
-        await StartWithTrace(this.SetupMessagingServiceContainer, DockerServices.MessagingService);
-        await StartWithTrace(this.SetupSecurityServiceContainer, DockerServices.SecurityService);
-        await StartWithTrace(this.SetupCallbackHandlerContainer, DockerServices.CallbackHandler);
-        await StartWithTrace(this.SetupTestHostContainer, DockerServices.TestHost);
-        await StartWithTrace(this.SetupTransactionProcessorContainer, DockerServices.TransactionProcessor);
-        await StartWithTrace(this.SetupFileProcessorContainer, DockerServices.FileProcessor);
-        await StartWithTrace(this.SetupTransactionProcessorAclContainer, DockerServices.TransactionProcessorAcl);
-        await StartWithTrace(this.SetupConfigHostContainer, DockerServices.ConfigurationHost);
-        if (this.DockerPlatform == DockerEnginePlatform.Linux) {
-            await StartWithTrace(this.SetupEstateManagementUiContainer, DockerServices.EstateManagementUI);
-            await StartWithTrace(this.SetupEstateReportingContainer, DockerServices.EstateReporting);
+        Func<DockerServices, Func<DotNet.Testcontainers.Builders.ContainerBuilder>> setupContainerForService = service => service switch
+        {
+            DockerServices.SqlServer => this.ConfigureSqlContainer,
+            DockerServices.EventStore => this.SetupEventStoreContainer,
+            DockerServices.MessagingService => this.SetupMessagingServiceContainer,
+            DockerServices.SecurityService => this.SetupSecurityServiceContainer,
+            DockerServices.CallbackHandler => this.SetupCallbackHandlerContainer,
+            DockerServices.TestHost => this.SetupTestHostContainer,
+            DockerServices.TransactionProcessor => this.SetupTransactionProcessorContainer,
+            DockerServices.FileProcessor => this.SetupFileProcessorContainer,
+            DockerServices.TransactionProcessorAcl => this.SetupTransactionProcessorAclContainer,
+            DockerServices.ConfigurationHost => this.SetupConfigHostContainer,
+            DockerServices.EstateManagementUI => this.SetupEstateManagementUiContainer,
+            DockerServices.EstateReporting => this.SetupEstateReportingContainer,
+            _ => throw new InvalidOperationException($"No startup plan exists for docker service [{service}]")
+        };
+
+        foreach (IReadOnlyList<DockerServices> startupGroup in this.GetStartupGroups())
+        {
+            await Task.WhenAll(startupGroup.Select(service => StartWithTrace(setupContainerForService(service), service)));
         }
 
         await this.LoadEventStoreProjections();
@@ -117,23 +107,6 @@ public abstract class DockerHelper : BaseDockerHelper
         await this.CreateSubscriptions();
     }
 
-    //protected virtual async Task CopyEventStoreLogs(IContainer eventStoreContainerService){
-    //    try
-    //    {
-    //        if (this.DockerPlatform == DockerEnginePlatform.Windows)
-    //            return;
-
-    //        String logfilePath = "/var/log/kurrentdb";
-
-    //        await eventStoreContainerService.CopyFolderAsync(this.HostTraceFolder, logfilePath);
-            
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        this.Trace($"copy failed [{ex.Message}]");
-    //    }
-    //}
-    
     public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices) {
         if (this.Containers.Any()) {
             this.Containers.Reverse();
@@ -144,12 +117,17 @@ public abstract class DockerHelper : BaseDockerHelper
                     continue;
                 }
 
-                String? name = containerService.Item2.Name;
+                String? name;
+                try
+                {
+                    name = containerService.Item2.Name;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    this.Trace($"Skipping container entry that is no longer available [{containerService.Item1}] ({ex.Message})");
+                    continue;
+                }
                 this.Trace($"Stopping container [{name}]");
-                //if (name.Contains("eventstore"))
-                //{
-                //    CopyEventStoreLogs(containerService.Item2);
-                //}
                 await containerService.Item2.StopAsync(CancellationToken.None);
                 await containerService.Item2.DisposeAsync();
                 this.Trace($"Container [{name}] stopped");

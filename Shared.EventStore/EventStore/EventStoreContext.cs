@@ -240,9 +240,13 @@ public class EventStoreContext : IEventStoreContext
     {
         this.LogInformation($"About to append {aggregateEvents.Count} to Stream {streamName}");
         try {
+            StreamState expectedState = expectedVersion < 0
+                ? StreamState.NoStream
+                : StreamState.StreamRevision((ulong)expectedVersion);
+
             await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
                     this.UseClientAsync(client =>
-                        client.AppendToStreamAsync(streamName, StreamState.StreamRevision((ulong)expectedVersion),
+                        client.AppendToStreamAsync(streamName, expectedState,
                             aggregateEvents.AsEnumerable(), deadline: this.Deadline, cancellationToken: cancellationToken)),
                 nameof(this.InsertEvents), $"stream {streamName}", this.LogRetry);
             return Result.Success();

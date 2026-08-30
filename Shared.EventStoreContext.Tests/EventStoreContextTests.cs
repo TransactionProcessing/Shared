@@ -10,6 +10,7 @@ using Shared.Middleware;
 using Shared.Serialisation;
 using Shouldly;
 using SimpleResults;
+using Microsoft.Extensions.Configuration;
 
 namespace Shared.EventStoreContext.Tests;
 
@@ -32,6 +33,8 @@ public class EventStoreContextTests : IDisposable{
 
         this.EventStoreDockerHelper = new() { Logger = logger };
         StringSerialiser.Initialise(new SystemTextJsonSerializer(new JsonSerializerOptions()));
+        this.InitialiseRetryConfiguration();
+        TypeMap.AddType<EstateCreatedEvent>("EstateCreatedEvent");
     }
 
     #endregion
@@ -354,6 +357,19 @@ public class EventStoreContextTests : IDisposable{
 
         IEventStoreContext context = new EventStore.EventStore.EventStoreContext(settings, deadline);
         return context;
+    }
+
+    private void InitialiseRetryConfiguration()
+    {
+        IConfigurationBuilder builder = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<String, String?>
+        {
+            ["AppSettings:GrpcRetryMaxAttempts"] = "10",
+            ["AppSettings:GrpcRetryBaseDelayMilliseconds"] = "1000",
+            ["AppSettings:GrpcRetryMaxDelayMilliseconds"] = "5000",
+            ["AppSettings:GrpcRetryUseJitter"] = "false",
+        });
+
+        ConfigurationReader.Initialise(builder.Build());
     }
 
     #endregion
