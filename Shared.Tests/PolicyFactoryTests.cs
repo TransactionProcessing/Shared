@@ -10,7 +10,6 @@ using Shouldly;
 namespace Shared.Tests;
 
     using global::Shared.General;
-    using Moq;
     using Polly;
     using SimpleResults;
     using System;

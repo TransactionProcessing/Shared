@@ -1,11 +1,11 @@
-﻿using Shared.EventStore.Tests.TestObjects;
+using Shared.EventStore.Tests.TestObjects;
 
 namespace Shared.EventStore.Tests;
 
 using System.Threading;
 using System.Threading.Tasks;
 using DomainDrivenDesign.EventSourcing;
-using Moq;
+using Imposter.Abstractions;
 using ProjectionEngine;
 using Xunit;
 
@@ -17,15 +17,15 @@ public class ProjectionHandlerTests{
             Name = "Test Name"
         };
 
-        Mock<IProjectionStateRepository<TestState>> projectionStateRepository = new();
-        projectionStateRepository.Setup(p => p.Load(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(originalState);
-        Mock<IProjection<TestState>> projection = new();
-        projection.Setup(p => p.ShouldIHandleEvent(It.IsAny<IDomainEvent>())).Returns(true);
-        projection.Setup(p => p.Handle(It.IsAny<TestState>(), It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(updatedState);
-        Mock<IStateDispatcher<TestState>> dispatcher = new();
-        ProjectionHandler<TestState> handler = new(projectionStateRepository.Object,
-            projection.Object,
-            dispatcher.Object);
+        TestProjectionStateRepository projectionStateRepository = new();
+        projectionStateRepository.LoadHandler = (_, _) => Task.FromResult(originalState);
+        TestProjection projection = new();
+        projection.ShouldHandleHandler = _ => true;
+        projection.HandleHandler = (_, _, _) => Task.FromResult(updatedState);
+        TestStateDispatcher dispatcher = new();
+        ProjectionHandler<TestState> handler = new(projectionStateRepository,
+            projection,
+            dispatcher);
 
         AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
         await handler.Handle(@event, CancellationToken.None);
@@ -36,15 +36,15 @@ public class ProjectionHandlerTests{
     {
         TestState originalState = new();
 
-        Mock<IProjectionStateRepository<TestState>> projectionStateRepository = new();
-        projectionStateRepository.Setup(p => p.Load(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(originalState);
-        Mock<IProjection<TestState>> projection = new();
-        projection.Setup(p => p.ShouldIHandleEvent(It.IsAny<IDomainEvent>())).Returns(true);
-        projection.Setup(p => p.Handle(It.IsAny<TestState>(), It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(originalState);
-        Mock<IStateDispatcher<TestState>> dispatcher = new();
-        ProjectionHandler<TestState> handler = new(projectionStateRepository.Object,
-            projection.Object,
-            dispatcher.Object);
+        TestProjectionStateRepository projectionStateRepository = new();
+        projectionStateRepository.LoadHandler = (_, _) => Task.FromResult(originalState);
+        TestProjection projection = new();
+        projection.ShouldHandleHandler = _ => true;
+        projection.HandleHandler = (_, _, _) => Task.FromResult(originalState);
+        TestStateDispatcher dispatcher = new();
+        ProjectionHandler<TestState> handler = new(projectionStateRepository,
+            projection,
+            dispatcher);
 
         AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
         await handler.Handle(@event, CancellationToken.None);
@@ -55,15 +55,15 @@ public class ProjectionHandlerTests{
     {
         TestState originalState = new();
 
-        Mock<IProjectionStateRepository<TestState>> projectionStateRepository = new();
-        projectionStateRepository.Setup(p => p.Load(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(originalState);
-        Mock<IProjection<TestState>> projection = new();
-        projection.Setup(p => p.ShouldIHandleEvent(It.IsAny<IDomainEvent>())).Returns(true);
-        projection.Setup(p => p.Handle(It.IsAny<TestState>(), It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(originalState);
-        Mock<IStateDispatcher<TestState>> dispatcher = new();
-        ProjectionHandler<TestState> handler = new(projectionStateRepository.Object,
-            projection.Object,
-            dispatcher.Object);
+        TestProjectionStateRepository projectionStateRepository = new();
+        projectionStateRepository.LoadHandler = (_, _) => Task.FromResult(originalState);
+        TestProjection projection = new();
+        projection.ShouldHandleHandler = _ => true;
+        projection.HandleHandler = (_, _, _) => Task.FromResult(originalState);
+        TestStateDispatcher dispatcher = new();
+        ProjectionHandler<TestState> handler = new(projectionStateRepository,
+            projection,
+            dispatcher);
 
         AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
         await handler.Handle(@event, CancellationToken.None);
@@ -73,12 +73,12 @@ public class ProjectionHandlerTests{
     [Fact]
     public async Task ProjectionHandler_Handle_NullEvent_EventHandled()
     {
-        Mock<IProjectionStateRepository<TestState>> projectionStateRepository = new Mock<IProjectionStateRepository<TestState>>();
-        Mock<IProjection<TestState>> projection = new Mock<IProjection<TestState>>();
-        Mock<IStateDispatcher<TestState>> dispatcher = new Mock<IStateDispatcher<TestState>>();
-        ProjectionHandler<TestState> handler = new ProjectionHandler<TestState>(projectionStateRepository.Object,
-            projection.Object,
-            dispatcher.Object);
+        TestProjectionStateRepository projectionStateRepository = new TestProjectionStateRepository();
+        TestProjection projection = new TestProjection();
+        TestStateDispatcher dispatcher = new TestStateDispatcher();
+        ProjectionHandler<TestState> handler = new ProjectionHandler<TestState>(projectionStateRepository,
+            projection,
+            dispatcher);
 
         AggregateNameSetEvent @event = null;
         await handler.Handle(@event, CancellationToken.None);
@@ -87,13 +87,13 @@ public class ProjectionHandlerTests{
     [Fact]
     public async Task ProjectionHandler_Handle_EventNotHandled_EventHandled()
     {
-        Mock<IProjectionStateRepository<TestState>> projectionStateRepository = new();
-        Mock<IProjection<TestState>> projection = new();
-        projection.Setup(p => p.ShouldIHandleEvent(It.IsAny<IDomainEvent>())).Returns(false);
-        Mock<IStateDispatcher<TestState>> dispatcher = new();
-        ProjectionHandler<TestState> handler = new(projectionStateRepository.Object,
-            projection.Object,
-            dispatcher.Object);
+        TestProjectionStateRepository projectionStateRepository = new();
+        TestProjection projection = new();
+        projection.ShouldHandleHandler = _ => false;
+        TestStateDispatcher dispatcher = new();
+        ProjectionHandler<TestState> handler = new(projectionStateRepository,
+            projection,
+            dispatcher);
 
         AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
         await handler.Handle(@event, CancellationToken.None);
@@ -103,14 +103,14 @@ public class ProjectionHandlerTests{
     public async Task ProjectionHandler_Handle_NullState_EventHandled(){
         TestState originalState = null;
 
-        Mock<IProjectionStateRepository<TestState>> projectionStateRepository = new();
-        projectionStateRepository.Setup(p => p.Load(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(originalState);
-        Mock<IProjection<TestState>> projection = new();
-        projection.Setup(p => p.ShouldIHandleEvent(It.IsAny<IDomainEvent>())).Returns(true);
-        Mock<IStateDispatcher<TestState>> dispatcher = new();
-        ProjectionHandler<TestState> handler = new(projectionStateRepository.Object,
-            projection.Object,
-            dispatcher.Object);
+        TestProjectionStateRepository projectionStateRepository = new();
+        projectionStateRepository.LoadHandler = (_, _) => Task.FromResult(originalState);
+        TestProjection projection = new();
+        projection.ShouldHandleHandler = _ => true;
+        TestStateDispatcher dispatcher = new();
+        ProjectionHandler<TestState> handler = new(projectionStateRepository,
+            projection,
+            dispatcher);
 
         AggregateNameSetEvent @event = new(TestData.AggregateId, TestData.EventId, TestData.EstateName);
         await handler.Handle(@event, CancellationToken.None);

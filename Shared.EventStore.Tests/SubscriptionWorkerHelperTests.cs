@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EventHandling;
-using Moq;
+using Imposter.Abstractions;
 using Shouldly;
 using SubscriptionWorker;
 using Xunit;
@@ -15,7 +15,7 @@ public class SubscriptionWorkerHelperTests
 {
     #region Fields
 
-    private readonly Mock<IDomainEventHandlerResolver> domainEventHandlerResolver;
+    private readonly IDomainEventHandlerResolverImposter domainEventHandlerResolver;
 
     #endregion
 

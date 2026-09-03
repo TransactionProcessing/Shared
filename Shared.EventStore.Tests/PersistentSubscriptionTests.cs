@@ -18,7 +18,7 @@ using SimpleResults;
 using Shared.EventStore.SubscriptionWorker;
 using Shared.General;
 using Shared.Logger;
-using Moq;
+using Imposter.Abstractions;
 using Shouldly;
 using Xunit;
 
@@ -38,8 +38,8 @@ public class PersistentSubscriptionTests : IDisposable
     {
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
         TestDomainEventHandler eventHandler = new();
-        Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new Mock<IDomainEventHandlerResolver>();
-        domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>())).Returns(new List<IDomainEventHandler>()
+        IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler>()
         {
             eventHandler
         });
@@ -49,7 +49,7 @@ public class PersistentSubscriptionTests : IDisposable
 
             
 
-        var persistentSubscription = PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
+        var persistentSubscription = PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Instance());
 
         await persistentSubscription.ConnectToSubscription(cancellationToken);
 
@@ -69,8 +69,8 @@ public class PersistentSubscriptionTests : IDisposable
     {
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
         TestDomainEventHandler eventHandler = new();
-        Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new Mock<IDomainEventHandlerResolver>();
-        domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>())).Returns(new List<IDomainEventHandler>()
+        IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler>()
         {
             eventHandler
         });
@@ -78,7 +78,7 @@ public class PersistentSubscriptionTests : IDisposable
         CancellationToken cancellationToken = CancellationToken.None;
             
         var persistentSubscription =
-            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
+            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Instance());
 
         await persistentSubscription.ConnectToSubscription(cancellationToken);
 
@@ -99,8 +99,8 @@ public class PersistentSubscriptionTests : IDisposable
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
         TestDomainEventHandler eventHandler1 = new();
         TestDomainEventHandler eventHandler2 = new();
-        Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new Mock<IDomainEventHandlerResolver>();
-        domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>())).Returns(new List<IDomainEventHandler>()
+        IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler>()
         {
             eventHandler1,
             eventHandler2
@@ -109,7 +109,7 @@ public class PersistentSubscriptionTests : IDisposable
         CancellationToken cancellationToken = CancellationToken.None;
             
         var persistentSubscription =
-            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
+            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Instance());
 
         await persistentSubscription.ConnectToSubscription(cancellationToken);
 
@@ -129,26 +129,26 @@ public class PersistentSubscriptionTests : IDisposable
     [Fact]
     public async Task PersistentSubscription_FailedHandlerWithEmptyMessage_LogsUsefulMessageWithoutSyntheticException()
     {
-        Mock<ILogger> loggerMock = new();
-        Logger.Initialise(loggerMock.Object);
+        TestLogger loggerMock = new();
+        Logger.Initialise(loggerMock);
 
         try
         {
             PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
-            Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new();
-            Mock<IDomainEventHandler> domainEventHandler = new();
-            domainEventHandler.Setup(s => s.Handle(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+            IDomainEventHandlerResolverImposter domainEventHandlerResolver = new();
+            IDomainEventHandlerImposter domainEventHandler = new();
+            domainEventHandler.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
                 .ReturnsAsync(Result.Failure(new List<String>()));
 
-            domainEventHandlerResolver.Setup(d => d.GetDomainEventHandlers(It.IsAny<IDomainEvent>()))
+            domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any())
                 .Returns(new List<IDomainEventHandler>()
                 {
-                    domainEventHandler.Object
+                    domainEventHandler.Instance()
                 });
 
             InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
             PersistentSubscription persistentSubscription =
-                PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
+                PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Instance());
 
             await persistentSubscription.ConnectToSubscription(CancellationToken.None);
 
@@ -156,10 +156,10 @@ public class PersistentSubscriptionTests : IDisposable
 
             persistentSubscriptionsClient.WriteEvent(@event, "EstateCreatedEvent", CancellationToken.None);
 
-            loggerMock.Verify(l => l.LogError(It.Is<String>(message =>
-                message.Contains("Failed to process the event type") &&
-                message.Contains("Result was One or more event handlers have failed. Error Messages []"))), Times.Once);
-            loggerMock.Verify(l => l.LogError(It.IsAny<Exception>()), Times.Never);
+            loggerMock.ErrorMessages.Count.ShouldBe(1);
+            loggerMock.ErrorMessages[0].ShouldContain("Failed to process the event type");
+            loggerMock.ErrorMessages[0].ShouldContain("Result was One or more event handlers have failed. Error Messages []");
+            loggerMock.ErrorExceptions.Count.ShouldBe(0);
         }
         finally
         {
@@ -172,11 +172,11 @@ public class PersistentSubscriptionTests : IDisposable
         this.InitialiseGrpcRetryConfiguration(maxAttempts: 3);
 
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
-        Mock<IDomainEventHandlerResolver> domainEventHandlerResolver = new();
+        IDomainEventHandlerResolverImposter domainEventHandlerResolver = new();
         FlakyPersistentSubscriptionsClient persistentSubscriptionsClient = new(2);
 
         PersistentSubscription persistentSubscription =
-            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Object);
+            PersistentSubscription.Create(persistentSubscriptionsClient, persistentSubscriptionDetails, domainEventHandlerResolver.Instance());
 
         await persistentSubscription.ConnectToSubscription(CancellationToken.None);
 

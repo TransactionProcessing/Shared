@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using Imposter.Abstractions;
 using Shared.EntityFramework;
 using Shouldly;
 using System;
@@ -27,13 +27,13 @@ public class DbContextResolverTests {
         services.AddDbContext<TestDbContext>(options => options.UseInMemoryDatabase("TestDb"));
         ServiceProvider provider = services.BuildServiceProvider();
 
-        Mock<IConfigurationSection> configSectionMock = new();
-        configSectionMock.Setup(x => x["Default"]).Returns("Server=.;Database=Default;Trusted_Connection=True;");
+        IConfigurationSectionImposter configSectionMock = new();
+        configSectionMock[Arg<String>.Is("Default")].Getter().Returns("Server=.;Database=Default;Trusted_Connection=True;");
 
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(configSectionMock.Object);
+        IConfigurationImposter configMock = new();
+        configMock.GetSection("ConnectionStrings").Returns(configSectionMock.Instance());
 
-        DbContextResolver<TestDbContext> resolver = new(provider, configMock.Object);
+        DbContextResolver<TestDbContext> resolver = new(provider, configMock.Instance());
 
         // Act
         ResolvedDbContext<TestDbContext> result = resolver.Resolve("Default", null);
@@ -50,13 +50,13 @@ public class DbContextResolverTests {
         ServiceCollection services = new();
         ServiceProvider provider = services.BuildServiceProvider();
 
-        Mock<IConfigurationSection> configSectionMock = new();
-        configSectionMock.Setup(x => x["Missing"]).Returns(String.Empty);
+        IConfigurationSectionImposter configSectionMock = new();
+        configSectionMock[Arg<String>.Is("Missing")].Getter().Returns(String.Empty);
 
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(configSectionMock.Object);
+        IConfigurationImposter configMock = new();
+        configMock.GetSection("ConnectionStrings").Returns(configSectionMock.Instance());
 
-        DbContextResolver<TestDbContext> resolver = new(provider, configMock.Object);
+        DbContextResolver<TestDbContext> resolver = new(provider, configMock.Instance());
 
         // Act & Assert
         Should.Throw<InvalidOperationException>(() => resolver.Resolve("Missing", null));
@@ -68,13 +68,13 @@ public class DbContextResolverTests {
         ServiceCollection services = new();
         ServiceProvider provider = services.BuildServiceProvider();
 
-        Mock<IConfigurationSection> configSectionMock = new();
-        configSectionMock.Setup(x => x["Default"]).Returns("Server=.;Database=DefaultDb;Trusted_Connection=True;");
+        IConfigurationSectionImposter configSectionMock = new();
+        configSectionMock[Arg<String>.Is("Default")].Getter().Returns("Server=.;Database=DefaultDb;Trusted_Connection=True;");
 
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(configSectionMock.Object);
+        IConfigurationImposter configMock = new();
+        configMock.GetSection("ConnectionStrings").Returns(configSectionMock.Instance());
 
-        DbContextResolver<TestDbContext> resolver = new(provider, configMock.Object);
+        DbContextResolver<TestDbContext> resolver = new(provider, configMock.Instance());
 
         // Act
         ResolvedDbContext<TestDbContext> result = resolver.Resolve("Default", "Tenant1");
