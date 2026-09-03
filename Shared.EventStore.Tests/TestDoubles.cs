@@ -16,12 +16,16 @@ internal sealed class TestAggregateRepository : IAggregateRepository<TestAggrega
     public Func<Guid, CancellationToken, Task<Result<TestAggregate>>> GetLatestVersionHandler { get; set; }
     public Func<TestAggregate, CancellationToken, Task<Result>> SaveChangesHandler { get; set; }
     public Func<Guid, CancellationToken, Task<Result<TestAggregate>>> GetLatestVersionFromLastEventHandler { get; set; }
+    public List<(TestAggregate Aggregate, CancellationToken CancellationToken)> SaveChangesInvocations { get; } = new();
 
     public Task<Result<TestAggregate>> GetLatestVersion(Guid aggregateId, CancellationToken cancellationToken) =>
         GetLatestVersionHandler?.Invoke(aggregateId, cancellationToken) ?? Task.FromResult<Result<TestAggregate>>(default);
 
-    public Task<Result> SaveChanges(TestAggregate aggregate, CancellationToken cancellationToken) =>
-        SaveChangesHandler?.Invoke(aggregate, cancellationToken) ?? Task.FromResult(Result.Success());
+    public Task<Result> SaveChanges(TestAggregate aggregate, CancellationToken cancellationToken)
+    {
+        SaveChangesInvocations.Add((aggregate, cancellationToken));
+        return SaveChangesHandler?.Invoke(aggregate, cancellationToken) ?? Task.FromResult(Result.Success());
+    }
 
     public Task<Result<TestAggregate>> GetLatestVersionFromLastEvent(Guid aggregateId, CancellationToken cancellationToken) =>
         GetLatestVersionFromLastEventHandler?.Invoke(aggregateId, cancellationToken) ?? Task.FromResult<Result<TestAggregate>>(default);

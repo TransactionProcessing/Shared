@@ -136,7 +136,8 @@ public class AggregateServiceTests {
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-
+        repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
+        repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
     }
 
     [Fact]
@@ -156,7 +157,8 @@ public class AggregateServiceTests {
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-
+        repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
+        repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
     }
 
     [Fact]
@@ -176,7 +178,7 @@ public class AggregateServiceTests {
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-
+        repositoryMock.SaveChangesInvocations.Count.ShouldBe(0);
     }
 
     [Fact]
@@ -196,13 +198,17 @@ public class AggregateServiceTests {
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-
+        repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
+        repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
 
         _memoryCache.TryGetValue($"TestAggregate-{aggregate.AggregateId}", out TestAggregate cachedAggregate).ShouldBeTrue();
         cachedAggregate.AggregateName.ShouldBe("1");
 
         aggregate.SetAggregateName("2", Guid.NewGuid());
         result = await _aggregateService.Save(aggregate, CancellationToken.None);
+
+        repositoryMock.SaveChangesInvocations.Count.ShouldBe(2);
+        repositoryMock.SaveChangesInvocations[1].Aggregate.ShouldBeSameAs(aggregate);
 
         _memoryCache.TryGetValue($"TestAggregate-{aggregate.AggregateId}", out cachedAggregate).ShouldBeTrue();
         cachedAggregate.AggregateName.ShouldBe("2");
@@ -224,6 +230,8 @@ public class AggregateServiceTests {
 
         // Assert
         result.IsFailed.ShouldBeTrue();
+        repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
+        repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
     }
 
 
