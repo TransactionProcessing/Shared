@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
-using Moq;
+using Imposter.Abstractions;
 using Shared.EventStore.EventHandling;
 using Shared.EventStore.Extensions;
 using Shared.EventStore.SubscriptionWorker;
@@ -26,7 +26,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new() { 
             SubscriptionWorkers = new List<SubscriptionWorkerConfig>()
@@ -50,14 +50,14 @@ public class ApplicationBuilderExtensionsTests
 
             }
         };
-        Mock<IDomainEventHandlerResolver> deh = new();
+        IDomainEventHandlerResolverImposter deh = new();
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
-        eventHandlerResolvers.Add("Ordered", deh.Object);
-        eventHandlerResolvers.Add("Main", deh.Object);
-        eventHandlerResolvers.Add("Domain", deh.Object);
+        eventHandlerResolvers.Add("Ordered", deh.Instance());
+        eventHandlerResolvers.Add("Main", deh.Instance());
+        eventHandlerResolvers.Add("Domain", deh.Instance());
         Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(3);
     }
@@ -65,7 +65,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_NoneEnabled_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new()
         {
@@ -84,13 +84,13 @@ public class ApplicationBuilderExtensionsTests
                 }
             }
         };
-        Mock<IDomainEventHandlerResolver> deh = new();
+        IDomainEventHandlerResolverImposter deh = new();
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
-        eventHandlerResolvers.Add("Ordered", deh.Object);
-        eventHandlerResolvers.Add("Main", deh.Object);
+        eventHandlerResolvers.Add("Ordered", deh.Instance());
+        eventHandlerResolvers.Add("Main", deh.Instance());
         Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(0);
     }
@@ -98,7 +98,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_NoWorkers_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new()
         {
@@ -107,7 +107,7 @@ public class ApplicationBuilderExtensionsTests
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
         Action<TraceEventType, String, String> traceHandler = null;
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(0);
     }
@@ -115,7 +115,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_OrderedOnlyWorkers_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new()
         {
@@ -128,12 +128,12 @@ public class ApplicationBuilderExtensionsTests
                 },
             }
         };
-        Mock<IDomainEventHandlerResolver> deh = new();
+        IDomainEventHandlerResolverImposter deh = new();
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
-        eventHandlerResolvers.Add("Ordered", deh.Object);
+        eventHandlerResolvers.Add("Ordered", deh.Instance());
         Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(1);
         result.Single().InflightMessages.ShouldBe(1);
@@ -142,7 +142,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_OrderedOnlyWorkers_NoHandlers_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new()
         {
@@ -158,7 +158,7 @@ public class ApplicationBuilderExtensionsTests
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
         Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(0);
     }
@@ -166,7 +166,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_MainOnlyWorkers_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new()
         {
@@ -181,12 +181,12 @@ public class ApplicationBuilderExtensionsTests
                 }
             }
         };
-        Mock<IDomainEventHandlerResolver> deh = new();
+        IDomainEventHandlerResolverImposter deh = new();
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
-        eventHandlerResolvers.Add("Main", deh.Object);
+        eventHandlerResolvers.Add("Main", deh.Instance());
         Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(1);
         result.Single().InflightMessages.ShouldBe(500);
@@ -195,7 +195,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_MainOnlyWorkers_NoHandlers_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new()
         {
@@ -213,7 +213,7 @@ public class ApplicationBuilderExtensionsTests
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
         Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(0);            
     }
@@ -221,7 +221,7 @@ public class ApplicationBuilderExtensionsTests
     [Fact]
     public void ApplicationBuilderExtensions_ConfigureSubscriptions_MainOnlyWorkers_InstanceCount2_WorkerListReturned()
     {
-        Mock<ISubscriptionRepository> subscriptionRepository = new();
+        ISubscriptionRepositoryImposter subscriptionRepository = new();
 
         SubscriptionWorkersRoot config = new()
         {
@@ -236,12 +236,12 @@ public class ApplicationBuilderExtensionsTests
                 }
             }
         };
-        Mock<IDomainEventHandlerResolver> deh = new();
+        IDomainEventHandlerResolverImposter deh = new();
         String eventStoreConnectionString = "esdb://192.168.0.133:2113?tls=true&tlsVerifyCert=false";
         Dictionary<String, IDomainEventHandlerResolver> eventHandlerResolvers = new();
-        eventHandlerResolvers.Add("Main", deh.Object);
+        eventHandlerResolvers.Add("Main", deh.Instance());
         Action<TraceEventType, String, String> traceHandler = (et, type, msg) => TestOutputHelper.WriteLine(msg);
-        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Object, config,
+        var result = IApplicationBuilderExtensions.ConfigureSubscriptions(subscriptionRepository.Instance(), config,
             eventStoreConnectionString, eventHandlerResolvers, traceHandler);
         result.Count.ShouldBe(2);            
     }

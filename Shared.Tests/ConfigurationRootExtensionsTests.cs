@@ -39,7 +39,8 @@ public partial class SharedTests
     {
         return testLogger.GetLogEntries().Where(l => !l.Contains("PSLockDownPolicy") && !String.IsNullOrEmpty(l))
             .Where(l => !l.Contains("Configuration Section"))
-            .Where(l => !l.Contains("CF_USER_TEXT_ENCODING")).ToArray();
+            .Where(l => !l.Contains("CF_USER_TEXT_ENCODING"))
+            .Where(l => !l.Contains("COMPAT_LAYER")).ToArray();
     }
 
     /// <summary>

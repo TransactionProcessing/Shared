@@ -1,6 +1,6 @@
-﻿using EventStore.Client;
+using EventStore.Client;
 using Microsoft.Extensions.Configuration;
-using Moq;
+using Imposter.Abstractions;
 using Shared.EventStore.EventStore;
 using Shared.General;
 using Shouldly;
@@ -17,18 +17,18 @@ namespace Shared.EventStore.Tests;
 public class EventStoreContextManagerTests {
     private readonly EventStoreContextManager Manager;
     
-    private readonly Mock<IEventStoreContext> Context1;
-    private readonly Mock<IEventStoreContext> Context2;
+    private readonly IEventStoreContextImposter Context1;
+    private readonly IEventStoreContextImposter Context2;
     private const String ConnectionStringIdentifier = "ConnectionString";
     private const String ConnectionStringIdentifier1 = "ConnectionString1";
 
     public EventStoreContextManagerTests() {
-        this.Context1 = new Mock<IEventStoreContext>();
-        this.Context2 = new Mock<IEventStoreContext>();
+        this.Context1 = new IEventStoreContextImposter();
+        this.Context2 = new IEventStoreContextImposter();
         this.Manager = new EventStoreContextManager((s) => {
             if (s.Contains("133"))
-                return this.Context1.Object;
-            return this.Context2.Object;
+                return this.Context1.Instance();
+            return this.Context2.Instance();
         });
         
         IReadOnlyDictionary<String, String> defaultAppSettings = new Dictionary<String, String>
