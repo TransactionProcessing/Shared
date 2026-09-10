@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using KurrentDB.Client;
+using Shared.Monitoring;
+using SocketIOClient;
 
 namespace Driver;
 
@@ -41,8 +43,14 @@ internal class Program
     }
 
     private static async Task Main(String[] args) {
-        Logger.Initialise(NullLogger.Instance);
-        await Program.SubscriptionsTest();
+        var config = new UptimeKumaConfiguration(true, "http://localhost:3001", "txnproc", "Sc0tland");
+        ISocketIO socket = new SocketIO(new Uri(config.ServerAddress));
+        UptimeKumaClient client = new UptimeKumaClient(socket, config);
+
+        await client.RegisterMonitor(new UptimeKumaMonitor("Test", "https://localhost:5001/health", 60), CancellationToken.None);
+        
+        //Logger.Initialise(NullLogger.Instance);
+        //await Program.SubscriptionsTest();
         Console.ReadKey();
     }
 
