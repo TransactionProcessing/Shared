@@ -54,13 +54,19 @@ public static class UptimeKumaExtensions
         return services;
     }
 
-    public static Task RegisterWithUptimeKumaAsync(
+    public static async Task RegisterWithUptimeKumaAsync(
         this IHost host,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(host);
 
-        return host.RegisterWithUptimeKumaAsync(
+        var configuration = host.Services.GetService<UptimeKumaConfiguration>();
+        if (configuration is null || !configuration.Enabled)
+        {
+            return;
+        }
+
+        await host.RegisterWithUptimeKumaAsync(
             host.Services.GetRequiredService<UptimeKumaMonitor>(),
             cancellationToken);
     }
@@ -139,6 +145,9 @@ public static class UptimeKumaExtensions
             url,
             monitor.GetValue(
                 "IntervalInSeconds",
-                section.GetValue("IntervalInSeconds", 60)));
+                section.GetValue("IntervalInSeconds", 60)),
+            monitor.GetValue(
+                "IgnoreTls",
+                section.GetValue("IgnoreTls", false)));
     }
 }

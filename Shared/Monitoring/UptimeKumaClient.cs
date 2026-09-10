@@ -48,7 +48,7 @@ namespace Shared.Monitoring
                 notificationIDList = new Dictionary<string, bool>(),
 
                 active = true,
-                ignoreTls = true,
+                ignoreTls = monitorToAdd.IgnoreTls,
                 expiryNotification = true,
                 upsideDown = false,
                 maxredirects = 10
@@ -109,7 +109,9 @@ namespace Shared.Monitoring
                     return Task.CompletedTask;
                 }, cancellationToken);
 
-            return await completion.Task;
+            return await completion.Task.WaitAsync(
+                TimeSpan.FromSeconds(30),
+                cancellationToken);
         }
 
         public async ValueTask DisposeAsync()
@@ -135,5 +137,9 @@ namespace Shared.Monitoring
 
     public record UptimeKumaConfiguration(Boolean Enabled, String ServerAddress, String Username, String Password);
 
-    public record UptimeKumaMonitor(String Name, String Url, Int32 IntervalInSeconds=60);
+    public record UptimeKumaMonitor(
+        String Name,
+        String Url,
+        Int32 IntervalInSeconds = 60,
+        Boolean IgnoreTls = false);
 }

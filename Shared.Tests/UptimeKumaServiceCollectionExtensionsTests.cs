@@ -107,6 +107,24 @@ public sealed class UptimeKumaServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public async Task RegisterWithUptimeKumaAsync_WhenDisabled_DoesNotResolveConfiguredMonitor()
+    {
+        var fake = new RecordingUptimeKumaClient();
+        using var host = new HostBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IUptimeKumaClient>(fake);
+                services.AddSingleton(new UptimeKumaConfiguration(
+                    false, "http://kuma.test:3001", "user", "password"));
+            })
+            .Build();
+
+        await host.RegisterWithUptimeKumaAsync();
+
+        fake.CallCount.ShouldBe(0);
+    }
+
+    [Fact]
     public async Task RegisterWithUptimeKumaAsync_WhenDisabled_DoesNotCallClient()
     {
         var fake = new RecordingUptimeKumaClient();
