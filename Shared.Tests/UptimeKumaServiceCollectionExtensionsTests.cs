@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Shared.Monitoring;
 using Shouldly;
 using SimpleResults;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -13,6 +14,40 @@ namespace Shared.Tests;
 
 public sealed class UptimeKumaServiceCollectionExtensionsTests
 {
+    [Fact]
+    public void FindExistingMonitor_MatchesNameAndUrl()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "12": { "id": 12, "name": "My API", "url": "https://api.test/health" },
+              "13": { "id": 13, "name": "Other API", "url": "https://api.test/health" }
+            }
+            """);
+
+        var match = UptimeKumaClient.FindExistingMonitor(
+            document.RootElement,
+            new UptimeKumaMonitor("My API", "https://api.test/health"));
+
+        match.ShouldNotBeNull();
+        match.Id.ShouldBe(12);
+    }
+
+    [Fact]
+    public void FindExistingMonitor_ReturnsNullWhenNameOrUrlDiffers()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "12": { "id": 12, "name": "My API", "url": "https://api.test/health" }
+            }
+            """);
+
+        var match = UptimeKumaClient.FindExistingMonitor(
+            document.RootElement,
+            new UptimeKumaMonitor("My API", "https://api.test/other"));
+
+        match.ShouldBeNull();
+    }
+
     [Fact]
     public async Task AddUptimeKuma_BindsConfigurationAndRegistersClient()
     {
