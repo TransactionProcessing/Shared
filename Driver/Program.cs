@@ -51,7 +51,8 @@ internal class Program
         await client.RegisterMonitor(new UptimeKumaMonitor("Test", "http://localhost:5001/health", 60), CancellationToken.None);
         await client.RegisterMonitor(new UptimeKumaMonitor("Test", "http://localhost:5001/health", 60), CancellationToken.None);
         await client.RegisterMonitor(new UptimeKumaMonitor("Test1", "http://localhost:5001/health", 60), CancellationToken.None);
-
+        await client.RegisterMonitor(new UptimeKumaMonitor("Test", "http://localhost:5002/health", 60), CancellationToken.None);
+        await client.RegisterMonitor(new UptimeKumaMonitor("Test2", "http://localhost:5001/health", 60), CancellationToken.None);
         //Logger.Initialise(NullLogger.Instance);
         //await Program.SubscriptionsTest();
         Console.ReadKey();
