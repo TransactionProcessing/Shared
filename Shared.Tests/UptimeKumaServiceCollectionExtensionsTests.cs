@@ -49,6 +49,39 @@ public sealed class UptimeKumaServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public void MergeMonitorPayload_PreservesExistingKumaManagedSettings()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "12": {
+                "id": 12,
+                "name": "My API",
+                "url": "https://api.test/health",
+                "notificationIDList": { "7": true },
+                "conditions": [{ "key": "status", "value": "500" }],
+                "active": false,
+                "timeout": 15
+              }
+            }
+            """);
+
+        var existing = UptimeKumaClient.FindExistingMonitor(
+            document.RootElement,
+            new UptimeKumaMonitor("My API", "https://api.test/health"));
+
+        existing.ShouldNotBeNull();
+        var merged = UptimeKumaClient.MergeMonitorPayload(
+            existing,
+            new UptimeKumaMonitor("My API", "https://api.test/health", 30));
+
+        merged["notificationIDList"].GetProperty("7").GetBoolean().ShouldBeTrue();
+        merged["conditions"].GetArrayLength().ShouldBe(1);
+        merged["active"].GetBoolean().ShouldBeFalse();
+        merged["timeout"].GetInt32().ShouldBe(15);
+        merged["interval"].GetInt32().ShouldBe(30);
+    }
+
+    [Fact]
     public async Task AddUptimeKuma_BindsConfigurationAndRegistersClient()
     {
         var configuration = new ConfigurationBuilder()

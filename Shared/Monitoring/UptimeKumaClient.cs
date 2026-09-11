@@ -61,11 +61,10 @@ namespace Shared.Monitoring
                 TimeSpan.FromSeconds(30),
                 cancellationToken);
             var existingMonitor = FindExistingMonitor(monitorList, monitorToAdd);
-            var monitor = BuildMonitorPayload(monitorToAdd);
-
             if (existingMonitor is null)
             {
-                var addResult = await EmitAsync<MonitorResponse>("add", monitor, cancellationToken);
+                var addMonitor = BuildMonitorPayload(monitorToAdd);
+                var addResult = await EmitAsync<MonitorResponse>("add", addMonitor, cancellationToken);
                 if (!addResult.ok || addResult.monitorID is null)
                 {
                     throw new InvalidOperationException($"Monitor creation failed: {addResult.msg}");
@@ -74,10 +73,10 @@ namespace Shared.Monitoring
                 return addResult.monitorID.Value;
             }
 
-            monitor["id"] = existingMonitor.Id;
+            var editMonitor = MergeMonitorPayload(existingMonitor, monitorToAdd);
             var editResult = await EmitAsync<MonitorResponse>(
                 "editMonitor",
-                monitor,
+                editMonitor,
                 cancellationToken);
             if (!editResult.ok)
             {
@@ -111,12 +110,12 @@ namespace Shared.Monitoring
                 if (monitor.TryGetProperty("id", out var idProperty)
                     && idProperty.TryGetInt32(out var monitorId))
                 {
-                    return new ExistingMonitor(monitorId);
+                    return new ExistingMonitor(monitorId, monitor.Clone());
                 }
 
                 if (int.TryParse(monitorProperty.Name, out monitorId))
                 {
-                    return new ExistingMonitor(monitorId);
+                    return new ExistingMonitor(monitorId, monitor.Clone());
                 }
             }
 
@@ -124,6 +123,35 @@ namespace Shared.Monitoring
         }
 
         private static Dictionary<string, object> BuildMonitorPayload(UptimeKumaMonitor monitorToAdd)
+        {
+            var payload = BuildManagedMonitorPayload(monitorToAdd);
+            payload["conditions"] = Array.Empty<object>();
+            payload["notificationIDList"] = new Dictionary<string, bool>();
+            payload["active"] = true;
+            return payload;
+        }
+
+        internal static Dictionary<string, JsonElement> MergeMonitorPayload(
+            ExistingMonitor existingMonitor,
+            UptimeKumaMonitor monitorToAdd)
+        {
+            var payload = new Dictionary<string, JsonElement>();
+            foreach (var property in existingMonitor.Payload.EnumerateObject())
+            {
+                payload[property.Name] = property.Value.Clone();
+            }
+
+            foreach (var property in BuildManagedMonitorPayload(monitorToAdd))
+            {
+                payload[property.Key] = JsonSerializer.SerializeToElement(property.Value);
+            }
+
+            payload["id"] = JsonSerializer.SerializeToElement(existingMonitor.Id);
+            return payload;
+        }
+
+        private static Dictionary<string, object> BuildManagedMonitorPayload(
+            UptimeKumaMonitor monitorToAdd)
         {
             return new Dictionary<string, object>
             {
@@ -136,9 +164,6 @@ namespace Shared.Monitoring
                 ["maxretries"] = 0,
                 ["resendInterval"] = 0,
                 ["accepted_statuscodes"] = new[] { "200-299" },
-                ["conditions"] = Array.Empty<object>(),
-                ["notificationIDList"] = new Dictionary<string, bool>(),
-                ["active"] = true,
                 ["ignoreTls"] = monitorToAdd.IgnoreTls,
                 ["expiryNotification"] = true,
                 ["upsideDown"] = false,
@@ -235,7 +260,7 @@ namespace Shared.Monitoring
             public string? msg { get; set; }
         }
 
-        internal sealed record ExistingMonitor(int Id);
+        internal sealed record ExistingMonitor(int Id, JsonElement Payload);
     }
 
 
