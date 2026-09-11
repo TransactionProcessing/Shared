@@ -45,7 +45,9 @@ public static class UptimeKumaExtensions
         services.AddSingleton<UptimeKumaClient>(serviceProvider =>
         {
             var configuration = serviceProvider.GetRequiredService<UptimeKumaConfiguration>();
-            var socket = new SocketIO(new Uri(configuration.ServerAddress));
+            var socket = configuration.Enabled
+                ? new SocketIO(new Uri(configuration.ServerAddress))
+                : null;
             return new UptimeKumaClient(socket, configuration);
         });
         services.AddSingleton<IUptimeKumaClient>(serviceProvider =>
@@ -109,6 +111,11 @@ public static class UptimeKumaExtensions
 
     private static UptimeKumaConfiguration BindConfiguration(IConfigurationSection section)
     {
+        if (!section.Exists())
+        {
+            return new UptimeKumaConfiguration(false, string.Empty, string.Empty, string.Empty);
+        }
+
         var server = section.GetSection("Server");
         var serverAddress = server["Address"]
             ?? server["ServerAddress"]

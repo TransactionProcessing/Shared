@@ -57,6 +57,35 @@ public sealed class UptimeKumaServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public async Task RegisterWithUptimeKumaAsync_WhenConfigurationSectionIsMissing_DoesNothing()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+        using var host = new HostBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConfiguration>(configuration);
+                services.AddUptimeKuma();
+            })
+            .Build();
+
+        await Should.NotThrowAsync(() => host.RegisterWithUptimeKumaAsync());
+    }
+
+    [Fact]
+    public async Task AddUptimeKuma_WhenConfigurationSectionIsMissing_ResolvesDisabledClient()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+        await using var provider = new ServiceCollection()
+            .AddSingleton<IConfiguration>(configuration)
+            .AddUptimeKuma()
+            .BuildServiceProvider();
+
+        var client = provider.GetRequiredService<IUptimeKumaClient>();
+
+        client.ShouldNotBeNull();
+    }
+
+    [Fact]
     public async Task AddUptimeKuma_BindsNestedServerAndMonitorSections()
     {
         var configuration = new ConfigurationBuilder()

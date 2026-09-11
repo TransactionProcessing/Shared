@@ -13,11 +13,11 @@ namespace Shared.Monitoring
     }
 
     public class UptimeKumaClient : IUptimeKumaClient, IAsyncDisposable {
-        private readonly ISocketIO Socket;
+        private readonly ISocketIO? Socket;
         private readonly UptimeKumaConfiguration Configuration;
 
 
-        public UptimeKumaClient(ISocketIO socket, UptimeKumaConfiguration configuration) {
+        public UptimeKumaClient(ISocketIO? socket, UptimeKumaConfiguration configuration) {
             this.Socket = socket;
             this.Configuration = configuration;
         }
@@ -116,6 +116,11 @@ namespace Shared.Monitoring
 
         public async ValueTask DisposeAsync()
         {
+            if (Socket is null)
+            {
+                return;
+            }
+
             await Socket.DisconnectAsync();
             Socket.Dispose();
         }
