@@ -137,6 +137,14 @@ public static class UptimeKumaExtensions
 
     private static UptimeKumaMonitor BindMonitor(IConfigurationSection section)
     {
+        var server = section.GetSection("Server");
+        var enabled = server.GetValue("Enabled", section.GetValue("Enabled", false));
+
+        if (!section.Exists() || !enabled)
+        {
+            return new UptimeKumaMonitor(string.Empty, string.Empty);
+        }
+
         var monitor = section.GetSection("Monitor");
         var name = monitor["Name"] ?? section["MonitorName"];
         var url = monitor["Url"] ?? section["MonitorUrl"];
