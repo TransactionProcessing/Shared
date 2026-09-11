@@ -109,6 +109,11 @@ public static class UptimeKumaExtensions
 
     private static UptimeKumaConfiguration BindConfiguration(IConfigurationSection section)
     {
+        if (!section.Exists())
+        {
+            return new UptimeKumaConfiguration(false, string.Empty, string.Empty, string.Empty);
+        }
+
         var server = section.GetSection("Server");
         var serverAddress = server["Address"]
             ?? server["ServerAddress"]
