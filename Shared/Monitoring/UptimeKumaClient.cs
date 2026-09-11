@@ -29,43 +29,156 @@ namespace Shared.Monitoring
                 return Result.Success(0);
             }
 
+            var monitorListReceived = new TaskCompletionSource<JsonElement>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
             await LoginAsync(this.Configuration.Username, this.Configuration.Password, cancellationToken);
 
-            var monitor = new
+            Socket.On("monitorList", response =>
             {
-                type = "http",
-                name = monitorToAdd.Name,
-                url = monitorToAdd.Url,
-                method = "GET",
+                try
+                {
+                    monitorListReceived.TrySetResult(response.GetValue<JsonElement>(0));
+                }
+                catch (Exception exception)
+                {
+                    monitorListReceived.TrySetException(exception);
+                }
 
-                interval = monitorToAdd.IntervalInSeconds,
-                retryInterval = monitorToAdd.IntervalInSeconds,
-                maxretries = 0,
-                resendInterval = 0,
+                return Task.CompletedTask;
+            });
 
-                accepted_statuscodes = new[] { "200-299" },
-                conditions = Array.Empty<object>(),
-                notificationIDList = new Dictionary<string, bool>(),
-
-                active = true,
-                ignoreTls = monitorToAdd.IgnoreTls,
-                expiryNotification = true,
-                upsideDown = false,
-                maxredirects = 10
-            };
-
-            var result = await EmitAsync<MonitorResponse>("add", monitor, cancellationToken);
-            if (!result.ok || result.monitorID is null)
+            var listResult = await EmitAsync<MonitorListResponse>(
+                "getMonitorList",
+                null,
+                cancellationToken);
+            if (!listResult.ok)
             {
-                throw new InvalidOperationException($"Monitor creation failed: {result.msg}");
+                throw new InvalidOperationException($"Monitor list retrieval failed: {listResult.msg}");
             }
 
-            return result.monitorID.Value;
+            var monitorList = await monitorListReceived.Task.WaitAsync(
+                TimeSpan.FromSeconds(30),
+                cancellationToken);
+            var existingMonitor = FindExistingMonitor(monitorList, monitorToAdd);
+            if (existingMonitor is null)
+            {
+                var addMonitor = BuildMonitorPayload(monitorToAdd);
+                var addResult = await EmitAsync<MonitorResponse>("add", addMonitor, cancellationToken);
+                if (!addResult.ok || addResult.monitorID is null)
+                {
+                    throw new InvalidOperationException($"Monitor creation failed: {addResult.msg}");
+                }
+
+                return addResult.monitorID.Value;
+            }
+
+            var editMonitor = MergeMonitorPayload(existingMonitor, monitorToAdd);
+            var editResult = await EmitAsync<MonitorResponse>(
+                "editMonitor",
+                editMonitor,
+                cancellationToken);
+            if (!editResult.ok)
+            {
+                throw new InvalidOperationException($"Monitor update failed: {editResult.msg}");
+            }
+
+            return existingMonitor.Id;
+        }
+
+        internal static ExistingMonitor? FindExistingMonitor(
+            JsonElement monitorList,
+            UptimeKumaMonitor monitorToFind)
+        {
+            if (monitorList.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            foreach (var monitorProperty in monitorList.EnumerateObject())
+            {
+                var monitor = monitorProperty.Value;
+                if (monitor.ValueKind != JsonValueKind.Object
+                    || !monitor.TryGetProperty("name", out var name)
+                    || !monitor.TryGetProperty("url", out var url)
+                    || !string.Equals(name.GetString(), monitorToFind.Name, StringComparison.Ordinal)
+                    || !string.Equals(url.GetString(), monitorToFind.Url, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (monitor.TryGetProperty("id", out var idProperty)
+                    && idProperty.TryGetInt32(out var monitorId))
+                {
+                    return new ExistingMonitor(monitorId, monitor.Clone());
+                }
+
+                if (int.TryParse(monitorProperty.Name, out monitorId))
+                {
+                    return new ExistingMonitor(monitorId, monitor.Clone());
+                }
+            }
+
+            return null;
+        }
+
+        private static Dictionary<string, object> BuildMonitorPayload(UptimeKumaMonitor monitorToAdd)
+        {
+            var payload = BuildManagedMonitorPayload(monitorToAdd);
+            payload["conditions"] = Array.Empty<object>();
+            payload["notificationIDList"] = new Dictionary<string, bool>();
+            payload["active"] = true;
+            return payload;
+        }
+
+        internal static Dictionary<string, JsonElement> MergeMonitorPayload(
+            ExistingMonitor existingMonitor,
+            UptimeKumaMonitor monitorToAdd)
+        {
+            var payload = new Dictionary<string, JsonElement>();
+            foreach (var property in existingMonitor.Payload.EnumerateObject())
+            {
+                payload[property.Name] = property.Value.Clone();
+            }
+
+            foreach (var property in BuildManagedMonitorPayload(monitorToAdd))
+            {
+                payload[property.Key] = JsonSerializer.SerializeToElement(property.Value);
+            }
+
+            payload["id"] = JsonSerializer.SerializeToElement(existingMonitor.Id);
+            return payload;
+        }
+
+        private static Dictionary<string, object> BuildManagedMonitorPayload(
+            UptimeKumaMonitor monitorToAdd)
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "http",
+                ["name"] = monitorToAdd.Name,
+                ["url"] = monitorToAdd.Url,
+                ["method"] = "GET",
+                ["interval"] = monitorToAdd.IntervalInSeconds,
+                ["retryInterval"] = monitorToAdd.IntervalInSeconds,
+                ["maxretries"] = 0,
+                ["resendInterval"] = 0,
+                ["accepted_statuscodes"] = new[] { "200-299" },
+                ["ignoreTls"] = monitorToAdd.IgnoreTls,
+                ["expiryNotification"] = true,
+                ["upsideDown"] = false,
+                ["maxredirects"] = 10
+            };
         }
 
         private async Task LoginAsync(string username,
                                       string password,
                                       CancellationToken cancellationToken) {
+            if (Socket.Connected)
+            {
+                return;
+            }
+
             var infoReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
             // Register before ConnectAsync.
@@ -76,7 +189,7 @@ namespace Shared.Monitoring
 
             await Socket.ConnectAsync(cancellationToken);
 
-            await infoReceived.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
+            await infoReceived.Task.WaitAsync(TimeSpan.FromSeconds(60), cancellationToken);
 
             var login = await EmitAsync<LoginResponse>("login", new { username, password, token = "" }, cancellationToken);
 
@@ -86,14 +199,17 @@ namespace Shared.Monitoring
         }
 
 
-        private async Task<T> EmitAsync<T>(string eventName, object payload, CancellationToken cancellationToken)
+        private async Task<T> EmitAsync<T>(
+            string eventName,
+            object? payload,
+            CancellationToken cancellationToken)
         {
             var completion = new TaskCompletionSource<T>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
 
             await Socket.EmitAsync(
                 eventName,
-                new[] { payload },
+                payload is null ? Array.Empty<object>() : new[] { payload },
                 acknowledgement =>
                 {
                     try
@@ -137,6 +253,14 @@ namespace Shared.Monitoring
             public string? msg { get; set; }
             public int? monitorID { get; set; }
         }
+
+        private sealed class MonitorListResponse
+        {
+            public bool ok { get; set; }
+            public string? msg { get; set; }
+        }
+
+        internal sealed record ExistingMonitor(int Id, JsonElement Payload);
     }
 
 

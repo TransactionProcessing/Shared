@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-	  <DebugType>None</DebugType>
+	  <DebugType>Full</DebugType>
 	  <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
 
