@@ -47,8 +47,11 @@ internal class Program
         ISocketIO socket = new SocketIO(new Uri(config.ServerAddress));
         UptimeKumaClient client = new UptimeKumaClient(socket, config);
 
-        await client.RegisterMonitor(new UptimeKumaMonitor("Test", "https://localhost:5001/health", 60), CancellationToken.None);
-        
+        await client.RegisterMonitor(new UptimeKumaMonitor("Test", "http://localhost:5001/health", 60), CancellationToken.None);
+        await client.RegisterMonitor(new UptimeKumaMonitor("Test", "http://localhost:5001/health", 60), CancellationToken.None);
+        await client.RegisterMonitor(new UptimeKumaMonitor("Test", "http://localhost:5001/health", 60), CancellationToken.None);
+        await client.RegisterMonitor(new UptimeKumaMonitor("Test1", "http://localhost:5001/health", 60), CancellationToken.None);
+
         //Logger.Initialise(NullLogger.Instance);
         //await Program.SubscriptionsTest();
         Console.ReadKey();

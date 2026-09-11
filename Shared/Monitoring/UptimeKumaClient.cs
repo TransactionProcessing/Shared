@@ -32,6 +32,8 @@ namespace Shared.Monitoring
             var monitorListReceived = new TaskCompletionSource<JsonElement>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
 
+            await LoginAsync(this.Configuration.Username, this.Configuration.Password, cancellationToken);
+
             Socket.On("monitorList", response =>
             {
                 try
@@ -46,7 +48,14 @@ namespace Shared.Monitoring
                 return Task.CompletedTask;
             });
 
-            await LoginAsync(this.Configuration.Username, this.Configuration.Password, cancellationToken);
+            var listResult = await EmitAsync<MonitorListResponse>(
+                "getMonitorList",
+                null,
+                cancellationToken);
+            if (!listResult.ok)
+            {
+                throw new InvalidOperationException($"Monitor list retrieval failed: {listResult.msg}");
+            }
 
             var monitorList = await monitorListReceived.Task.WaitAsync(
                 TimeSpan.FromSeconds(30),
@@ -140,6 +149,11 @@ namespace Shared.Monitoring
         private async Task LoginAsync(string username,
                                       string password,
                                       CancellationToken cancellationToken) {
+            if (Socket.Connected)
+            {
+                return;
+            }
+
             var infoReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
             // Register before ConnectAsync.
@@ -150,7 +164,7 @@ namespace Shared.Monitoring
 
             await Socket.ConnectAsync(cancellationToken);
 
-            await infoReceived.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
+            await infoReceived.Task.WaitAsync(TimeSpan.FromSeconds(60), cancellationToken);
 
             var login = await EmitAsync<LoginResponse>("login", new { username, password, token = "" }, cancellationToken);
 
@@ -160,14 +174,17 @@ namespace Shared.Monitoring
         }
 
 
-        private async Task<T> EmitAsync<T>(string eventName, object payload, CancellationToken cancellationToken)
+        private async Task<T> EmitAsync<T>(
+            string eventName,
+            object? payload,
+            CancellationToken cancellationToken)
         {
             var completion = new TaskCompletionSource<T>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
 
             await Socket.EmitAsync(
                 eventName,
-                new[] { payload },
+                payload is null ? Array.Empty<object>() : new[] { payload },
                 acknowledgement =>
                 {
                     try
@@ -210,6 +227,12 @@ namespace Shared.Monitoring
             public bool ok { get; set; }
             public string? msg { get; set; }
             public int? monitorID { get; set; }
+        }
+
+        private sealed class MonitorListResponse
+        {
+            public bool ok { get; set; }
+            public string? msg { get; set; }
         }
 
         internal sealed record ExistingMonitor(int Id);
