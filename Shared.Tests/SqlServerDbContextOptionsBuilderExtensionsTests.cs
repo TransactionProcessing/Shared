@@ -75,4 +75,69 @@ public class SqlServerDbContextOptionsBuilderExtensionsTests
         options.MaxRetryDelay.ShouldBe(TimeSpan.FromSeconds(12));
         options.AdditionalTransientErrorNumbers.ShouldBe(new[] { 1, 2, 3 });
     }
+
+    [Fact]
+    public void UseSharedSqlServer_WithOnlyRetryCount_UsesDefaultDelayAndErrorNumbers()
+    {
+        DbContextOptionsBuilder<TestDbContext> optionsBuilder = new();
+
+        optionsBuilder.UseSharedSqlServer<TestDbContext>(
+            "Server=.;Database=DefaultDb;Trusted_Connection=True;",
+            retryOptions => retryOptions.MaxRetryCount = 2);
+
+        SqlServerRetryingExecutionStrategy strategy =
+            new TestDbContext(optionsBuilder.Options).Database.CreateExecutionStrategy()
+                as SqlServerRetryingExecutionStrategy;
+
+        strategy.MaxRetryCount.ShouldBe(2);
+        strategy.MaxRetryDelay.ShouldBe(TimeSpan.FromSeconds(30));
+        strategy.AdditionalErrorNumbers.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void UseSharedSqlServer_WithOnlyAdditionalErrors_UsesDefaultRetryValues()
+    {
+        DbContextOptionsBuilder<TestDbContext> optionsBuilder = new();
+
+        optionsBuilder.UseSharedSqlServer<TestDbContext>(
+            "Server=.;Database=DefaultDb;Trusted_Connection=True;",
+            retryOptions => retryOptions.AdditionalTransientErrorNumbers = new[] { 4060 });
+
+        SqlServerRetryingExecutionStrategy strategy =
+            new TestDbContext(optionsBuilder.Options).Database.CreateExecutionStrategy()
+                as SqlServerRetryingExecutionStrategy;
+
+        strategy.MaxRetryCount.ShouldBe(6);
+        strategy.MaxRetryDelay.ShouldBe(TimeSpan.FromSeconds(30));
+        strategy.AdditionalErrorNumbers.ShouldBe(new[] { 4060 });
+    }
+
+    [Fact]
+    public void UseSharedSqlServer_WithOnlyRetryDelay_UsesDefaultCountAndErrorNumbers()
+    {
+        DbContextOptionsBuilder<TestDbContext> optionsBuilder = new();
+
+        optionsBuilder.UseSharedSqlServer<TestDbContext>(
+            "Server=.;Database=DefaultDb;Trusted_Connection=True;",
+            retryOptions => retryOptions.MaxRetryDelay = TimeSpan.FromSeconds(7));
+
+        SqlServerRetryingExecutionStrategy strategy =
+            new TestDbContext(optionsBuilder.Options).Database.CreateExecutionStrategy()
+                as SqlServerRetryingExecutionStrategy;
+
+        strategy.MaxRetryCount.ShouldBe(6);
+        strategy.MaxRetryDelay.ShouldBe(TimeSpan.FromSeconds(7));
+        strategy.AdditionalErrorNumbers.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void UseSharedSqlServer_RejectsNullOrBlankArguments()
+    {
+        Should.Throw<ArgumentNullException>(() =>
+            SqlServerDbContextOptionsBuilderExtensions.UseSharedSqlServer<TestDbContext>(
+                null,
+                "connection"));
+        Should.Throw<ArgumentException>(() =>
+            new DbContextOptionsBuilder().UseSharedSqlServer<TestDbContext>(" "));
+    }
 }

@@ -1,18 +1,5 @@
 ﻿namespace Shared.Logger.TennantContext;
 
-public record TenantIdentifiers(Guid EstateId,
-                                Guid MerchantId)
-{
-    #region Methods
-
-    public static TenantIdentifiers Default()
-    {
-        return new TenantIdentifiers(Guid.Empty, Guid.Empty);
-    }
-
-    #endregion
-}
-
 public class TenantContext
 {
     #region Fields
@@ -23,7 +10,7 @@ public class TenantContext
 
     #region Properties
 
-    public Guid CorrelationId { get; internal set; } = Guid.NewGuid();
+    public CorrelationId CorrelationId { get; internal set; } = CorrelationId.New();
 
     public static TenantContext CurrentTenant
     {
@@ -36,28 +23,6 @@ public class TenantContext
     public Boolean PerTenantLogsEnabled { get; internal set; }
 
     public Guid MerchantId { get; internal set; }
-
-    #endregion
-}
-
-public static class TenantContextExtensionMethods
-{
-    #region Methods
-
-    public static void SetCorrelationId(this TenantContext context,
-                                        Guid correlationId)
-    {
-        context.CorrelationId = correlationId;
-    }
-
-    public static void Initialise(this TenantContext tenantContext,
-                                  TenantIdentifiers identifiers,
-                                  Boolean perTenantLogsEnabled)
-    {
-        tenantContext.EstateId = identifiers.EstateId;
-        tenantContext.MerchantId = identifiers.MerchantId;
-        tenantContext.PerTenantLogsEnabled = perTenantLogsEnabled;
-    }
 
     #endregion
 }

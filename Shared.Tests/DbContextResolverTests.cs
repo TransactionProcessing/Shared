@@ -21,6 +21,12 @@ public class TestDbContext : DbContext {
 
 public class DbContextResolverTests {
     [Fact]
+    public void ResolvedDbContext_RejectsNullScope()
+    {
+        Should.Throw<ArgumentNullException>(() => new ResolvedDbContext<TestDbContext>(null));
+    }
+
+    [Fact]
     public void Resolve_WithValidConnectionString_ResolvesDbContext() {
         // Arrange
         ServiceCollection services = new();
@@ -40,6 +46,26 @@ public class DbContextResolverTests {
 
         // Assert
         result.ShouldNotBeNull();
+        result.Context.ShouldNotBeNull();
+        result.Dispose();
+    }
+
+    [Fact]
+    public void Resolve_WithoutSuffix_ResolvesDbContext() {
+        ServiceCollection services = new();
+        services.AddDbContext<TestDbContext>(options => options.UseInMemoryDatabase("TestDbWithoutSuffix"));
+        ServiceProvider provider = services.BuildServiceProvider();
+
+        IConfigurationSectionImposter configSectionMock = new();
+        configSectionMock[Arg<String>.Is("Default")].Getter().Returns("Server=.;Database=Default;Trusted_Connection=True;");
+
+        IConfigurationImposter configMock = new();
+        configMock.GetSection("ConnectionStrings").Returns(configSectionMock.Instance());
+
+        DbContextResolver<TestDbContext> resolver = new(provider, configMock.Instance());
+
+        ResolvedDbContext<TestDbContext> result = resolver.Resolve("Default");
+
         result.Context.ShouldNotBeNull();
         result.Dispose();
     }
