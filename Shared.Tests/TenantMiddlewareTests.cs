@@ -112,7 +112,8 @@ public class TenantMiddlewareTests
         await middleware.InvokeAsync(context, tenantContext);
 
         tenantContext.CorrelationId.Value.ShouldBe(correlationId);
-        context.Items[TenantMiddleware.KeyNameCorrelationId].ShouldBe(correlationId.ToString());
+        context.Items[TenantMiddleware.KeyNameCorrelationId]
+            .ShouldBe(CorrelationId.From(correlationId).ToString());
         nextCalled.ShouldBeTrue();
     }
 

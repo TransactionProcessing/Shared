@@ -28,6 +28,6 @@ public sealed record CorrelationId {
     }
 
     public override string ToString() {
-        return this.Value.ToString("N");
+        return this.Value.ToString("D");
     }
 }

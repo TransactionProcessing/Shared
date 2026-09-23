@@ -51,12 +51,12 @@ public class CorrelationIdTests
     }
 
     [Fact]
-    public void ToString_ReturnsTheGuidInNFormat()
+    public void ToString_ReturnsTheGuidInDFormat()
     {
         Guid value = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
         CorrelationId correlationId = CorrelationId.From(value);
 
-        correlationId.ToString().ShouldBe("0123456789abcdef0123456789abcdef");
+        correlationId.ToString().ShouldBe("01234567-89ab-cdef-0123-456789abcdef");
     }
 
     [Fact]
