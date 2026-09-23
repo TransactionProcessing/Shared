@@ -9,6 +9,7 @@ namespace Shared.Tests;
 using System.Reflection;
 using General;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Shouldly;
 using Xunit;
 
@@ -162,6 +163,20 @@ public partial class SharedTests
     }
 
     [Fact]
+    public void ConfigurationReader_GetSection_UnbindableSection_ErrorThrown()
+    {
+        IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<String, String>
+            {
+                ["AppSettings:UnbindableSection:Value"] = "value"
+            });
+        ConfigurationReader.Initialise(configurationBuilder.Build());
+
+        Should.Throw<InvalidOperationException>(() =>
+            ConfigurationReader.GetSection<String>("AppSettings:UnbindableSection"));
+    }
+
+    [Fact]
     public void ConfigurationReader_GetSection_NotInitialised_ErrorThrown()
     {
         var field = typeof(ConfigurationReader).GetProperty("IsInitialised", BindingFlags.Static | BindingFlags.Public | BindingFlags.GetProperty);
@@ -208,6 +223,24 @@ public partial class SharedTests
 
         var value = ConfigurationReader.GetValueOrDefault("AppSettings", "Test", "http://127.0.0.1:5001");
         value.ShouldBe("http://127.0.0.1:5001");
+    }
+
+    [Fact]
+    public void ConfigurationReader_GetValueOrDefault_ParsesEnumValue()
+    {
+        IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<String, String>
+            {
+                ["AppSettings:LoggingLevel"] = "Warning"
+            });
+        ConfigurationReader.Initialise(configurationBuilder.Build());
+
+        LogLevel value = ConfigurationReader.GetValueOrDefault(
+            "AppSettings",
+            "LoggingLevel",
+            LogLevel.Information);
+
+        value.ShouldBe(LogLevel.Warning);
     }
 
     private sealed class SecurityConfig

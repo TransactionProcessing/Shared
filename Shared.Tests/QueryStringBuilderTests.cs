@@ -97,4 +97,24 @@ public class QueryStringBuilderTests
 
         queryString.Contains("param2").ShouldBeTrue();
     }
+
+    [Fact]
+    public void QueryStringBuilder_NullStringIsExcluded()
+    {
+        QueryStringBuilder builder = new();
+
+        builder.AddParameter("param", null);
+
+        builder.BuildQueryString().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void QueryStringBuilder_AlwaysIncludeEmptyStringIncludesParameter()
+    {
+        QueryStringBuilder builder = new();
+
+        builder.AddParameter("param", String.Empty, true);
+
+        builder.BuildQueryString().ShouldBe("param=");
+    }
 }

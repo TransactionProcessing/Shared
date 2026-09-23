@@ -37,8 +37,9 @@ public class TenantMiddleware
 
         if (correlationId != Guid.Empty)
         {
-            tenantContext.SetCorrelationId(correlationId);
-            context.Items[KeyNameCorrelationId] = correlationId.ToString(); // make it accessible to HttpClient handlers
+            CorrelationId valueObject = CorrelationId.From(correlationId);
+            tenantContext.SetCorrelationId(valueObject);
+            context.Items[KeyNameCorrelationId] = valueObject.ToString(); // make it accessible to HttpClient handlers
         }
 
         tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);

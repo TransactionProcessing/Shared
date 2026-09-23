@@ -365,6 +365,51 @@ public partial class SharedTests
         logger.GetWarningLogEntries().Length.ShouldBe(0);
     }
 
+    [Fact]
+    public async Task RequestResponseLoggingMiddleware_RedactsSensitiveRequestAndResponseHeaders()
+    {
+        TestLogger logger = TestHelpers.InitialiseLogger();
+        RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Information, true, true);
+        DefaultHttpContext context = TestHelpers.CreateHttpContext();
+        context.Request.Headers["Authorization"] = "request-secret";
+        context.Request.Headers["X-Request-Id"] = "request-id";
+
+        RequestResponseLoggingMiddleware middleware = new(innerHttpContext =>
+        {
+            innerHttpContext.Response.Headers["Set-Cookie"] = "response-secret";
+            innerHttpContext.Response.Headers["X-Response-Id"] = "response-id";
+            innerHttpContext.Response.StatusCode = 200;
+            return innerHttpContext.Response.WriteAsync("OK");
+        });
+
+        await middleware.Invoke(context, configuration);
+
+        String logs = String.Join(Environment.NewLine, logger.GetLogEntries());
+        logs.ShouldContain("Authorization=***REDACTED***");
+        logs.ShouldContain("Set-Cookie=***REDACTED***");
+        logs.ShouldContain("X-Request-Id=request-id");
+        logs.ShouldContain("X-Response-Id=response-id");
+    }
+
+    [Fact]
+    public async Task RequestResponseLoggingMiddleware_SoapResponse_ClosesCapturedResponseStream()
+    {
+        TestHelpers.InitialiseLogger();
+        RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Information, false, true);
+        DefaultHttpContext context = TestHelpers.CreateHttpContext();
+        context.Request.Headers["SOAPAction"] = "urn:test";
+
+        RequestResponseLoggingMiddleware middleware = new(innerHttpContext =>
+        {
+            innerHttpContext.Response.StatusCode = 200;
+            return innerHttpContext.Response.WriteAsync(String.Empty);
+        });
+
+        await middleware.Invoke(context, configuration);
+
+        context.Response.Body.ShouldBeOfType<ResponseLoggingMemoryStream>().CanRead.ShouldBeFalse();
+    }
+
 
     [Fact]
     public void ApplicationBuilderExtensions_AddRequestResponseLogging_HandlerAdded()
