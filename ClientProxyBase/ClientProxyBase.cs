@@ -592,6 +592,11 @@ public abstract class ClientProxyBase {
                 throw new ArgumentException($"Header value for '{header}' cannot be null, empty, or whitespace.", nameof(additionalHeaders));
             }
 
+            if (string.Equals(header, TenantContext.KeyNameCorrelationId, StringComparison.OrdinalIgnoreCase)
+                && request.Headers.Contains(TenantContext.KeyNameCorrelationId)) {
+                continue;
+            }
+
             if (request.Headers.TryAddWithoutValidation(header, value)) {
                 continue;
             }
