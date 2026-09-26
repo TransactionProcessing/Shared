@@ -19,9 +19,7 @@ public class TenantMiddleware
     {
         this.Next = next;
     }
-
-    public static readonly String KeyNameCorrelationId = "correlationId";
-    
+            
     public async Task InvokeAsync(HttpContext context, TenantContext tenantContext)
     {
         Stopwatch watch = Stopwatch.StartNew();
@@ -32,14 +30,14 @@ public class TenantMiddleware
         Boolean.TryParse(ConfigurationReader.GetValueOrDefault("AppSettings", "LogsPerTenantEnabled", "false"), out Boolean logPerTenantEnabled);
 
         // Check the headers for a correlationId
-        context.Request.Headers.TryGetValue(KeyNameCorrelationId, out StringValues correlationIdHeader);
+        context.Request.Headers.TryGetValue(TenantContext.KeyNameCorrelationId, out StringValues correlationIdHeader);
         Guid.TryParse(correlationIdHeader, out Guid correlationId);
 
         if (correlationId != Guid.Empty)
         {
             CorrelationId valueObject = CorrelationId.From(correlationId);
             tenantContext.SetCorrelationId(valueObject);
-            context.Items[KeyNameCorrelationId] = valueObject.ToString(); // make it accessible to HttpClient handlers
+            context.Items[TenantContext.KeyNameCorrelationId] = valueObject.ToString(); // make it accessible to HttpClient handlers
         }
 
         tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);

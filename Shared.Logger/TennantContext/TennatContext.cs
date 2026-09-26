@@ -3,6 +3,7 @@
 public class TenantContext
 {
     #region Fields
+    public static readonly String KeyNameCorrelationId = "correlationId";
 
     private static readonly AsyncLocal<TenantContext> Current = new AsyncLocal<TenantContext>();
 

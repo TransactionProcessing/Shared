@@ -1,4 +1,6 @@
-﻿using SimpleResults;
+﻿using Microsoft.VisualBasic;
+using Shared.Logger.TennantContext;
+using SimpleResults;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -501,6 +503,10 @@ public abstract class ClientProxyBase {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         }
 
+        if (TenantContext.CurrentTenant != null) {
+            request.Headers.Add(TenantContext.KeyNameCorrelationId, TenantContext.CurrentTenant.CorrelationId.ToString());
+        }
+
         if (body is HttpContent httpContent) {
             request.Content = httpContent;
         }
@@ -584,6 +590,11 @@ public abstract class ClientProxyBase {
 
             if (string.IsNullOrWhiteSpace(value)) {
                 throw new ArgumentException($"Header value for '{header}' cannot be null, empty, or whitespace.", nameof(additionalHeaders));
+            }
+
+            if (string.Equals(header, TenantContext.KeyNameCorrelationId, StringComparison.OrdinalIgnoreCase)
+                && request.Headers.Contains(TenantContext.KeyNameCorrelationId)) {
+                continue;
             }
 
             if (request.Headers.TryAddWithoutValidation(header, value)) {

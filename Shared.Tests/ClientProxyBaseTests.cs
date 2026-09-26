@@ -9,6 +9,7 @@ namespace Shared.Tests;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
+using Shared.Logger.TennantContext;
 using Shouldly;
 using Xunit;
 
@@ -93,6 +94,38 @@ public sealed class ClientProxyBaseTests
         handler.LastRequest.Headers["X-Correlation-Id"].ShouldBe("corr-1");
         handler.LastRequest.Headers["Accept-Language"].ShouldBe("en-GB");
         handler.LastRequest.Body.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Get_WithCorrelationIdHeaderAndCurrentTenant_PrefersCurrentTenantCorrelationId()
+    {
+        var tenantCorrelationId = CorrelationId.From(Guid.Parse("11111111-1111-1111-1111-111111111111"));
+        var previousTenant = TenantContext.CurrentTenant;
+        var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("""{"id":1,"name":"ok"}""")
+        });
+
+        try
+        {
+            TenantContext.CurrentTenant = new TenantContext();
+            TenantContext.CurrentTenant.SetCorrelationId(tenantCorrelationId);
+
+            var sut = CreateWrapper(handler, deserialise: (_, _) => new SampleResponse(1, "ok"));
+
+            var result = await sut.Get<SampleResponse>(
+                "widgets/1",
+                [(TenantContext.KeyNameCorrelationId, "caller-correlation-id")]);
+
+            result.IsSuccess.ShouldBeTrue();
+            handler.LastRequest.ShouldNotBeNull();
+            handler.LastRequest!.Headers[TenantContext.KeyNameCorrelationId]
+                .ShouldBe(tenantCorrelationId.ToString());
+        }
+        finally
+        {
+            TenantContext.CurrentTenant = previousTenant;
+        }
     }
 
     [Fact]
