@@ -19,6 +19,7 @@
 	<Target Name="IncludeP2PAssets">
 		<ItemGroup>
 			<BuildOutputInPackage Include="$(OutputPath)Shared.Results.dll" />
+			<BuildOutputInPackage Include="$(OutputPath)Shared.Logger.dll" />
 		</ItemGroup>
 	</Target>
 
