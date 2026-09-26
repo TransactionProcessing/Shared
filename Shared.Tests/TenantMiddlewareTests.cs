@@ -100,7 +100,7 @@ public class TenantMiddlewareTests
 
         Guid correlationId = Guid.NewGuid();
         DefaultHttpContext context = TestHelpers.CreateHttpContext();
-        context.Request.Headers[TenantMiddleware.KeyNameCorrelationId] = correlationId.ToString();
+        context.Request.Headers[TenantContext.KeyNameCorrelationId] = correlationId.ToString();
         TenantContext tenantContext = new();
         Boolean nextCalled = false;
         TenantMiddleware middleware = new(_ =>
@@ -112,7 +112,7 @@ public class TenantMiddlewareTests
         await middleware.InvokeAsync(context, tenantContext);
 
         tenantContext.CorrelationId.Value.ShouldBe(correlationId);
-        context.Items[TenantMiddleware.KeyNameCorrelationId]
+        context.Items[TenantContext.KeyNameCorrelationId]
             .ShouldBe(CorrelationId.From(correlationId).ToString());
         nextCalled.ShouldBeTrue();
     }
@@ -127,7 +127,7 @@ public class TenantMiddlewareTests
         TestHelpers.InitialiseLogger();
 
         DefaultHttpContext context = TestHelpers.CreateHttpContext();
-        context.Request.Headers[TenantMiddleware.KeyNameCorrelationId] = "invalid";
+        context.Request.Headers[TenantContext.KeyNameCorrelationId] = "invalid";
         TenantContext tenantContext = new();
         CorrelationId originalCorrelationId = tenantContext.CorrelationId;
         TenantMiddleware middleware = new(_ => Task.CompletedTask);
@@ -135,6 +135,6 @@ public class TenantMiddlewareTests
         await middleware.InvokeAsync(context, tenantContext);
 
         tenantContext.CorrelationId.ShouldBe(originalCorrelationId);
-        context.Items.ContainsKey(TenantMiddleware.KeyNameCorrelationId).ShouldBeFalse();
+        context.Items.ContainsKey(TenantContext.KeyNameCorrelationId).ShouldBeFalse();
     }
 }

@@ -1,4 +1,6 @@
-﻿using SimpleResults;
+﻿using Microsoft.VisualBasic;
+using Shared.Logger.TennantContext;
+using SimpleResults;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -499,6 +501,10 @@ public abstract class ClientProxyBase {
             }
 
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
+        if (TenantContext.CurrentTenant != null) {
+            request.Headers.Add(TenantContext.KeyNameCorrelationId, TenantContext.CurrentTenant.CorrelationId.ToString());
         }
 
         if (body is HttpContent httpContent) {

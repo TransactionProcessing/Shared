@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Shared.Logger\Shared.Logger.csproj" PrivateAssets="All" />
     <ProjectReference Include="..\Shared.Results\Shared.Results.csproj" PrivateAssets="All" />
   </ItemGroup>
 
