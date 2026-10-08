@@ -125,36 +125,46 @@ public abstract class DockerHelper : BaseDockerHelper
     }
 
     public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices) {
-        if (this.Containers.Any()) {
-            this.Containers.Reverse();
+        try
+        {
+            if (this.Containers.Any()) {
+                this.Containers.Reverse();
 
-            foreach ((DockerServices, IContainer) containerService in this.Containers) {
+                foreach ((DockerServices, IContainer) containerService in this.Containers) {
 
-                if ((sharedDockerServices & containerService.Item1) == containerService.Item1){
-                    continue;
-                }
+                    if ((sharedDockerServices & containerService.Item1) == containerService.Item1){
+                        continue;
+                    }
 
-                String? name;
-                try
-                {
-                    name = containerService.Item2.Name;
+                    String? name;
+                    try
+                    {
+                        name = containerService.Item2.Name;
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        this.Trace($"Skipping container entry that is no longer available [{containerService.Item1}] ({ex.Message})");
+                        continue;
+                    }
+                    this.Trace($"Stopping container [{name}]");
+                    await containerService.Item2.StopAsync(CancellationToken.None);
+                    await containerService.Item2.DisposeAsync();
+                    this.Trace($"Container [{name}] stopped");
                 }
-                catch (InvalidOperationException ex)
-                {
-                    this.Trace($"Skipping container entry that is no longer available [{containerService.Item1}] ({ex.Message})");
-                    continue;
+            }
+
+            if (this.TestNetworks.Any()) {
+                foreach (INetwork networkService in this.TestNetworks){
+                    await networkService.DeleteAsync(CancellationToken.None);
+                    await networkService.DisposeAsync();
                 }
-                this.Trace($"Stopping container [{name}]");
-                await containerService.Item2.StopAsync(CancellationToken.None);
-                await containerService.Item2.DisposeAsync();
-                this.Trace($"Container [{name}] stopped");
             }
         }
-
-        if (this.TestNetworks.Any()) {
-            foreach (INetwork networkService in this.TestNetworks){
-                await networkService.DeleteAsync(CancellationToken.None);
-                await networkService.DisposeAsync();
+        finally
+        {
+            if ((sharedDockerServices & DockerServices.SecurityService) != DockerServices.SecurityService)
+            {
+                this.DisposeIntegrationTestCertificate();
             }
         }
     }

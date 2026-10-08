@@ -519,7 +519,7 @@ public abstract class BaseDockerHelper{
 
     protected IntegrationTestCertificate? IntegrationTestCertificate;
 
-    public ContainerBuilder SetupSecurityServiceContainer()
+    public virtual ContainerBuilder SetupSecurityServiceContainer()
     {
         this.Trace("About to Start Security Container");
 
