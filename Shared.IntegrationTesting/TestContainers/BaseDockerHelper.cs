@@ -517,46 +517,72 @@ public abstract class BaseDockerHelper{
         return messagingServiceContainer;
     }
 
-    public virtual ContainerBuilder SetupSecurityServiceContainer(){
+    protected IntegrationTestCertificate? IntegrationTestCertificate;
+
+    public virtual ContainerBuilder SetupSecurityServiceContainer()
+    {
         this.Trace("About to Start Security Container");
 
+        if (this.IntegrationTestCertificate is null)
+        {
+            throw new InvalidOperationException("Integration test certificate was not initialised before container setup.");
+        }
+
         Dictionary<String, String> environmentVariables = this.GetCommonEnvironmentVariables();
-        environmentVariables.Add("ServiceOptions:PublicOrigin",$"https://{this.SecurityServiceContainerName}:{DockerPorts.SecurityServiceDockerPort}");
-        environmentVariables.Add("ServiceOptions:IssuerUrl",$"https://{this.SecurityServiceContainerName}:{DockerPorts.SecurityServiceDockerPort}");
-        environmentVariables.Add("ASPNETCORE_ENVIRONMENT","IntegrationTest");
-        environmentVariables.Add("urls",$"https://*:{DockerPorts.SecurityServiceDockerPort}");
-
-        environmentVariables.Add("ServiceOptions:PasswordOptions:RequiredLength","6");
-        environmentVariables.Add("ServiceOptions:PasswordOptions:RequireDigit","false");
-        environmentVariables.Add("ServiceOptions:PasswordOptions:RequireUpperCase","false");
-        environmentVariables.Add("ServiceOptions:UserOptions:RequireUniqueEmail","false");
-        environmentVariables.Add("ServiceOptions:SignInOptions:RequireConfirmedEmail","false");
-
-        environmentVariables.Add("ConnectionStrings:PersistedGrantDbContext", this.SetConnectionString( $"PersistedGrantStore-{this.TestId}", this.UseSecureSqlServerDatabase));
+        environmentVariables.Add("ServiceOptions:PublicOrigin", $"https://{this.SecurityServiceContainerName}:{DockerPorts.SecurityServiceDockerPort}");
+        environmentVariables.Add("ServiceOptions:IssuerUrl", $"https://{this.SecurityServiceContainerName}:{DockerPorts.SecurityServiceDockerPort}");
+        environmentVariables.Add("ASPNETCORE_ENVIRONMENT", "IntegrationTest");
+        environmentVariables.Add("urls", $"https://*:{DockerPorts.SecurityServiceDockerPort}");
+        environmentVariables.Add("ServiceOptions:KestrelOptions:Path", this.IntegrationTestCertificate.GetContainerCertificatePath());
+        environmentVariables.Add("ServiceOptions:KestrelOptions:Password", this.IntegrationTestCertificate.Password);
+        environmentVariables.Add("ServiceOptions:PasswordOptions:RequiredLength", "6");
+        environmentVariables.Add("ServiceOptions:PasswordOptions:RequireDigit", "false");
+        environmentVariables.Add("ServiceOptions:PasswordOptions:RequireUpperCase", "false");
+        environmentVariables.Add("ServiceOptions:UserOptions:RequireUniqueEmail", "false");
+        environmentVariables.Add("ServiceOptions:SignInOptions:RequireConfirmedEmail", "false");
+        environmentVariables.Add("ServiceOptions:ManagementBootstrap:Enabled", "true");
+        environmentVariables.Add("ServiceOptions:ManagementBootstrap:ClientId", "management-bootstrap");
+        environmentVariables.Add("ServiceOptions:ManagementBootstrap:ClientSecret", "management-bootstrap-secret");
+        environmentVariables.Add("ServiceOptions:OAuth:LegacyGrantTypeClients:password:0", "merchantClient");
+        environmentVariables.Add("ServiceOptions:OAuth:LegacyGrantTypeClients:hybrid:0", "testclient2");
+        environmentVariables.Add("ServiceOptions:OAuth:EnableLegacyGrantTypes", "true");
+        environmentVariables.Add("ConnectionStrings:PersistedGrantDbContext", this.SetConnectionString($"PersistedGrantStore-{this.TestId}", this.UseSecureSqlServerDatabase));
         environmentVariables.Add("ConnectionStrings:ConfigurationDbContext", this.SetConnectionString($"Configuration-{this.TestId}", this.UseSecureSqlServerDatabase));
         environmentVariables.Add("ConnectionStrings:AuthenticationDbContext", this.SetConnectionString($"Authentication-{this.TestId}", this.UseSecureSqlServerDatabase));
 
         Dictionary<String, String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.SecurityService);
-
-        foreach (KeyValuePair<String, String> additionalEnvironmentVariable in additionalEnvironmentVariables) {
-            environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
+        if (additionalEnvironmentVariables != null)
+        {
+            foreach (KeyValuePair<String, String> additionalEnvironmentVariable in additionalEnvironmentVariables)
+            {
+                environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
+            }
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.SecurityService).Data;
+        SimpleResults.Result<(String imageName, Boolean useLatest)> imageDetailsResult = this.GetImageDetails(ContainerType.SecurityService);
+        if (imageDetailsResult.IsFailed)
+        {
+            throw new Exception($"Image details not found for {ContainerType.SecurityService}");
+        }
 
-        ContainerBuilder securityServiceContainer = new ContainerBuilder()
-            .WithName(this.SecurityServiceContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
+        ContainerBuilder securityServiceContainer = new ContainerBuilder(imageDetailsResult.Data.imageName)
+            .WithName(this.SecurityServiceContainerName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
-            .WithPortBinding(DockerPorts.SecurityServiceDockerPort, true);
-        
-        // TODO: might need this but not sure yet
-        //Int32? hostPort = this.GetHostPort(ContainerType.SecurityService);
-        //securityServiceContainer = hostPort == null ? securityServiceContainer.ExposePort(DockerPorts.SecurityServiceDockerPort) : securityServiceContainer.ExposePort(hostPort.Value, DockerPorts.SecurityServiceDockerPort);
+            .WithBindMount(this.IntegrationTestCertificate.CertificateDirectory, this.IntegrationTestCertificate.ContainerCertificateDirectory, AccessMode.ReadOnly);
+
+        Int32? hostPort = this.GetHostPort(ContainerType.SecurityService);
+        if (hostPort is null || hostPort <= 0)
+        {
+            securityServiceContainer = securityServiceContainer.WithPortBinding(DockerPorts.SecurityServiceDockerPort, true);
+        }
+        else
+        {
+            securityServiceContainer = securityServiceContainer.WithPortBinding(DockerPorts.SecurityServiceDockerPort, hostPort.Value);
+        }
 
         return securityServiceContainer;
     }
+
 
     public virtual ContainerBuilder ConfigureSqlContainer()
     {
