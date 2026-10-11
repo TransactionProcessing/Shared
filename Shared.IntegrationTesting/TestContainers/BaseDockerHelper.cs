@@ -794,28 +794,34 @@ public abstract class BaseDockerHelper{
 
     protected async Task DoSqlServerHealthCheck(IContainer containerService){
         // Try opening a connection
-        Int32 maxRetries = 10;
-        Int32 counter = 1;
+        const int maxRetries = 10;
+        bool connected = false;
 
-        while (counter <= maxRetries){
-            try{
-                this.Trace($"Connection attempt {counter}");
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                this.Trace($"Connection attempt {attempt}");
+
                 CheckSqlConnection(containerService);
+                connected = true;
                 break;
             }
-            catch(SqlException ex){
+            catch (SqlException ex)
+            {
                 this.Logger.LogError(ex);
-                await Task.Delay(30000);
-            }
-            finally{
-                counter++;
+
+                if (attempt < maxRetries)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(30));
+                }
             }
         }
 
-        if (counter >= maxRetries)
+        if (!connected)
         {
-            // We have got to the end and still not opened the connection
-            throw new ApplicationException($"Database container not started in {maxRetries} retries");
+            throw new ApplicationException(
+                $"Database container not started after {maxRetries} attempts");
         }
     }
     protected async Task DoEventStoreHealthCheck(){
@@ -933,47 +939,47 @@ public abstract class BaseDockerHelper{
         //Start our Continuous Projections - we might decide to do this at a different stage, but now lets try here
         String projectionsFolder = "projections/continuous";
 
-        if (!String.IsNullOrWhiteSpace(projectionsFolder)){
+        if (!String.IsNullOrWhiteSpace(projectionsFolder))
+        {
             DirectoryInfo di = new(projectionsFolder);
 
-            if (di.Exists){
+            if (di.Exists)
+            {
                 FileInfo[] files = di.GetFiles();
                 var requiredProjections = this.GetRequiredProjections();
                 EventStoreProjectionManagementClient projectionClient = new(this.ConfigureEventStoreSettings());
                 List<String> projectionNames = new();
-                
-                foreach (FileInfo file in files){
+
+                foreach (FileInfo file in files)
+                {
                     if (!requiredProjections.Contains(file.Name))
                         continue;
 
                     String projection = await BaseDockerHelper.RemoveProjectionTestSetup(file);
                     String projectionName = file.Name.Replace(".js", String.Empty);
 
-                    Should.NotThrow(async () => {
-                                        this.Trace($"Creating projection [{projectionName}] from file [{file.FullName}]");
-                                        try{
-                                            await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams:true).ConfigureAwait(false);
-                                        }
-                                        catch (Exception ex) {
-                                            // ignored
-                                        }
 
-                                        projectionNames.Add(projectionName);
-                                        this.Trace($"Projection [{projectionName}] created");
-                                    },
-                                    $"Projection [{projectionName}] error");
+                    this.Trace($"Creating projection [{projectionName}] from file [{file.FullName}]");
+                    try
+                    {
+                        await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams: true).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        // ignored
+                        this.Trace($"Projection [{projectionName}] create error {ex.Message}");
+                    }
+
+                    projectionNames.Add(projectionName);
+                    this.Trace($"Projection [{projectionName}] created");
                 }
 
                 // Now check the create status of each
-                foreach (String projectionName in projectionNames){
-                    Should.NotThrow(async () => {
-                                        ProjectionDetails projectionDetails = await projectionClient.GetStatusAsync(projectionName);
-
-                                        projectionDetails.Status.ShouldBe("Running", $"Projection [{projectionName}] is {projectionDetails.Status}");
-
-                                        this.Trace($"Projection [{projectionName}] running");
-                                    },
-                                    "Error getting Projection [{projectionName}] status");
+                foreach (String projectionName in projectionNames)
+                {
+                    ProjectionDetails projectionDetails = await projectionClient.GetStatusAsync(projectionName);
+                    projectionDetails.Status.ShouldBe("Running", $"Projection [{projectionName}] is {projectionDetails.Status}");
+                    this.Trace($"Projection [{projectionName}] running");
                 }
             }
         }
@@ -1029,8 +1035,7 @@ public abstract class BaseDockerHelper{
             });
 
             this.Trace($"{dockerService} Container Started");
-            this.Containers.Add((dockerService, builtContainer));
-
+            
             //  Do a health check here
             ContainerType type = dockerService switch{
                 DockerServices.CallbackHandler => ContainerType.CallbackHandler,

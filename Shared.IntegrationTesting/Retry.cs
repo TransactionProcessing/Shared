@@ -57,7 +57,7 @@ public static class Retry
                 lastException = e;
 
                 // wait before retrying
-                Thread.Sleep(retryInterval ?? Retry.DefaultRetryInterval);
+                await Task.Delay(retryInterval ?? Retry.DefaultRetryInterval);
             }
         }
 

@@ -124,48 +124,69 @@ public abstract class DockerHelper : BaseDockerHelper
         this.IntegrationTestCertificate = null;
     }
 
-    public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices) {
+    public override async Task StopContainersForScenarioRun(
+    DockerServices sharedDockerServices)
+    {
+        List<Exception> cleanupErrors = [];
+
         try
         {
-            if (this.Containers.Any()) {
-                this.Containers.Reverse();
+            foreach ((DockerServices service, IContainer container)
+                     in this.Containers.AsEnumerable().Reverse())
+            {
+                if ((sharedDockerServices & service) == service)
+                {
+                    continue;
+                }
+                String containerName = container.Name;
+                try
+                {                   
+                    this.Trace($"Stopping container [{containerName}]");
 
-                foreach ((DockerServices, IContainer) containerService in this.Containers) {
+                    await container.StopAsync(CancellationToken.None);
+                    await container.DisposeAsync();
 
-                    if ((sharedDockerServices & containerService.Item1) == containerService.Item1){
-                        continue;
-                    }
-
-                    String? name;
-                    try
-                    {
-                        name = containerService.Item2.Name;
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        this.Trace($"Skipping container entry that is no longer available [{containerService.Item1}] ({ex.Message})");
-                        continue;
-                    }
-                    this.Trace($"Stopping container [{name}]");
-                    await containerService.Item2.StopAsync(CancellationToken.None);
-                    await containerService.Item2.DisposeAsync();
-                    this.Trace($"Container [{name}] stopped");
+                    this.Trace($"Container [{containerName}] stopped");
+                }
+                catch (Exception ex)
+                {
+                    this.Trace($"Failed to stop container [{containerName}]");
+                    cleanupErrors.Add(ex);
                 }
             }
 
-            if (this.TestNetworks.Any()) {
-                foreach (INetwork networkService in this.TestNetworks){
-                    await networkService.DeleteAsync(CancellationToken.None);
-                    await networkService.DisposeAsync();
+            foreach (INetwork network in this.TestNetworks.AsEnumerable().Reverse())
+            {
+                try
+                {
+                    await network.DeleteAsync(CancellationToken.None);
+                    await network.DisposeAsync();
+                }
+                catch (Exception ex)
+                {
+                    this.Trace("Failed to remove Docker network");
+                    cleanupErrors.Add(ex);
                 }
             }
         }
         finally
         {
-            if ((sharedDockerServices & DockerServices.SecurityService) != DockerServices.SecurityService)
+            // Prevent a second cleanup attempt from using disposed objects.
+            this.Containers.Clear();
+            this.TestNetworks.Clear();
+
+            if ((sharedDockerServices & DockerServices.SecurityService)
+                != DockerServices.SecurityService)
             {
                 this.DisposeIntegrationTestCertificate();
             }
+        }
+
+        if (cleanupErrors.Count > 0)
+        {
+            throw new AggregateException(
+                "One or more integration-test resources failed to clean up.",
+                cleanupErrors);
         }
     }
 
