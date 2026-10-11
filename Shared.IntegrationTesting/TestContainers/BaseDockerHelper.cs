@@ -1026,6 +1026,11 @@ public abstract class BaseDockerHelper{
                 try
                 {
                     await builtContainer.StartAsync();
+
+                    lock (this.ContainerStateLock)
+                    {
+                        this.Containers.Add((dockerService, builtContainer));
+                    }
                 }
                 catch
                 {
@@ -1076,11 +1081,6 @@ public abstract class BaseDockerHelper{
                         await this.DoHealthCheck(type);
                         break;
                 }
-            }
-
-            lock (this.ContainerStateLock)
-            {
-                this.Containers.Add((dockerService, builtContainer));
             }
 
             this.Trace($"Container [{buildContainerFunc.Method.Name}] started");

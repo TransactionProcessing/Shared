@@ -128,6 +128,9 @@ public abstract class DockerHelper : BaseDockerHelper
     DockerServices sharedDockerServices)
     {
         List<Exception> cleanupErrors = [];
+        List<(DockerServices service, IContainer container)> remainingContainers =
+            RetainSharedContainers(this.Containers, sharedDockerServices).ToList();
+        List<INetwork> remainingNetworks = [];
 
         try
         {
@@ -138,9 +141,20 @@ public abstract class DockerHelper : BaseDockerHelper
                 {
                     continue;
                 }
-                String containerName = container.Name;
+
+                String containerName;
                 try
                 {                   
+                    containerName = container.Name;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    this.Trace($"Skipping unavailable container [{service}] ({ex.Message})");
+                    continue;
+                }
+
+                try
+                {
                     this.Trace($"Stopping container [{containerName}]");
 
                     await container.StopAsync(CancellationToken.None);
@@ -152,28 +166,36 @@ public abstract class DockerHelper : BaseDockerHelper
                 {
                     this.Trace($"Failed to stop container [{containerName}]");
                     cleanupErrors.Add(ex);
+                    remainingContainers.Add((service, container));
                 }
             }
 
-            foreach (INetwork network in this.TestNetworks.AsEnumerable().Reverse())
+            if (remainingContainers.Count > 0)
             {
-                try
+                remainingNetworks.AddRange(this.TestNetworks);
+            }
+            else
+            {
+                foreach (INetwork network in this.TestNetworks.AsEnumerable().Reverse())
                 {
-                    await network.DeleteAsync(CancellationToken.None);
-                    await network.DisposeAsync();
-                }
-                catch (Exception ex)
-                {
-                    this.Trace("Failed to remove Docker network");
-                    cleanupErrors.Add(ex);
+                    try
+                    {
+                        await network.DeleteAsync(CancellationToken.None);
+                        await network.DisposeAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Trace("Failed to remove Docker network");
+                        cleanupErrors.Add(ex);
+                        remainingNetworks.Add(network);
+                    }
                 }
             }
         }
         finally
         {
-            // Prevent a second cleanup attempt from using disposed objects.
-            this.Containers.Clear();
-            this.TestNetworks.Clear();
+            this.Containers = remainingContainers;
+            this.TestNetworks = remainingNetworks;
 
             if ((sharedDockerServices & DockerServices.SecurityService)
                 != DockerServices.SecurityService)
@@ -188,6 +210,15 @@ public abstract class DockerHelper : BaseDockerHelper
                 "One or more integration-test resources failed to clean up.",
                 cleanupErrors);
         }
+    }
+
+    protected static IReadOnlyList<(DockerServices service, IContainer container)> RetainSharedContainers(
+        IEnumerable<(DockerServices service, IContainer container)> containers,
+        DockerServices sharedDockerServices)
+    {
+        return containers
+            .Where(container => (sharedDockerServices & container.service) == container.service)
+            .ToList();
     }
 
     public abstract Task CreateSubscriptions();

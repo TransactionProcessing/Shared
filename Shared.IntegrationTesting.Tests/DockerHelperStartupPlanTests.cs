@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using DotNet.Testcontainers.Containers;
 using NUnit.Framework;
 using Shared.IntegrationTesting;
+using Shared.IntegrationTesting.TestContainers;
 using Shouldly;
 
 namespace Shared.IntegrationTesting.Tests;
@@ -18,6 +20,13 @@ public class DockerHelperStartupPlanTests
         public IReadOnlyList<IReadOnlyList<DockerServices>> GetStartupGroupsForTesting()
         {
             return base.GetStartupGroups();
+        }
+
+        public static IReadOnlyList<(DockerServices service, IContainer container)> GetRetainedSharedContainers(
+            IEnumerable<(DockerServices service, IContainer container)> containers,
+            DockerServices sharedDockerServices)
+        {
+            return DockerHelper.RetainSharedContainers(containers, sharedDockerServices);
         }
     }
 
@@ -45,5 +54,20 @@ public class DockerHelperStartupPlanTests
             ],
             [DockerServices.EstateManagementUI]
         ]);
+    }
+
+    [Test]
+    public void Shared_containers_are_retained_for_later_cleanup()
+    {
+        List<(DockerServices service, IContainer container)> containers =
+        [
+            (DockerServices.SqlServer, null!),
+            (DockerServices.EventStore, null!)
+        ];
+
+        IReadOnlyList<(DockerServices service, IContainer container)> remaining =
+            InspectableDockerHelper.GetRetainedSharedContainers(containers, DockerServices.SqlServer);
+
+        remaining.Select(container => container.service).ShouldBe([DockerServices.SqlServer]);
     }
 }
