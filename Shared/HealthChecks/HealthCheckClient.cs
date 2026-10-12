@@ -53,6 +53,9 @@ public class HealthCheckClient : IHealthCheckClient
     private String BuildRequestUri(String scheme, 
                                    String uri,
                                    Int32 port) {
-        return $"{scheme}://{uri}:{port}/health";
+        // The standard health endpoint is allowed to use a plain-text response.
+        // Container startup deserialises the response, so use the JSON health
+        // check UI endpoint consistently across the services.
+        return $"{scheme}://{uri}:{port}/healthui";
     }
 }
