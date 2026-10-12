@@ -103,7 +103,7 @@ public class EventStoreContextTests : IDisposable{
     [TestCase(false)]
     public async Task EventStoreContext_InsertEvents_EventsAreWritten(Boolean secureEventStore){
 
-        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}");
+        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_InsertEvents_EventsAreWritten_{secureEventStore}", CancellationToken.None);
 
         TimeSpan deadline = TimeSpan.FromMinutes(2);
             
@@ -132,7 +132,7 @@ public class EventStoreContextTests : IDisposable{
         TypeMap.AddType<EstateCreatedEvent>("EstateCreatedEvent");
         TimeSpan deadline = TimeSpan.FromMinutes(2);
 
-        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}");
+        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEvents_EventsAreRead{secureEventStore}", CancellationToken.None);
             
         IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
@@ -175,7 +175,7 @@ public class EventStoreContextTests : IDisposable{
     public async Task EventStoreContext_ReadEventsBackwards_EventsAreRead(Boolean secureEventStore){
         TimeSpan deadline = TimeSpan.FromMinutes(2);
 
-        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_EventsAreRead{secureEventStore}");
+        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_EventsAreRead{secureEventStore}", CancellationToken.None);
 
         IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
@@ -206,7 +206,7 @@ public class EventStoreContextTests : IDisposable{
     public async Task EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead(Boolean secureEventStore){
         TimeSpan deadline = TimeSpan.FromMinutes(2);
             
-        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead{secureEventStore}");
+        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_ReadEventsBackwards_StreamNotFound_EventsAreRead{secureEventStore}", CancellationToken.None);
 
         IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
@@ -225,7 +225,7 @@ public class EventStoreContextTests : IDisposable{
     public async Task EventStoreContext_RunTransientQuery_Faulted_ErrorThrown(Boolean secureEventStore){
         TimeSpan deadline = TimeSpan.FromMinutes(2);
 
-        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}");
+        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_Faulted_ErrorThrown{secureEventStore}", CancellationToken.None);
             
         IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
@@ -274,7 +274,7 @@ public class EventStoreContextTests : IDisposable{
     public async Task EventStoreContext_RunTransientQuery_QueryIsRun(Boolean secureEventStore){
         TimeSpan deadline = TimeSpan.FromMinutes(2);
 
-        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}");
+        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_QueryIsRun{secureEventStore}", CancellationToken.None);
 
         IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 
@@ -320,7 +320,7 @@ public class EventStoreContextTests : IDisposable{
     public async Task EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown(Boolean secureEventStore){
         TimeSpan deadline = TimeSpan.FromMinutes(2);
 
-        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}");
+        await this.EventStoreDockerHelper.StartContainers(secureEventStore, $"EventStoreContext_RunTransientQuery_ResultIsEmpty_ErrorThrown{secureEventStore}", CancellationToken.None);
 
         IEventStoreContext context = this.CreateContext(secureEventStore, deadline);
 

@@ -36,6 +36,20 @@ public static class Retry
                                  TimeSpan? retryFor = null,
                                  TimeSpan? retryInterval = null)
     {
+        await For(
+            _ => action(),
+            CancellationToken.None,
+            retryFor,
+            retryInterval).ConfigureAwait(false);
+    }
+
+    public static async Task For(
+        Func<CancellationToken, Task> action,
+        CancellationToken cancellationToken,
+        TimeSpan? retryFor = null,
+        TimeSpan? retryInterval = null)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         DateTime startTime = DateTime.Now;
         Exception lastException = null;
 
@@ -48,16 +62,20 @@ public static class Retry
         {
             try
             {
-                await action().ConfigureAwait(false);
+                await action(cancellationToken).ConfigureAwait(false);
                 lastException = null;
                 break;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception e)
             {
                 lastException = e;
 
                 // wait before retrying
-                await Task.Delay(retryInterval ?? Retry.DefaultRetryInterval);
+                await Task.Delay(retryInterval ?? Retry.DefaultRetryInterval, cancellationToken);
             }
         }
 

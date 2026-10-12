@@ -11,7 +11,7 @@ using NLog;
 using Reqnroll;
 
 public class TestDockerHelper : DockerHelper{
-    public override async Task CreateSubscriptions(){
+    public override async Task CreateSubscriptions(CancellationToken cancellationToken){
         // Nothing here
     }
 }
@@ -50,7 +50,10 @@ public class GenericSteps
         this.TestingContext.Logger = logger;
         this.TestingContext.Logger.LogInformation("About to Start Containers for Scenario Run");
         this.TestingContext.DockerHelper.ScenarioName = scenarioName;
-        await this.TestingContext.DockerHelper.StartContainersForScenarioRun(scenarioName, services).ConfigureAwait(false);
+        await this.TestingContext.DockerHelper.StartContainersForScenarioRun(
+            scenarioName,
+            services,
+            CancellationToken.None).ConfigureAwait(false);
         this.TestingContext.Logger.LogInformation("Containers for Scenario Run Started");
     }
 

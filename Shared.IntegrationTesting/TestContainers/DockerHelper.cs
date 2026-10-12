@@ -42,14 +42,15 @@ public abstract class DockerHelper : BaseDockerHelper
     }
 
     
-    public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices){
+    public override async Task StartContainersForScenarioRun(
+        String scenarioName,
+        DockerServices dockerServices,
+        CancellationToken cancellationToken){
 
+        cancellationToken.ThrowIfCancellationRequested();
         this.IntegrationTestCertificate = IntegrationTestCertificate.Create();
         try
         {
-            Result<DockerEnginePlatform> result = await BaseDockerHelper.GetDockerEnginePlatform();
-            this.DockerPlatform = result.Data;
-
             this.RequiredDockerServices = dockerServices;
 
             this.IsSecureEventStore = Environment.GetEnvironmentVariable("IsSecureEventStore") switch
@@ -80,7 +81,7 @@ public abstract class DockerHelper : BaseDockerHelper
             {
                 DateTimeOffset startedAt = DateTimeOffset.UtcNow;
                 this.Trace($"Starting container [{service}]");
-                await StartContainer2(setupContainer, networks, service);
+                await StartContainer2(setupContainer, networks, service, cancellationToken);
                 TimeSpan elapsed = DateTimeOffset.UtcNow - startedAt;
                 this.Trace($"Container [{service}] started in {elapsed.TotalSeconds:N1}s");
             }
@@ -104,12 +105,14 @@ public abstract class DockerHelper : BaseDockerHelper
 
             foreach (IReadOnlyList<DockerServices> startupGroup in this.GetStartupGroups())
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 await Task.WhenAll(startupGroup.Select(service => StartWithTrace(setupContainerForService(service), service)));
             }
 
-            await this.LoadEventStoreProjections();
+            await this.LoadEventStoreProjections(cancellationToken);
 
-            await this.CreateSubscriptions();
+            cancellationToken.ThrowIfCancellationRequested();
+            await this.CreateSubscriptions(cancellationToken);
         }
         catch
         {
@@ -221,5 +224,5 @@ public abstract class DockerHelper : BaseDockerHelper
             .ToList();
     }
 
-    public abstract Task CreateSubscriptions();
+    public abstract Task CreateSubscriptions(CancellationToken cancellationToken);
 }
