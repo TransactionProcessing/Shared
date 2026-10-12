@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 using KurrentDB.Client;
 using Shared.IntegrationTesting;
 using Shared.IntegrationTesting.TestContainers;
@@ -10,11 +11,14 @@ namespace Shared.EventStoreContext.Tests;
 
 public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.DockerHelper
 {
-    public async Task StartContainers(Boolean isSecureEventStore, String testName)
+    public async Task StartContainers(
+        Boolean isSecureEventStore,
+        String testName,
+        CancellationToken cancellationToken)
     {
         this.SetHostTraceFolder(testName);
         this.ScenarioName = testName;
-        await this.StartContainersForScenarioRun(testName, DockerServices.EventStore);
+        await this.StartContainersForScenarioRun(testName, DockerServices.EventStore, cancellationToken);
     }
 
     public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices)
@@ -42,13 +46,17 @@ public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.D
         }
     }
 
-    public override async Task CreateSubscriptions()
+    public override async Task CreateSubscriptions(CancellationToken cancellationToken)
     {
         // Nothing actually needed here
     }
 
-    public override async Task StartContainersForScenarioRun(String scenarioName, DockerServices services)
+    public override async Task StartContainersForScenarioRun(
+        String scenarioName,
+        DockerServices services,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         this.TestId = Guid.NewGuid();
         String networkName = $"eventstoretestnetwork{this.TestId:N}";
         INetwork networkService = await this.SetupTestNetwork(networkName, true);
@@ -78,13 +86,15 @@ public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.D
                                   new List<INetwork> {
                                                                 networkService
                                                             },
-                                  DockerServices.EventStore);
+                                  DockerServices.EventStore,
+                                  cancellationToken);
 
         await this.StartContainer2(SetupInsecureEventStoreContainerLocal,
             new List<INetwork> {
                 networkService
             },
-            DockerServices.EventStore);
+            DockerServices.EventStore,
+            cancellationToken);
     }
 
     public KurrentDBClientSettings CreateEventStoreClientSettings(Boolean secureEventStore, TimeSpan? deadline = null, String userName = "admin", String password = "changeit")

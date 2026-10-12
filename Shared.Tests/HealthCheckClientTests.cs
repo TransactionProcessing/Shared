@@ -23,7 +23,7 @@ public partial class SharedTests
         MockHttpMessageHandler mockHttp = new();
 
         String expectedResponse = "{'name' : 'Test'}";
-        mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/health").Respond("application/json", expectedResponse);
+        mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/healthui").Respond("application/json", expectedResponse);
 
         HealthCheckClient healthCheckClient = new(mockHttp.ToHttpClient());
 
@@ -45,7 +45,7 @@ public partial class SharedTests
         MockHttpMessageHandler mockHttp = new();
 
         //String expectedResponse = "{'name' : 'Test'}";
-        mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/health").Respond(req => new HttpResponseMessage(statusCode));
+        mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/healthui").Respond(req => new HttpResponseMessage(statusCode));
 
         HealthCheckClient healthCheckClient = new(mockHttp.ToHttpClient());
 

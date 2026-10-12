@@ -9,7 +9,6 @@ using System;
 public static class Extensions
 {
     public static ContainerBuilder MountHostFolder(this ContainerBuilder containerBuilder,
-                                                   DockerEnginePlatform dockerEnginePlatform,
                                                    String hostTraceFolder,
                                                    String containerPath = null)
     {

@@ -72,6 +72,8 @@ public abstract class BaseDockerHelper{
 
     protected readonly IHealthCheckClient HealthCheckClient;
 
+    protected static readonly HttpClient EventStoreHealthCheckClient = CreateEventStoreHealthCheckClient();
+
     protected Dictionary<ContainerType, Int32> HostPorts = new();
 
     protected String HostTraceFolder;
@@ -125,13 +127,6 @@ public abstract class BaseDockerHelper{
                                                                                                                                                }
                                                                                             }));
         
-        // Linux-only integration containers.
-        this.DockerPlatform = BaseDockerHelper.GetDockerEnginePlatform().Result.Data;
-        if (this.DockerPlatform != DockerEnginePlatform.Linux)
-        {
-            throw new NotSupportedException("Integration test containers are only supported on Linux Docker engines.");
-        }
-
         this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
         this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.1", true));
         this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
@@ -221,23 +216,6 @@ public abstract class BaseDockerHelper{
         return startupGroups;
     }
 
-    public static async Task<SimpleResults.Result<DockerEnginePlatform>> GetDockerEnginePlatform(){
-        try{
-            Docker.DotNet.DockerClientBuilder b = new DockerClientBuilder();
-            DockerClient docker = b.Build();
-            
-            SystemInfoResponse? info = await docker.System.GetSystemInfoAsync();
-
-            return info.OSType switch {
-                "linux" => Result.Success(DockerEnginePlatform.Linux),
-                _ => Result.Success(DockerEnginePlatform.Unknown)
-            };
-        }
-        catch(Exception e){
-            return Result.Failure($"Unable to determine docker Engine Platform. Exception [{e.Message}]");
-        }
-    }
-
     public static DockerClient GetDockerHost() {
         Docker.DotNet.DockerClientBuilder b = new DockerClientBuilder();
         DockerClient docker = b.Build();
@@ -273,8 +251,6 @@ public abstract class BaseDockerHelper{
 
         return Result.Success(details.Value);
     }
-    public DockerEnginePlatform DockerPlatform { get; protected set; }
-
     public void SetHostPort(ContainerType key, Int32 hostPort){
         KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
         if (!details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
@@ -313,7 +289,7 @@ public abstract class BaseDockerHelper{
             .WithName(this.CallbackHandlerContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.CallbackHandlerDockerPort, true);
 
         return callbackHandlerContainer;
@@ -341,7 +317,7 @@ public abstract class BaseDockerHelper{
     protected String EstateManagementUiContainerName;
 
     public virtual ContainerBuilder SetupEventStoreContainer(){
-        this.Trace($"About to Start Event Store Container [{this.DockerPlatform}]");
+        this.Trace("About to Start Event Store Container");
 
         Dictionary<String, String> environmentVariables = new(){
             {"EVENTSTORE_RUN_PROJECTIONS","all"},
@@ -360,7 +336,7 @@ public abstract class BaseDockerHelper{
             // Copy these to the container
             String path = Path.Combine(Directory.GetCurrentDirectory(), "certs");
 
-            eventStoreContainer = eventStoreContainer.MountHostFolder(this.DockerPlatform, path, certsPath);
+            eventStoreContainer = eventStoreContainer.MountHostFolder(path, certsPath);
 
             // Certificates configuration
             environmentVariables.Add("EVENTSTORE_CertificateFile",$"{certsPath}/node1/node.crt");
@@ -369,11 +345,8 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add("EVENTSTORE_INSECURE","false");
         }
 
-        if (this.DockerPlatform == DockerEnginePlatform.Linux) {
-            String logfilePath = "/var/log/kurrentdb";
-
-            eventStoreContainer = eventStoreContainer.MountHostFolder(this.DockerPlatform, this.HostTraceFolder, logfilePath);
-        }
+        String logfilePath = "/var/log/kurrentdb";
+        eventStoreContainer = eventStoreContainer.MountHostFolder(this.HostTraceFolder, logfilePath);
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EventStore).Data;
         this.Trace($"About to Start Event Store Container using image [{imageDetails.imageName}]");
@@ -419,7 +392,7 @@ public abstract class BaseDockerHelper{
             .WithName(this.FileProcessorContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.FileProcessorDockerPort, true);
         
         // Mount the folder to upload files
@@ -456,6 +429,9 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add($"AppSettings:BackEndClientId", "serviceClient");
         environmentVariables.Add($"AppSettings:BackEndClientSecret", "Secret1");
         environmentVariables.Add($"DataReloadConfig:DefaultInSeconds", "1");
+        environmentVariables.Add(
+            "AppSettings:EstateReportingApi",
+            $"http://{this.EstateReportingContainerName}:{DockerPorts.EstateReportingDockerPort}");
         environmentVariables.Add("ConnectionStrings:TransactionProcessorReadModel", this.SetConnectionString("TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateManagementUI).Data;
@@ -464,7 +440,7 @@ public abstract class BaseDockerHelper{
             .WithName(this.EstateManagementUiContainerName)
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.EstateManagementUIDockerPort,true);
 
         return containerBuilder;
@@ -475,13 +451,16 @@ public abstract class BaseDockerHelper{
         this.Trace("About to Start Config Host Container");
         Dictionary<String, String> environmentVariables = new();
         environmentVariables.Add("AppSettings:InMemoryDatabase", "true");
+        environmentVariables.Add(
+            "ConnectionStrings:ConfigurationDatabase",
+            this.SetConnectionString("master", this.UseSecureSqlServerDatabase));
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.ConfigurationHost).Data;
 
         ContainerBuilder configHostContainer = new ContainerBuilder().WithName(this.ConfigHostContainerName)
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.ConfigHostDockerPort, true);
 
         return configHostContainer;
@@ -508,7 +487,7 @@ public abstract class BaseDockerHelper{
         ContainerBuilder messagingServiceContainer = new ContainerBuilder().WithName(this.MessagingServiceContainerName) // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder);
+            .MountHostFolder(this.HostTraceFolder);
 
         messagingServiceContainer = messagingServiceContainer
             .WithPortBinding(DockerPorts.MessagingServiceDockerPort, true);
@@ -631,7 +610,7 @@ public abstract class BaseDockerHelper{
             .WithName(this.TestHostContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.TestHostPort, true);
         
         return testHostContainer;
@@ -656,7 +635,7 @@ public abstract class BaseDockerHelper{
             .WithName(this.EstateReportingContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.EstateReportingDockerPort, true);
 
         return estateReportingContainer;
@@ -688,7 +667,7 @@ public abstract class BaseDockerHelper{
             .WithName(this.TransactionProcessorAclContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.TransactionProcessorAclDockerPort, true);
 
         return transactionProcessorACLContainer;
@@ -718,7 +697,7 @@ public abstract class BaseDockerHelper{
             .WithName(this.TransactionProcessorContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.DockerPlatform, this.HostTraceFolder)
+            .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.TransactionProcessorDockerPort, true);
 
         // TODO: Extension for multiple networks
@@ -729,7 +708,10 @@ public abstract class BaseDockerHelper{
         return transactionProcessorContainer;
     }
 
-    public abstract Task StartContainersForScenarioRun(String scenarioName, DockerServices dockerServices);
+    public abstract Task StartContainersForScenarioRun(
+        String scenarioName,
+        DockerServices dockerServices,
+        CancellationToken cancellationToken);
 
     public abstract Task StopContainersForScenarioRun(DockerServices sharedDockerServices);
 
@@ -792,7 +774,9 @@ public abstract class BaseDockerHelper{
         this.Trace($"Subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] created");
     }
 
-    protected async Task DoSqlServerHealthCheck(IContainer containerService){
+    protected async Task DoSqlServerHealthCheck(
+        IContainer containerService,
+        CancellationToken cancellationToken){
         // Try opening a connection
         const int maxRetries = 10;
         bool connected = false;
@@ -813,7 +797,7 @@ public abstract class BaseDockerHelper{
 
                 if (attempt < maxRetries)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(30));
+                    await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
                 }
             }
         }
@@ -824,54 +808,58 @@ public abstract class BaseDockerHelper{
                 $"Database container not started after {maxRetries} attempts");
         }
     }
-    protected async Task DoEventStoreHealthCheck(){
+    protected async Task DoEventStoreHealthCheck(CancellationToken cancellationToken){
         String scheme = this.IsSecureEventStore switch
         {
             true => "https",
             _ => "http"
         };
         this.Trace("About to do event store ping");
-        await Retry.For(async () =>
+        await Retry.For(async cancellationToken =>
         {
+            cancellationToken.ThrowIfCancellationRequested();
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
 
-            using HttpClientHandler httpClientHandler = new();
-            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-            using HttpClient client = new(httpClientHandler);
-            String authenticationString = "admin:changeit";
-            String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
-
-            HttpResponseMessage pingResponse = await client.GetAsync(url).ConfigureAwait(false);
+            using HttpResponseMessage pingResponse = await EventStoreHealthCheckClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         },
-
+                        cancellationToken,
                         TimeSpan.FromSeconds(300),
                         TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
         this.Trace("About to do event store info");
 
-        await Retry.For(async () =>
+        await Retry.For(async cancellationToken =>
         {
+            cancellationToken.ThrowIfCancellationRequested();
             String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
 
-            using HttpClientHandler httpClientHandler = new();
-            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-            using HttpClient client = new(httpClientHandler);
-            String authenticationString = "admin:changeit";
-            String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
-
-            HttpResponseMessage infoResponse = await client.GetAsync(url).ConfigureAwait(false);
+            using HttpResponseMessage infoResponse = await EventStoreHealthCheckClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
             infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
             String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             this.Trace(infoData);
-        });
+        }, cancellationToken);
     }
 
-    protected async Task DoHealthCheck(ContainerType containerType) {
+    private static HttpClient CreateEventStoreHealthCheckClient()
+    {
+        HttpClientHandler httpClientHandler = new()
+        {
+            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+        };
+
+        HttpClient client = new(httpClientHandler);
+        String authenticationString = "admin:changeit";
+        String base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.UTF8.GetBytes(authenticationString));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+        return client;
+    }
+
+    protected async Task DoHealthCheck(
+        ContainerType containerType,
+        CancellationToken cancellationToken) {
         (String, Int32) containerDetails = containerType switch {
             ContainerType.CallbackHandler => ("http", this.CallbackHandlerPort),
             ContainerType.FileProcessor => ("http", this.FileProcessorPort),
@@ -880,8 +868,8 @@ public abstract class BaseDockerHelper{
             ContainerType.TransactionProcessor => ("http", this.TransactionProcessorPort),
             ContainerType.SecurityService => ("https", this.SecurityServicePort),
             ContainerType.TransactionProcessorAcl => ("http", this.TransactionProcessorAclPort),
-            //ContainerType.ConfigurationHost => ("http", this.ConfigHostPort),
-            //ContainerType.EstateManagementUI => ("https", this.EstateManagementUiPort),
+            ContainerType.ConfigurationHost => ("http", this.ConfigHostPort),
+            ContainerType.EstateManagementUI => ("https", this.EstateManagementUiPort),
             ContainerType.EstateReporting => ("http", this.EstateReportingPort),
             _ => (null, 0)
         };
@@ -889,10 +877,11 @@ public abstract class BaseDockerHelper{
         if (containerDetails.Item1 == null)
             return;
 
-        await Retry.For(async () => {
+        await Retry.For(async cancellationToken => {
+            cancellationToken.ThrowIfCancellationRequested();
             this.Trace($"About to do health check for {containerType}");
 
-            SimpleResults.Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, CancellationToken.None);
+            SimpleResults.Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, cancellationToken);
 
             if (healthCheckResult.IsSuccess) {
                 HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckResult.Data, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
@@ -906,7 +895,7 @@ public abstract class BaseDockerHelper{
                 this.Trace($"health check failed for {containerType}");
                 throw new InvalidOperationException($"Health check failed for {containerType} [{healthCheckResult.Message}]");
             }
-        }, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
+        }, cancellationToken, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
     }
 
     protected void Error(String message, Exception ex){
@@ -935,7 +924,7 @@ public abstract class BaseDockerHelper{
         return requiredProjections;
     }
 
-    protected virtual async Task LoadEventStoreProjections(){
+    protected virtual async Task LoadEventStoreProjections(CancellationToken cancellationToken){
         //Start our Continuous Projections - we might decide to do this at a different stage, but now lets try here
         String projectionsFolder = "projections/continuous";
 
@@ -945,7 +934,7 @@ public abstract class BaseDockerHelper{
 
             if (di.Exists)
             {
-                FileInfo[] files = di.GetFiles();
+                IReadOnlyList<FileInfo> files = this.GetProjectionFiles();
                 var requiredProjections = this.GetRequiredProjections();
                 EventStoreProjectionManagementClient projectionClient = new(this.ConfigureEventStoreSettings());
                 List<String> projectionNames = new();
@@ -960,15 +949,8 @@ public abstract class BaseDockerHelper{
 
 
                     this.Trace($"Creating projection [{projectionName}] from file [{file.FullName}]");
-                    try
-                    {
-                        await projectionClient.CreateContinuousAsync(projectionName, projection, trackEmittedStreams: true).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        // ignored
-                        this.Trace($"Projection [{projectionName}] create error {ex.Message}");
-                    }
+                    await this.CreateContinuousProjection(projectionClient, projectionName, projection, cancellationToken)
+                        .ConfigureAwait(false);
 
                     projectionNames.Add(projectionName);
                     this.Trace($"Projection [{projectionName}] created");
@@ -977,14 +959,77 @@ public abstract class BaseDockerHelper{
                 // Now check the create status of each
                 foreach (String projectionName in projectionNames)
                 {
-                    ProjectionDetails projectionDetails = await projectionClient.GetStatusAsync(projectionName);
-                    projectionDetails.Status.ShouldBe("Running", $"Projection [{projectionName}] is {projectionDetails.Status}");
-                    this.Trace($"Projection [{projectionName}] running");
+                    await Retry.For(async cancellationToken =>
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        ProjectionDetails projectionDetails = await this.GetProjectionStatus(
+                                projectionClient,
+                                projectionName,
+                                cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (IsTerminalProjectionStatus(projectionDetails.Status))
+                        {
+                            throw new TerminalProjectionException(
+                                $"Projection [{projectionName}] entered terminal state [{projectionDetails.Status}]");
+                        }
+
+                        projectionDetails.Status.ShouldBe("Running", $"Projection [{projectionName}] is {projectionDetails.Status}");
+                        this.Trace($"Projection [{projectionName}] running");
+                    },
+                    cancellationToken,
+                    exception => exception is not TerminalProjectionException,
+                    TimeSpan.FromMinutes(3),
+                    TimeSpan.FromSeconds(5));
                 }
             }
         }
 
         this.Trace("Loaded projections");
+    }
+
+    protected virtual IReadOnlyList<FileInfo> GetProjectionFiles()
+    {
+        return new DirectoryInfo("projections/continuous").GetFiles();
+    }
+
+    protected virtual Task CreateContinuousProjection(
+        EventStoreProjectionManagementClient projectionClient,
+        String projectionName,
+        String projection,
+        CancellationToken cancellationToken)
+    {
+        return projectionClient.CreateContinuousAsync(
+            projectionName,
+            projection,
+            trackEmittedStreams: true,
+            cancellationToken: cancellationToken);
+    }
+
+    protected virtual Task<ProjectionDetails> GetProjectionStatus(
+        EventStoreProjectionManagementClient projectionClient,
+        String projectionName,
+        CancellationToken cancellationToken)
+    {
+        return projectionClient.GetStatusAsync(
+            projectionName,
+            cancellationToken: cancellationToken);
+    }
+
+    private static Boolean IsTerminalProjectionStatus(String status)
+    {
+        return String.Equals(status, "Faulted", StringComparison.OrdinalIgnoreCase)
+               || String.Equals(status, "Stopped", StringComparison.OrdinalIgnoreCase)
+               || String.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase)
+               || String.Equals(status, "Aborted", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class TerminalProjectionException : InvalidOperationException
+    {
+        public TerminalProjectionException(String message)
+            : base(message)
+        {
+        }
     }
 
     //protected virtual void SetAdditionalVariables(ContainerType containerType, List<String> variableList){
@@ -1005,17 +1050,24 @@ public abstract class BaseDockerHelper{
     }
 
     
-    protected async Task<IContainer> StartContainer2(Func<ContainerBuilder> buildContainerFunc, List<INetwork> networkServices, DockerServices dockerService){
+    protected async Task<IContainer> StartContainer2(
+        Func<ContainerBuilder> buildContainerFunc,
+        List<INetwork> networkServices,
+        DockerServices dockerService,
+        CancellationToken cancellationToken){
         if ((this.RequiredDockerServices & dockerService) != dockerService)
         {
             return default;
         }
 
-        try{
-            IContainer builtContainer = default;
+        IContainer builtContainer = default;
+        Boolean containerStarted = false;
 
-            await Retry.For(async () =>
+        try{
+
+            await Retry.For(async cancellationToken =>
             {
+                containerStarted = false;
                 ContainerBuilder containerBuilder = buildContainerFunc();
 
                 foreach (INetwork networkService in networkServices) {
@@ -1025,14 +1077,21 @@ public abstract class BaseDockerHelper{
                 builtContainer = containerBuilder.Build();
                 try
                 {
-                    await builtContainer.StartAsync();
+                    await builtContainer.StartAsync(cancellationToken);
+                    containerStarted = true;
+
+                    lock (this.ContainerStateLock)
+                    {
+                        this.Containers.Add((dockerService, builtContainer));
+                    }
                 }
                 catch
                 {
+                    await this.CaptureContainerLogs(builtContainer, cancellationToken);
                     await builtContainer.DisposeAsync();
                     throw;
                 }
-            });
+            }, cancellationToken);
 
             this.Trace($"{dockerService} Container Started");
             
@@ -1067,20 +1126,15 @@ public abstract class BaseDockerHelper{
                 switch (type)
                 {
                     case ContainerType.EventStore:
-                        await DoEventStoreHealthCheck();
+                         await DoEventStoreHealthCheck(cancellationToken);
                         break;
                     case ContainerType.SqlServer:
-                        await DoSqlServerHealthCheck(builtContainer);
+                         await DoSqlServerHealthCheck(builtContainer, cancellationToken);
                         break;
                     default:
-                        await this.DoHealthCheck(type);
+                         await this.DoHealthCheck(type, cancellationToken);
                         break;
                 }
-            }
-
-            lock (this.ContainerStateLock)
-            {
-                this.Containers.Add((dockerService, builtContainer));
             }
 
             this.Trace($"Container [{buildContainerFunc.Method.Name}] started");
@@ -1088,16 +1142,41 @@ public abstract class BaseDockerHelper{
             return builtContainer;
         }
         catch (Exception ex){
-            // TODO: read console logs
-            //if (consoleLogs != null){
-            //    while (!consoleLogs.IsFinished){
-            //        String s = consoleLogs.TryRead(10000);
-            //        this.Trace(s);
-            //    }
-            //}
+            if (builtContainer is not null && containerStarted)
+            {
+                await this.CaptureContainerLogs(builtContainer, cancellationToken);
+            }
 
             this.Error($"Error starting container [{buildContainerFunc.Method.Name}]", ex);
             throw;
+        }
+    }
+
+    protected virtual async Task CaptureContainerLogs(
+        IContainer container,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            (String stdout, String stderr) logs = await container.GetLogsAsync(
+                DateTime.UtcNow.AddMinutes(-5),
+                DateTime.UtcNow,
+                timestampsEnabled: true,
+                cancellationToken).ConfigureAwait(false);
+
+            if (String.IsNullOrWhiteSpace(logs.stdout) == false)
+            {
+                this.Trace($"Container [{container.Name}] stdout:\n{logs.stdout}");
+            }
+
+            if (String.IsNullOrWhiteSpace(logs.stderr) == false)
+            {
+                this.Trace($"Container [{container.Name}] stderr:\n{logs.stderr}");
+            }
+        }
+        catch (Exception logException)
+        {
+            this.Trace($"Unable to capture logs for container: {logException.Message}");
         }
     }
 

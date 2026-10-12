@@ -36,10 +36,3 @@ public enum DockerServices
     EstateManagementUI = 1024,
     EstateReporting = 2048
 }
-
-public enum DockerEnginePlatform
-{
-    Unknown,
-    Linux,
-    Windows
-}

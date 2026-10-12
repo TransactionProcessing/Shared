@@ -42,7 +42,7 @@ public class EventStoreContextRetryIntegrationTests : IDisposable
     public async Task EventStoreContext_InsertEvents_RetriesAfterDockerOutage()
     {
         this.InitialiseRetryConfiguration();
-        await this.EventStoreDockerHelper.StartContainers(false, nameof(this.EventStoreContext_InsertEvents_RetriesAfterDockerOutage));
+        await this.EventStoreDockerHelper.StartContainers(false, nameof(this.EventStoreContext_InsertEvents_RetriesAfterDockerOutage), CancellationToken.None);
 
         TimeSpan deadline = TimeSpan.FromSeconds(5);
         IEventStoreContext context = this.CreateContext(false, deadline);
