@@ -448,6 +448,9 @@ public abstract class BaseDockerHelper{
         this.Trace("About to Start Config Host Container");
         Dictionary<String, String> environmentVariables = new();
         environmentVariables.Add("AppSettings:InMemoryDatabase", "true");
+        environmentVariables.Add(
+            "ConnectionStrings:ConfigurationDatabase",
+            this.SetConnectionString("master", this.UseSecureSqlServerDatabase));
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.ConfigurationHost).Data;
 
