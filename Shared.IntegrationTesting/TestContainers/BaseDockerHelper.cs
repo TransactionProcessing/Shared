@@ -429,6 +429,9 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add($"AppSettings:BackEndClientId", "serviceClient");
         environmentVariables.Add($"AppSettings:BackEndClientSecret", "Secret1");
         environmentVariables.Add($"DataReloadConfig:DefaultInSeconds", "1");
+        environmentVariables.Add(
+            "AppSettings:EstateReportingApi",
+            $"http://{this.EstateReportingContainerName}:{DockerPorts.EstateReportingDockerPort}");
         environmentVariables.Add("ConnectionStrings:TransactionProcessorReadModel", this.SetConnectionString("TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateManagementUI).Data;
