@@ -75,7 +75,8 @@ public class DockerHelperStartupPlanTests
         protected override Task CreateContinuousProjection(
             EventStoreProjectionManagementClient projectionClient,
             string projectionName,
-            string projection)
+            string projection,
+            CancellationToken cancellationToken)
         {
             throw new InvalidOperationException("projection creation failed");
         }

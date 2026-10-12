@@ -943,7 +943,7 @@ public abstract class BaseDockerHelper{
 
 
                     this.Trace($"Creating projection [{projectionName}] from file [{file.FullName}]");
-                    await this.CreateContinuousProjection(projectionClient, projectionName, projection)
+                    await this.CreateContinuousProjection(projectionClient, projectionName, projection, cancellationToken)
                         .ConfigureAwait(false);
 
                     projectionNames.Add(projectionName);
@@ -956,10 +956,25 @@ public abstract class BaseDockerHelper{
                     await Retry.For(async cancellationToken =>
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        ProjectionDetails projectionDetails = await projectionClient.GetStatusAsync(projectionName);
+                        ProjectionDetails projectionDetails = await this.GetProjectionStatus(
+                                projectionClient,
+                                projectionName,
+                                cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (IsTerminalProjectionStatus(projectionDetails.Status))
+                        {
+                            throw new TerminalProjectionException(
+                                $"Projection [{projectionName}] entered terminal state [{projectionDetails.Status}]");
+                        }
+
                         projectionDetails.Status.ShouldBe("Running", $"Projection [{projectionName}] is {projectionDetails.Status}");
                         this.Trace($"Projection [{projectionName}] running");
-                    }, cancellationToken, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(5));
+                    },
+                    cancellationToken,
+                    exception => exception is not TerminalProjectionException,
+                    TimeSpan.FromMinutes(3),
+                    TimeSpan.FromSeconds(5));
                 }
             }
         }
@@ -975,12 +990,40 @@ public abstract class BaseDockerHelper{
     protected virtual Task CreateContinuousProjection(
         EventStoreProjectionManagementClient projectionClient,
         String projectionName,
-        String projection)
+        String projection,
+        CancellationToken cancellationToken)
     {
         return projectionClient.CreateContinuousAsync(
             projectionName,
             projection,
-            trackEmittedStreams: true);
+            trackEmittedStreams: true,
+            cancellationToken: cancellationToken);
+    }
+
+    protected virtual Task<ProjectionDetails> GetProjectionStatus(
+        EventStoreProjectionManagementClient projectionClient,
+        String projectionName,
+        CancellationToken cancellationToken)
+    {
+        return projectionClient.GetStatusAsync(
+            projectionName,
+            cancellationToken: cancellationToken);
+    }
+
+    private static Boolean IsTerminalProjectionStatus(String status)
+    {
+        return String.Equals(status, "Faulted", StringComparison.OrdinalIgnoreCase)
+               || String.Equals(status, "Stopped", StringComparison.OrdinalIgnoreCase)
+               || String.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase)
+               || String.Equals(status, "Aborted", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class TerminalProjectionException : InvalidOperationException
+    {
+        public TerminalProjectionException(String message)
+            : base(message)
+        {
+        }
     }
 
     //protected virtual void SetAdditionalVariables(ContainerType containerType, List<String> variableList){
@@ -1038,7 +1081,7 @@ public abstract class BaseDockerHelper{
                 }
                 catch
                 {
-                    await this.CaptureContainerLogs(builtContainer, CancellationToken.None);
+                    await this.CaptureContainerLogs(builtContainer, cancellationToken);
                     await builtContainer.DisposeAsync();
                     throw;
                 }
@@ -1095,7 +1138,7 @@ public abstract class BaseDockerHelper{
         catch (Exception ex){
             if (builtContainer is not null && containerStarted)
             {
-                await this.CaptureContainerLogs(builtContainer, CancellationToken.None);
+                await this.CaptureContainerLogs(builtContainer, cancellationToken);
             }
 
             this.Error($"Error starting container [{buildContainerFunc.Method.Name}]", ex);

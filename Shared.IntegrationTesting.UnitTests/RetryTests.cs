@@ -42,4 +42,23 @@ public class RetryTests
             TimeSpan.FromMinutes(1),
             TimeSpan.FromSeconds(1)));
     }
+
+    [Fact]
+    public async Task Retry_For_does_not_retry_when_exception_is_not_retryable()
+    {
+        Int32 attempts = 0;
+
+        await Should.ThrowAsync<InvalidOperationException>(() => Retry.For(
+            _ =>
+            {
+                attempts++;
+                throw new InvalidOperationException("terminal failure");
+            },
+            CancellationToken.None,
+            _ => false,
+            TimeSpan.FromMinutes(1),
+            TimeSpan.FromSeconds(1)));
+
+        attempts.ShouldBe(1);
+    }
 }
