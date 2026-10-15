@@ -402,7 +402,7 @@ public abstract class BaseDockerHelper{
 
         String containerFolder = "/home/txnproc/bulkfiles";
         Directory.CreateDirectory(uploadFolder);
-        fileProcessorContainer.WithBindMount(uploadFolder, containerFolder, AccessMode.ReadWrite);
+        fileProcessorContainer.MountHostFolder(uploadFolder, containerFolder);
         return fileProcessorContainer;
     }
 
