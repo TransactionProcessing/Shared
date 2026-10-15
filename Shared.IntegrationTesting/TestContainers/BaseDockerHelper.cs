@@ -402,7 +402,7 @@ public abstract class BaseDockerHelper{
 
         String containerFolder = "/home/txnproc/bulkfiles";
         Directory.CreateDirectory(uploadFolder);
-        fileProcessorContainer.WithBindMount(uploadFolder, containerFolder, AccessMode.ReadWrite);
+        fileProcessorContainer.MountHostFolder(uploadFolder, containerFolder);
         return fileProcessorContainer;
     }
 
@@ -547,7 +547,8 @@ public abstract class BaseDockerHelper{
         ContainerBuilder securityServiceContainer = new ContainerBuilder(imageDetailsResult.Data.imageName)
             .WithName(this.SecurityServiceContainerName)
             .WithEnvironment(environmentVariables)
-            .WithBindMount(this.IntegrationTestCertificate.CertificateDirectory, this.IntegrationTestCertificate.ContainerCertificateDirectory, AccessMode.ReadOnly);
+            .MountHostFolder(this.HostTraceFolder)
+            .MountHostFolder(this.IntegrationTestCertificate.CertificateDirectory, this.IntegrationTestCertificate.ContainerCertificateDirectory);            
 
         Int32? hostPort = this.GetHostPort(ContainerType.SecurityService);
         if (hostPort is null || hostPort <= 0)
