@@ -14,6 +14,7 @@ using Aggregate;
 using DomainDrivenDesign.EventSourcing;
 using EventStore;
 using global::EventStore.Client;
+using Shared.Logger.TennantContext;
 using Imposter.Abstractions;
 using Shouldly;
 using Xunit;
@@ -181,5 +182,46 @@ public class AggregateRepositoryTests{
         testAggregate.SetAggregateName("New name", Guid.NewGuid());
         Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task AggregateRepository_SaveChanges_AddsSameCorrelationIdToEveryPendingEvent()
+    {
+        TenantContext previousTenantContext = TenantContext.CurrentTenant;
+        TenantContext.CurrentTenant = new TenantContext();
+        Guid correlationId = Guid.NewGuid();
+        TenantContext.CurrentTenant.SetCorrelationId(CorrelationId.From(correlationId));
+
+        try
+        {
+            List<EventData> appendedEvents = null;
+            IEventStoreContextImposter context = new();
+            context.InsertEvents(Arg<String>.Any(), Arg<long>.Any(),
+                    Arg<List<EventData>>.Is(events =>
+                    {
+                        appendedEvents = events;
+                        return true;
+                    }), Arg<CancellationToken>.Any())
+                .ReturnsAsync(Result.Success());
+
+            AggregateRepository<TestAggregate, DomainEvent> repository = new(context.Instance(), new DomainEventFactory());
+            TestAggregate aggregate = TestAggregate.Create(TestData.AggregateId);
+            aggregate.SetAggregateName("First", Guid.NewGuid());
+            aggregate.SetAggregateName("Second", Guid.NewGuid());
+
+            Result result = await repository.SaveChanges(aggregate, CancellationToken.None);
+
+            result.IsSuccess.ShouldBeTrue();
+            appendedEvents.Count.ShouldBe(2);
+            foreach (EventData eventData in appendedEvents)
+            {
+                using JsonDocument metadata = JsonDocument.Parse(eventData.Metadata);
+                metadata.RootElement.GetProperty(TenantContext.KeyNameCorrelationId).GetString().ShouldBe(correlationId.ToString("D"));
+            }
+        }
+        finally
+        {
+            TenantContext.CurrentTenant = previousTenantContext;
+        }
     }
 }

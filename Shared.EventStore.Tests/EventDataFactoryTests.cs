@@ -6,6 +6,7 @@ using KurrentDB.Client;
 using Shared.DomainDrivenDesign.EventSourcing;
 using Shared.EventStore.Aggregate;
 using Shared.EventStore.Tests.TestObjects;
+using Shared.Logger.TennantContext;
 using Shared.Serialisation;
 using Shouldly;
 using Xunit;
@@ -23,6 +24,21 @@ public class EventDataFactoryTests{
         AggregateNameSetEvent aggregateNameSetEvent = new(TestData.AggregateId, TestData.EventId, "Test");
         EventData eventData = factory.CreateEventData(aggregateNameSetEvent);
         eventData.EventId.ToGuid().ShouldBe(aggregateNameSetEvent.EventId);
+        eventData.Metadata.IsEmpty.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void EventDataFactory_CreateEventData_CorrelationIdIncludedInMetadata()
+    {
+        EventDataFactory factory = new();
+        AggregateNameSetEvent domainEvent = new(TestData.AggregateId, TestData.EventId, "Test");
+        Guid correlationId = Guid.NewGuid();
+
+        EventData eventData = factory.CreateEventData(domainEvent, correlationId.ToString("D"));
+
+        eventData.Metadata.IsEmpty.ShouldBeFalse();
+        using JsonDocument metadata = JsonDocument.Parse(eventData.Metadata);
+        metadata.RootElement.GetProperty(TenantContext.KeyNameCorrelationId).GetString().ShouldBe(correlationId.ToString("D"));
     }
 
     [Fact]
