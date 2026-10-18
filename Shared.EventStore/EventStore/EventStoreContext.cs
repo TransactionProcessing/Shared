@@ -371,10 +371,17 @@ public class EventStoreContext : IEventStoreContext
         }
         finally
         {
-            await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
-                    this.UseProjectionManagementClientAsync(client =>
-                        client.DisableAsync(queryName, deadline: this.Deadline, cancellationToken: cancellationToken)),
-                nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
+            try
+            {
+                await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
+                        this.UseProjectionManagementClientAsync(client =>
+                            client.DisableAsync(queryName, deadline: this.Deadline, cancellationToken: cancellationToken)),
+                    nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
+            }
+            catch (RpcException rex) when (rex.StatusCode == StatusCode.NotFound)
+            {
+                // KurrentDB may remove completed or faulted transient projections before cleanup runs.
+            }
         }
     }
 
