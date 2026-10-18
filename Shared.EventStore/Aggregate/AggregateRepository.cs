@@ -14,6 +14,7 @@ using DomainDrivenDesign.EventSourcing;
 using EventStore;
 using global::EventStore.Client;
 using Shared.TraceHandler;
+using Shared.Logger.TennantContext;
 
 public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTraceHandler, IAggregateRepository<TAggregate, TDomainEvent> where TAggregate : Aggregate, new()
     where TDomainEvent : IDomainEvent
@@ -86,10 +87,13 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         if (!pendingEvents.Any())
             return Result.Success();
 
+        String correlationId = TenantContext.CurrentTenant?.CorrelationId.ToString();
         List<EventData> events = new();
 
         foreach (IDomainEvent domainEvent in pendingEvents){
-            EventData @event = TypeMapConvertor.Convertor(domainEvent);
+            EventData @event = String.IsNullOrWhiteSpace(correlationId)
+                ? TypeMapConvertor.Convertor(domainEvent)
+                : TypeMapConvertor.Convertor(domainEvent, correlationId);
 
             events.Add(@event);
         }

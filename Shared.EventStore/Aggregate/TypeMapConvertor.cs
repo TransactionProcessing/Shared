@@ -68,6 +68,12 @@ public static class TypeMapConvertor
         return eventDataFactory.CreateEventData(@event);
     }
 
+    public static EventData Convertor(IDomainEvent @event, String correlationId)
+    {
+        EventDataFactory eventDataFactory = new();
+        return eventDataFactory.CreateEventData(@event, correlationId);
+    }
+
     /// <summary>
     /// Convertors the specified event.
     /// </summary>

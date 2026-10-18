@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -142,6 +143,28 @@ public class PersistentSubscription
         }
     }
 
+    private static CorrelationId GetCorrelationIdFromEventMetadata(ResolvedEvent resolvedEvent)
+    {
+        try
+        {
+            using JsonDocument metadata = JsonDocument.Parse(resolvedEvent.Event.Metadata);
+            if (metadata.RootElement.ValueKind == JsonValueKind.Object &&
+                metadata.RootElement.TryGetProperty(TenantContext.KeyNameCorrelationId, out JsonElement correlationIdElement) &&
+                correlationIdElement.ValueKind == JsonValueKind.String &&
+                Guid.TryParse(correlationIdElement.GetString(), out Guid correlationId) &&
+                correlationId != Guid.Empty)
+            {
+                return CorrelationId.From(correlationId);
+            }
+        }
+        catch (JsonException)
+        {
+            // Older events or events with unrelated metadata can still be processed.
+        }
+
+        return null;
+    }
+
     internal async Task EventAppeared(KurrentDB.Client.PersistentSubscription persistentSubscription,
                                              ResolvedEvent resolvedEvent,
                                              Int32? retryCount,
@@ -161,6 +184,11 @@ public class PersistentSubscription
 
             TenantContext tenantContext = new();
             tenantContext.Initialise(tenantIdentifiers, logPerTenantEnabled);
+            CorrelationId correlationId = PersistentSubscription.GetCorrelationIdFromEventMetadata(resolvedEvent);
+            if (correlationId != null)
+            {
+                tenantContext.SetCorrelationId(correlationId);
+            }
             TenantContext.CurrentTenant = tenantContext;
 
             Logger.Logger.LogInformation($"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");

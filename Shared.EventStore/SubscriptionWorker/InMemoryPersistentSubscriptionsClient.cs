@@ -39,10 +39,15 @@ public class InMemoryPersistentSubscriptionsClient : IPersistentSubscriptionsCli
 
     public void WriteEvent(String @event, String @type, CancellationToken cancellationToken)
     {
+        this.WriteEvent(@event, @type, @event, cancellationToken);
+    }
+
+    public void WriteEvent(String @event, String @type, String customMetadata, CancellationToken cancellationToken)
+    {
 
         ReadOnlyMemory<byte> data = new(Encoding.Default.GetBytes(@event));
         IDictionary<string, string> metadata = new Dictionary<String, String>();
-        ReadOnlyMemory<byte> custommetadata = new(Encoding.Default.GetBytes(@event));
+        ReadOnlyMemory<byte> custommetadata = new(Encoding.UTF8.GetBytes(customMetadata));
 
         metadata.Add("type", @type);
         metadata.Add("created", "1000");

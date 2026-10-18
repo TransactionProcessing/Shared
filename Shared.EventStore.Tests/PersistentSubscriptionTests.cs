@@ -18,6 +18,7 @@ using SimpleResults;
 using Shared.EventStore.SubscriptionWorker;
 using Shared.General;
 using Shared.Logger;
+using Shared.Logger.TennantContext;
 using Imposter.Abstractions;
 using Shouldly;
 using Xunit;
@@ -62,6 +63,37 @@ public class PersistentSubscriptionTests : IDisposable
 
         //Crude - but a decent start point
         eventHandler.DomainEvents.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task PersistentSubscription_RestoresCorrelationIdFromEventMetadata()
+    {
+        TenantContext previousTenantContext = TenantContext.CurrentTenant;
+        Guid correlationId = Guid.NewGuid();
+        PersistentSubscriptionDetails details = new("$ce-test", "local-correlation");
+        CorrelationCapturingEventHandler eventHandler = new();
+        IDomainEventHandlerResolverImposter resolver = new();
+        resolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler> { eventHandler });
+        InMemoryPersistentSubscriptionsClient client = new();
+        PersistentSubscription subscription = PersistentSubscription.Create(client, details, resolver.Instance());
+
+        try
+        {
+            await subscription.ConnectToSubscription(CancellationToken.None);
+
+            String eventJson = "{\"estateId\":\"4fc2692f-067a-443e-8006-335bf2732248\",\"estateName\":\"Demo Estate\"}";
+            String metadataJson = JsonSerializer.Serialize(new Dictionary<String, String>
+            {
+                [TenantContext.KeyNameCorrelationId] = correlationId.ToString("D")
+            });
+            client.WriteEvent(eventJson, "EstateCreatedEvent", metadataJson, CancellationToken.None);
+
+            eventHandler.CorrelationId.ShouldBe(correlationId);
+        }
+        finally
+        {
+            TenantContext.CurrentTenant = previousTenantContext;
+        }
     }
 
     [Fact]
@@ -232,5 +264,16 @@ public class PersistentSubscriptionTests : IDisposable
     public void Dispose()
     {
         ConfigurationReader.Initialise(new ConfigurationRoot(new List<IConfigurationProvider>()));
+    }
+
+    private sealed class CorrelationCapturingEventHandler : IDomainEventHandler
+    {
+        public Guid? CorrelationId { get; private set; }
+
+        public Task<Result> Handle(IDomainEvent domainEvent, CancellationToken cancellationToken)
+        {
+            this.CorrelationId = TenantContext.CurrentTenant?.CorrelationId.Value;
+            return Task.FromResult(Result.Success());
+        }
     }
 }
