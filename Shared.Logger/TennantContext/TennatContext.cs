@@ -2,14 +2,11 @@
 
 public class TenantContext
 {
-    #region Fields
     public static readonly String KeyNameCorrelationId = "correlationId";
 
     private static readonly AsyncLocal<TenantContext> Current = new AsyncLocal<TenantContext>();
 
-    #endregion
 
-    #region Properties
 
     public CorrelationId CorrelationId { get; internal set; } = CorrelationId.New();
 
@@ -25,5 +22,4 @@ public class TenantContext
 
     public Guid MerchantId { get; internal set; }
 
-    #endregion
 }

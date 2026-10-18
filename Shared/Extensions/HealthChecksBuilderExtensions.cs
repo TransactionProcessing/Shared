@@ -11,7 +11,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 /// </summary>
 public static class HealthChecksBuilderExtensions
 {
-    #region Methods
     public static IHealthChecksBuilder AddFileProcessorService(this IHealthChecksBuilder builder,
                                                                Func<IServiceProvider, HttpClientHandler> customHttpHandler = null)
     {
@@ -63,5 +62,4 @@ public static class HealthChecksBuilderExtensions
             configurePrimaryHttpMessageHandler: customHttpHandler);
     }
         
-    #endregion
 }

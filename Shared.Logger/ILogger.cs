@@ -7,7 +7,6 @@ using System;
 /// </summary>
 public interface ILogger
 {
-    #region Properties
 
     /// <summary>
     /// Gets or sets a value indicating whether this instance is initialised.
@@ -17,9 +16,7 @@ public interface ILogger
     /// </value>
     Boolean IsInitialised { get; set; }
 
-    #endregion
 
-    #region Methods
 
     void LogCritical(Exception exception);
 
@@ -41,5 +38,4 @@ public interface ILogger
 
     void LogWarning(String message);
 
-    #endregion
 }

@@ -19,7 +19,6 @@ using Shared.Logger.TennantContext;
 public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTraceHandler, IAggregateRepository<TAggregate, TDomainEvent> where TAggregate : Aggregate, new()
     where TDomainEvent : IDomainEvent
 {
-    #region Fields
 
     /// <summary>
     /// The convert to event
@@ -28,9 +27,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
 
     private readonly IDomainEventFactory<IDomainEvent> DomainEventFactory;
 
-    #endregion
 
-    #region Constructors
 
     public AggregateRepository(IEventStoreContext eventStoreContext, IDomainEventFactory<IDomainEvent> domainEventFactory)
     {
@@ -38,9 +35,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         DomainEventFactory = domainEventFactory;
     }
 
-    #endregion
 
-    #region Methods
 
     public async Task<Result<TAggregate>> GetLatestVersion(Guid aggregateId,
                                                            CancellationToken cancellationToken)
@@ -145,5 +140,4 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         return Result.Success(aggregate);
     }
 
-    #endregion
 }

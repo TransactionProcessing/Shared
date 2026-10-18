@@ -15,7 +15,6 @@ using global::EventStore.Client;
 [ExcludeFromCodeCoverage]
 public class SubscriptionWorker
 {
-    #region Fields
 
     internal readonly List<PersistentSubscription> CurrentSubscriptions = new();
 
@@ -37,9 +36,7 @@ public class SubscriptionWorker
 
     private readonly Action<String> WriteWarning;
 
-    #endregion
 
-    #region Constructors
 
     private SubscriptionWorker(String eventStoreConnectionString,
                                IDomainEventHandlerResolver domainEventHandlerResolver,
@@ -68,9 +65,7 @@ public class SubscriptionWorker
         this.WriteError = message => SubscriptionWorkerHelper.SafeInvokeEvent(this.Error, this, message);
     }
 
-    #endregion
 
-    #region Properties
 
     public String IncludeGroups { get; internal set; }
     public String IgnoreGroups { get; internal set; }
@@ -83,17 +78,13 @@ public class SubscriptionWorker
     public Boolean IsRunning { get; private set; }
     public Int32 PersistentSubscriptionPollingInSeconds { get; }
         
-    #endregion
 
-    #region Events
 
     public event EventHandler<TraceEventArgs> Error;
     public event EventHandler<TraceEventArgs> Trace;
     public event EventHandler<TraceEventArgs> Warning;
 
-    #endregion
 
-    #region Methods
 
     public static SubscriptionWorker CreateSubscriptionWorker(String eventStoreConnectionString,
                                                               IDomainEventHandlerResolver domainEventHandlerResolver,
@@ -261,5 +252,4 @@ public class SubscriptionWorker
         }
     }
 
-    #endregion
 }

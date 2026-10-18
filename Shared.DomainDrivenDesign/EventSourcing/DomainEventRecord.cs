@@ -12,7 +12,6 @@ public record DomainEvent : IDomainEvent
         this.EventType = DomainHelper.GetEventTypeName(this.GetType());
     }
 
-    #region Properties
 
     public Guid AggregateId { get; init; }
 
@@ -26,5 +25,4 @@ public record DomainEvent : IDomainEvent
 
     public String EventType { get; init; }
 
-    #endregion
 }

@@ -7,7 +7,6 @@ using DomainDrivenDesign.EventSourcing;
 
 public static class AggregateExtensions
 {
-    #region Methods
 
     /// <summary>
     /// Applies the specified historic event.
@@ -72,5 +71,4 @@ public static class AggregateExtensions
         return aggregate.EventHistory.ContainsKey(eventId) || aggregate.PendingEvents.Any(x => x.EventId == eventId);
     }
 
-    #endregion
 }

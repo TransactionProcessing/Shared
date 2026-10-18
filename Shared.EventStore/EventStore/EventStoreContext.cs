@@ -25,7 +25,6 @@ public delegate void TraceHandler(String trace,
 [ExcludeFromCodeCoverage(Justification = "This testing is handled with a suite of integration tests")]
 public class EventStoreContext : IEventStoreContext
 {
-    #region Fields
 
     /// <summary>
     /// The event store client
@@ -44,9 +43,7 @@ public class EventStoreContext : IEventStoreContext
 
     private readonly TimeSpan? Deadline;
 
-    #endregion
 
-    #region Constructors
 
     public EventStoreContext(KurrentDBClient eventStoreClient, KurrentDBProjectionManagementClient projectionManagementClient, TimeSpan? deadline = null)
     {
@@ -61,15 +58,11 @@ public class EventStoreContext : IEventStoreContext
         this.Deadline = deadline;
     }
 
-    #endregion
 
-    #region Events
 
     public event TraceHandler TraceGenerated;
 
-    #endregion
 
-    #region Methods
 
     private async Task<T> UseClientAsync<T>(Func<KurrentDBClient, Task<T>> action)
     {
@@ -448,5 +441,4 @@ public class EventStoreContext : IEventStoreContext
         }
     }
 
-    #endregion
 }

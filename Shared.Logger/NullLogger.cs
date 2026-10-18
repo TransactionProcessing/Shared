@@ -10,15 +10,12 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class NullLogger : ILogger
 {
-    #region Properties
 
     public static NullLogger Instance => new NullLogger();
 
     public Boolean IsInitialised { get; set; }
 
-    #endregion
 
-    #region Methods
 
     public void Initialise() {
         this.IsInitialised = true;
@@ -62,5 +59,4 @@ public class NullLogger : ILogger
         // This is a null logger so needs to actual implementation
     }
 
-    #endregion
 }

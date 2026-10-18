@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public static class GuidCalculator
 {
-    #region Methods
 
     public static Guid Combine(Guid firstGuid,
                                Guid secondGuid,
@@ -53,5 +52,4 @@ public static class GuidCalculator
         return GuidCalculator.Combine(firstGuid, secondGuid, thirdGuid, 0);
     }
 
-    #endregion
 }

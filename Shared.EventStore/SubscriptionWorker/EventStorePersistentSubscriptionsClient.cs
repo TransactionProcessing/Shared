@@ -11,21 +11,16 @@ using global::EventStore.Client;
 [ExcludeFromCodeCoverage]
 public class EventStorePersistentSubscriptionsClient : IPersistentSubscriptionsClient
 {
-    #region Fields
 
     private readonly KurrentDBPersistentSubscriptionsClient SubscriptionsClient;
 
-    #endregion
 
-    #region Constructors
 
     public EventStorePersistentSubscriptionsClient(KurrentDBPersistentSubscriptionsClient subscriptionsClient) {
         this.SubscriptionsClient = subscriptionsClient;
     }
 
-    #endregion
 
-    #region Methods
 
     public Task<KurrentDB.Client.PersistentSubscription> SubscribeAsync(String stream,
                                                                                 String group,
@@ -39,5 +34,4 @@ public class EventStorePersistentSubscriptionsClient : IPersistentSubscriptionsC
         return this.SubscriptionsClient.SubscribeToStreamAsync(stream, group, eventAppeared, subscriptionDropped, userCredentials, bufferSize, cancellationToken);
     }
 
-    #endregion
 }

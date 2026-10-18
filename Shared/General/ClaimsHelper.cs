@@ -11,7 +11,6 @@ using Exceptions;
 [ExcludeFromCodeCoverage]
 public static class ClaimsHelper
 {
-    #region Methods
 
     public static Result<Claim> GetUserClaim(ClaimsPrincipal user,
                                              String customClaimType) =>
@@ -98,5 +97,4 @@ public static class ClaimsHelper
         return true;
     }
 
-    #endregion
 }

@@ -18,7 +18,6 @@ public class InMemoryPersistentSubscriptionsClient : IPersistentSubscriptionsCli
     private String Stream;
     private String Group;
 
-    #region Methods
 
     public async Task<KurrentDB.Client.PersistentSubscription> SubscribeAsync(String stream,
                                                                                        String group,
@@ -59,5 +58,4 @@ public class InMemoryPersistentSubscriptionsClient : IPersistentSubscriptionsCli
         this.EventAppeared(default, re, 0, cancellationToken);
     }
 
-    #endregion
 }

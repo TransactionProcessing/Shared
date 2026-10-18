@@ -9,7 +9,6 @@ using DomainDrivenDesign.EventSourcing;
 
 public class DomainEventHandlerResolver : IDomainEventHandlerResolver
 {
-    #region Fields
 
     /// <summary>
     /// The domain event handlers
@@ -21,9 +20,7 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
     /// </summary>
     private readonly Dictionary<String, String[]> EventHandlerConfiguration;
 
-    #endregion
 
-    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DomainEventHandlerResolver" /> class.
@@ -51,9 +48,7 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
         }
     }
 
-    #endregion
 
-    #region Methods
 
     /// <summary>
     /// Gets the domain event handlers.
@@ -90,5 +85,4 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
         return Result.Success(handlersToReturn);
     }
 
-    #endregion
 }

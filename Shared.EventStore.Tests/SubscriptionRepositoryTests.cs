@@ -13,7 +13,6 @@ using Xunit;
 
 public class SubscriptionRepositoryTests
 {
-    #region Methods
 
     [Fact]
     public async Task SubscriptionRepository_GetSubscriptions_ReturnsSubscriptions()
@@ -67,5 +66,4 @@ public class SubscriptionRepositoryTests
         second.PersistentSubscriptionInfo[0].GroupName.ShouldBe("Group-A");
     }
 
-    #endregion
 }

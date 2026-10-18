@@ -5,7 +5,6 @@ using DomainDrivenDesign.EventSourcing;
 
 public interface IAggregateRepositoryManager
 {
-    #region Methods
 
     /// <summary>
     /// Gets the aggregate repository.
@@ -17,5 +16,4 @@ public interface IAggregateRepositoryManager
         where TDomainEvent : IDomainEvent;
 
 
-    #endregion
 }

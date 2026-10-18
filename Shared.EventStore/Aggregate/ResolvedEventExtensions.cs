@@ -12,7 +12,6 @@ using global::EventStore.Client;
 /// </summary>
 public static class ResolvedEventExtensions
 {
-    #region Methods
 
     /// <summary>
     /// Gets the resolved event data as string.
@@ -24,5 +23,4 @@ public static class ResolvedEventExtensions
         return Encoding.Default.GetString(resolvedEvent.Event.Data.ToArray(), 0, resolvedEvent.Event.Data.Length);
     }
         
-    #endregion
 }

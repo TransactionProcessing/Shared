@@ -4,7 +4,6 @@ namespace Shared.EventStoreContext.Tests;
 
 public record EstateCreatedEvent : DomainEvent
 {
-    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EstateCreatedEvent" /> class.
@@ -18,9 +17,7 @@ public record EstateCreatedEvent : DomainEvent
         this.EstateName = estateName;
     }
 
-    #endregion
 
-    #region Properties
 
     /// <summary>
     /// Gets the estate identifier.
@@ -38,5 +35,4 @@ public record EstateCreatedEvent : DomainEvent
     /// </value>
     public String EstateName { get; init; }
 
-    #endregion
 }

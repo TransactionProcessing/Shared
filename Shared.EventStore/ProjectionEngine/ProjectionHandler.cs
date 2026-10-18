@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using DomainDrivenDesign.EventSourcing;
 
 public class ProjectionHandler<TState> : IProjectionHandler where TState : State{
-    #region Fields
 
     private readonly IProjection<TState> Projection;
 
@@ -16,9 +15,7 @@ public class ProjectionHandler<TState> : IProjectionHandler where TState : State
 
     private readonly IStateDispatcher<TState> StateDispatcher;
 
-    #endregion
 
-    #region Constructors
 
     public ProjectionHandler(IProjectionStateRepository<TState> projectionStateRepository,
                              IProjection<TState> projection,
@@ -28,15 +25,11 @@ public class ProjectionHandler<TState> : IProjectionHandler where TState : State
         this.StateDispatcher = stateDispatcher;
     }
 
-    #endregion
 
-    #region Events
 
     public event EventHandler<String> TraceGenerated;
 
-    #endregion
 
-    #region Methods
 
     public async Task Handle(IDomainEvent @event, CancellationToken cancellationToken){
         if (@event == null) return;
@@ -94,5 +87,4 @@ public class ProjectionHandler<TState> : IProjectionHandler where TState : State
             this.TraceGenerated(this, traceMessage );
     }
 
-    #endregion
 }

@@ -8,7 +8,6 @@ using DomainDrivenDesign.EventSourcing;
 
 public interface IDomainEventHandler
 {
-    #region Methods
 
     /// <summary>
     /// Handles the specified domain event.
@@ -19,5 +18,4 @@ public interface IDomainEventHandler
     Task<Result> Handle(IDomainEvent domainEvent,
                         CancellationToken cancellationToken);
 
-    #endregion
 }

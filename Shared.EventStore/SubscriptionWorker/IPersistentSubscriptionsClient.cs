@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 public interface IPersistentSubscriptionsClient
 {
-    #region Methods
 
     Task<KurrentDB.Client.PersistentSubscription> SubscribeAsync(String stream,
                                                                  String group,
@@ -20,5 +19,4 @@ public interface IPersistentSubscriptionsClient
                                                                  Int32 bufferSize,
                                                                  CancellationToken cancellationToken);
 
-    #endregion
 }

@@ -8,7 +8,6 @@ using System;
 /// <seealso cref="System.IEquatable&lt;Shared.ValueObjects.Money&gt;" />
 public record Money
 {
-    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Money"/> class.
@@ -19,9 +18,7 @@ public record Money
         this.Value = value;
     }
 
-    #endregion
 
-    #region Properties
 
     /// <summary>
     /// Gets the value.
@@ -31,9 +28,7 @@ public record Money
     /// </value>
     public Decimal Value { get; }
 
-    #endregion
 
-    #region Methods
 
     /// <summary>
     /// Creates the specified value.
@@ -73,5 +68,4 @@ public record Money
         return new Money(leftHand.Value - rightHand.Value);
     }
 
-    #endregion
 }

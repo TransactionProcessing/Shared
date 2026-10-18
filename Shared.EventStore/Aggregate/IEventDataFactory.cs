@@ -11,7 +11,6 @@ using global::EventStore.Client;
 /// </summary>
 public interface IEventDataFactory
 {
-    #region Methods
 
     /// <summary>
     /// Creates the event data.
@@ -27,5 +26,4 @@ public interface IEventDataFactory
     /// <returns></returns>
     EventData[] CreateEventDataList(IList<IDomainEvent> domainEvents);
 
-    #endregion
 }

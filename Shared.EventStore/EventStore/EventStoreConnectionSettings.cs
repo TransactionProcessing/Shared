@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class EventStoreConnectionSettings
 {
-    #region Public Properties
 
     public String ConnectionString { get; set; }
 
@@ -20,9 +19,7 @@ public class EventStoreConnectionSettings
 
     public String Password { get; set; }
 
-    #endregion
 
-    #region Constructors
 
     public EventStoreConnectionSettings()
     {
@@ -38,11 +35,8 @@ public class EventStoreConnectionSettings
         this.HttpPort = httpPort;
     }
         
-    #endregion
 
-    #region Public Methods
 
-    #region public static EventStoreConnectionSettings Create()        
     public static EventStoreConnectionSettings Create(String connectionString,
                                                       Int32 httpPort)
     {
@@ -53,11 +47,8 @@ public class EventStoreConnectionSettings
     {
         return new EventStoreConnectionSettings(connectionString, 2113);
     }
-    #endregion
 
-    #endregion
 
-    #region Private Methods
 
     private void ParseConnectionString(String connectionString)
     {
@@ -125,5 +116,4 @@ public class EventStoreConnectionSettings
         this.UserName = splitUserDetails[0];
         this.Password = splitUserDetails[1];
     }
-    #endregion
 }

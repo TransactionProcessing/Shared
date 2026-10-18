@@ -12,7 +12,6 @@ using Xunit;
 /// </summary>
 public partial class SharedTests
 {
-    #region Methods
 
     /// <summary>
     /// Configurations the root extensions log configuration configuration is logged.
@@ -77,5 +76,4 @@ public partial class SharedTests
         Should.Throw<ArgumentNullException>(() => configuration.LogConfiguration(loggerAction));
     }
 
-    #endregion
 }

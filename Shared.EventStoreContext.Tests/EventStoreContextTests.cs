@@ -15,7 +15,6 @@ using Microsoft.Extensions.Configuration;
 namespace Shared.EventStoreContext.Tests;
 
 public class EventStoreContextTests : IDisposable{
-    #region Fields
 
     private readonly EventStoreDockerHelper EventStoreDockerHelper;
 
@@ -37,9 +36,7 @@ public class EventStoreContextTests : IDisposable{
         TypeMap.AddType<EstateCreatedEvent>("EstateCreatedEvent");
     }
 
-    #endregion
 
-    #region Methods
 
     public void Dispose(){
         // Just needed for the interface
@@ -372,6 +369,5 @@ public class EventStoreContextTests : IDisposable{
         ConfigurationReader.Initialise(builder.Build());
     }
 
-    #endregion
         
 }

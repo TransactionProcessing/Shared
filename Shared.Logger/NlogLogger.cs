@@ -11,21 +11,16 @@ using NLog;
 [ExcludeFromCodeCoverage]
 public class NlogLogger : ILogger
 {
-    #region Fields
 
     private String FileName;
 
     private NLog.Logger LoggerObject;
 
-    #endregion
 
-    #region Properties
 
     public Boolean IsInitialised { get; set; }
 
-    #endregion
 
-    #region Methods
 
     public void Initialise(NLog.Logger loggerObject,
                            String fileName) {
@@ -87,5 +82,4 @@ public class NlogLogger : ILogger
         }
     }
 
-    #endregion
 }

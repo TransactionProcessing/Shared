@@ -8,7 +8,6 @@ using Microsoft.Extensions.Hosting;
 /// </summary>
 public static class HostEnvironmentExtensions
 {
-    #region Methods
         
     public static Boolean IsPreProduction(this IHostEnvironment hostEnvironment)
     {
@@ -20,5 +19,4 @@ public static class HostEnvironmentExtensions
         return hostEnvironment.IsEnvironment("PreProduction");
     }
 
-    #endregion
 }

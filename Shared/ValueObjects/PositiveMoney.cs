@@ -8,7 +8,6 @@ using System;
 /// <seealso cref="System.IEquatable&lt;Shared.ValueObjects.PositiveMoney&gt;" />
 public record PositiveMoney
 {
-    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PositiveMoney"/> class.
@@ -20,9 +19,7 @@ public record PositiveMoney
         this.Money = moneyAmount;
     }
 
-    #endregion
 
-    #region Properties
 
     /// <summary>
     /// Gets the value.
@@ -43,9 +40,7 @@ public record PositiveMoney
     /// </value>
     private Money Money { get; }
 
-    #endregion
 
-    #region Methods
 
     /// <summary>
     /// Creates the specified money amount.
@@ -70,5 +65,4 @@ public record PositiveMoney
         }
     }
 
-    #endregion
 }

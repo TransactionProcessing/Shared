@@ -7,19 +7,14 @@ using Microsoft.Extensions.Logging;
 [ExcludeFromCodeCoverage]
 public class MicrosoftLogger : ILogger
 {
-    #region Fields
 
     private Microsoft.Extensions.Logging.ILogger LoggerObject;
 
-    #endregion
 
-    #region Properties
 
     public Boolean IsInitialised { get; set; }
 
-    #endregion
 
-    #region Methods
 
     public void Initialise(Microsoft.Extensions.Logging.ILogger loggerObject) {
         this.LoggerObject = loggerObject;
@@ -80,5 +75,4 @@ public class MicrosoftLogger : ILogger
         }
     }
 
-    #endregion
 }

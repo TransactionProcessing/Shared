@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public record PersistentSubscriptionDetails
 {
-    #region Constructors
 
     public PersistentSubscriptionDetails(String streamName,
                                          String groupName)
@@ -15,9 +14,7 @@ public record PersistentSubscriptionDetails
         this.GroupName = groupName;
     }
 
-    #endregion
 
-    #region Properties
 
     public String GroupName { get; init; }
 
@@ -25,11 +22,8 @@ public record PersistentSubscriptionDetails
 
     public String StreamName { get; init; }
 
-    #endregion
 
-    #region Methods
 
     public override String ToString() => $"{this.StreamName}-{this.GroupName}";
 
-    #endregion
 }

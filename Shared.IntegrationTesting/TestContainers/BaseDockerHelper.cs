@@ -29,7 +29,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 public abstract class BaseDockerHelper{
-    #region Fields
 
     public Boolean SkipHealthChecks;
 
@@ -110,9 +109,7 @@ public abstract class BaseDockerHelper{
 
     private String sqlTestConnString;
 
-    #endregion
 
-    #region Constructors
 
     protected BaseDockerHelper(Boolean skipHealthChecks=false) {
         this.SkipHealthChecks = skipHealthChecks;
@@ -127,8 +124,8 @@ public abstract class BaseDockerHelper{
                                                                                                                                                }
                                                                                             }));
         
-        this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2022-latest", true));
-        this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.1", true));
+        this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2025-latest", true));
+        this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.2.2", true));
         this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
         this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
         this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
@@ -143,15 +140,11 @@ public abstract class BaseDockerHelper{
         this.HostPorts = new Dictionary<ContainerType, Int32>();
     }
 
-    #endregion
 
-    #region Properties
 
     public Boolean IsSecureEventStore{ get; protected set; }
 
-    #endregion
 
-    #region Methods
 
     public virtual Dictionary<String,String> GetAdditionalVariables(ContainerType containerType){
         Dictionary<String, String> result = new();
@@ -1271,5 +1264,4 @@ public abstract class BaseDockerHelper{
         );
     }
 
-    #endregion
 }
