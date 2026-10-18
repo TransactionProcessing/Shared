@@ -17,7 +17,6 @@ using System.Threading.Tasks;
 
 public static class IApplicationBuilderExtensions
 {
-    #region Methods
 
     [ExcludeFromCodeCoverage(Justification = "Cant test with coverage as has thread inside")]
     public static async Task ConfigureSubscriptionService(this IApplicationBuilder applicationBuilder,
@@ -157,6 +156,5 @@ public static class IApplicationBuilderExtensions
 
     
 
-    #endregion
 
 }

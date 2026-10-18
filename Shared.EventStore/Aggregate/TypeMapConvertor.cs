@@ -14,7 +14,6 @@ using global::EventStore.Client;
 /// </summary>
 public static class TypeMapConvertor
 {
-    #region Fields
 
     /// <summary>
     /// The domain event record factory
@@ -23,9 +22,7 @@ public static class TypeMapConvertor
 
     private static IDomainEventFactory<IDomainEvent> OverrideDomainEventFactory = null;
 
-    #endregion
 
-    #region Methods
 
     public static IDomainEvent Convertor(IDomainEventFactory<IDomainEvent> overrideFactory, Guid aggregateId, ResolvedEvent @event)
     {
@@ -97,5 +94,4 @@ public static class TypeMapConvertor
         return TypeMapConvertor.StandardDomainEventFactory.CreateDomainEvent(aggregateId, @event);
     }
 
-    #endregion
 }

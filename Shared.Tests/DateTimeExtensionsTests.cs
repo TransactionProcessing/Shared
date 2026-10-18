@@ -7,7 +7,6 @@ using Xunit;
 
 public partial class SharedTests
 {
-    #region Methods
 
     [Theory]
     [InlineData("2022-01-12", "yyyy-MM-dd", "79fe8000-d55e-08d9-0000-000000000000")]
@@ -23,5 +22,4 @@ public partial class SharedTests
         guid.ShouldBe(Guid.Parse(expectedGuid));
     }
 
-    #endregion
 }

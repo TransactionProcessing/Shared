@@ -7,7 +7,6 @@ using Xunit;
 
 public partial class SharedTests
 {
-    #region Methods
 
     [Theory]
     [InlineData("79fe8000-d55e-08d9-0000-000000000000", "2022-01-12", "yyyy-MM-dd")]
@@ -23,5 +22,4 @@ public partial class SharedTests
         dateTime.ShouldBe(DateTime.ParseExact(expectedDateTime, format, null));
     }
 
-    #endregion
 }

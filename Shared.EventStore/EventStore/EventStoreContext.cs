@@ -25,7 +25,6 @@ public delegate void TraceHandler(String trace,
 [ExcludeFromCodeCoverage(Justification = "This testing is handled with a suite of integration tests")]
 public class EventStoreContext : IEventStoreContext
 {
-    #region Fields
 
     /// <summary>
     /// The event store client
@@ -44,9 +43,7 @@ public class EventStoreContext : IEventStoreContext
 
     private readonly TimeSpan? Deadline;
 
-    #endregion
 
-    #region Constructors
 
     public EventStoreContext(KurrentDBClient eventStoreClient, KurrentDBProjectionManagementClient projectionManagementClient, TimeSpan? deadline = null)
     {
@@ -61,15 +58,11 @@ public class EventStoreContext : IEventStoreContext
         this.Deadline = deadline;
     }
 
-    #endregion
 
-    #region Events
 
     public event TraceHandler TraceGenerated;
 
-    #endregion
 
-    #region Methods
 
     private async Task<T> UseClientAsync<T>(Func<KurrentDBClient, Task<T>> action)
     {
@@ -331,7 +324,7 @@ public class EventStoreContext : IEventStoreContext
         {
             await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
                     this.UseProjectionManagementClientAsync(client =>
-                        client.CreateTransientAsync(queryName, query, cancellationToken: source.Token)),
+                        client.CreateContinuousAsync(queryName, query, false, cancellationToken: source.Token)),
                 nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
 
             while (true)
@@ -352,7 +345,7 @@ public class EventStoreContext : IEventStoreContext
                     return Result.Failure($"Projection {projectionDetails.Name} Status is Faulted");
 
                 // We need to wait until the query has been run before we continue.
-                if (status == ProjectionRunningStatus.Completed)
+                if (status == ProjectionRunningStatus.Completed || projectionDetails.Progress >= 100)
                 {
                     JsonDocument jsonDocument = await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
                         await this.UseProjectionManagementClientAsync(client =>
@@ -378,10 +371,17 @@ public class EventStoreContext : IEventStoreContext
         }
         finally
         {
-            await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
-                    this.UseProjectionManagementClientAsync(client =>
-                        client.DisableAsync(queryName, deadline: this.Deadline, cancellationToken: cancellationToken)),
-                nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
+            try
+            {
+                await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
+                        this.UseProjectionManagementClientAsync(client =>
+                            client.DisableAsync(queryName, deadline: this.Deadline, cancellationToken: cancellationToken)),
+                    nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
+            }
+            catch (RpcException rex) when (rex.StatusCode == StatusCode.NotFound)
+            {
+                // KurrentDB may remove completed or faulted transient projections before cleanup runs.
+            }
         }
     }
 
@@ -448,5 +448,4 @@ public class EventStoreContext : IEventStoreContext
         }
     }
 
-    #endregion
 }

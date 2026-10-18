@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using DomainDrivenDesign.EventSourcing;
 
 public interface IProjectionStateRepository<TState> where TState : State{
-    #region Methods
 
     Task<TState> Load(IDomainEvent @event, CancellationToken cancellationToken);
 
@@ -14,5 +13,4 @@ public interface IProjectionStateRepository<TState> where TState : State{
 
     Task<TState> Save(TState state, IDomainEvent @event, CancellationToken cancellationToken);
 
-    #endregion
 }

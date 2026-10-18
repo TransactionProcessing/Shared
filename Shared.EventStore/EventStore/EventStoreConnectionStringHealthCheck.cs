@@ -18,7 +18,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 /// <seealso cref="Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck" />
 public class EventStoreConnectionStringHealthCheck : IHealthCheck
 {
-    #region Fields
 
     /// <summary>
     /// The event store client settings
@@ -32,9 +31,7 @@ public class EventStoreConnectionStringHealthCheck : IHealthCheck
 
     private readonly IEventStoreContext Context;
 
-    #endregion
 
-    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EventStoreConnectionStringHealthCheck" /> class.
@@ -57,9 +54,7 @@ public class EventStoreConnectionStringHealthCheck : IHealthCheck
         this.Context = context;
     }
 
-    #endregion
 
-    #region Methods
 
     /// <summary>
     /// Runs the health check, returning the status of the component being checked.
@@ -90,5 +85,4 @@ public class EventStoreConnectionStringHealthCheck : IHealthCheck
         }
     }
 
-    #endregion
 }

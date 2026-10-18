@@ -12,7 +12,6 @@ using PersistentSubscriptionInfo = SubscriptionWorker.PersistentSubscriptionInfo
 
 public class TestData
 {
-    #region Methods
 
     public static readonly Guid AggregateId = Guid.Parse("103B335B-540A-4985-BB80-FD9B2BABF866");
     public static readonly Guid EventId = Guid.Parse("C9416757-582C-4F67-A320-80FE1E937045");
@@ -120,5 +119,4 @@ public class TestData
         return list;
     }
 
-    #endregion
 }

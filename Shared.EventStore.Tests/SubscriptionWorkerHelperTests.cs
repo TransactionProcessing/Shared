@@ -13,22 +13,17 @@ using Xunit;
 
 public class SubscriptionWorkerHelperTests
 {
-    #region Fields
 
     private readonly IDomainEventHandlerResolverImposter domainEventHandlerResolver;
 
-    #endregion
 
-    #region Constructors
 
     public SubscriptionWorkerHelperTests()
     {
         domainEventHandlerResolver = new();
     }
 
-    #endregion
 
-    #region Methods
 
     [Fact]
     public void SubscriptionWorkerHelper_GetNewSubscriptions_SubscriptionsReturned()
@@ -188,5 +183,4 @@ public class SubscriptionWorkerHelperTests
         validationError.ShouldBeNull();
     }
 
-    #endregion
 }

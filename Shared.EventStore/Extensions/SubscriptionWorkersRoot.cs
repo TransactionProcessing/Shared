@@ -7,7 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class SubscriptionWorkersRoot
 {
-    #region Properties
 
     public Boolean InternalSubscriptionService { get; set; }
 
@@ -17,5 +16,4 @@ public class SubscriptionWorkersRoot
 
     public List<SubscriptionWorkerConfig> SubscriptionWorkers { get; set; }
 
-    #endregion
 }

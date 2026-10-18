@@ -13,7 +13,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 [ExcludeFromCodeCoverage]
 public static class HealthCheckMiddleware
 {
-    #region Methods
 
     public static Task WriteResponse(HttpContext context,
                                      HealthReport healthReport) {
@@ -51,5 +50,4 @@ public static class HealthCheckMiddleware
         return context.Response.WriteAsync(Encoding.UTF8.GetString(memoryStream.ToArray()));
     }
 
-    #endregion
 }

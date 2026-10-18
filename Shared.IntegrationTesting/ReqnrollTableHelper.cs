@@ -8,7 +8,6 @@ using Reqnroll;
 /// </summary>
 public static class ReqnrollTableHelper
 {
-    #region Methods
 
     public static Boolean GetBooleanValue(DataTableRow row,
                                           String key)
@@ -85,5 +84,4 @@ public static class ReqnrollTableHelper
     }
 
 
-    #endregion
 }

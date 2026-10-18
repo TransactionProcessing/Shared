@@ -6,9 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class TraceEventArgs : EventArgs
 {
-    #region Properties
 
     public String Message { get; set; }
 
-    #endregion
 }

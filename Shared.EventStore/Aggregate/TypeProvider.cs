@@ -13,7 +13,6 @@ using General;
 /// </summary>
 public static class TypeProvider
 {
-    #region Methods
 
     public static void LoadDomainEventsTypeDynamically(Assembly[] assemblies)
     {
@@ -37,5 +36,4 @@ public static class TypeProvider
 
     public static void LoadDomainEventsTypeDynamically() => LoadDomainEventsTypeDynamically(null);
 
-    #endregion
 }

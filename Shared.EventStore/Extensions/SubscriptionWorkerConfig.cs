@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class SubscriptionWorkerConfig
 {
-    #region Properties
 
     public Boolean Enabled { get; set; }
 
@@ -27,5 +26,4 @@ public class SubscriptionWorkerConfig
 
     public String WorkerName { get; set; }
 
-    #endregion
 }

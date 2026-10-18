@@ -7,7 +7,6 @@ using System;
 /// </summary>
 public static class DomainHelper
 {
-    #region Methods
 
     /// <summary>
     /// Gets the name of the event type.
@@ -19,5 +18,4 @@ public static class DomainHelper
         return type.Name;
     }
 
-    #endregion
 }

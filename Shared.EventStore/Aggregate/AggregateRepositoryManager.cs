@@ -6,7 +6,6 @@ using EventStore;
 
 public class AggregateRepositoryManager : IAggregateRepositoryManager
 {
-    #region Fields
 
     /// <summary>
     /// The event store context manager
@@ -15,9 +14,7 @@ public class AggregateRepositoryManager : IAggregateRepositoryManager
 
     private readonly IDomainEventFactory<IDomainEvent> DomainEventFactory;
 
-    #endregion
 
-    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AggregateRepositoryManager" /> class.
@@ -29,9 +26,7 @@ public class AggregateRepositoryManager : IAggregateRepositoryManager
         DomainEventFactory = domainEventFactory;
     }
 
-    #endregion
 
-    #region Methods
 
     /// <summary>
     /// Gets the aggregate repository.
@@ -47,5 +42,4 @@ public class AggregateRepositoryManager : IAggregateRepositoryManager
         return new AggregateRepository<TAggregate, TDomainEvent>(context, DomainEventFactory);
     }
 
-    #endregion
 }

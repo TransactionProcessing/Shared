@@ -4,7 +4,6 @@ using System;
 
 public static class GuidExtensions
 {
-    #region Methods
 
     public static DateTime ToDateTime(this Guid guid)
     {
@@ -15,5 +14,4 @@ public static class GuidExtensions
         return new DateTime(BitConverter.ToInt64(bytes));
     }
 
-    #endregion
 }

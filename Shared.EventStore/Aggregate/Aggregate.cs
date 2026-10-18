@@ -9,7 +9,6 @@ using DomainDrivenDesign.EventSourcing;
 /// </summary>
 public abstract record Aggregate
 {
-    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Aggregate" /> class.
@@ -20,9 +19,7 @@ public abstract record Aggregate
         this.Version = -1L;
     }
 
-    #endregion
 
-    #region Properties
 
     /// <summary>
     /// Gets or sets the aggregate identifier.
@@ -64,9 +61,7 @@ public abstract record Aggregate
     /// </value>
     internal IList<IDomainEvent> PendingEvents { get; set; }
 
-    #endregion
 
-    #region Methods
 
     /// <summary>
     /// Applies the and append.
@@ -101,5 +96,4 @@ public abstract record Aggregate
 
     protected abstract Object GetMetadata();
 
-    #endregion
 }

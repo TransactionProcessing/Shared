@@ -13,7 +13,6 @@ using global::EventStore.Client;
 /// <typeparam name="TDomainEvent">The type of the domain event.</typeparam>
 public interface IDomainEventFactory<out TDomainEvent> where TDomainEvent : IDomainEvent
 {
-    #region Methods
 
     /// <summary>
     /// Creates the agge aggregate snapshot.
@@ -42,5 +41,4 @@ public interface IDomainEventFactory<out TDomainEvent> where TDomainEvent : IDom
     TDomainEvent[] CreateDomainEvents(Guid aggregateId,
                                       IList<ResolvedEvent> @event);
 
-    #endregion
 }

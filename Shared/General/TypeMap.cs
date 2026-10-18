@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 public static class TypeMap
 {
-    #region Fields
 
     /// <summary>
     /// The map
@@ -17,9 +16,7 @@ public static class TypeMap
     /// </summary>
     public static readonly Dictionary<String, Type> ReverseMap = new();
 
-    #endregion
 
-    #region Methods
 
     public static void AddType<T>(String name)
     {
@@ -39,5 +36,4 @@ public static class TypeMap
 
     public static String GetTypeName(Object o) => TypeMap.Map[o.GetType()];
 
-    #endregion
 }

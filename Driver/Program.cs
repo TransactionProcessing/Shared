@@ -19,7 +19,6 @@ using Shared.Logger;
 
 internal class Program
 {
-    #region Methods
 
     internal static KurrentDBClientSettings ConfigureEventStoreSettings() {
         KurrentDBClientSettings settings = new();
@@ -83,5 +82,4 @@ internal class Program
         concurrentSubscriptions.StartAsync(CancellationToken.None).Wait();
     }
 
-    #endregion
 }

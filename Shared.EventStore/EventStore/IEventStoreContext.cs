@@ -9,16 +9,13 @@ using System.Threading;
 using System.Threading.Tasks;
 
 public interface IEventStoreContext{
-    #region Events
 
     /// <summary>
     /// Occurs when trace is generated
     /// </summary>
     event TraceHandler TraceGenerated;
 
-    #endregion
 
-    #region Methods
 
     Task<Result<List<ResolvedEvent>>> GetEventsBackward(String streamName,
                                                         Int32 maxNumberOfEventsToRetrieve,
@@ -58,5 +55,4 @@ public interface IEventStoreContext{
 
     Task<Result<String>> RunTransientQuery(String query, CancellationToken cancellationToken);
         
-    #endregion
 }

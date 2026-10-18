@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 public static class Retry
 {
-    #region Fields
 
     /// <summary>
     /// The default retry for
@@ -21,9 +20,7 @@ public static class Retry
     /// </summary>
     private static readonly TimeSpan DefaultRetryInterval = TimeSpan.FromSeconds(5);
 
-    #endregion
 
-    #region Methods
 
     /// <summary>
     /// Fors the specified action.
@@ -105,5 +102,4 @@ public static class Retry
         }
     }
 
-    #endregion
 }

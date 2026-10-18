@@ -12,7 +12,6 @@ using global::EventStore.Client;
 [ExcludeFromCodeCoverage]
 public static class PersistentSubscriptionsHelper
 {
-    #region Methods
 
     public static PersistentSubscriptions Update(this PersistentSubscriptions persistentSubscriptions, List<PersistentSubscriptionInfo> subscriptions)
     {
@@ -40,5 +39,4 @@ public static class PersistentSubscriptionsHelper
             _ => false
         };
 
-    #endregion
 }

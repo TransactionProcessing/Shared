@@ -16,7 +16,6 @@ using System.Text;
 [ExcludeFromCodeCoverage]
 public static class SubscriptionWorkerHelper
 {
-    #region Methods
 
     public static void SafeInvokeEvent(EventHandler<TraceEventArgs> eventHandler,
                                        Object sender,
@@ -241,5 +240,4 @@ public static class SubscriptionWorkerHelper
         worker.Error += (_, args) => traceHandler(TraceEventType.Error, type, args.Message);
     }
 
-    #endregion
 }

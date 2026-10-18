@@ -14,7 +14,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 /// </summary>
 public static class EventStoreHealthCheckBuilderExtensions
 {
-    #region Methods
 
     /// <summary>
     /// Add a health check for EventStore services.
@@ -42,14 +41,11 @@ public static class EventStoreHealthCheckBuilderExtensions
             tags));
     }
 
-    #endregion
 
-    #region Others
 
     /// <summary>
     /// The name
     /// </summary>
     private const String NAME = "eventstore";
 
-    #endregion
 }

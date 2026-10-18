@@ -15,7 +15,6 @@ using EventHandling;
 [ExcludeFromCodeCoverage]
 public static class EventDispatchHelper
 {
-    #region Methods
 
     /// <summary>
     /// Dispatches to handlers.
@@ -59,5 +58,4 @@ public static class EventDispatchHelper
         return Result.Success();
     }
 
-    #endregion
 }

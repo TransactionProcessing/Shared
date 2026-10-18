@@ -4,7 +4,6 @@ using System;
 
 public static class DateTimeExtensions
 {
-    #region Methods
 
     public static Guid ToGuid(this DateTime dt)
     {
@@ -15,5 +14,4 @@ public static class DateTimeExtensions
         return new Guid(bytes);
     }
 
-    #endregion
 }
