@@ -324,7 +324,7 @@ public class EventStoreContext : IEventStoreContext
         {
             await EventStoreGrpcRetryPolicy.ExecuteAsync(() =>
                     this.UseProjectionManagementClientAsync(client =>
-                        client.CreateTransientAsync(queryName, query, cancellationToken: source.Token)),
+                        client.CreateContinuousAsync(queryName, query, false, cancellationToken: source.Token)),
                 nameof(this.RunTransientQuery), $"transient query {queryName}", this.LogRetry);
 
             while (true)
@@ -345,7 +345,7 @@ public class EventStoreContext : IEventStoreContext
                     return Result.Failure($"Projection {projectionDetails.Name} Status is Faulted");
 
                 // We need to wait until the query has been run before we continue.
-                if (status == ProjectionRunningStatus.Completed)
+                if (status == ProjectionRunningStatus.Completed || projectionDetails.Progress >= 100)
                 {
                     JsonDocument jsonDocument = await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
                         await this.UseProjectionManagementClientAsync(client =>
