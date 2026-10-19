@@ -60,10 +60,10 @@ public class EventStoreContextRetryIntegrationTests : IDisposable
         Task restartTask = Task.Run(async () =>
         {
             await Task.Delay(2000);
-            await this.EventStoreDockerHelper.UnpauseEventStoreContainer();
+            await this.EventStoreDockerHelper.UnpauseKurrentDbContainer();
         });
 
-        await this.EventStoreDockerHelper.PauseEventStoreContainer();
+        await this.EventStoreDockerHelper.PauseKurrentDbContainer();
 
         try
         {

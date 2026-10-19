@@ -18,7 +18,7 @@ public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.D
     {
         this.SetHostTraceFolder(testName);
         this.ScenarioName = testName;
-        await this.StartContainersForScenarioRun(testName, DockerServices.EventStore, cancellationToken);
+        await this.StartContainersForScenarioRun(testName, DockerServices.KurrentDb, cancellationToken);
     }
 
     public override async Task StopContainersForScenarioRun(DockerServices sharedDockerServices)
@@ -66,34 +66,34 @@ public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.D
 
         ContainerBuilder SetupSecureEventStoreContainerLocal()
         {
-            this.IsSecureEventStore = true;
+            this.IsSecureKurrentDb = true;
 
-            this.EventStoreContainerName = "UnitTestEventStore_Secure";
+            this.KurrentDbContainerName = "UnitTestKurrentDb_Secure";
 
-            return this.SetupEventStoreContainer().WithReuse(true);
+            return this.SetupKurrentDbContainer().WithReuse(true);
         }
 
         ContainerBuilder SetupInsecureEventStoreContainerLocal()
         {
-            this.IsSecureEventStore = false;
+            this.IsSecureKurrentDb = false;
 
-            this.EventStoreContainerName = "UnitTestEventStore_Insecure";
+            this.KurrentDbContainerName = "UnitTestKurrentDb_Insecure";
 
-            return this.SetupEventStoreContainer().WithReuse(true);
+            return this.SetupKurrentDbContainer().WithReuse(true);
         }
 
         await this.StartContainer2(SetupSecureEventStoreContainerLocal,
                                   new List<INetwork> {
                                                                 networkService
                                                             },
-                                  DockerServices.EventStore,
+                                  DockerServices.KurrentDb,
                                   cancellationToken);
 
         await this.StartContainer2(SetupInsecureEventStoreContainerLocal,
             new List<INetwork> {
                 networkService
             },
-            DockerServices.EventStore,
+            DockerServices.KurrentDb,
             cancellationToken);
     }
 
@@ -101,8 +101,8 @@ public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.D
     {
         String connectionString = secureEventStore switch
         {
-            true => $"esdb://{userName}:{password}@127.0.0.1:{this.EventStoreSecureHttpPort}?tls=true&tlsVerifyCert=false",
-            _ => $"esdb://{userName}:{password}@127.0.0.1:{this.EventStoreHttpPort}?tls=false"
+            true => $"esdb://{userName}:{password}@127.0.0.1:{this.KurrentDbSecureHttpPort}?tls=true&tlsVerifyCert=false",
+            _ => $"esdb://{userName}:{password}@127.0.0.1:{this.KurrentDbHttpPort}?tls=false"
         };
 
         KurrentDBClientSettings settings = KurrentDBClientSettings.Create(connectionString);
@@ -127,24 +127,24 @@ public class EventStoreDockerHelper : Shared.IntegrationTesting.TestContainers.D
         return settings;
     }
 
-    public Task PauseEventStoreContainer()
+    public Task PauseKurrentDbContainer()
     {
-        return this.RunDockerCommand($"pause {this.EventStoreContainerName}");
+        return this.RunDockerCommand($"pause {this.KurrentDbContainerName}");
     }
 
-    public Task UnpauseEventStoreContainer()
+    public Task UnpauseKurrentDbContainer()
     {
-        return this.RunDockerCommand($"unpause {this.EventStoreContainerName}");
+        return this.RunDockerCommand($"unpause {this.KurrentDbContainerName}");
     }
 
     public Task StopEventStoreContainer()
     {
-        return this.RunDockerCommand($"stop -t 0 {this.EventStoreContainerName}");
+        return this.RunDockerCommand($"stop -t 0 {this.KurrentDbContainerName}");
     }
 
-    public Task StartEventStoreContainer()
+    public Task StartKurrentDbContainer()
     {
-        return this.RunDockerCommand($"start {this.EventStoreContainerName}");
+        return this.RunDockerCommand($"start {this.KurrentDbContainerName}");
     }
 
     private async Task RunDockerCommand(String arguments)

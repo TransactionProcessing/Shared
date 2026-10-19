@@ -41,7 +41,7 @@ public class GenericSteps
         this.TestingContext.DockerHelper = new TestDockerHelper();
         this.TestingContext.DockerHelper.Logger = logger;
 
-        DockerServices services = DockerServices.SqlServer | DockerServices.EventStore | DockerServices.MessagingService | DockerServices.SecurityService |
+        DockerServices services = DockerServices.SqlServer | DockerServices.KurrentDb | DockerServices.MessagingService | DockerServices.SecurityService |
                                   DockerServices.CallbackHandler | DockerServices.FileProcessor |
                                   DockerServices.TestHost | DockerServices.TransactionProcessor |
                                   DockerServices.TransactionProcessorAcl | DockerServices.ConfigurationHost | 
@@ -50,10 +50,24 @@ public class GenericSteps
         this.TestingContext.Logger = logger;
         this.TestingContext.Logger.LogInformation("About to Start Containers for Scenario Run");
         this.TestingContext.DockerHelper.ScenarioName = scenarioName;
-        await this.TestingContext.DockerHelper.StartContainersForScenarioRun(
-            scenarioName,
-            services,
-            CancellationToken.None).ConfigureAwait(false);
+        System.Diagnostics.Stopwatch startupTimer = System.Diagnostics.Stopwatch.StartNew();
+        Setup.RecordInfrastructureStartupStarted();
+        try
+        {
+            this.TestingContext.DockerHelper.UseSharedSqlServer(
+                await Setup.GetSqlServerFixtureAsync().ConfigureAwait(false));
+            await this.TestingContext.DockerHelper.StartContainersForScenarioRun(
+                scenarioName,
+                services,
+                CancellationToken.None).ConfigureAwait(false);
+        }
+        finally
+        {
+            startupTimer.Stop();
+            Setup.RecordInfrastructureStartupCompleted();
+            this.TestingContext.Logger.LogInformation(
+                $"Scenario infrastructure startup completed in {startupTimer.Elapsed.TotalSeconds:N1}s");
+        }
         this.TestingContext.Logger.LogInformation("Containers for Scenario Run Started");
     }
 

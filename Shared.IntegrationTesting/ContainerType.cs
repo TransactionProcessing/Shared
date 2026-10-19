@@ -5,7 +5,7 @@ namespace Shared.IntegrationTesting;
 public enum ContainerType
 {
     SqlServer,
-    EventStore,
+    KurrentDb,
     MessagingService,
     SecurityService,
     CallbackHandler,
@@ -24,7 +24,7 @@ public enum DockerServices
 {
     None = 0,
     SqlServer = 1,
-    EventStore = 2,
+    KurrentDb = 2,
     MessagingService = 4,
     SecurityService = 8,
     CallbackHandler = 16,

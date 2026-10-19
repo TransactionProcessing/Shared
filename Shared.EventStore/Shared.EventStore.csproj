@@ -16,6 +16,7 @@
 		<PackageReference Include="SimpleResults" />
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<PackageReference Include="prometheus-net" />
+		<PackageReference Include="System.Security.Cryptography.Pkcs" />
 	</ItemGroup>
 
 	<ItemGroup>

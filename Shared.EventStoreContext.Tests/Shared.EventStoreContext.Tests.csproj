@@ -21,6 +21,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
 	<PackageReference Include="SimpleResults" />
+	<PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
 	<ItemGroup>

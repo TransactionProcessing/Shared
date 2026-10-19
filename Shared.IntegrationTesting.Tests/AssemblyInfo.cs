@@ -16,5 +16,6 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM.
 
 [assembly: Guid("36b1817d-245b-424f-8a32-a924b23f98ba")]
+// Scenarios remain parallelizable because shared SQL connections use per-scenario database names.
 [assembly: LevelOfParallelism(2)]
 [assembly: Parallelizable(ParallelScope.Fixtures)]

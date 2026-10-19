@@ -12,6 +12,7 @@ namespace Shared.IntegrationTesting.TestContainers;
 using Docker.DotNet;
 using EventStore.Client;
 using HealthChecks;
+using KurrentDB.Client;
 using Logger;
 using Microsoft.Data.SqlClient;
 using Shouldly;
@@ -58,12 +59,12 @@ public abstract class BaseDockerHelper{
 
     protected readonly Object ContainerStateLock = new();
 
-    protected String EventStoreContainerName;
+    protected String KurrentDbContainerName;
 
     public String ConfigHostContainerName;
     public Int32 ConfigHostPort;
-    protected Int32 EventStoreHttpPort;
-    protected Int32 EventStoreSecureHttpPort;
+    protected Int32 KurrentDbHttpPort;
+    protected Int32 KurrentDbSecureHttpPort;
 
     protected String FileProcessorContainerName;
 
@@ -71,7 +72,7 @@ public abstract class BaseDockerHelper{
 
     protected readonly IHealthCheckClient HealthCheckClient;
 
-    protected static readonly HttpClient EventStoreHealthCheckClient = CreateEventStoreHealthCheckClient();
+    protected static readonly HttpClient KurrentDbHealthCheckClient = CreateKurrentDbHealthCheckClient();
 
     protected Dictionary<ContainerType, Int32> HostPorts = new();
 
@@ -107,6 +108,8 @@ public abstract class BaseDockerHelper{
 
     protected Boolean UseSecureSqlServerDatabase;
 
+    protected SqlServerTestRunFixture SharedSqlServerFixture;
+
     private String sqlTestConnString;
 
 
@@ -125,7 +128,7 @@ public abstract class BaseDockerHelper{
                                                                                             }));
         
         this.ImageDetails.Add(ContainerType.SqlServer, ("mcr.microsoft.com/mssql/server:2025-latest", true));
-        this.ImageDetails.Add(ContainerType.EventStore, ("kurrentplatform/kurrentdb:26.2.2", true));
+        this.ImageDetails.Add(ContainerType.KurrentDb, ("kurrentplatform/kurrentdb:26.2.2", true));
         this.ImageDetails.Add(ContainerType.MessagingService, ("stuartferguson/messagingservice:master", true));
         this.ImageDetails.Add(ContainerType.SecurityService, ("stuartferguson/securityservice:master", true));
         this.ImageDetails.Add(ContainerType.CallbackHandler, ("stuartferguson/callbackhandler:master", true));
@@ -142,7 +145,7 @@ public abstract class BaseDockerHelper{
 
 
 
-    public Boolean IsSecureEventStore{ get; protected set; }
+    public Boolean IsSecureKurrentDb { get; protected set; }
 
 
 
@@ -167,7 +170,7 @@ public abstract class BaseDockerHelper{
         Int32 securityServicePort = this.GetSecurityServicePort();
 
         return new Dictionary<String, String>() {
-            {"EventStoreSettings:ConnectionString", this.GenerateEventStoreConnectionString()},
+            {"EventStoreSettings:ConnectionString", this.GenerateKurrentDbConnectionString()},
             {"AppSettings:PersistentSubscriptionPollingInSeconds", this.PersistentSubscriptionSettings.pollingInterval.ToString()},
             {"AppSettings:InternalSubscriptionServiceCacheDuration", this.PersistentSubscriptionSettings.cacheDuration.ToString()},
             {"AppSettings:SubscriptionConfiguration:PersistentSubscriptionPollingInSeconds", this.PersistentSubscriptionSettings.pollingInterval.ToString()},
@@ -180,7 +183,7 @@ public abstract class BaseDockerHelper{
             {"AppSettings:TransactionProcessorApi", $"http://{this.TransactionProcessorContainerName}:{DockerPorts.TransactionProcessorDockerPort}"},
             {"AppSettings:FileProcessorApi", $"http://{this.FileProcessorContainerName}:{DockerPorts.FileProcessorDockerPort}"},
             {"ConnectionStrings:HealthCheck", this.SetConnectionString("master", this.UseSecureSqlServerDatabase)},
-            {"\"EventStoreSettings:Insecure", this.IsSecureEventStore.ToString()}
+            {"EventStoreSettings:Insecure", this.IsSecureKurrentDb.ToString()}
             
         };
     }
@@ -189,7 +192,7 @@ public abstract class BaseDockerHelper{
     {
         List<IReadOnlyList<DockerServices>> startupGroups = [
             [DockerServices.SqlServer],
-            [DockerServices.EventStore],
+            [DockerServices.KurrentDb],
             [
                 DockerServices.MessagingService,
                 DockerServices.SecurityService,
@@ -218,8 +221,7 @@ public abstract class BaseDockerHelper{
 
     public Int32? GetHostPort(ContainerType key) =>
         key switch {
-            ContainerType.CallbackHandler => this.CallbackHandlerPort,
-            //ContainerType.EventStore => this.EventStoreHttpPort,
+            ContainerType.CallbackHandler => this.CallbackHandlerPort,            
             ContainerType.ConfigurationHost => this.ConfigHostPort,
             ContainerType.FileProcessor => this.FileProcessorPort,
             ContainerType.MessagingService => this.MessagingServicePort,
@@ -230,8 +232,8 @@ public abstract class BaseDockerHelper{
             ContainerType.SqlServer => this.SqlServerPort,
             ContainerType.EstateManagementUI => this.EstateManagementUiPort,
             ContainerType.EstateReporting => this.EstateReportingPort,
-            _ when key == ContainerType.EventStore && this.IsSecureEventStore => this.EventStoreSecureHttpPort,
-            _ when key == ContainerType.EventStore && this.IsSecureEventStore == false => this.EventStoreHttpPort,
+            _ when key == ContainerType.KurrentDb && this.IsSecureKurrentDb => this.KurrentDbSecureHttpPort,
+            _ when key == ContainerType.KurrentDb && this.IsSecureKurrentDb == false => this.KurrentDbHttpPort,
             _ => null
     };
 
@@ -291,7 +293,7 @@ public abstract class BaseDockerHelper{
     public virtual void SetupContainerNames(){
         // Setup the container names
         this.SqlServerContainerName= $"sqlserver{this.TestId:N}";
-        this.EventStoreContainerName = $"eventstore{this.TestId:N}";
+        this.KurrentDbContainerName = $"kurrentdb{this.TestId:N}";
         this.SecurityServiceContainerName = $"securityservice{this.TestId:N}";
         this.TestHostContainerName = $"testhosts{this.TestId:N}";
         this.CallbackHandlerContainerName = $"callbackhandler{this.TestId:N}";
@@ -307,10 +309,18 @@ public abstract class BaseDockerHelper{
     protected Int32 EstateManagementUiPort;
     protected Int32 SqlServerPort;
 
+    public void UseSharedSqlServer(SqlServerTestRunFixture fixture)
+    {
+        this.SharedSqlServerFixture = fixture ?? throw new ArgumentNullException(nameof(fixture));
+        this.SqlServerContainerName = fixture.ContainerName;
+        this.SqlServerPort = fixture.MappedPort;
+        this.SqlCredentials = (fixture.UserName, fixture.Password);
+    }
+
     protected String EstateManagementUiContainerName;
 
-    public virtual ContainerBuilder SetupEventStoreContainer(){
-        this.Trace("About to Start Event Store Container");
+    public virtual ContainerBuilder SetupKurrentDbContainer(){
+        this.Trace("About to Start Kurrent Db Container");
 
         Dictionary<String, String> environmentVariables = new(){
             {"EVENTSTORE_RUN_PROJECTIONS","all"},
@@ -318,18 +328,18 @@ public abstract class BaseDockerHelper{
             {"EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP","true"},
             {"EVENTSTORE_PROJECTION_EXECUTION_TIMEOUT","5000"}
         };
-        ContainerBuilder eventStoreContainer = new ContainerBuilder();
+        ContainerBuilder kurrentDbContainer = new();
         
-        if (!this.IsSecureEventStore){
+        if (!this.IsSecureKurrentDb){
             environmentVariables.Add("EVENTSTORE_INSECURE","true");
         }
         else{
-            String certsPath = "/etc/eventstore/certs";
+            String certsPath = "/etc/kurrentdb/certs";
 
             // Copy these to the container
             String path = Path.Combine(Directory.GetCurrentDirectory(), "certs");
 
-            eventStoreContainer = eventStoreContainer.MountHostFolder(path, certsPath);
+            kurrentDbContainer = kurrentDbContainer.MountHostFolder(path, certsPath);
 
             // Certificates configuration
             environmentVariables.Add("EVENTSTORE_CertificateFile",$"{certsPath}/node1/node.crt");
@@ -339,19 +349,19 @@ public abstract class BaseDockerHelper{
         }
 
         String logfilePath = "/var/log/kurrentdb";
-        eventStoreContainer = eventStoreContainer.MountHostFolder(this.HostTraceFolder, logfilePath);
+        kurrentDbContainer = kurrentDbContainer.MountHostFolder(this.HostTraceFolder, logfilePath);
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EventStore).Data;
-        this.Trace($"About to Start Event Store Container using image [{imageDetails.imageName}]");
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.KurrentDb).Data;
+        this.Trace($"About to Start Kurrent Db Container using image [{imageDetails.imageName}]");
 
-        
 
-        eventStoreContainer = eventStoreContainer.WithName(this.EventStoreContainerName)  // similar to WithName()
+
+        kurrentDbContainer = kurrentDbContainer.WithName(this.KurrentDbContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
-            .WithPortBinding(DockerPorts.EventStoreHttpDockerPort, true);
+            .WithPortBinding(DockerPorts.KurrentDbHttpDockerPort, true);
         
-        return eventStoreContainer;
+        return kurrentDbContainer;
     }
     
     public virtual ContainerBuilder SetupFileProcessorContainer(){
@@ -747,20 +757,20 @@ public abstract class BaseDockerHelper{
         }
     }
 
-    protected virtual EventStoreClientSettings ConfigureEventStoreSettings(String username = "admin", String password="changeit"){
-        String connectionString = $"esdb://{username}:{password}@127.0.0.1:{this.EventStoreHttpPort}";
+    protected virtual KurrentDBClientSettings ConfigureKurrentDbSettings(String username = "admin", String password="changeit"){
+        String connectionString = $"esdb://{username}:{password}@127.0.0.1:{this.KurrentDbHttpPort}";
         
-        connectionString = this.IsSecureEventStore switch{
+        connectionString = this.IsSecureKurrentDb switch{
             true => $"{connectionString}?tls=true&tlsVerifyCert=false",
             _ => $"{connectionString}?tls=false&tlsVerifyCert=false"
         };
         
-        return EventStoreClientSettings.Create(connectionString);
+        return KurrentDBClientSettings.Create(connectionString);
     }
 
     protected virtual async Task CreatePersistentSubscription((String streamName, String groupName, Int32 maxRetryCount) subscription){
-        EventStorePersistentSubscriptionsClient client = new(this.ConfigureEventStoreSettings());
-
+        KurrentDBPersistentSubscriptionsClient client = new(this.ConfigureKurrentDbSettings());
+        
         PersistentSubscriptionSettings settings = new(resolveLinkTos:true, StreamPosition.Start, maxRetryCount:subscription.maxRetryCount);
         this.Trace($"Creating persistent subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] Retry Count [{subscription.maxRetryCount}]");
         await client.CreateToStreamAsync(subscription.streamName, subscription.groupName, settings);
@@ -803,7 +813,7 @@ public abstract class BaseDockerHelper{
         }
     }
     protected async Task DoEventStoreHealthCheck(CancellationToken cancellationToken){
-        String scheme = this.IsSecureEventStore switch
+        String scheme = this.IsSecureKurrentDb switch
         {
             true => "https",
             _ => "http"
@@ -812,9 +822,9 @@ public abstract class BaseDockerHelper{
         await Retry.For(async cancellationToken =>
         {
             cancellationToken.ThrowIfCancellationRequested();
-            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/ping";
+            String url = $"{scheme}://127.0.0.1:{this.KurrentDbHttpPort}/ping";
 
-            using HttpResponseMessage pingResponse = await EventStoreHealthCheckClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+            using HttpResponseMessage pingResponse = await KurrentDbHealthCheckClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             pingResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         },
                         cancellationToken,
@@ -826,9 +836,9 @@ public abstract class BaseDockerHelper{
         await Retry.For(async cancellationToken =>
         {
             cancellationToken.ThrowIfCancellationRequested();
-            String url = $"{scheme}://127.0.0.1:{this.EventStoreHttpPort}/info";
+            String url = $"{scheme}://127.0.0.1:{this.KurrentDbHttpPort}/info";
 
-            using HttpResponseMessage infoResponse = await EventStoreHealthCheckClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+            using HttpResponseMessage infoResponse = await KurrentDbHealthCheckClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
             infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
             String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -837,7 +847,7 @@ public abstract class BaseDockerHelper{
         }, cancellationToken);
     }
 
-    private static HttpClient CreateEventStoreHealthCheckClient()
+    private static HttpClient CreateKurrentDbHealthCheckClient()
     {
         HttpClientHandler httpClientHandler = new()
         {
@@ -898,8 +908,8 @@ public abstract class BaseDockerHelper{
         }
     }
     
-    protected virtual String GenerateEventStoreConnectionString(String userName = "admin", String password = "changeit"){
-        String eventStoreAddress = $"esdb://{userName}:{password}@{this.EventStoreContainerName}:{DockerPorts.EventStoreHttpDockerPort}?tls=false";
+    protected virtual String GenerateKurrentDbConnectionString(String userName = "admin", String password = "changeit"){
+        String eventStoreAddress = $"esdb://{userName}:{password}@{this.KurrentDbContainerName}:{DockerPorts.KurrentDbHttpDockerPort}?tls=false";
 
         return eventStoreAddress;
     }
@@ -930,7 +940,7 @@ public abstract class BaseDockerHelper{
             {
                 IReadOnlyList<FileInfo> files = this.GetProjectionFiles();
                 var requiredProjections = this.GetRequiredProjections();
-                EventStoreProjectionManagementClient projectionClient = new(this.ConfigureEventStoreSettings());
+                KurrentDBProjectionManagementClient projectionClient = new(this.ConfigureKurrentDbSettings());
                 List<String> projectionNames = new();
 
                 foreach (FileInfo file in files)
@@ -988,7 +998,7 @@ public abstract class BaseDockerHelper{
     }
 
     protected virtual Task CreateContinuousProjection(
-        EventStoreProjectionManagementClient projectionClient,
+        KurrentDBProjectionManagementClient projectionClient,
         String projectionName,
         String projection,
         CancellationToken cancellationToken)
@@ -1001,7 +1011,7 @@ public abstract class BaseDockerHelper{
     }
 
     protected virtual Task<ProjectionDetails> GetProjectionStatus(
-        EventStoreProjectionManagementClient projectionClient,
+        KurrentDBProjectionManagementClient projectionClient,
         String projectionName,
         CancellationToken cancellationToken)
     {
@@ -1037,13 +1047,49 @@ public abstract class BaseDockerHelper{
             encryptValue = ";Encrypt=False";
         }
 
+        String scenarioDatabaseName = GetScenarioDatabaseName(
+            databaseName,
+            this.TestId,
+            this.SharedSqlServerFixture is not null);
+
         String connectionString =
-            $"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.usename};password={this.SqlCredentials.password};database={databaseName}{encryptValue}";
+            $"server={this.SqlServerContainerName},1433;user id={this.SqlCredentials.usename};password={this.SqlCredentials.password};database={scenarioDatabaseName}{encryptValue}";
         
         return connectionString;
     }
 
+    protected static String GetScenarioDatabaseName(
+        String databaseName,
+        Guid testId,
+        Boolean sharedSqlServer)
+    {
+        if (sharedSqlServer == false || databaseName == "master")
+        {
+            return databaseName;
+        }
+
+        String compactSuffix = $"-{testId:N}";
+        if (databaseName.EndsWith(compactSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            return databaseName;
+        }
+
+        String dashedSuffix = $"-{testId:D}";
+        return databaseName.EndsWith(dashedSuffix, StringComparison.OrdinalIgnoreCase)
+            ? $"{databaseName[..^dashedSuffix.Length]}{compactSuffix}"
+            : $"{databaseName}{compactSuffix}";
+    }
+
     
+    protected static DockerServices GetServicesForStartup(
+        DockerServices requiredServices,
+        Boolean hasSharedSqlServer)
+    {
+        return hasSharedSqlServer
+            ? requiredServices & ~DockerServices.SqlServer
+            : requiredServices;
+    }
+
     protected async Task<IContainer> StartContainer2(
         Func<ContainerBuilder> buildContainerFunc,
         List<INetwork> networkServices,
@@ -1098,7 +1144,7 @@ public abstract class BaseDockerHelper{
                 DockerServices.TestHost => ContainerType.TestHost,
                 DockerServices.TransactionProcessor => ContainerType.TransactionProcessor,
                 DockerServices.TransactionProcessorAcl => ContainerType.TransactionProcessorAcl,
-                DockerServices.EventStore=> ContainerType.EventStore,
+                DockerServices.KurrentDb => ContainerType.KurrentDb,
                 DockerServices.SqlServer => ContainerType.SqlServer,
                 DockerServices.ConfigurationHost => ContainerType.ConfigurationHost,
                 DockerServices.EstateManagementUI => ContainerType.EstateManagementUI,
@@ -1119,7 +1165,7 @@ public abstract class BaseDockerHelper{
              
                 switch (type)
                 {
-                    case ContainerType.EventStore:
+                    case ContainerType.KurrentDb:
                          await DoEventStoreHealthCheck(cancellationToken);
                         break;
                     case ContainerType.SqlServer:
@@ -1179,11 +1225,11 @@ public abstract class BaseDockerHelper{
             startedContainer.GetMappedPublicPort(dockerPort);
 
         switch (type) {
-            case ContainerType.EventStore:
-                Int32 port = GetPort(DockerPorts.EventStoreHttpDockerPort);
-                EventStoreHttpPort = port;
-                if (IsSecureEventStore)
-                    EventStoreSecureHttpPort = port;
+            case ContainerType.KurrentDb:
+                Int32 port = GetPort(DockerPorts.KurrentDbHttpDockerPort);
+                KurrentDbHttpPort = port;
+                if (IsSecureKurrentDb)
+                    KurrentDbSecureHttpPort = port;
                 break;
 
             case ContainerType.MessagingService: 

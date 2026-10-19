@@ -19,6 +19,7 @@
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<PackageReference Include="RichardSzalay.MockHttp" />
 		<PackageReference Include="SimpleResults" />
+		<PackageReference Include="System.Security.Cryptography.Pkcs" />
 		<PackageReference Include="xunit.v3" />
 		<PackageReference Include="xunit.runner.visualstudio">
 		  <PrivateAssets>all</PrivateAssets>
