@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.SqlServer;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Imposter.Abstractions;
 using Shared.EntityFramework;
@@ -19,6 +22,20 @@ public class TestDbContext : DbContext {
     }
 }
 
+public sealed class DisposableTestDbContext : DbContext
+{
+    public DisposableTestDbContext(DbContextOptions<DisposableTestDbContext> options) : base(options) { }
+
+    public bool WasDisposed { get; private set; }
+
+    public override void Dispose()
+    {
+        this.WasDisposed = true;
+        base.Dispose();
+    }
+}
+
+public sealed class NoOpCommandInterceptor : DbCommandInterceptor { }
 public class DbContextResolverTests {
     [Fact]
     public void ResolvedDbContext_RejectsNullScope()
@@ -110,5 +127,116 @@ public class DbContextResolverTests {
         result.Context.ShouldNotBeNull();
         result.Context.Database.GetDbConnection().Database.ShouldBe("DefaultDb-Tenant1");
         result.Dispose();
+    }
+
+    [Fact]
+    public void Resolve_WithSuffix_UsesConfiguredRetryOptionsAndInterceptors()
+    {
+        IConfigurationRoot configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:ReadModel"] = "Server=localhost;Initial Catalog=ReadModel;Integrated Security=True;TrustServerCertificate=True"
+            })
+            .Build();
+        NoOpCommandInterceptor interceptor = new();
+        DbContextResolverOptions resolverOptions = new()
+        {
+            RetryOptionsFactory = key =>
+            {
+                key.ShouldBe("ReadModel");
+                return new SqlServerRetryOptions
+                {
+                    MaxRetryCount = 2,
+                    MaxRetryDelay = TimeSpan.FromSeconds(5),
+                    AdditionalTransientErrorNumbers = [4060]
+                };
+            },
+            Interceptors = [interceptor]
+        };
+        using ServiceProvider rootProvider = new ServiceCollection().BuildServiceProvider();
+        DbContextResolver<TestDbContext> resolver = new(rootProvider, configuration, resolverOptions);
+
+        using ResolvedDbContext<TestDbContext> resolved = resolver.Resolve("ReadModel", "estate-123");
+
+        resolved.Context.Database.GetConnectionString().ShouldContain("Initial Catalog=ReadModel-estate-123");
+        SqlServerRetryingExecutionStrategy strategy = (SqlServerRetryingExecutionStrategy)resolved.Context.Database.CreateExecutionStrategy();
+        strategy.MaxRetryCount.ShouldBe(2);
+        strategy.MaxRetryDelay.ShouldBe(TimeSpan.FromSeconds(5));
+        strategy.AdditionalErrorNumbers.ShouldBe(new[] { 4060 });
+        resolved.Context.GetService<IInterceptors>().Aggregate<IDbCommandInterceptor>().ShouldBe(interceptor);
+    }
+
+    [Fact]
+    public void Resolve_WithSuffix_UsesDefaultRetryPolicyWhenNoRetryOptionsAreConfigured()
+    {
+        IConfigurationRoot configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:ReadModel"] = "Server=localhost;Initial Catalog=ReadModel;Integrated Security=True;TrustServerCertificate=True"
+            })
+            .Build();
+        using ServiceProvider rootProvider = new ServiceCollection().BuildServiceProvider();
+        DbContextResolver<TestDbContext> resolver = new(rootProvider, configuration);
+
+        using ResolvedDbContext<TestDbContext> resolved = resolver.Resolve("ReadModel", "estate-123");
+
+        SqlServerRetryingExecutionStrategy strategy = (SqlServerRetryingExecutionStrategy)
+            resolved.Context.Database.CreateExecutionStrategy();
+        strategy.MaxRetryCount.ShouldBe(6);
+        strategy.MaxRetryDelay.ShouldBe(TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public void Resolve_WithSuffix_DisposesTheDynamicallyCreatedContext()
+    {
+        IConfigurationRoot configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:ReadModel"] = "Server=localhost;Initial Catalog=ReadModel;Integrated Security=True;TrustServerCertificate=True"
+            })
+            .Build();
+        using ServiceProvider rootProvider = new ServiceCollection().BuildServiceProvider();
+        DbContextResolver<DisposableTestDbContext> resolver = new(rootProvider, configuration);
+
+        ResolvedDbContext<DisposableTestDbContext> resolved = resolver.Resolve("ReadModel", "estate-123");
+        DisposableTestDbContext context = resolved.Context;
+        resolved.Dispose();
+
+        context.WasDisposed.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Resolve_WithMalformedConnectionString_ThrowsBeforeResolvingContext()
+    {
+        IConfigurationRoot configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:ReadModel"] = "NotAValidConnectionString"
+            })
+            .Build();
+        using ServiceProvider rootProvider = new ServiceCollection().BuildServiceProvider();
+        DbContextResolver<TestDbContext> resolver = new(rootProvider, configuration);
+
+        Should.Throw<ArgumentException>(() => resolver.Resolve("ReadModel", "estate-123"));
+    }
+
+    [Fact]
+    public void Resolve_WithNonSqlUnsuffixedConnectionString_ResolvesRegisteredContext()
+    {
+        ServiceCollection services = new();
+        services.AddDbContext<TestDbContext>(options => options.UseInMemoryDatabase("TestDbNonSqlConnectionString"));
+        IConfigurationRoot configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:ReadModel"] = "Mode=Memory;Cache=Shared;Data Source=test"
+            })
+            .Build();
+        using ServiceProvider rootProvider = services.BuildServiceProvider();
+        DbContextResolver<TestDbContext> resolver = new(rootProvider, configuration);
+
+        using ResolvedDbContext<TestDbContext> resolved = resolver.Resolve("ReadModel");
+
+        resolved.Context.ShouldNotBeNull();
+        resolved.Context.Database.ProviderName.ShouldContain("InMemory");
     }
 }

@@ -17,8 +17,8 @@ public sealed class SqlServerRetryOptions
 
 public static class SqlServerDbContextOptionsBuilderExtensions
 {
-    private const int DefaultMaxRetryCount = 6;
-    private static readonly TimeSpan DefaultMaxRetryDelay = TimeSpan.FromSeconds(30);
+    internal const int DefaultMaxRetryCount = 6;
+    internal static readonly TimeSpan DefaultMaxRetryDelay = TimeSpan.FromSeconds(30);
 
     public static DbContextOptionsBuilder UseSharedSqlServer<TContext>(
         this DbContextOptionsBuilder optionsBuilder,
