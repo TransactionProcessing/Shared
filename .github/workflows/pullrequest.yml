@@ -32,6 +32,9 @@ jobs:
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "Shared.Tests/Shared.Tests.csproj"
 
+    - name: Run API Defaults Tests
+      run: dotnet test "TransactionProcessing.ApiDefaults.Tests/TransactionProcessing.ApiDefaults.Tests.csproj" --configuration Release
+
     - name: Run Event Store Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"

@@ -19,6 +19,7 @@ Reusable .NET libraries for transaction-processing services, including logging, 
 | `Shared.Logger` | Logging and correlation context | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Logger.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Logger) |
 | `Shared.Results` | Result types and retry policies | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Results.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Results) |
 | `Shared.Results.Web` | ASP.NET result mappings | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Results.Web.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Results.Web) |
+| `TransactionProcessing.ApiDefaults` | Minimal API versioning, OpenAPI, and Scalar defaults | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.ApiDefaults.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.ApiDefaults) |
 
 ## Requirements
 
@@ -45,6 +46,38 @@ Other packages can be installed independently depending on the functionality req
 - Entity Framework Core helpers
 - EventStore/KurrentDB integration
 - Reusable integration-testing infrastructure
+- Shared URL-based API versioning, per-version OpenAPI documents, and Scalar UI (`TransactionProcessing.ApiDefaults`)
+
+## API defaults sample
+
+`TransactionProcessing.ApiDefaults` is a separate package. It is not referenced by `Shared`, so applications that only consume the non-web shared packages do not gain its ASP.NET Core dependencies.
+
+Install it into an ASP.NET Core Minimal API project:
+
+```bash
+dotnet add package TransactionProcessing.ApiDefaults
+```
+
+Register the defaults before building the application, then map versioned endpoint groups and enable the shared OpenAPI and Scalar endpoints:
+
+```csharp
+using Asp.Versioning;
+
+builder.Services.AddApiDefaults(options => options.Title = "Transaction API");
+
+var app = builder.Build();
+app.UseApiDefaults();
+
+var api = app.NewVersionedApi("Transactions");
+var transactions = api
+    .MapGroup("/api/v{version:apiVersion}/transactions")
+    .HasApiVersion(ApiVersions.V1);
+transactions.MapGet("/", GetTransactions).MapToApiVersion(ApiVersions.V1);
+
+app.Run();
+```
+
+The package serves version-specific OpenAPI documents at `/openapi/v1.json` and the Scalar reference at `/scalar`. The version list is discovered from mapped endpoints; adding another version does not require updating the shared package. Run the complete example with `dotnet run --project TransactionProcessing.ApiDefaults.Sample`.
 
 ## Testing
 
