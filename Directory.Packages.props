@@ -4,14 +4,20 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
+    <PackageVersion Include="Asp.Versioning.Http" Version="10.2.3" />
+    <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
+    <PackageVersion Include="Asp.Versioning.OpenApi" Version="10.2.3" />
     <PackageVersion Include="coverlet.MTP" Version="10.1.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.13" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageVersion Include="RichardSzalay.MockHttp" Version="7.1.0" />
     <PackageVersion Include="SimpleResults" Version="4.0.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.0" />
     <PackageVersion Include="SocketIOClient" Version="4.0.5" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <PackageVersion Include="xunit.v3" Version="4.0.2" />

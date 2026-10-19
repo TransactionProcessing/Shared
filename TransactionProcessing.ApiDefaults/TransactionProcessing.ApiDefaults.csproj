@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>TransactionProcessing.ApiDefaults</PackageId>
+    <Description>Shared API versioning and OpenAPI defaults for ASP.NET Core Minimal APIs.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>ASP.NET Core;Minimal API;API versioning;OpenAPI;Scalar</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Http" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
+    <PackageReference Include="Asp.Versioning.OpenApi" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>
