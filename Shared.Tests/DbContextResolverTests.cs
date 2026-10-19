@@ -221,17 +221,22 @@ public class DbContextResolverTests {
     }
 
     [Fact]
-    public void Resolve_WithMalformedUnsuffixedConnectionString_ThrowsBeforeResolvingContext()
+    public void Resolve_WithNonSqlUnsuffixedConnectionString_ResolvesRegisteredContext()
     {
+        ServiceCollection services = new();
+        services.AddDbContext<TestDbContext>(options => options.UseInMemoryDatabase("TestDbNonSqlConnectionString"));
         IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:ReadModel"] = "NotAValidConnectionString"
+                ["ConnectionStrings:ReadModel"] = "Mode=Memory;Cache=Shared;Data Source=test"
             })
             .Build();
-        using ServiceProvider rootProvider = new ServiceCollection().BuildServiceProvider();
+        using ServiceProvider rootProvider = services.BuildServiceProvider();
         DbContextResolver<TestDbContext> resolver = new(rootProvider, configuration);
 
-        Should.Throw<ArgumentException>(() => resolver.Resolve("ReadModel"));
+        using ResolvedDbContext<TestDbContext> resolved = resolver.Resolve("ReadModel");
+
+        resolved.Context.ShouldNotBeNull();
+        resolved.Context.Database.ProviderName.ShouldContain("InMemory");
     }
 }

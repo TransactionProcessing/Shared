@@ -45,7 +45,6 @@ public class DbContextResolver<TContext> : IDbContextResolver<TContext> where TC
         if (String.IsNullOrWhiteSpace(connectionString))
             throw new InvalidOperationException($"Connection string for '{connectionStringKey}' not found.");
 
-        SqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
         if (String.IsNullOrWhiteSpace(databaseNameSuffix))
         {
             IServiceScope regularScope = _rootProvider.CreateScope();
@@ -60,6 +59,7 @@ public class DbContextResolver<TContext> : IDbContextResolver<TContext> where TC
             }
         }
 
+        SqlConnectionStringBuilder connectionStringBuilder = new(connectionString);
         connectionStringBuilder.InitialCatalog = $"{connectionStringBuilder.InitialCatalog}-{databaseNameSuffix}";
         connectionString = connectionStringBuilder.ConnectionString;
 
