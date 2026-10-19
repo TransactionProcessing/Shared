@@ -51,7 +51,7 @@ Other packages can be installed independently depending on the functionality req
 Run the test suite with:
 
 ```bash
-dotnet test Shared.sln
+dotnet test --solution Shared.sln
 ```
 
 Docker-backed integration tests require a compatible Linux Docker engine.

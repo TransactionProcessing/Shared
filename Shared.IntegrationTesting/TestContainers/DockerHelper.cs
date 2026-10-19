@@ -9,6 +9,7 @@ namespace Shared.IntegrationTesting.TestContainers;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -20,14 +21,13 @@ public abstract class DockerHelper : BaseDockerHelper
         StringSerialiser.Initialise(new SystemTextJsonSerializer(new System.Text.Json.JsonSerializerOptions()));
     }
     
-    protected  virtual void SetHostTraceFolder(String scenarioName) {
+    protected virtual void SetHostTraceFolder(String scenarioName, DateTimeOffset? runStartedAt = null) {
         String ciEnvVar = Environment.GetEnvironmentVariable("CI");
 
         Boolean isCI = (!String.IsNullOrEmpty(ciEnvVar) && String.Compare(ciEnvVar, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0);
+        Boolean isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-        this.HostTraceFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? (isCI ? $@"C:\Users\runneradmin\trace\{scenarioName}" : $@"C:\home\txnproc\trace\{scenarioName}")
-            : (isCI ? $"/home/runner/trace/{scenarioName}" : $"/home/txnproc/trace/{scenarioName}");
+        this.HostTraceFolder = BuildHostTraceFolderPath(scenarioName, runStartedAt, isCI, isWindows);
         
         if (Directory.Exists(this.HostTraceFolder) == false){
             this.Trace($"[{this.HostTraceFolder}] does not exist");
@@ -39,6 +39,25 @@ public abstract class DockerHelper : BaseDockerHelper
         }
         
         this.Trace($"HostTraceFolder is [{this.HostTraceFolder}]");
+    }
+
+    protected static String BuildHostTraceFolderPath(
+        String scenarioName,
+        DateTimeOffset? runStartedAt,
+        Boolean isCI,
+        Boolean isWindows)
+    {
+        String rootFolder = isWindows
+            ? (isCI ? @"C:\Users\runneradmin\trace" : @"C:\home\integrationtests")
+            : (isCI ? "/home/runner/trace" : "/home/integrationtests");
+
+        return runStartedAt is null
+            ? Path.Combine(rootFolder, scenarioName)
+            : Path.Combine(
+                rootFolder,
+                scenarioName,
+                runStartedAt.Value.ToString("yyyyMMdd", CultureInfo.InvariantCulture),
+                runStartedAt.Value.ToString("HHmm", CultureInfo.InvariantCulture));
     }
 
     
@@ -53,25 +72,37 @@ public abstract class DockerHelper : BaseDockerHelper
         {
             this.RequiredDockerServices = dockerServices;
 
-            this.IsSecureEventStore = Environment.GetEnvironmentVariable("IsSecureEventStore") switch
+            this.IsSecureKurrentDb = Environment.GetEnvironmentVariable("IsSecureEventStore") switch
             {
                 null => false,
                 { Length: 0 } => false,
                 "false" => false,
                 _ => true
             };
-            this.SetHostTraceFolder(scenarioName);
+            this.SetHostTraceFolder(scenarioName, this.SharedSqlServerFixture?.StartedAt);
 
             this.TestId = Guid.NewGuid();
 
             this.Trace($"Test Id is {this.TestId}");
 
             this.SetupContainerNames();
+            if (this.SharedSqlServerFixture is not null)
+            {
+                this.SqlServerContainerName = this.SharedSqlServerFixture.ContainerName;
+            }
 
             this.ClientDetails = ("serviceClient", "Secret1");
 
-            INetwork testNetwork = await this.SetupTestNetwork();
-            this.TestNetworks.Add(testNetwork);
+            INetwork testNetwork;
+            if (this.SharedSqlServerFixture is null)
+            {
+                testNetwork = await this.SetupTestNetwork();
+                this.TestNetworks.Add(testNetwork);
+            }
+            else
+            {
+                testNetwork = this.SharedSqlServerFixture.Network;
+            }
 
             List<INetwork> networks = [
                 testNetwork,
@@ -89,7 +120,7 @@ public abstract class DockerHelper : BaseDockerHelper
             Func<DockerServices, Func<DotNet.Testcontainers.Builders.ContainerBuilder>> setupContainerForService = service => service switch
             {
                 DockerServices.SqlServer => this.ConfigureSqlContainer,
-                DockerServices.EventStore => this.SetupEventStoreContainer,
+                DockerServices.KurrentDb => this.SetupKurrentDbContainer,
                 DockerServices.MessagingService => this.SetupMessagingServiceContainer,
                 DockerServices.SecurityService => this.SetupSecurityServiceContainer,
                 DockerServices.CallbackHandler => this.SetupCallbackHandlerContainer,
@@ -103,10 +134,16 @@ public abstract class DockerHelper : BaseDockerHelper
                 _ => throw new InvalidOperationException($"No startup plan exists for docker service [{service}]")
             };
 
+            DockerServices servicesForStartup = GetServicesForStartup(
+                this.RequiredDockerServices,
+                this.SharedSqlServerFixture is not null);
+
             foreach (IReadOnlyList<DockerServices> startupGroup in this.GetStartupGroups())
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await Task.WhenAll(startupGroup.Select(service => StartWithTrace(setupContainerForService(service), service)));
+                await Task.WhenAll(startupGroup
+                    .Where(service => (servicesForStartup & service) == service)
+                    .Select(service => StartWithTrace(setupContainerForService(service), service)));
             }
 
             await this.LoadEventStoreProjections(cancellationToken);
@@ -114,8 +151,21 @@ public abstract class DockerHelper : BaseDockerHelper
             cancellationToken.ThrowIfCancellationRequested();
             await this.CreateSubscriptions(cancellationToken);
         }
-        catch
+        catch (Exception startupException)
         {
+            try
+            {
+                await this.StopContainersForScenarioRun(DockerServices.None).ConfigureAwait(false);
+            }
+            catch (Exception cleanupException)
+            {
+                this.DisposeIntegrationTestCertificate();
+                throw new AggregateException(
+                    "Scenario container startup failed and cleanup also failed.",
+                    startupException,
+                    cleanupException);
+            }
+
             this.DisposeIntegrationTestCertificate();
             throw;
         }

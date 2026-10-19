@@ -8,9 +8,9 @@ public static class DockerPorts
 
     public static readonly Int32 CallbackHandlerDockerPort = 5010;
     
-    public static readonly Int32 EventStoreHttpDockerPort = 2113;
+    public static readonly Int32 KurrentDbHttpDockerPort = 2113;
 
-    public static readonly Int32 EventStoreTcpDockerPort = 1113;
+    //public static readonly Int32 EventStoreTcpDockerPort = 1113;
 
     public static readonly Int32 MessagingServiceDockerPort = 5006;
 

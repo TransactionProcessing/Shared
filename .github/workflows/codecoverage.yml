@@ -27,23 +27,23 @@ jobs:
     - name: Run Unit Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests\Shared.Tests.csproj" \
-            /p:CollectCoverage=true \
-            /p:Exclude="[xunit*]*" \
-            /p:ExcludeByAttribute="Obsolete" \
-            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
-            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
-            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-            /p:CoverletOutput="../lcov1.info" /maxcpucount:1 \
-            /p:CoverletOutputFormat="lcov"
+        dotnet test "Shared.Tests/Shared.Tests.csproj" \
+            --results-directory "coverage/Shared.Tests" \
+            --coverlet --coverlet-output-format lcov --coverlet-file-prefix Shared.Tests \
+            --coverlet-exclude "[xunit*]*" \
+            --coverlet-exclude-by-attribute Obsolete \
+            --coverlet-exclude-by-attribute GeneratedCodeAttribute \
+            --coverlet-exclude-by-attribute CompilerGeneratedAttribute \
+            --coverlet-exclude-by-attribute ExcludeFromCodeCoverageAttribute
 
-        dotnet test "Shared.EventStore.Tests\Shared.EventStore.Tests.csproj" \
-            /p:CollectCoverage=true /p:Exclude="[xunit*]*" \
-            /p:ExcludeByAttribute="Obsolete" \
-            /p:ExcludeByAttribute="GeneratedCodeAttribute" \
-            /p:ExcludeByAttribute="CompilerGeneratedAttribute" \
-            /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" \
-            /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"
+        dotnet test "Shared.EventStore.Tests/Shared.EventStore.Tests.csproj" \
+            --results-directory "coverage/Shared.EventStore.Tests" \
+            --coverlet --coverlet-output-format lcov --coverlet-file-prefix Shared.EventStore.Tests \
+            --coverlet-exclude "[xunit*]*" \
+            --coverlet-exclude-by-attribute Obsolete \
+            --coverlet-exclude-by-attribute GeneratedCodeAttribute \
+            --coverlet-exclude-by-attribute CompilerGeneratedAttribute \
+            --coverlet-exclude-by-attribute ExcludeFromCodeCoverageAttribute
 
     - name: Install LCOV merger
       run: npm install -g lcov-result-merger
@@ -51,7 +51,7 @@ jobs:
     - name: Merge LCOV reports
       run: |
         mkdir -p coverage
-        lcov-result-merger "*.info" > lcov.info
+        lcov-result-merger "coverage/**/*.lcov" > lcov.info
 
     - name: Upload merged coverage to Codacy
       uses: codacy/codacy-coverage-reporter-action@v1

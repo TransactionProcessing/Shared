@@ -12,9 +12,9 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" />
     <PackageReference Include="Reqnroll" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" />
-    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" />
+    <PackageReference Include="KurrentDB.Client" />
     <PackageReference Include="SimpleResults" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="Docker.DotNet" />
   </ItemGroup>
