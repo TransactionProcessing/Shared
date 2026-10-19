@@ -13,6 +13,7 @@ internal sealed class MinimumApiVersionApiDescriptionProvider : Microsoft.AspNet
 
     public void OnProvidersExecuting(Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescriptionProviderContext context)
     {
+        // Version applicability is adjusted after API descriptions have been generated.
     }
 
     public void OnProvidersExecuted(Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescriptionProviderContext context)

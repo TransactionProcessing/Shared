@@ -15,6 +15,8 @@ namespace TransactionProcessing.ApiDefaults.Tests;
 
 public sealed class ApiDefaultsIntegrationTests
 {
+    private const string OpenApiPathsPropertyName = "paths";
+
     [Fact]
     public void ApiDefaultsOptions_HasExpectedDefaults()
     {
@@ -99,22 +101,22 @@ public sealed class ApiDefaultsIntegrationTests
 
         v1.RootElement.GetProperty("info").GetProperty("title").GetString().ShouldBe("Test Transactions API");
         v1.RootElement.GetProperty("info").GetProperty("description").GetString().ShouldBe("API defaults integration test.");
-        v1.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v1/transactions/shared");
-        v1.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v1/transactions");
-        v1.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v1/transactions/v1");
-        v1.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v1/transactions/v2");
-        v1.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v1/transactions/async");
-        v2.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v2/transactions/shared");
-        v2.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v2/transactions/v2");
-        v2.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v2/transactions/async");
-        v2.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v2/transactions/v1");
-        v3.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions/shared");
-        v3.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions");
-        v3.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions/v3");
-        v3.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions/async");
-        v1.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v1/transactions/future-only");
-        v2.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v2/transactions/future-only");
-        v3.RootElement.GetProperty("paths").EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v3/transactions/future-only");
+        v1.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v1/transactions/shared");
+        v1.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v1/transactions");
+        v1.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v1/transactions/v1");
+        v1.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v1/transactions/v2");
+        v1.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v1/transactions/async");
+        v2.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v2/transactions/shared");
+        v2.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v2/transactions/v2");
+        v2.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v2/transactions/async");
+        v2.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v2/transactions/v1");
+        v3.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions/shared");
+        v3.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions");
+        v3.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions/v3");
+        v3.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldContain("/api/v3/transactions/async");
+        v1.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v1/transactions/future-only");
+        v2.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v2/transactions/future-only");
+        v3.RootElement.GetProperty(OpenApiPathsPropertyName).EnumerateObject().Select(x => x.Name).ShouldNotContain("/api/v3/transactions/future-only");
     }
 
     [Fact]
