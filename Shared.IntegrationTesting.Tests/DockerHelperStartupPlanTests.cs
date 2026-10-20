@@ -122,6 +122,7 @@ public class DockerHelperStartupPlanTests
         startupGroups.Select(group => group.ToArray()).ShouldBe([
             [DockerServices.SqlServer],
             [DockerServices.KurrentDb],
+            [DockerServices.SubscriptionService],
             [
                 DockerServices.MessagingService,
                 DockerServices.SecurityService,

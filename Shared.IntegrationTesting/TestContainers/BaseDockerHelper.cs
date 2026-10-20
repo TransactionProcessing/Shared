@@ -1201,6 +1201,7 @@ public abstract class BaseDockerHelper{
                 DockerServices.ConfigurationHost => ContainerType.ConfigurationHost,
                 DockerServices.EstateManagementUI => ContainerType.EstateManagementUI,
                 DockerServices.EstateReporting => ContainerType.EstateReporting,
+                DockerServices.SubscriptionService => ContainerType.SubscriptionService,
                 _ => ContainerType.NotSet
             };
 
@@ -1316,6 +1317,9 @@ public abstract class BaseDockerHelper{
                 break;
             case ContainerType.EstateReporting:
                 EstateReportingPort = GetPort(DockerPorts.EstateReportingDockerPort);
+                break;
+            case ContainerType.SubscriptionService:
+                SubscriptionServicePort = GetPort(DockerPorts.SubscriptionServiceDockerPort);
                 break;
 
         }
