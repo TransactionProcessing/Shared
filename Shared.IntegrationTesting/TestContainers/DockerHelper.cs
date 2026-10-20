@@ -131,6 +131,7 @@ public abstract class DockerHelper : BaseDockerHelper
                 DockerServices.ConfigurationHost => this.SetupConfigHostContainer,
                 DockerServices.EstateManagementUI => this.SetupEstateManagementUiContainer,
                 DockerServices.EstateReporting => this.SetupEstateReportingContainer,
+                DockerServices.SubscriptionService => this.SetupSubscriptionServiceContainer,
                 _ => throw new InvalidOperationException($"No startup plan exists for docker service [{service}]")
             };
 

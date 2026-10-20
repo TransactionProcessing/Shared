@@ -50,8 +50,12 @@ public abstract class BaseDockerHelper{
     protected String CallbackHandlerContainerName;
     protected String EstateReportingContainerName;
 
+    protected String SubscriptionServiceContainerName;
+
     protected Int32 CallbackHandlerPort;
     protected Int32 EstateReportingPort;
+
+    protected Int32 SubscriptionServicePort;
 
     protected (String clientId, String clientSecret) ClientDetails;
 
@@ -139,15 +143,12 @@ public abstract class BaseDockerHelper{
         this.ImageDetails.Add(ContainerType.ConfigurationHost, ("stuartferguson/mobileconfiguration:master", true));
         this.ImageDetails.Add(ContainerType.EstateManagementUI, ("stuartferguson/estatemanagementui:master", true));
         this.ImageDetails.Add(ContainerType.EstateReporting, ("stuartferguson/estatereportingapi:master", true));
+        this.ImageDetails.Add(ContainerType.SubscriptionService, ("stuartferguson/subscriptionservice:master", true));
 
         this.HostPorts = new Dictionary<ContainerType, Int32>();
     }
 
-
-
     public Boolean IsSecureKurrentDb { get; protected set; }
-
-
 
     public virtual Dictionary<String,String> GetAdditionalVariables(ContainerType containerType){
         Dictionary<String, String> result = new();
@@ -193,6 +194,7 @@ public abstract class BaseDockerHelper{
         List<IReadOnlyList<DockerServices>> startupGroups = [
             [DockerServices.SqlServer],
             [DockerServices.KurrentDb],
+            [DockerServices.SubscriptionService],
             [
                 DockerServices.MessagingService,
                 DockerServices.SecurityService,
@@ -205,7 +207,7 @@ public abstract class BaseDockerHelper{
                 DockerServices.EstateReporting
             ],
             [
-                DockerServices.EstateManagementUI
+                DockerServices.EstateManagementUI,                
             ]
         ];
 
@@ -232,6 +234,7 @@ public abstract class BaseDockerHelper{
             ContainerType.SqlServer => this.SqlServerPort,
             ContainerType.EstateManagementUI => this.EstateManagementUiPort,
             ContainerType.EstateReporting => this.EstateReportingPort,
+            ContainerType.SubscriptionService => this.SubscriptionServicePort,
             _ when key == ContainerType.KurrentDb && this.IsSecureKurrentDb => this.KurrentDbSecureHttpPort,
             _ when key == ContainerType.KurrentDb && this.IsSecureKurrentDb == false => this.KurrentDbHttpPort,
             _ => null
@@ -304,6 +307,7 @@ public abstract class BaseDockerHelper{
         this.ConfigHostContainerName = $"mobileconfighost{this.TestId:N}";
         this.EstateManagementUiContainerName = $"estateadministrationui{this.TestId:N}";
         this.EstateReportingContainerName = $"estatereporting{this.TestId:N}";
+        this.SubscriptionServiceContainerName= $"subscriptionservice{this.TestId:N}";
     }
 
     protected Int32 EstateManagementUiPort;
@@ -353,8 +357,6 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.KurrentDb).Data;
         this.Trace($"About to Start Kurrent Db Container using image [{imageDetails.imageName}]");
-
-
 
         kurrentDbContainer = kurrentDbContainer.WithName(this.KurrentDbContainerName)  // similar to WithName()
             .WithImage(imageDetails.imageName)
@@ -449,6 +451,24 @@ public abstract class BaseDockerHelper{
         return containerBuilder;
     }
 
+    public virtual ContainerBuilder SetupSubscriptionServiceContainer() {
+        this.Trace("About to Start Subscription Service Container");
+
+        Dictionary<String, String> environmentVariables = new();
+        environmentVariables.Add("ConnectionStrings:KurrentDb", this.GenerateKurrentDbConnectionString());
+        environmentVariables.Add("ConnectionStrings:SubscriptionServiceDb", this.SetConnectionString("SubscriptionService", this.UseSecureSqlServerDatabase));
+        
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.SubscriptionService).Data;
+
+        ContainerBuilder subscriptionServiceContainer = new ContainerBuilder().WithName(this.SubscriptionServiceContainerName)
+                                                                     .WithImage(imageDetails.imageName)
+                                                                     .WithEnvironment(environmentVariables)
+                                                                     .MountHostFolder(this.HostTraceFolder)
+                                                                     .WithPortBinding(DockerPorts.SubscriptionServiceDockerPort, true);
+
+        return subscriptionServiceContainer;
+    }
+
     public virtual ContainerBuilder SetupConfigHostContainer()
     {
         this.Trace("About to Start Config Host Container");
@@ -494,7 +514,6 @@ public abstract class BaseDockerHelper{
 
         messagingServiceContainer = messagingServiceContainer
             .WithPortBinding(DockerPorts.MessagingServiceDockerPort, true);
-            //.WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(DockerPorts.MessagingServiceDockerPort));
         
         return messagingServiceContainer;
     }
@@ -533,17 +552,14 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add("ConnectionStrings:AuthenticationDbContext", this.SetConnectionString($"Authentication-{this.TestId}", this.UseSecureSqlServerDatabase));
 
         Dictionary<String, String> additionalEnvironmentVariables = this.GetAdditionalVariables(ContainerType.SecurityService);
-        if (additionalEnvironmentVariables != null)
-        {
-            foreach (KeyValuePair<String, String> additionalEnvironmentVariable in additionalEnvironmentVariables)
-            {
+        if (additionalEnvironmentVariables != null) {
+            foreach (KeyValuePair<String, String> additionalEnvironmentVariable in additionalEnvironmentVariables) {
                 environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
             }
         }
 
         SimpleResults.Result<(String imageName, Boolean useLatest)> imageDetailsResult = this.GetImageDetails(ContainerType.SecurityService);
-        if (imageDetailsResult.IsFailed)
-        {
+        if (imageDetailsResult.IsFailed) {
             throw new Exception($"Image details not found for {ContainerType.SecurityService}");
         }
 
@@ -554,12 +570,10 @@ public abstract class BaseDockerHelper{
             .MountHostFolder(this.IntegrationTestCertificate.CertificateDirectory, this.IntegrationTestCertificate.ContainerCertificateDirectory);            
 
         Int32? hostPort = this.GetHostPort(ContainerType.SecurityService);
-        if (hostPort is null || hostPort <= 0)
-        {
+        if (hostPort is null or <= 0) {
             securityServiceContainer = securityServiceContainer.WithPortBinding(DockerPorts.SecurityServiceDockerPort, true);
         }
-        else
-        {
+        else {
             securityServiceContainer = securityServiceContainer.WithPortBinding(DockerPorts.SecurityServiceDockerPort, hostPort.Value);
         }
 
@@ -580,19 +594,6 @@ public abstract class BaseDockerHelper{
 
         return containerService;
     }
-
-    //public virtual async Task<IContainer> SetupSqlServerContainer(INetwork networkService){
-    //    if (this.SqlCredentials == default)
-    //        throw new ArgumentNullException("Sql Credentials have not been set");
-
-    //    IContainer databaseServerContainer = await this.StartContainer2(this.ConfigureSqlContainer,
-    //                                                                           new List<INetwork>{
-    //                                                                                                        networkService
-    //                                                                                                    },
-    //                                                                           DockerServices.SqlServer);
-        
-    //    return databaseServerContainer;
-    //}
 
     public virtual ContainerBuilder SetupTestHostContainer(){
         this.Trace("About to Start Test Hosts Container");
@@ -712,10 +713,9 @@ public abstract class BaseDockerHelper{
         return transactionProcessorContainer;
     }
 
-    public abstract Task StartContainersForScenarioRun(
-        String scenarioName,
-        DockerServices dockerServices,
-        CancellationToken cancellationToken);
+    public abstract Task StartContainersForScenarioRun(String scenarioName,
+                                                       DockerServices dockerServices,
+                                                       CancellationToken cancellationToken);
 
     public abstract Task StopContainersForScenarioRun(DockerServices sharedDockerServices);
 
@@ -776,6 +776,44 @@ public abstract class BaseDockerHelper{
         await client.CreateToStreamAsync(subscription.streamName, subscription.groupName, settings);
 
         this.Trace($"Subscription Group [{subscription.groupName}] Stream [{subscription.streamName}] created");
+    }
+
+    public ISubscriptionServiceClient SubscriptionServiceClient;
+
+    protected virtual async Task CreateSubscription(EndpointDefinition endpointDefinition, String indexName, String tag, CancellationToken cancellationToken) {
+        // Check if the endpoint exists already
+        SubscriptionApiResponse<IReadOnlyCollection<EndpointDefinition>> existingEndpoints = await this.SubscriptionServiceClient.GetEndpointsAsync(cancellationToken);
+
+        if (existingEndpoints.Value.SingleOrDefault(s => s.Url == endpointDefinition.Url) == null) {
+            // Need to create a new endpoint here
+            SubscriptionApiResponse<EndpointDefinition> result = await this.SubscriptionServiceClient.CreateEndpointAsync(endpointDefinition, cancellationToken);
+            if (result.IsSuccessStatusCode == false)
+                throw new Exception($"Error creating endpoint name {endpointDefinition.Name} Status Code = {result.StatusCode}");
+        }
+
+        String subscriptionId = $"{indexName}_{endpointDefinition.Name}_{tag}";
+
+        SubscriptionApiResponse<IReadOnlyCollection<SubscriptionDefinition>> subscriptionConfigList = await this.SubscriptionServiceClient.GetSubscriptionConfigurationsAsync(cancellationToken);
+
+        if (subscriptionConfigList.Value.SingleOrDefault(x => x.SubscriptionId == subscriptionId) == null) {
+            SubscriptionConfigurationRequest subscriptionConfigurationRequest = new();
+            subscriptionConfigurationRequest = subscriptionConfigurationRequest with {
+                                                   ContinueOnParked = true,
+                                                   CheckpointBatchSize = 100,
+                                                   EndpointUrl = endpointDefinition.Url,
+                                                   RetryDelaySeconds = 5,
+                                                   RetryMaxAttempts = 0,
+                                                   SecondaryIndexName = indexName,
+                                                   SoftDeleteParked = true,
+                                                   SubscriptionId = subscriptionId,
+                                                   Tag = tag,
+                                                   TimeoutSeconds = 30,
+                                               };
+
+            SubscriptionApiResponse<SubscriptionDefinition> result = await this.SubscriptionServiceClient.CreateSubscriptionConfigurationAsync(subscriptionConfigurationRequest, cancellationToken);
+            if (result.IsSuccessStatusCode == false)
+                throw new Exception($"Error subscription configuration id {subscriptionConfigurationRequest.SubscriptionId} Status Code = {result.StatusCode}");
+        }
     }
 
     protected async Task DoSqlServerHealthCheck(
@@ -841,7 +879,7 @@ public abstract class BaseDockerHelper{
             using HttpResponseMessage infoResponse = await KurrentDbHealthCheckClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
             infoResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-            String infoData = await infoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            String infoData = await infoResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             this.Trace(infoData);
         }, cancellationToken);
