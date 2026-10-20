@@ -780,15 +780,27 @@ public abstract class BaseDockerHelper{
 
     public ISubscriptionServiceClient SubscriptionServiceClient;
 
-    protected virtual async Task CreateSubscription(EndpointDefinition endpointDefinition, String indexName, String tag, CancellationToken cancellationToken) {
+    protected virtual async Task<Result> CreateSubscription(EndpointDefinition endpointDefinition, String indexName, String tag, CancellationToken cancellationToken) {
+        if (endpointDefinition == null) {
+            return Result.Failure("Endpoint definition must not be null");
+        }
+
+        if (this.SubscriptionServiceClient == null) {
+            return Result.Failure("SubscriptionServiceClient needs initialised");
+        }
+
         // Check if the endpoint exists already
         SubscriptionApiResponse<IReadOnlyCollection<EndpointDefinition>> existingEndpoints = await this.SubscriptionServiceClient.GetEndpointsAsync(cancellationToken);
+        if (existingEndpoints.IsSuccessStatusCode == false) {
+            return Result.Failure($"Error getting existing endpoints Status Code = {existingEndpoints.StatusCode}");
+        }
+
 
         if (existingEndpoints.Value.SingleOrDefault(s => s.Url == endpointDefinition.Url) == null) {
             // Need to create a new endpoint here
             SubscriptionApiResponse<EndpointDefinition> result = await this.SubscriptionServiceClient.CreateEndpointAsync(endpointDefinition, cancellationToken);
             if (result.IsSuccessStatusCode == false)
-                throw new Exception($"Error creating endpoint name {endpointDefinition.Name} Status Code = {result.StatusCode}");
+                return Result.Failure($"Error creating endpoint name {endpointDefinition.Name} Status Code = {result.StatusCode}");
         }
 
         String subscriptionId = $"{indexName}_{endpointDefinition.Name}_{tag}";
@@ -812,8 +824,10 @@ public abstract class BaseDockerHelper{
 
             SubscriptionApiResponse<SubscriptionDefinition> result = await this.SubscriptionServiceClient.CreateSubscriptionConfigurationAsync(subscriptionConfigurationRequest, cancellationToken);
             if (result.IsSuccessStatusCode == false)
-                throw new Exception($"Error subscription configuration id {subscriptionConfigurationRequest.SubscriptionId} Status Code = {result.StatusCode}");
+                return Result.Failure($"Error subscription configuration id {subscriptionConfigurationRequest.SubscriptionId} Status Code = {result.StatusCode}");
         }
+
+        return Result.Success();
     }
 
     protected async Task DoSqlServerHealthCheck(
