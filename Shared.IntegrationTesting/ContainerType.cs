@@ -16,6 +16,7 @@ public enum ContainerType
     ConfigurationHost,
     EstateManagementUI,
     EstateReporting,
+    SubscriptionService,
     NotSet
 }
 
@@ -34,5 +35,6 @@ public enum DockerServices
     TransactionProcessorAcl = 256,
     ConfigurationHost = 512,
     EstateManagementUI = 1024,
-    EstateReporting = 2048
+    EstateReporting = 2048,
+    SubscriptionService = 4096,
 }

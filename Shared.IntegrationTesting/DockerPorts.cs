@@ -25,5 +25,7 @@ public static class DockerPorts
 
     public static readonly Int32 EstateManagementUIDockerPort = 5004;
     public static readonly Int32 EstateReportingDockerPort = 5011;
+
+    public static readonly Int32 SubscriptionServiceDockerPort = 8080;
     public static readonly Int32 SqlServerDockerPort = 1433;
 }
