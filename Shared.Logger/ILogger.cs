@@ -1,8 +1,10 @@
 namespace Shared.Logger;
 
 using System;
+using System.Collections;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 
 /// <summary>
 /// 
@@ -83,7 +85,7 @@ public interface ILogger
                 Int32 end = messageTemplate.IndexOf('}', index + 1);
                 if (end >= 0 && argumentIndex < args.Length)
                 {
-                    result.Append(Convert.ToString(args[argumentIndex++], CultureInfo.InvariantCulture));
+                    result.Append(FormatArgument(args[argumentIndex++]));
                     index = end + 1;
                     continue;
                 }
@@ -91,6 +93,20 @@ public interface ILogger
             result.Append(messageTemplate[index++]);
         }
         return result.ToString();
+    }
+
+    private static String FormatArgument(Object? argument)
+    {
+        if (argument is IEnumerable && argument is not String)
+        {
+            try
+            {
+                return JsonSerializer.Serialize(argument, argument.GetType());
+            }
+            catch (NotSupportedException) { }
+            catch (JsonException) { }
+        }
+        return Convert.ToString(argument, CultureInfo.InvariantCulture) ?? String.Empty;
     }
 
 }

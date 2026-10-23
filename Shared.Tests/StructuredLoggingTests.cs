@@ -103,6 +103,30 @@ public class StructuredLoggingTests
     }
 
     [Fact]
+    public async Task Middleware_PreservesQueryAndHeaderCollectionsWithLegacyLogger()
+    {
+        LegacyCapturingLogger logger = new();
+        Shared.Logger.Logger.Initialise(logger);
+        DefaultHttpContext context = CreateContext(String.Empty, null);
+        context.Request.QueryString = new QueryString("?search=visible&token=query-secret");
+        context.Request.Headers.Authorization = "header-secret";
+        context.Request.Headers["X-Request-Id"] = "request-123";
+        RequestResponseLoggingMiddleware middleware = new(_ => Task.CompletedTask);
+
+        await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, true, false));
+
+        String log = logger.Entries.ShouldHaveSingleItem();
+        log.ShouldContain("search");
+        log.ShouldContain("visible");
+        log.ShouldContain("X-Request-Id");
+        log.ShouldContain("request-123");
+        log.ShouldContain("[REDACTED]");
+        log.ShouldNotContain("query-secret");
+        log.ShouldNotContain("header-secret");
+        log.ShouldNotContain("System.Collections.Generic.Dictionary");
+    }
+
+    [Fact]
     public async Task Middleware_OmitsBodyWhenRequestExceedsConfiguredLimitAndRestoresRequestStream()
     {
         CapturingLogger logger = new();
@@ -246,5 +270,21 @@ public class StructuredLoggingTests
         public void LogWarning(String messageTemplate, params Object?[] args) => this.Add(messageTemplate, args, LogLevel.Warning);
 
         private void Add(String template, Object?[] args, LogLevel level) => this.Entries.Add(new(template, args, level));
+    }
+
+    private sealed class LegacyCapturingLogger : Shared.Logger.ILogger
+    {
+        public Boolean IsInitialised { get; set; } = true;
+        public List<String> Entries { get; } = new();
+
+        public void LogCritical(Exception exception) => this.Entries.Add(exception.Message);
+        public void LogCritical(String message, Exception exception) => this.Entries.Add(message);
+        public void LogDebug(String message) => this.Entries.Add(message);
+        public void LogError(Exception exception) => this.Entries.Add(exception.Message);
+        public void LogError(String message) => this.Entries.Add(message);
+        public void LogError(String message, Exception exception) => this.Entries.Add(message);
+        public void LogInformation(String message) => this.Entries.Add(message);
+        public void LogTrace(String message) => this.Entries.Add(message);
+        public void LogWarning(String message) => this.Entries.Add(message);
     }
 }
