@@ -56,14 +56,42 @@ internal static class SensitiveDataRedactor
         format = default;
         if (String.IsNullOrWhiteSpace(contentType)) return false;
         String mediaType = contentType.Split(';', 2)[0].Trim();
-        Boolean json = mediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase) ||
-                       (mediaType.StartsWith("application/", StringComparison.OrdinalIgnoreCase) && mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase) && supportedContentTypes.Contains("application/*+json"));
-        Boolean form = mediaType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase);
-        Boolean xml = mediaType.Equals("application/xml", StringComparison.OrdinalIgnoreCase) || mediaType.Equals("text/xml", StringComparison.OrdinalIgnoreCase) || mediaType.Equals("application/soap+xml", StringComparison.OrdinalIgnoreCase);
-        Boolean allowed = supportedContentTypes.Contains(mediaType) || (json && supportedContentTypes.Contains("application/*+json"));
-        if (!(json || form || xml) || !allowed) return false;
-        format = json ? BodyFormat.Json : form ? BodyFormat.Form : BodyFormat.Xml;
-        return true;
+        if (IsSupportedJsonMediaType(mediaType, supportedContentTypes))
+        {
+            format = BodyFormat.Json;
+            return true;
+        }
+        if (IsSupportedFormMediaType(mediaType, supportedContentTypes))
+        {
+            format = BodyFormat.Form;
+            return true;
+        }
+        if (IsSupportedXmlMediaType(mediaType, supportedContentTypes))
+        {
+            format = BodyFormat.Xml;
+            return true;
+        }
+        return false;
+    }
+
+    private static Boolean IsSupportedJsonMediaType(String mediaType, IReadOnlySet<String> supportedContentTypes)
+    {
+        Boolean isJson = mediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase) ||
+                         (mediaType.StartsWith("application/", StringComparison.OrdinalIgnoreCase) &&
+                          mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase) &&
+                          supportedContentTypes.Contains("application/*+json"));
+        return isJson && (supportedContentTypes.Contains(mediaType) || supportedContentTypes.Contains("application/*+json"));
+    }
+
+    private static Boolean IsSupportedFormMediaType(String mediaType, IReadOnlySet<String> supportedContentTypes) =>
+        mediaType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase) && supportedContentTypes.Contains(mediaType);
+
+    private static Boolean IsSupportedXmlMediaType(String mediaType, IReadOnlySet<String> supportedContentTypes)
+    {
+        Boolean isXml = mediaType.Equals("application/xml", StringComparison.OrdinalIgnoreCase) ||
+                        mediaType.Equals("text/xml", StringComparison.OrdinalIgnoreCase) ||
+                        mediaType.Equals("application/soap+xml", StringComparison.OrdinalIgnoreCase);
+        return isXml && supportedContentTypes.Contains(mediaType);
     }
 
     private static BodyCaptureResult RedactJsonBody(String text, IReadOnlySet<String> sensitive)

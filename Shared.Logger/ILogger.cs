@@ -103,8 +103,14 @@ public interface ILogger
             {
                 return JsonSerializer.Serialize(argument, argument.GetType());
             }
-            catch (NotSupportedException) { }
-            catch (JsonException) { }
+            catch (NotSupportedException)
+            {
+                // Unsupported collection types use the invariant scalar fallback below.
+            }
+            catch (JsonException)
+            {
+                // Collections that cannot be serialized also use the invariant scalar fallback below.
+            }
         }
         return Convert.ToString(argument, CultureInfo.InvariantCulture) ?? String.Empty;
     }

@@ -14,6 +14,7 @@ public class RequestResponseLoggingMiddleware
 {
     private const String RequestIdField = "requestId";
     private const String HeadersField = "headers";
+    private const String BodyStatusField = "bodyStatus";
 
     private readonly RequestDelegate next;
 
@@ -43,7 +44,7 @@ public class RequestResponseLoggingMiddleware
                 requestFields = new()
                 {
                     [RequestIdField] = requestId, ["method"] = context.Request.Method, ["path"] = path,
-                    ["query"] = query, [HeadersField] = requestHeaders, ["bodyStatus"] = requestCapture.Status,
+                    ["query"] = query, [HeadersField] = requestHeaders, [BodyStatusField] = requestCapture.Status,
                     ["body"] = requestCapture.Body, ["healthCheck"] = healthCheck
                 };
             }
@@ -71,7 +72,7 @@ public class RequestResponseLoggingMiddleware
                     {
                         [RequestIdField] = requestId, ["statusCode"] = context.Response.StatusCode, ["elapsedMs"] = timer.ElapsedMilliseconds,
                         [HeadersField] = SensitiveDataRedactor.FilterHeaders(context.Response.Headers, configuration.AllowedResponseHeaders, configuration.SensitiveHeaderNames),
-                        ["bodyStatus"] = responseCapture.Status, ["body"] = responseCapture.Body, ["healthCheck"] = healthCheck
+                        [BodyStatusField] = responseCapture.Status, ["body"] = responseCapture.Body, ["healthCheck"] = healthCheck
                     };
                     WriteLog(level, "HTTP response {requestId} {statusCode} in {elapsedMs}ms {headers} {bodyStatus} {body} {eventType}", responseFields);
                     if (captureStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction")) captureStream.ForceClose();
@@ -113,8 +114,8 @@ public class RequestResponseLoggingMiddleware
     {
         Object? eventType = fields["healthCheck"] is true ? "HEALTH_CHECK" : "HTTP";
         Object?[] values = fields.ContainsKey("method")
-            ? [fields["requestId"], fields["method"], fields["path"], fields["query"], fields["headers"], fields["bodyStatus"], fields["body"], eventType]
-            : [fields["requestId"], fields["statusCode"], fields["elapsedMs"], fields["headers"], fields["bodyStatus"], fields["body"], eventType];
+            ? [fields["requestId"], fields["method"], fields["path"], fields["query"], fields["headers"], fields[BodyStatusField], fields["body"], eventType]
+            : [fields["requestId"], fields["statusCode"], fields["elapsedMs"], fields["headers"], fields[BodyStatusField], fields["body"], eventType];
         try
         {
             switch (level)
