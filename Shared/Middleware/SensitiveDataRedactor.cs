@@ -92,13 +92,14 @@ internal static class SensitiveDataRedactor
 
     private static void RedactXml(XmlNode? node, IReadOnlySet<String> sensitive)
     {
-        if (node == null) return;
-        if (node.Attributes != null)
-            foreach (XmlAttribute attribute in node.Attributes) if (sensitive.Contains(attribute.LocalName)) attribute.Value = "[REDACTED]";
-        foreach (XmlNode child in node.ChildNodes)
+        if (node is not XmlElement element) return;
+        foreach (XmlAttribute attribute in element.Attributes)
+            if (sensitive.Contains(attribute.LocalName)) attribute.Value = "[REDACTED]";
+        if (sensitive.Contains(element.LocalName))
         {
-            if (child is XmlElement && sensitive.Contains(child.LocalName)) child.InnerText = "[REDACTED]";
-            else RedactXml(child, sensitive);
+            element.InnerText = "[REDACTED]";
+            return;
         }
+        foreach (XmlNode child in element.ChildNodes) RedactXml(child, sensitive);
     }
 }

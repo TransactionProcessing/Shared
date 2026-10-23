@@ -166,6 +166,8 @@ public class StructuredLoggingTests
     [Theory]
     [InlineData("application/x-www-form-urlencoded", "password=body-secret&name=alice", "password=[REDACTED]&name=alice")]
     [InlineData("application/xml", "<root><password>body-secret</password><name>alice</name></root>", "<root><password>[REDACTED]</password><name>alice</name></root>")]
+    [InlineData("application/xml", "<password>root-secret</password>", "<password>[REDACTED]</password>")]
+    [InlineData("application/xml", "<root><password token=\"attribute-secret\">body-secret</password></root>", "<root><password token=\"[REDACTED]\">[REDACTED]</password></root>")]
     public async Task Middleware_RedactsSensitiveFormAndXmlFields(String contentType, String payload, String expectedBody)
     {
         CapturingLogger logger = new();
