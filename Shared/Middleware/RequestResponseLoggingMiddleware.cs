@@ -12,6 +12,9 @@ namespace Shared.Middleware;
 
 public class RequestResponseLoggingMiddleware
 {
+    private const String RequestIdField = "requestId";
+    private const String HeadersField = "headers";
+
     private readonly RequestDelegate next;
 
     public RequestResponseLoggingMiddleware(RequestDelegate next) => this.next = next;
@@ -29,7 +32,6 @@ public class RequestResponseLoggingMiddleware
         Stopwatch timer = Stopwatch.StartNew();
         if (captureStream != null) context.Response.Body = captureStream;
 
-        BodyCaptureResult requestCapture = new(null, "disabled");
         IReadOnlyDictionary<String, String[]> query = SensitiveDataRedactor.RedactQuery(context.Request.Query, configuration.SensitiveFieldNames);
         IReadOnlyDictionary<String, String> requestHeaders = SensitiveDataRedactor.FilterHeaders(context.Request.Headers, configuration.AllowedRequestHeaders, configuration.SensitiveHeaderNames);
         Dictionary<String, Object?>? requestFields = null;
@@ -37,11 +39,11 @@ public class RequestResponseLoggingMiddleware
         {
             if (configuration.LogRequests)
             {
-                requestCapture = await CaptureRequestAsync(context, configuration);
+                BodyCaptureResult requestCapture = await CaptureRequestAsync(context, configuration);
                 requestFields = new()
                 {
-                    ["requestId"] = requestId, ["method"] = context.Request.Method, ["path"] = path,
-                    ["query"] = query, ["headers"] = requestHeaders, ["bodyStatus"] = requestCapture.Status,
+                    [RequestIdField] = requestId, ["method"] = context.Request.Method, ["path"] = path,
+                    ["query"] = query, [HeadersField] = requestHeaders, ["bodyStatus"] = requestCapture.Status,
                     ["body"] = requestCapture.Body, ["healthCheck"] = healthCheck
                 };
             }
@@ -67,8 +69,8 @@ public class RequestResponseLoggingMiddleware
                     LogLevel level = context.Response.StatusCode is < 200 or > 299 ? LogLevel.Warning : configuration.LoggingLevel;
                     Dictionary<String, Object?> responseFields = new()
                     {
-                        ["requestId"] = requestId, ["statusCode"] = context.Response.StatusCode, ["elapsedMs"] = timer.ElapsedMilliseconds,
-                        ["headers"] = SensitiveDataRedactor.FilterHeaders(context.Response.Headers, configuration.AllowedResponseHeaders, configuration.SensitiveHeaderNames),
+                        [RequestIdField] = requestId, ["statusCode"] = context.Response.StatusCode, ["elapsedMs"] = timer.ElapsedMilliseconds,
+                        [HeadersField] = SensitiveDataRedactor.FilterHeaders(context.Response.Headers, configuration.AllowedResponseHeaders, configuration.SensitiveHeaderNames),
                         ["bodyStatus"] = responseCapture.Status, ["body"] = responseCapture.Body, ["healthCheck"] = healthCheck
                     };
                     WriteLog(level, "HTTP response {requestId} {statusCode} in {elapsedMs}ms {headers} {bodyStatus} {body} {eventType}", responseFields);

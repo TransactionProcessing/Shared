@@ -22,7 +22,7 @@ public interface ILogger
 
     void LogCritical(Exception exception);
 
-    void LogCritical(String messageTemplate,
+    void LogCritical(String messageTemplate, // NOSONAR - delegates to the required string-only overload, so it is not recursive.
                      params Object?[] args) => this.LogCritical(FormatMessageTemplate(messageTemplate, args));
 
     void LogCritical(Exception exception,
@@ -71,11 +71,12 @@ public interface ILogger
         if (args == null || args.Length == 0) return messageTemplate;
         StringBuilder result = new(messageTemplate.Length + args.Length * 8);
         Int32 argumentIndex = 0;
-        for (Int32 index = 0; index < messageTemplate.Length; index++)
+        Int32 index = 0;
+        while (index < messageTemplate.Length)
         {
             if (messageTemplate[index] == '{' && index + 1 < messageTemplate.Length && messageTemplate[index + 1] == '{')
             {
-                result.Append("{{"); index++; continue;
+                result.Append("{{"); index += 2; continue;
             }
             if (messageTemplate[index] == '{')
             {
@@ -83,11 +84,11 @@ public interface ILogger
                 if (end >= 0 && argumentIndex < args.Length)
                 {
                     result.Append(Convert.ToString(args[argumentIndex++], CultureInfo.InvariantCulture));
-                    index = end;
+                    index = end + 1;
                     continue;
                 }
             }
-            result.Append(messageTemplate[index]);
+            result.Append(messageTemplate[index++]);
         }
         return result.ToString();
     }

@@ -29,7 +29,11 @@ public sealed class ResponseLoggingMemoryStream : Stream
     public override Int64 Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
     public override void Flush() => this.destination.Flush();
-    public override void Close() { }
+    public override void Close()
+    {
+        // The middleware reads the captured buffer after the response pipeline closes this wrapper.
+        // Keep the destination stream and captured buffer available until logging has completed.
+    }
     public override Task FlushAsync(CancellationToken cancellationToken) => this.destination.FlushAsync(cancellationToken);
     public override void Write(Byte[] buffer, Int32 offset, Int32 count)
     {

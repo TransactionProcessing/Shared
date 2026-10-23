@@ -84,14 +84,15 @@ public static class Logger
         Logger.Write(logger => logger.LogCritical(exception, messageTemplate, args), true);
     }
 
-    [Obsolete("Use LogCritical(String messageTemplate, params Object?[] args) or the exception-aware structured overload.")]
+    // Compatibility overloads below remain available for existing callers and can be removed only in a breaking release.
+    [Obsolete("Use LogCritical(String messageTemplate, params Object?[] args) or the exception-aware structured overload.")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogCritical(Exception exception)
     {
         Logger.ValidateLoggerObject();
         Logger.Write(logger => logger.LogCritical(exception));
     }
 
-    [Obsolete("Use LogCritical(String messageTemplate, params Object?[] args) or the exception-aware structured overload.")]
+    [Obsolete("Use LogCritical(String messageTemplate, params Object?[] args) or the exception-aware structured overload.")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogCritical(String message,
                                    Exception exception)
     {
@@ -99,28 +100,28 @@ public static class Logger
         Logger.Write(logger => logger.LogCritical(message, exception));
     }
 
-    [Obsolete("Use LogDebug(String messageTemplate, params Object?[] args).")]
+    [Obsolete("Use LogDebug(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogDebug(String message)
     {
         Logger.ValidateLoggerObject();
         Logger.Write(logger => logger.LogDebug(message));
     }
 
-    [Obsolete("Use LogError(Exception exception, String messageTemplate, params Object?[] args).")]
+    [Obsolete("Use LogError(Exception exception, String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogError(Exception exception)
     {
         Logger.ValidateLoggerObject();
         Logger.Write(logger => logger.LogError(exception));
     }
 
-    [Obsolete("Use LogError(String messageTemplate, params Object?[] args).")]
+    [Obsolete("Use LogError(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogError(String message)
     {
         Logger.ValidateLoggerObject();
         Logger.Write(logger => logger.LogError(message));
     }
 
-    [Obsolete("Use LogError(Exception exception, String messageTemplate, params Object?[] args).")]
+    [Obsolete("Use LogError(Exception exception, String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogError(String message,
                                 Exception exception)
     {
@@ -128,21 +129,21 @@ public static class Logger
         Logger.Write(logger => logger.LogError(message, exception));
     }
 
-    [Obsolete("Use LogInformation(String messageTemplate, params Object?[] args).")]
+    [Obsolete("Use LogInformation(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogInformation(String message)
     {
         Logger.ValidateLoggerObject();
         Logger.Write(logger => logger.LogInformation(message));
     }
 
-    [Obsolete("Use LogTrace(String messageTemplate, params Object?[] args).")]
+    [Obsolete("Use LogTrace(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogTrace(String message)
     {
         Logger.ValidateLoggerObject();
         Logger.Write(logger => logger.LogTrace(message));
     }
 
-    [Obsolete("Use LogWarning(String messageTemplate, params Object?[] args).")]
+    [Obsolete("Use LogWarning(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogWarning(String message)
     {
         Logger.ValidateLoggerObject();

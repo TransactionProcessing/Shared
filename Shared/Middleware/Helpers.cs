@@ -9,21 +9,23 @@ namespace Shared.Middleware;
 
 public static class Helpers
 {
+    private const String MessageTemplate = "{eventType} {message}";
+
     public static Boolean IsHealthCheckRequest(String url) => url.EndsWith("/health", StringComparison.OrdinalIgnoreCase);
 
     [ExcludeFromCodeCoverage]
     public static void LogMessage(String url, StringBuilder message, LogLevel logLevel)
     {
         String eventType = IsHealthCheckRequest(url) ? "HEALTH_CHECK" : "HTTP";
-        Dictionary<String, Object?> fields = new() { ["eventType"] = eventType, ["message"] = message.ToString() };
+        String messageText = message.ToString();
         switch (logLevel)
         {
-            case LogLevel.Trace: Logger.Logger.LogTrace("{eventType} {message}", eventType, message.ToString()); break;
-            case LogLevel.Debug: Logger.Logger.LogDebug("{eventType} {message}", eventType, message.ToString()); break;
-            case LogLevel.Warning: Logger.Logger.LogWarning("{eventType} {message}", eventType, message.ToString()); break;
-            case LogLevel.Error: Logger.Logger.LogError("{eventType} {message}", eventType, message.ToString()); break;
-            case LogLevel.Critical: Logger.Logger.LogCritical("{eventType} {message}", eventType, message.ToString()); break;
-            default: Logger.Logger.LogInformation("{eventType} {message}", eventType, message.ToString()); break;
+            case LogLevel.Trace: Logger.Logger.LogTrace(MessageTemplate, eventType, messageText); break;
+            case LogLevel.Debug: Logger.Logger.LogDebug(MessageTemplate, eventType, messageText); break;
+            case LogLevel.Warning: Logger.Logger.LogWarning(MessageTemplate, eventType, messageText); break;
+            case LogLevel.Error: Logger.Logger.LogError(MessageTemplate, eventType, messageText); break;
+            case LogLevel.Critical: Logger.Logger.LogCritical(MessageTemplate, eventType, messageText); break;
+            default: Logger.Logger.LogInformation(MessageTemplate, eventType, messageText); break;
         }
     }
 }
