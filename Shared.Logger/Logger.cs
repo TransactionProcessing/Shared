@@ -168,8 +168,17 @@ public static class Logger
 
     private static String SanitizeForPlainTextLog(String value)
     {
-        return value.Replace("\r", String.Empty)
-                    .Replace("\n", String.Empty);
+        if (String.IsNullOrEmpty(value)) return value;
+
+        Char[] sanitized = value.Where(character =>
+            character != '\r' &&
+            character != '\n' &&
+            character != '\u0085' && // Next Line (NEL)
+            character != '\u2028' && // Line Separator
+            character != '\u2029'    // Paragraph Separator
+        ).ToArray();
+
+        return new String(sanitized);
     }
 
     private static Object?[] SanitizeLogArgs(Object?[] args) =>
