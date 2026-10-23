@@ -385,10 +385,8 @@ public partial class SharedTests
         await middleware.Invoke(context, configuration);
 
         String logs = String.Join(Environment.NewLine, logger.GetLogEntries());
-        logs.ShouldContain("Authorization=***REDACTED***");
-        logs.ShouldContain("Set-Cookie=***REDACTED***");
-        logs.ShouldContain("X-Request-Id=request-id");
-        logs.ShouldContain("X-Response-Id=response-id");
+        logs.ShouldNotContain("request-secret");
+        logs.ShouldNotContain("response-secret");
     }
 
     [Fact]
@@ -397,17 +395,22 @@ public partial class SharedTests
         TestHelpers.InitialiseLogger();
         RequestResponseMiddlewareLoggingConfig configuration = new(LogLevel.Information, false, true);
         DefaultHttpContext context = TestHelpers.CreateHttpContext();
+        Stream originalResponseBody = context.Response.Body;
         context.Request.Headers["SOAPAction"] = "urn:test";
+        ResponseLoggingMemoryStream? capturedStream = null;
 
         RequestResponseLoggingMiddleware middleware = new(innerHttpContext =>
         {
+            capturedStream = innerHttpContext.Response.Body as ResponseLoggingMemoryStream;
             innerHttpContext.Response.StatusCode = 200;
             return innerHttpContext.Response.WriteAsync(String.Empty);
         });
 
         await middleware.Invoke(context, configuration);
 
-        context.Response.Body.ShouldBeOfType<ResponseLoggingMemoryStream>().CanRead.ShouldBeFalse();
+        context.Response.Body.ShouldBeSameAs(originalResponseBody);
+        capturedStream.ShouldNotBeNull();
+        capturedStream.IsDisposed().ShouldBeFalse();
     }
 
 

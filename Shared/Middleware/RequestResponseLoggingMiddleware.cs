@@ -1,136 +1,133 @@
+#nullable enable
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Shared.Middleware;
 
 public class RequestResponseLoggingMiddleware
 {
-    private static readonly HashSet<String> RequestRedactedHeaders =
-        new(StringComparer.OrdinalIgnoreCase) { "Authorization", "Cookie" };
-
-    private static readonly HashSet<String> ResponseRedactedHeaders =
-        new(StringComparer.OrdinalIgnoreCase) { "Set-Cookie", "Authorization", "Cookie" };
+    private const String RequestIdField = "requestId";
+    private const String HeadersField = "headers";
+    private const String BodyStatusField = "bodyStatus";
 
     private readonly RequestDelegate next;
 
-    public RequestResponseLoggingMiddleware(RequestDelegate next)
-    {
-        this.next = next;
-    }
+    public RequestResponseLoggingMiddleware(RequestDelegate next) => this.next = next;
 
     public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
     {
-        String url = context.Request.GetDisplayUrl();
-        Stream originalRequestBody = context.Request.Body;
-        Stream originalResponseBody = context.Response.Body;
+        String requestId = context.TraceIdentifier;
+        String path = context.Request.Path.Value ?? String.Empty;
+        Boolean healthCheck = Helpers.IsHealthCheckRequest(path);
+        Stream requestBody = context.Request.Body;
+        Stream responseBody = context.Response.Body;
+        ResponseLoggingMemoryStream? captureStream = configuration.LogResponses
+            ? new ResponseLoggingMemoryStream(responseBody, configuration.MaximumResponseBodyBytes)
+            : null;
+        Stopwatch timer = Stopwatch.StartNew();
+        if (captureStream != null) context.Response.Body = captureStream;
 
-        String requestBodyText = await CaptureRequestBodyAsync(context, configuration.LogRequests);
-        ResponseLoggingMemoryStream responseBodyStream = SetupResponseCapture(context, configuration.LogResponses);
-
-        await this.next(context);
-
-        LogLevel effectiveLogLevel = (context.Response.StatusCode < 200 || context.Response.StatusCode > 299)
-            ? LogLevel.Warning
-            : configuration.LoggingLevel;
-
-        if (configuration.LogRequests)
+        IReadOnlyDictionary<String, String[]> query = SensitiveDataRedactor.RedactQuery(context.Request.Query, configuration.SensitiveFieldNames);
+        IReadOnlyDictionary<String, String> requestHeaders = SensitiveDataRedactor.FilterHeaders(context.Request.Headers, configuration.AllowedRequestHeaders, configuration.SensitiveHeaderNames);
+        Dictionary<String, Object?>? requestFields = null;
+        try
         {
-            Helpers.LogMessage(url, BuildRequestLog(context, url, requestBodyText), effectiveLogLevel);
-            context.Request.Body = originalRequestBody;
+            if (configuration.LogRequests)
+            {
+                BodyCaptureResult requestCapture = await CaptureRequestAsync(context, configuration);
+                requestFields = new()
+                {
+                    [RequestIdField] = requestId, ["method"] = context.Request.Method, ["path"] = path,
+                    ["query"] = query, [HeadersField] = requestHeaders, [BodyStatusField] = requestCapture.Status,
+                    ["body"] = requestCapture.Body, ["healthCheck"] = healthCheck
+                };
+            }
+            await this.next(context);
         }
-
-        if (configuration.LogResponses)
+        finally
         {
-            await WriteAndLogResponseAsync(context, url, responseBodyStream, originalResponseBody, effectiveLogLevel);
-        }
-    }
-
-    private static async Task<String> CaptureRequestBodyAsync(HttpContext context, Boolean logRequests)
-    {
-        if (!logRequests)
-            return String.Empty;
-
-        MemoryStream requestBodyStream = new();
-        await context.Request.Body.CopyToAsync(requestBodyStream);
-        requestBodyStream.Seek(0, SeekOrigin.Begin);
-        String bodyText = await new StreamReader(requestBodyStream).ReadToEndAsync();
-        requestBodyStream.Seek(0, SeekOrigin.Begin);
-        context.Request.Body = requestBodyStream;
-        return bodyText;
-    }
-
-    private static ResponseLoggingMemoryStream SetupResponseCapture(HttpContext context, Boolean logResponses)
-    {
-        if (!logResponses)
-            return null;
-
-        ResponseLoggingMemoryStream responseBodyStream = new();
-        context.Response.Body = responseBodyStream;
-        return responseBodyStream;
-    }
-
-    private static StringBuilder BuildRequestLog(HttpContext context, String url, String requestBodyText)
-    {
-        StringBuilder log = new();
-        log.Append($"Request: Method: {context.Request.Method} Url: {url}");
-        AppendHeaders(log, context.Request.Headers, RequestRedactedHeaders);
-        if (requestBodyText != String.Empty)
-        {
-            log.Append($" Body: {requestBodyText}");
-        }
-        return log;
-    }
-
-    private static async Task WriteAndLogResponseAsync(HttpContext context, String url,
-        ResponseLoggingMemoryStream responseBodyStream, Stream originalResponseBody, LogLevel logLevel)
-    {
-        responseBodyStream.Seek(0, SeekOrigin.Begin);
-        String responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
-        Helpers.LogMessage(url, BuildResponseLog(context, responseBody), logLevel);
-        responseBodyStream.Seek(0, SeekOrigin.Begin);
-        await responseBodyStream.CopyToAsync(originalResponseBody);
-        if (responseBodyStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction"))
-        {
-            responseBodyStream.ForceClose();
+            timer.Stop();
+            context.Request.Body = requestBody;
+            if (requestFields != null)
+            {
+                LogLevel requestLevel = context.Response.StatusCode is < 200 or > 299 ? LogLevel.Warning : configuration.LoggingLevel;
+                WriteLog(requestLevel, "HTTP request {requestId} {method} {path} {query} {headers} {bodyStatus} {body} {eventType}", requestFields);
+            }
+            if (captureStream != null)
+            {
+                context.Response.Body = responseBody;
+                if (configuration.LogResponses)
+                {
+                    Byte[] responseBytes = captureStream.GetCapturedBytes();
+                    BodyCaptureResult responseCapture = SensitiveDataRedactor.RedactBody(responseBytes, context.Response.ContentType,
+                        configuration.SensitiveFieldNames, configuration.MaximumResponseBodyBytes, configuration.SupportedBodyContentTypes);
+                    LogLevel level = context.Response.StatusCode is < 200 or > 299 ? LogLevel.Warning : configuration.LoggingLevel;
+                    Dictionary<String, Object?> responseFields = new()
+                    {
+                        [RequestIdField] = requestId, ["statusCode"] = context.Response.StatusCode, ["elapsedMs"] = timer.ElapsedMilliseconds,
+                        [HeadersField] = SensitiveDataRedactor.FilterHeaders(context.Response.Headers, configuration.AllowedResponseHeaders, configuration.SensitiveHeaderNames),
+                        [BodyStatusField] = responseCapture.Status, ["body"] = responseCapture.Body, ["healthCheck"] = healthCheck
+                    };
+                    WriteLog(level, "HTTP response {requestId} {statusCode} in {elapsedMs}ms {headers} {bodyStatus} {body} {eventType}", responseFields);
+                    if (captureStream.IsDisposed() && context.Request.Headers.ContainsKey("SOAPAction")) captureStream.ForceClose();
+                }
+            }
         }
     }
 
-    private static StringBuilder BuildResponseLog(HttpContext context, String responseBody)
+    private static async Task<BodyCaptureResult> CaptureRequestAsync(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
     {
-        StringBuilder log = new();
-        log.Append($"Response: Status Code: {context.Response.StatusCode}");
-        AppendHeaders(log, context.Response.Headers, ResponseRedactedHeaders);
-        if (!String.IsNullOrEmpty(responseBody))
+        if (context.Request.ContentLength == 0) return new(null, "empty");
+        Int32 limit = Math.Max(0, configuration.MaximumRequestBodyBytes);
+        Stream? body = null;
+        try
         {
-            log.Append($" Body: {responseBody}");
+            context.Request.EnableBuffering();
+            body = context.Request.Body;
+            using MemoryStream buffer = new();
+            Byte[] chunk = new Byte[Math.Min(8192, Math.Max(1, limit + 1))];
+            Int32 remaining = limit + 1;
+            while (remaining > 0)
+            {
+                Int32 read = await body.ReadAsync(chunk.AsMemory(0, Math.Min(chunk.Length, remaining)));
+                if (read == 0) break;
+                await buffer.WriteAsync(chunk.AsMemory(0, read));
+                remaining -= read;
+            }
+            return SensitiveDataRedactor.RedactBody(buffer.ToArray(), context.Request.ContentType, configuration.SensitiveFieldNames,
+                limit, configuration.SupportedBodyContentTypes);
         }
-        return log;
+        catch { return new(null, "redaction_failed"); }
+        finally
+        {
+            if (body?.CanSeek == true) body.Position = 0;
+        }
     }
 
-    private static void AppendHeaders(StringBuilder log, IHeaderDictionary headers, HashSet<String> redactedHeaders)
+    private static void WriteLog(LogLevel level, String template, Dictionary<String, Object?> fields)
     {
-        if (headers == null || headers.Count == 0)
-            return;
-
-        log.Append(" Headers:");
-        Boolean firstHeader = true;
-        foreach (var header in headers)
+        Object? eventType = fields["healthCheck"] is true ? "HEALTH_CHECK" : "HTTP";
+        Object?[] values = fields.ContainsKey("method")
+            ? [fields["requestId"], fields["method"], fields["path"], fields["query"], fields["headers"], fields[BodyStatusField], fields["body"], eventType]
+            : [fields["requestId"], fields["statusCode"], fields["elapsedMs"], fields["headers"], fields[BodyStatusField], fields["body"], eventType];
+        try
         {
-            if (!firstHeader)
-                log.Append(',');
-            firstHeader = false;
-
-            String value = redactedHeaders.Contains(header.Key) ? "***REDACTED***" : header.Value.ToString();
-            log.Append(' ');
-            log.Append(header.Key);
-            log.Append('=');
-            log.Append(value);
+            switch (level)
+            {
+                case LogLevel.Trace: Logger.Logger.LogTrace(template, values); break;
+                case LogLevel.Debug: Logger.Logger.LogDebug(template, values); break;
+                case LogLevel.Warning: Logger.Logger.LogWarning(template, values); break;
+                case LogLevel.Error: Logger.Logger.LogError(template, values); break;
+                case LogLevel.Critical: Logger.Logger.LogCritical(template, values); break;
+                default: Logger.Logger.LogInformation(template, values); break;
+            }
         }
+        catch { /* Logging must not break request processing or mask an application exception. */ }
     }
 }
