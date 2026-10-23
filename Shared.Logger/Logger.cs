@@ -1,7 +1,10 @@
 namespace Shared.Logger;
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using NLog;
 using Shared.Logger.TennantContext;
 
@@ -30,35 +33,40 @@ public static class Logger
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogTrace(messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogTrace(messageTemplate, sanitizedArgs), true);
     }
 
     public static void LogDebug(String messageTemplate,
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogDebug(messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogDebug(messageTemplate, sanitizedArgs), true);
     }
 
     public static void LogInformation(String messageTemplate,
                                       params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogInformation(messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogInformation(messageTemplate, sanitizedArgs), true);
     }
 
     public static void LogWarning(String messageTemplate,
                                   params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogWarning(messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogWarning(messageTemplate, sanitizedArgs), true);
     }
 
     public static void LogError(String messageTemplate,
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogError(messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogError(messageTemplate, sanitizedArgs), true);
     }
 
     public static void LogError(Exception exception,
@@ -66,14 +74,16 @@ public static class Logger
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogError(exception, messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogError(exception, messageTemplate, sanitizedArgs), true);
     }
 
     public static void LogCritical(String messageTemplate,
                                    params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogCritical(messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogCritical(messageTemplate, sanitizedArgs), true);
     }
 
     public static void LogCritical(Exception exception,
@@ -81,7 +91,8 @@ public static class Logger
                                    params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogCritical(exception, messageTemplate, args), true);
+        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
+        Logger.Write(logger => logger.LogCritical(exception, messageTemplate, sanitizedArgs), true);
     }
 
     // Compatibility overloads below remain available for existing callers and can be removed only in a breaking release.
@@ -160,6 +171,33 @@ public static class Logger
         return value.Replace("\r", String.Empty)
                     .Replace("\n", String.Empty);
     }
+
+    private static Object?[] SanitizeLogArgs(Object?[] args) =>
+        args.Select(Logger.SanitizeLogValue).ToArray();
+
+    private static Object? SanitizeLogValue(Object? value)
+    {
+        if (value == null) return null;
+
+        if (value is String text) return Logger.SanitizeForLog(text);
+
+        if (value is IDictionary dictionary)
+        {
+            Dictionary<Object?, Object?> sanitized = new();
+            foreach (DictionaryEntry entry in dictionary)
+                sanitized[Logger.SanitizeLogValue(entry.Key)] = Logger.SanitizeLogValue(entry.Value);
+            return sanitized;
+        }
+
+        if (value is IEnumerable enumerable && value is not String)
+            return enumerable.Cast<Object?>().Select(Logger.SanitizeLogValue).ToArray();
+
+        return value;
+    }
+
+    private static String SanitizeForLog(String value) =>
+        value.Replace("\r", "\\r", StringComparison.Ordinal)
+             .Replace("\n", "\\n", StringComparison.Ordinal);
 
     [MemberNotNull(nameof(LoggerObject))]
     private static void ValidateLoggerObject()
