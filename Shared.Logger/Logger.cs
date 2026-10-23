@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text.Json;
 using NLog;
 using Shared.Logger.TennantContext;
 
@@ -33,28 +34,32 @@ public static class Logger
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write((logger, sanitizedArgs) => logger.LogTrace(messageTemplate, sanitizedArgs), true, args);
+        String sanitizedTemplate = Logger.SanitizeForLog(messageTemplate);
+        Logger.Write((logger, sanitizedArgs) => logger.LogTrace(sanitizedTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogDebug(String messageTemplate,
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write((logger, sanitizedArgs) => logger.LogDebug(messageTemplate, sanitizedArgs), true, args);
+        String sanitizedTemplate = Logger.SanitizeForLog(messageTemplate);
+        Logger.Write((logger, sanitizedArgs) => logger.LogDebug(sanitizedTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogInformation(String messageTemplate,
                                       params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write((logger, sanitizedArgs) => logger.LogInformation(messageTemplate, sanitizedArgs), true, args);
+        String sanitizedTemplate = Logger.SanitizeForLog(messageTemplate);
+        Logger.Write((logger, sanitizedArgs) => logger.LogInformation(sanitizedTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogWarning(String messageTemplate,
                                   params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write((logger, sanitizedArgs) => logger.LogWarning(messageTemplate, sanitizedArgs), true, args);
+        String sanitizedTemplate = Logger.SanitizeForLog(messageTemplate);
+        Logger.Write((logger, sanitizedArgs) => logger.LogWarning(sanitizedTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogError(String messageTemplate,
@@ -163,11 +168,9 @@ public static class Logger
         if (String.IsNullOrEmpty(value)) return value;
 
         Char[] sanitized = value.Where(character =>
-            character != '\r' &&
-            character != '\n' &&
-            character != '\u0085' && // Next Line (NEL)
-            character != '\u2028' && // Line Separator
-            character != '\u2029'    // Paragraph Separator
+            // Remove all control characters to prevent log forging and parser confusion.
+            // Keep standard printable text only.
+            !Char.IsControl(character)
         ).ToArray();
 
         return new String(sanitized);
@@ -184,17 +187,26 @@ public static class Logger
 
         if (value is IDictionary dictionary)
         {
-            Dictionary<Object?, Object?> sanitized = new();
+            Dictionary<String, Object?> sanitized = new();
             foreach (DictionaryEntry entry in dictionary)
-                sanitized[Logger.SanitizeLogValue(entry.Key)] = Logger.SanitizeLogValue(entry.Value);
-            return sanitized;
+            {
+                String key = Logger.SanitizeForLog(Convert.ToString(entry.Key) ?? String.Empty);
+                sanitized[key] = Logger.SanitizeLogValue(entry.Value);
+            }
+
+            String json = JsonSerializer.Serialize(sanitized);
+            return Logger.SanitizeForLog(json);
         }
 
         if (value is IEnumerable enumerable && value is not String)
-            return enumerable.Cast<Object?>().Select(Logger.SanitizeLogValue).ToArray();
+        {
+            Object?[] sanitizedItems = enumerable.Cast<Object?>().Select(Logger.SanitizeLogValue).ToArray();
+            String json = JsonSerializer.Serialize(sanitizedItems);
+            return Logger.SanitizeForLog(json);
+        }
 
         String? normalized = Convert.ToString(value);
-        return normalized == null ? value : Logger.SanitizeForLog(normalized);
+        return normalized == null ? null : Logger.SanitizeForLog(normalized);
     }
 
     private static String SanitizeForLog(String value) =>

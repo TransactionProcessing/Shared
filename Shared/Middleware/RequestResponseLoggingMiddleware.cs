@@ -83,7 +83,10 @@ public class RequestResponseLoggingMiddleware
 
     private static String SanitizeForLog(String value) =>
         value.Replace("\r", "\\r", StringComparison.Ordinal)
-             .Replace("\n", "\\n", StringComparison.Ordinal);
+             .Replace("\n", "\\n", StringComparison.Ordinal)
+             .Replace("\u0085", "\\u0085", StringComparison.Ordinal) // Next Line (NEL)
+             .Replace("\u2028", "\\u2028", StringComparison.Ordinal) // Line Separator
+             .Replace("\u2029", "\\u2029", StringComparison.Ordinal); // Paragraph Separator
 
     private static Object? SanitizeLogValue(Object? value)
     {

@@ -29,8 +29,28 @@ internal static class SensitiveDataRedactor
     {
         Dictionary<String, String> result = new(StringComparer.OrdinalIgnoreCase);
         foreach (KeyValuePair<String, StringValues> item in headers)
-            if (allowlist.Contains(item.Key)) result[item.Key] = sensitiveHeaders.Contains(item.Key) ? RedactedValue : item.Value.ToString();
+            if (allowlist.Contains(item.Key))
+            {
+                String sanitizedKey = SanitizeForLog(item.Key);
+                String value = sensitiveHeaders.Contains(item.Key) ? RedactedValue : item.Value.ToString();
+                result[sanitizedKey] = SanitizeForLog(value);
+            }
         return result;
+    }
+
+    private static String SanitizeForLog(String value)
+    {
+        if (String.IsNullOrEmpty(value)) return value;
+
+        Char[] sanitized = value.Where(character =>
+            character != '\r' &&
+            character != '\n' &&
+            character != '\u0085' && // Next Line (NEL)
+            character != '\u2028' && // Line Separator
+            character != '\u2029'    // Paragraph Separator
+        ).ToArray();
+
+        return new String(sanitized);
     }
 
     public static BodyCaptureResult RedactBody(ReadOnlyMemory<Byte> body, String? contentType, IReadOnlySet<String> sensitiveFieldNames, Int32 maximumBytes, IReadOnlySet<String> supportedContentTypes)
