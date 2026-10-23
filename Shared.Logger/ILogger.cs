@@ -1,6 +1,8 @@
 namespace Shared.Logger;
 
 using System;
+using System.Globalization;
+using System.Text;
 
 /// <summary>
 /// 
@@ -20,12 +22,29 @@ public interface ILogger
 
     void LogCritical(Exception exception);
 
+    void LogCritical(String messageTemplate,
+                     params Object?[] args) => this.LogCritical(FormatMessageTemplate(messageTemplate, args));
+
+    void LogCritical(Exception exception,
+                     String messageTemplate,
+                     params Object?[] args) => this.LogCritical(FormatMessageTemplate(messageTemplate, args), exception);
+
     void LogCritical(String message,
                      Exception exception);
 
     void LogDebug(String message);
 
+    void LogDebug(String messageTemplate,
+                  params Object?[] args) => this.LogDebug(FormatMessageTemplate(messageTemplate, args));
+
     void LogError(Exception exception);
+
+    void LogError(String messageTemplate,
+                  params Object?[] args) => this.LogError(FormatMessageTemplate(messageTemplate, args));
+
+    void LogError(Exception exception,
+                  String messageTemplate,
+                  params Object?[] args) => this.LogError(FormatMessageTemplate(messageTemplate, args), exception);
 
     void LogError(String message);
 
@@ -34,8 +53,43 @@ public interface ILogger
 
     void LogInformation(String message);
 
+    void LogInformation(String messageTemplate,
+                        params Object?[] args) => this.LogInformation(FormatMessageTemplate(messageTemplate, args));
+
     void LogTrace(String message);
 
+    void LogTrace(String messageTemplate,
+                  params Object?[] args) => this.LogTrace(FormatMessageTemplate(messageTemplate, args));
+
     void LogWarning(String message);
+
+    void LogWarning(String messageTemplate,
+                    params Object?[] args) => this.LogWarning(FormatMessageTemplate(messageTemplate, args));
+
+    private static String FormatMessageTemplate(String messageTemplate, Object?[] args)
+    {
+        if (args == null || args.Length == 0) return messageTemplate;
+        StringBuilder result = new(messageTemplate.Length + args.Length * 8);
+        Int32 argumentIndex = 0;
+        for (Int32 index = 0; index < messageTemplate.Length; index++)
+        {
+            if (messageTemplate[index] == '{' && index + 1 < messageTemplate.Length && messageTemplate[index + 1] == '{')
+            {
+                result.Append("{{"); index++; continue;
+            }
+            if (messageTemplate[index] == '{')
+            {
+                Int32 end = messageTemplate.IndexOf('}', index + 1);
+                if (end >= 0 && argumentIndex < args.Length)
+                {
+                    result.Append(Convert.ToString(args[argumentIndex++], CultureInfo.InvariantCulture));
+                    index = end;
+                    continue;
+                }
+            }
+            result.Append(messageTemplate[index]);
+        }
+        return result.ToString();
+    }
 
 }
