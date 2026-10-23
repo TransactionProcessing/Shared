@@ -118,7 +118,8 @@ public static class Logger
     public static void LogError(String message)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogError(message));
+        String sanitizedMessage = Logger.SanitizeForPlainTextLog(message);
+        Logger.Write(logger => logger.LogError(sanitizedMessage));
     }
 
     [Obsolete("Use LogError(Exception exception, String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
@@ -126,28 +127,38 @@ public static class Logger
                                 Exception exception)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogError(message, exception));
+        String sanitizedMessage = Logger.SanitizeForPlainTextLog(message);
+        Logger.Write(logger => logger.LogError(sanitizedMessage, exception));
     }
 
     [Obsolete("Use LogInformation(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogInformation(String message)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogInformation(message));
+        String sanitizedMessage = Logger.SanitizeForPlainTextLog(message);
+        Logger.Write(logger => logger.LogInformation(sanitizedMessage));
     }
 
     [Obsolete("Use LogTrace(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogTrace(String message)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogTrace(message));
+        String sanitizedMessage = Logger.SanitizeForPlainTextLog(message);
+        Logger.Write(logger => logger.LogTrace(sanitizedMessage));
     }
 
     [Obsolete("Use LogWarning(String messageTemplate, params Object?[] args).")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogWarning(String message)
     {
         Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogWarning(message));
+        String sanitizedMessage = Logger.SanitizeForPlainTextLog(message);
+        Logger.Write(logger => logger.LogWarning(sanitizedMessage));
+    }
+
+    private static String SanitizeForPlainTextLog(String value)
+    {
+        return value.Replace("\r", String.Empty)
+                    .Replace("\n", String.Empty);
     }
 
     [MemberNotNull(nameof(LoggerObject))]
