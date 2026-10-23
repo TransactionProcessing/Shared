@@ -192,7 +192,8 @@ public static class Logger
         if (value is IEnumerable enumerable && value is not String)
             return enumerable.Cast<Object?>().Select(Logger.SanitizeLogValue).ToArray();
 
-        return value;
+        String? normalized = Convert.ToString(value);
+        return normalized == null ? value : Logger.SanitizeForLog(normalized);
     }
 
     private static String SanitizeForLog(String value) =>
