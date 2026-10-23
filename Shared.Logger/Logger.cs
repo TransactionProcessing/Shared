@@ -85,6 +85,7 @@ public static class Logger
     }
 
     // Compatibility overloads below remain available for existing callers and can be removed only in a breaking release.
+#pragma warning disable S1133 // These deprecated APIs are retained for source compatibility until a breaking release.
     [Obsolete("Use LogCritical(String messageTemplate, params Object?[] args) or the exception-aware structured overload.")] // NOSONAR - retained for source compatibility until a breaking release.
     public static void LogCritical(Exception exception)
     {
@@ -149,6 +150,7 @@ public static class Logger
         Logger.ValidateLoggerObject();
         Logger.Write(logger => logger.LogWarning(message));
     }
+#pragma warning restore S1133
 
     [MemberNotNull(nameof(LoggerObject))]
     private static void ValidateLoggerObject()
