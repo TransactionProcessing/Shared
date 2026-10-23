@@ -19,6 +19,18 @@ public class TenantMiddleware
     {
         this.Next = next;
     }
+
+    private static String SanitizeForPlainTextLog(String? value)
+    {
+        if (String.IsNullOrEmpty(value)) return String.Empty;
+
+        return value
+            .Replace("\r", String.Empty)
+            .Replace("\n", String.Empty)
+            .Replace("\u0085", String.Empty) // Next Line (NEL)
+            .Replace("\u2028", String.Empty) // Line Separator
+            .Replace("\u2029", String.Empty); // Paragraph Separator
+    }
             
     public async Task InvokeAsync(HttpContext context, TenantContext tenantContext)
     {
@@ -46,9 +58,13 @@ public class TenantMiddleware
         TenantContext.CurrentTenant = tenantContext;
 
         String clientIp = context.Connection.RemoteIpAddress?.ToString();
+        String safeClientIp = SanitizeForPlainTextLog(clientIp);
+        String safeMethod = SanitizeForPlainTextLog(context.Request.Method);
+        String safeHost = SanitizeForPlainTextLog(context.Request.Host.ToString());
+        String safePath = SanitizeForPlainTextLog(context.Request.Path.ToString());
 
         //Makes sense to start our correlation audit trace here
-        String logMessage = $"Receiving from {clientIp} => {context.Request.Method} {context.Request.Host}{context.Request.Path}";
+        String logMessage = $"Receiving from {safeClientIp} => {safeMethod} {safeHost}{safePath}";
 
         Logger.Logger.LogInformation(logMessage);
 
