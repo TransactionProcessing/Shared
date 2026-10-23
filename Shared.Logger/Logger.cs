@@ -33,40 +33,35 @@ public static class Logger
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogTrace(messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogTrace(messageTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogDebug(String messageTemplate,
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogDebug(messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogDebug(messageTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogInformation(String messageTemplate,
                                       params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogInformation(messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogInformation(messageTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogWarning(String messageTemplate,
                                   params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogWarning(messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogWarning(messageTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogError(String messageTemplate,
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogError(messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogError(messageTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogError(Exception exception,
@@ -74,16 +69,14 @@ public static class Logger
                                 params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogError(exception, messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogError(exception, messageTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogCritical(String messageTemplate,
                                    params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogCritical(messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogCritical(messageTemplate, sanitizedArgs), true, args);
     }
 
     public static void LogCritical(Exception exception,
@@ -91,8 +84,7 @@ public static class Logger
                                    params Object?[] args)
     {
         Logger.ValidateLoggerObject();
-        Object?[] sanitizedArgs = Logger.SanitizeLogArgs(args);
-        Logger.Write(logger => logger.LogCritical(exception, messageTemplate, sanitizedArgs), true);
+        Logger.Write((logger, sanitizedArgs) => logger.LogCritical(exception, messageTemplate, sanitizedArgs), true, args);
     }
 
     // Compatibility overloads below remain available for existing callers and can be removed only in a breaking release.
@@ -217,12 +209,14 @@ public static class Logger
         }
     }
 
-    private static void Write(Action<ILogger> write, Boolean isStructured=false)
+    private static void Write(Action<ILogger, Object?[]?> write, Boolean isStructured=false, Object?[]? args=null)
     {
+        Object?[]? sanitizedArgs = args == null ? null : Logger.SanitizeLogArgs(args);
+
         TenantContext tenantContext = TenantContext.CurrentTenant;
         if (tenantContext == null)
         {
-            write(Logger.LoggerObject!);
+            write(Logger.LoggerObject!, sanitizedArgs);
             return;
         }
 
@@ -233,12 +227,12 @@ public static class Logger
 
         using (ScopeContext.PushProperty(TenantContext.KeyNameCorrelationId, correlationId))
         {
-            write(Logger.LoggerObject!);
+            write(Logger.LoggerObject!, sanitizedArgs);
             if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty)
             {
                 using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId}"))
                 {
-                    write(Logger.LoggerObject!);
+                    write(Logger.LoggerObject!, sanitizedArgs);
                 }
             }
         }
