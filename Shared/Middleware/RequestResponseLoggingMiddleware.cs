@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -21,8 +22,8 @@ public class RequestResponseLoggingMiddleware
 
     public async Task Invoke(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
     {
-        String requestId = context.TraceIdentifier;
-        String path = context.Request.Path.Value ?? String.Empty;
+        String requestId = SanitizeForLog(context.TraceIdentifier);
+        String path = SanitizeForLog(context.Request.Path.Value ?? String.Empty);
         Boolean healthCheck = Helpers.IsHealthCheckRequest(path);
         Stream requestBody = context.Request.Body;
         Stream responseBody = context.Response.Body;
@@ -42,9 +43,9 @@ public class RequestResponseLoggingMiddleware
                 BodyCaptureResult requestCapture = await CaptureRequestAsync(context, configuration);
                 requestFields = new()
                 {
-                    [RequestIdField] = requestId, ["method"] = context.Request.Method, ["path"] = path,
-                    ["query"] = query, [HeadersField] = requestHeaders, ["bodyStatus"] = requestCapture.Status,
-                    ["body"] = requestCapture.Body, ["healthCheck"] = healthCheck
+                    [RequestIdField] = requestId, ["method"] = SanitizeForLog(context.Request.Method), ["path"] = path,
+                    ["query"] = SanitizeLogValue(query), [HeadersField] = SanitizeLogValue(requestHeaders), ["bodyStatus"] = SanitizeLogValue(requestCapture.Status),
+                    ["body"] = SanitizeLogValue(requestCapture.Body), ["healthCheck"] = healthCheck
                 };
             }
             await this.next(context);
@@ -78,6 +79,30 @@ public class RequestResponseLoggingMiddleware
                 }
             }
         }
+    }
+
+    private static String SanitizeForLog(String value) =>
+        value.Replace("\r", "\\r", StringComparison.Ordinal)
+             .Replace("\n", "\\n", StringComparison.Ordinal);
+
+    private static Object? SanitizeLogValue(Object? value)
+    {
+        if (value == null) return null;
+        if (value is String text) return SanitizeForLog(text);
+
+        if (value is IDictionary dictionary)
+        {
+            Dictionary<Object?, Object?> sanitized = new();
+            foreach (DictionaryEntry entry in dictionary)
+                sanitized[SanitizeLogValue(entry.Key)] = SanitizeLogValue(entry.Value);
+            return sanitized;
+        }
+
+        if (value is IEnumerable enumerable && value is not String)
+            return enumerable.Cast<Object?>().Select(SanitizeLogValue).ToArray();
+
+        String? normalized = Convert.ToString(value);
+        return normalized == null ? value : SanitizeForLog(normalized);
     }
 
     private static async Task<BodyCaptureResult> CaptureRequestAsync(HttpContext context, RequestResponseMiddlewareLoggingConfig configuration)
@@ -115,6 +140,7 @@ public class RequestResponseLoggingMiddleware
         Object?[] values = fields.ContainsKey("method")
             ? [fields["requestId"], fields["method"], fields["path"], fields["query"], fields["headers"], fields["bodyStatus"], fields["body"], eventType]
             : [fields["requestId"], fields["statusCode"], fields["elapsedMs"], fields["headers"], fields["bodyStatus"], fields["body"], eventType];
+        values = values.Select(SanitizeLogValue).ToArray();
         try
         {
             switch (level)
