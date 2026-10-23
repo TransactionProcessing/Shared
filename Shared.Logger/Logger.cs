@@ -197,8 +197,7 @@ public static class Logger
     }
 
     private static String SanitizeForLog(String value) =>
-        value.Replace("\r", "\\r", StringComparison.Ordinal)
-             .Replace("\n", "\\n", StringComparison.Ordinal);
+        Logger.SanitizeForPlainTextLog(value);
 
     [MemberNotNull(nameof(LoggerObject))]
     private static void ValidateLoggerObject()
