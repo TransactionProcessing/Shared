@@ -32,13 +32,13 @@ public partial class SharedTests
             
         switch(loglevel){
             case LogLevel.Critical:
-                Should.NotThrow(() => Logger.Logger.LogCritical(new Exception(message)));
+                Should.NotThrow(() => Logger.Logger.LogCritical(message));
                 break;
             case LogLevel.Debug:
                 Should.NotThrow(() => Logger.Logger.LogDebug(message));
                 break;
             case LogLevel.Error:
-                Should.NotThrow(() => Logger.Logger.LogError(new Exception(message)));
+                Should.NotThrow(() => Logger.Logger.LogError(message));
                 break;
             case LogLevel.Information:
                 Should.NotThrow(() => Logger.Logger.LogInformation(message));

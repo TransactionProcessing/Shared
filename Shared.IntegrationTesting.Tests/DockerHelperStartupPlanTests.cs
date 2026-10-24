@@ -279,7 +279,7 @@ public class DockerHelperStartupPlanTests
     [Test]
     public void Host_folder_mount_does_not_require_docker_platform()
     {
-        ContainerBuilder builder = new();
+        ContainerBuilder builder = new("hello-world");
 
         ContainerBuilder mountedBuilder = builder.MountHostFolder("trace");
 

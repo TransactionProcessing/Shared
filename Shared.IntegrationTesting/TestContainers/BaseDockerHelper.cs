@@ -283,9 +283,8 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.CallbackHandler).Data;
 
-        ContainerBuilder callbackHandlerContainer = new ContainerBuilder()
+        ContainerBuilder callbackHandlerContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.CallbackHandlerContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.CallbackHandlerDockerPort, true);
@@ -332,7 +331,10 @@ public abstract class BaseDockerHelper{
             {"EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP","true"},
             {"EVENTSTORE_PROJECTION_EXECUTION_TIMEOUT","5000"}
         };
-        ContainerBuilder kurrentDbContainer = new();
+
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.KurrentDb).Data;
+
+        ContainerBuilder kurrentDbContainer = new(imageDetails.imageName);
         
         if (!this.IsSecureKurrentDb){
             environmentVariables.Add("EVENTSTORE_INSECURE","true");
@@ -355,11 +357,10 @@ public abstract class BaseDockerHelper{
         String logfilePath = "/var/log/kurrentdb";
         kurrentDbContainer = kurrentDbContainer.MountHostFolder(this.HostTraceFolder, logfilePath);
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.KurrentDb).Data;
+        
         this.Trace($"About to Start Kurrent Db Container using image [{imageDetails.imageName}]");
 
         kurrentDbContainer = kurrentDbContainer.WithName(this.KurrentDbContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .WithPortBinding(DockerPorts.KurrentDbHttpDockerPort, true);
         
@@ -393,9 +394,8 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.FileProcessor).Data;
 
-        ContainerBuilder fileProcessorContainer = new ContainerBuilder()
+        ContainerBuilder fileProcessorContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.FileProcessorContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.FileProcessorDockerPort, true);
@@ -441,9 +441,8 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateManagementUI).Data;
 
-        ContainerBuilder containerBuilder = new ContainerBuilder()
+        ContainerBuilder containerBuilder = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.EstateManagementUiContainerName)
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.EstateManagementUIDockerPort,true);
@@ -460,11 +459,10 @@ public abstract class BaseDockerHelper{
         
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.SubscriptionService).Data;
 
-        ContainerBuilder subscriptionServiceContainer = new ContainerBuilder().WithName(this.SubscriptionServiceContainerName)
-                                                                     .WithImage(imageDetails.imageName)
-                                                                     .WithEnvironment(environmentVariables)
-                                                                     .MountHostFolder(this.HostTraceFolder)
-                                                                     .WithPortBinding(DockerPorts.SubscriptionServiceDockerPort, true);
+        ContainerBuilder subscriptionServiceContainer = new ContainerBuilder(imageDetails.imageName).WithName(this.SubscriptionServiceContainerName)
+                                                                                                    .WithEnvironment(environmentVariables)
+                                                                                                    .MountHostFolder(this.HostTraceFolder)
+                                                                                                    .WithPortBinding(DockerPorts.SubscriptionServiceDockerPort, true);
 
         return subscriptionServiceContainer;
     }
@@ -480,11 +478,10 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.ConfigurationHost).Data;
 
-        ContainerBuilder configHostContainer = new ContainerBuilder().WithName(this.ConfigHostContainerName)
-            .WithImage(imageDetails.imageName)
-            .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.HostTraceFolder)
-            .WithPortBinding(DockerPorts.ConfigHostDockerPort, true);
+        ContainerBuilder configHostContainer = new ContainerBuilder(imageDetails.imageName).WithName(this.ConfigHostContainerName)
+                                                                                           .WithEnvironment(environmentVariables)
+                                                                                           .MountHostFolder(this.HostTraceFolder)
+                                                                                           .WithPortBinding(DockerPorts.ConfigHostDockerPort, true);
 
         return configHostContainer;
     }
@@ -507,10 +504,9 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.MessagingService).Data;
 
-        ContainerBuilder messagingServiceContainer = new ContainerBuilder().WithName(this.MessagingServiceContainerName) // similar to WithName()
-            .WithImage(imageDetails.imageName)
-            .WithEnvironment(environmentVariables)
-            .MountHostFolder(this.HostTraceFolder);
+        ContainerBuilder messagingServiceContainer = new ContainerBuilder(imageDetails.imageName).WithName(this.MessagingServiceContainerName) // similar to WithName()
+                                                                                                 .WithEnvironment(environmentVariables)
+                                                                                                 .MountHostFolder(this.HostTraceFolder);
 
         messagingServiceContainer = messagingServiceContainer
             .WithPortBinding(DockerPorts.MessagingServiceDockerPort, true);
@@ -584,10 +580,10 @@ public abstract class BaseDockerHelper{
     public virtual ContainerBuilder ConfigureSqlContainer()
     {
         this.Trace("About to start SQL Server Container");
-        
-        ContainerBuilder containerService = new ContainerBuilder()
+        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.SqlServer).Data;
+
+        ContainerBuilder containerService = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.SqlServerContainerName)  // similar to WithName()
-            .WithImage(this.GetImageDetails(ContainerType.SqlServer).Data.imageName)
             .WithEnvironment("ACCEPT_EULA", "Y")
             .WithEnvironment("SA_PASSWORD", this.SqlCredentials.password)
             .WithPortBinding(1433, true);
@@ -611,9 +607,8 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TestHost).Data;
         
-        ContainerBuilder testHostContainer = new ContainerBuilder()
+        ContainerBuilder testHostContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.TestHostContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.TestHostPort, true);
@@ -636,9 +631,8 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateReporting).Data;
 
-        ContainerBuilder estateReportingContainer = new ContainerBuilder()
+        ContainerBuilder estateReportingContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.EstateReportingContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.EstateReportingDockerPort, true);
@@ -668,9 +662,8 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TransactionProcessorAcl).Data;
 
-        ContainerBuilder transactionProcessorACLContainer = new ContainerBuilder()
+        ContainerBuilder transactionProcessorACLContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.TransactionProcessorAclContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.TransactionProcessorAclDockerPort, true);
@@ -698,9 +691,8 @@ public abstract class BaseDockerHelper{
 
         (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TransactionProcessor).Data;
 
-        ContainerBuilder transactionProcessorContainer = new ContainerBuilder()
+        ContainerBuilder transactionProcessorContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.TransactionProcessorContainerName)  // similar to WithName()
-            .WithImage(imageDetails.imageName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
             .WithPortBinding(DockerPorts.TransactionProcessorDockerPort, true);
