@@ -3,104 +3,94 @@ namespace Shared.Logger;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using NLog;
-using Shared.Logger.TennantContext;
+using TennantContext;
 
 [ExcludeFromCodeCoverage]
-public static class Logger
-{
+public static class Logger {
     private static ILogger? LoggerObject;
 
     public static Boolean IsInitialised { get; set; }
 
     public static void Initialise(NLog.Logger loggerObject,
-                                  String fileName)
-    {
+                                  String fileName) {
         NlogLogger logger = new();
         logger.Initialise(loggerObject, fileName);
-        Logger.Initialise(logger);
+        Initialise(logger);
     }
 
-    public static void Initialise(ILogger loggerObject)
-    {
-        Logger.LoggerObject = loggerObject ?? throw new ArgumentNullException(nameof(loggerObject));
-        Logger.IsInitialised = true;
+    public static void Initialise(ILogger loggerObject) {
+        LoggerObject = loggerObject ?? throw new ArgumentNullException(nameof(loggerObject));
+        IsInitialised = true;
     }
 
     public static void LogTrace(String messageTemplate,
-                                params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogTrace(messageTemplate, args), true);
+                                params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogTrace(messageTemplate, args), true);
     }
 
     public static void LogDebug(String messageTemplate,
-                                params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogDebug(messageTemplate, args), true);
+                                params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogDebug(messageTemplate, args), true);
     }
 
     public static void LogInformation(String messageTemplate,
-                                      params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogInformation(messageTemplate, args), true);
+                                      params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogInformation(messageTemplate, args), true);
+    }
+
+    public static void LogWarning(String message){
+        ValidateLoggerObject();
+        Write(logger => logger.LogWarning(message, null), true);
     }
 
     public static void LogWarning(String messageTemplate,
-                                  params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogWarning(messageTemplate, args), true);
+                                  params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogWarning(messageTemplate, args), true);
     }
 
     public static void LogError(String messageTemplate,
-                                params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogError(messageTemplate, args), true);
+                                params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogError(messageTemplate, args), true);
     }
 
     public static void LogError(Exception exception,
                                 String messageTemplate,
-                                params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogError(exception, messageTemplate, args), true);
+                                params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogError(exception, messageTemplate, args), true);
     }
 
     public static void LogCritical(String messageTemplate,
-                                   params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogCritical(messageTemplate, args), true);
+                                   params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogCritical(messageTemplate, args), true);
     }
 
     public static void LogCritical(Exception exception,
                                    String messageTemplate,
-                                   params Object?[] args)
-    {
-        Logger.ValidateLoggerObject();
-        Logger.Write(logger => logger.LogCritical(exception, messageTemplate, args), true);
+                                   params Object?[] args) {
+        ValidateLoggerObject();
+        Write(logger => logger.LogCritical(exception, messageTemplate, args), true);
     }
 
 #pragma warning restore S1133
 
     [MemberNotNull(nameof(LoggerObject))]
-    private static void ValidateLoggerObject()
-    {
-        if (Logger.LoggerObject == null)
-        {
+    private static void ValidateLoggerObject() {
+        if (LoggerObject == null) {
             throw new InvalidOperationException("Logger has not been initialised");
         }
     }
 
-    private static void Write(Action<ILogger> write, Boolean isStructured=false)
-    {
+    private static void Write(Action<ILogger> write, Boolean isStructured = false) {
         TenantContext tenantContext = TenantContext.CurrentTenant;
-        if (tenantContext == null)
-        {
-            write(Logger.LoggerObject!);
+        if (tenantContext == null) {
+            write(LoggerObject!);
             return;
         }
 
@@ -109,14 +99,11 @@ public static class Logger
                                    _ => $"Correlation ID: {tenantContext.CorrelationId}"
                                };
 
-        using (ScopeContext.PushProperty(TenantContext.KeyNameCorrelationId, correlationId))
-        {
-            write(Logger.LoggerObject!);
-            if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty)
-            {
-                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId}"))
-                {
-                    write(Logger.LoggerObject!);
+        using (ScopeContext.PushProperty(TenantContext.KeyNameCorrelationId, correlationId)) {
+            write(LoggerObject!);
+            if (tenantContext.PerTenantLogsEnabled && tenantContext.EstateId != Guid.Empty) {
+                using (ScopeContext.PushProperty("tenantId", $"_{tenantContext.EstateId}")) {
+                    write(LoggerObject!);
                 }
             }
         }
