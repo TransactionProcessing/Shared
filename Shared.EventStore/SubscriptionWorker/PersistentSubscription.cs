@@ -36,7 +36,7 @@ public class PersistentSubscription
     public void SubscriptionDropped(String reason)
     {
         this.Connected = false;
-        Logger.Logger.LogWarning($"Subscription dropped - {reason}");
+        Logger.Logger.LogWarning("Subscription dropped - {reason}", reason);
 
         if (this.SubscriptionHasDropped != null) {
             //Broadcast to owner
@@ -47,7 +47,7 @@ public class PersistentSubscription
     public void EventHandlerMissing(String reason)
     {
         this.Connected = false;
-        Logger.Logger.LogWarning($"Event handler missing - {reason}");
+        Logger.Logger.LogWarning("Event handler missing - {reason}", reason);
 
         if (this.EventHandlerIsMissing != null)
         {
@@ -90,13 +90,11 @@ public class PersistentSubscription
             this.ToString(),
             (level, message) =>
             {
-                if (level == LogLevel.Warning)
-                {
+                if (level == LogLevel.Warning) {
                     Logger.Logger.LogWarning(message);
                 }
-                else
-                {
-                    Logger.Logger.LogError(new Exception(message));
+                else {
+                    Logger.Logger.LogError(message);
                 }
             });
 
@@ -112,7 +110,7 @@ public class PersistentSubscription
 
     public override String ToString() => $"{this.PersistentSubscriptionDetails.StreamName}-{this.PersistentSubscriptionDetails.GroupName}";
 
-    private static String BuildFailureMessage(ResolvedEvent resolvedEvent,
+    private static (String messageTemplate, Object[]? args) BuildFailureMessage(ResolvedEvent resolvedEvent,
                                              Result result)
     {
         String errors = result.Errors?.Any() == true
@@ -123,7 +121,9 @@ public class PersistentSubscription
             ? $"Result status [{result.Status}]. Errors [{errors}]"
             : $"Result was {result.Message}";
 
-        return $"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()} {resultDetails}";
+        Object[] objectArray = new[] { resolvedEvent.Event.EventType, resolvedEvent.GetResolvedEventDataAsString(), resultDetails };
+
+        return ("Failed to process the event type {resolvedEventType} {resolvedEventString()} {resultDetails}", objectArray);
     }
 
     private static TenantIdentifiers GetTenantIdentifiersFromDomainEvent(IDomainEvent domainEvent)
@@ -138,7 +138,7 @@ public class PersistentSubscription
         }
         catch (Exception)
         {
-            Logger.Logger.LogWarning($"Unable to get estateId from request body [{domainEventAsString}]");
+            Logger.Logger.LogWarning("Unable to get estateId from request body [{domainEventAsString}]", domainEventAsString);
             return TenantIdentifiers.Default();
         }
     }
@@ -191,7 +191,7 @@ public class PersistentSubscription
             }
             TenantContext.CurrentTenant = tenantContext;
 
-            Logger.Logger.LogInformation($"EventAppearedFromPersistentSubscription with Event Id {resolvedEvent.Event.EventId} event type {resolvedEvent.Event.EventType}");
+            Logger.Logger.LogInformation("EventAppearedFromPersistentSubscription with Event Id {resolvedEventId} event type {resolvedEventType}", resolvedEvent.Event.EventId, resolvedEvent.Event.EventType);
 
             Result<List<IDomainEventHandler>> domainEventHandlersResult = domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
 
@@ -210,13 +210,12 @@ public class PersistentSubscription
                 await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
             }
             else {
-                Logger.Logger.LogError(BuildFailureMessage(resolvedEvent, result));
+                (String messageTemplate, Object[] args) failureDetails = BuildFailureMessage(resolvedEvent, result);
+                Logger.Logger.LogError(failureDetails.messageTemplate, failureDetails.args);
             }
         }
         catch (Exception e) {
-            Exception ex = new($"Failed to process the event type {resolvedEvent.Event.EventType} {resolvedEvent.GetResolvedEventDataAsString()}", e);
-
-            Logger.Logger.LogError(ex);
+            Logger.Logger.LogError(e,"Failed to process the event type {eventType} {resolvedEvent}", resolvedEvent.Event.EventType, resolvedEvent.GetResolvedEventDataAsString());
         }
     }
 }

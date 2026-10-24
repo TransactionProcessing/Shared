@@ -24,7 +24,7 @@ public partial class SharedTests
         IConfigurationRoot configuration = builder.Build();
 
         TestLogger testLogger = new();
-        Action<String> loggerAction = message => { testLogger.LogInformation(message); };
+        Action<String> loggerAction = testLogger.LogInformation;
 
         configuration.LogConfiguration(loggerAction);
 
@@ -53,7 +53,7 @@ public partial class SharedTests
         IConfigurationRoot configuration = builder.Build();
 
         TestLogger testLogger = new();
-        Action<String> loggerAction = message => { testLogger.LogInformation(message); };
+        Action<String> loggerAction = testLogger.LogInformation;
 
         configuration.LogConfiguration(loggerAction);
 

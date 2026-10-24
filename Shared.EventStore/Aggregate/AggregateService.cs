@@ -59,7 +59,7 @@ public class AggregateService : IAggregateService
                                           EvictionReason reason,
                                           Object state)
     {
-        Logger.Logger.LogWarning($"Key [{key}] of type [{value.GetType()}] removed from the cache {reason.ToString()}");
+        Logger.Logger.LogWarning("Key [{key}] of type [{value}] removed from the cache {reason}", key, value.GetType(), reason.ToString());
     }
 
     internal (Type, MemoryCacheEntryOptions, Object) GetAggregateType<TAggregate>() where TAggregate : Aggregate, new()
@@ -145,7 +145,7 @@ public class AggregateService : IAggregateService
                 return Result.Success(aggregate);
             }
 
-            Logger.Logger.LogWarning($"aggregateResult failed {aggregateResult.Message}");
+            Logger.Logger.LogWarning("aggregateResult failed {aggregateResult}", aggregateResult.Message);
             return aggregateResult;
         }
         finally

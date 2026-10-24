@@ -251,6 +251,7 @@ public class StructuredLoggingTests
         public Boolean IsInitialised { get; set; } = true;
         public List<StructuredLogEntry> Entries { get; } = new();
 
+        public void LogCritical(String message) => this.Add(message, Array.Empty<Object?>(), LogLevel.Critical);
         public void LogCritical(Exception exception) => this.Add(exception.Message, Array.Empty<Object?>(), LogLevel.Critical);
         public void LogCritical(String message, Exception exception) => this.Add(message, [exception], LogLevel.Critical);
         public void LogCritical(String messageTemplate, params Object?[] args) => this.Add(messageTemplate, args, LogLevel.Critical);
@@ -277,6 +278,7 @@ public class StructuredLoggingTests
         public Boolean IsInitialised { get; set; } = true;
         public List<String> Entries { get; } = new();
 
+        public void LogCritical(String message) => this.Entries.Add(message);
         public void LogCritical(Exception exception) => this.Entries.Add(exception.Message);
         public void LogCritical(String message, Exception exception) => this.Entries.Add(message);
         public void LogDebug(String message) => this.Entries.Add(message);

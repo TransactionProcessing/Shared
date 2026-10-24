@@ -52,11 +52,12 @@ internal sealed class TestStateDispatcher : IStateDispatcher<TestState>
     public Task Dispatch(TestState state, IDomainEvent @event, CancellationToken cancellationToken) => Task.CompletedTask;
 }
 
-internal sealed class TestLogger : ILogger
-{
+internal sealed class TestLogger : ILogger {
     public bool IsInitialised { get; set; }
     public List<string> ErrorMessages { get; } = new();
     public List<Exception> ErrorExceptions { get; } = new();
+    public void LogCritical(String message) {}
+
     public void LogCritical(Exception exception) { }
     public void LogCritical(string message, Exception exception) { }
     public void LogDebug(string message) { }

@@ -50,7 +50,7 @@ public static class EventDispatchHelper
         {
             if (all.Exception != null)
             {
-                Logger.Logger.LogError(all.Exception);
+                Logger.Logger.LogError(all.Exception,String.Empty);
                 return Result.Failure(all.Exception.GetExceptionMessages());
             }
             return Result.Failure(ex.GetExceptionMessages());

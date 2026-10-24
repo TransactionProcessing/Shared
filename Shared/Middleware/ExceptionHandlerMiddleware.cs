@@ -27,8 +27,7 @@ public class ExceptionHandlerMiddleware {
 
     private async Task HandleExceptionAsync(HttpContext context,
                                             Exception exception) {
-        Exception newException = new($"An unhandled exception has occurred while executing the request. Url: {context.Request.GetDisplayUrl()}", exception);
-        Logger.Logger.LogError(newException);
+        Logger.Logger.LogError(exception, "An unhandled exception has occurred while executing the request. Url: {url}", context.Request.GetDisplayUrl());
 
         // Set some defaults
         HttpResponse response = context.Response;
