@@ -20,14 +20,12 @@ public interface ILogger
     /// </value>
     Boolean IsInitialised { get; set; }
 
-
+    void LogCritical(String message);
 
     void LogCritical(Exception exception);
 
-#pragma warning disable S2190 // This overload delegates to the required string-only overload; it does not call itself.
     void LogCritical(String messageTemplate,
                      params Object?[] args) => this.LogCritical(FormatMessageTemplate(messageTemplate, args));
-#pragma warning restore S2190
 
     void LogCritical(Exception exception,
                      String messageTemplate,

@@ -17,6 +17,8 @@ public class TestLogger : ILogger
         return this.LogEntries.ToArray();
     }
 
+    public void LogCritical(String message) => this.LogEntries.Add(message);
+
     public void LogCritical(Exception exception)
     {
         this.LogEntries.Add(exception.ToString());

@@ -21,6 +21,10 @@ public class NullLogger : ILogger
         this.IsInitialised = true;
     }
 
+    public void LogCritical(String message) {
+        // This is a null logger so needs to actual implementation
+    }
+
     public void LogCritical(Exception exception) {
         // This is a null logger so needs to actual implementation
     }

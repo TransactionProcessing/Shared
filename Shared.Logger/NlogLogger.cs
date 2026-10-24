@@ -24,6 +24,8 @@ public class NlogLogger : ILogger
         this.IsInitialised = true;
     }
 
+    public void LogCritical(String message) => this.LogMessage(LogLevel.Fatal, message, null, Array.Empty<Object?>());
+
     public void LogCritical(Exception exception) =>
         this.LogMessage(LogLevel.Fatal, exception?.Message ?? String.Empty, exception, Array.Empty<Object?>());
 
