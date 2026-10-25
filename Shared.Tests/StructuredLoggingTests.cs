@@ -85,14 +85,20 @@ public class StructuredLoggingTests
 
         StructuredLogEntry request = logger.Entries.ShouldHaveSingleItem();
         request.Template.ShouldContain("{query}");
-        String query = JsonSerializer.Serialize(request.Arguments[3]);
+        request.Template.ShouldContain("{header_Authorization}");
+        request.Template.ShouldContain("{header_X_Request_Id}");
+        request.Template.ShouldNotContain("X-Unlisted");
+        String query = JsonSerializer.Serialize(GetStructuredValue(request, "query"));
         query.ShouldContain("[REDACTED]");
         query.ShouldContain("visible");
-        String headers = JsonSerializer.Serialize(request.Arguments[4]);
+        String headers = JsonSerializer.Serialize(new[]
+        {
+            GetStructuredValue(request, "header_Authorization"),
+            GetStructuredValue(request, "header_X_Request_Id")
+        });
         headers.ShouldContain("[REDACTED]");
         headers.ShouldContain("request-123");
-        headers.ShouldNotContain("X-Unlisted");
-        String body = request.Arguments[6]!.ToString()!;
+        String body = GetStructuredValue(request, "requestBody")!.ToString()!;
         body.ShouldContain("[REDACTED]");
         body.ShouldContain("alice");
         String allFields = String.Join('|', request.Arguments);
@@ -127,7 +133,7 @@ public class StructuredLoggingTests
     }
 
     [Fact]
-    public async Task Middleware_OmitsBodyWhenRequestExceedsConfiguredLimitAndRestoresRequestStream()
+    public async Task Middleware_RedactsRequestBodyAndRestoresRequestStream()
     {
         CapturingLogger logger = new();
         Shared.Logger.Logger.Initialise(logger);
@@ -135,14 +141,11 @@ public class StructuredLoggingTests
         Stream originalBody = context.Request.Body;
         RequestResponseLoggingMiddleware middleware = new(_ => Task.CompletedTask);
 
-        await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, true, false)
-        {
-            MaximumRequestBodyBytes = 8
-        });
+        await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, true, false));
 
         StructuredLogEntry request = logger.Entries.ShouldHaveSingleItem();
-        request.Arguments[5].ShouldBe("size_limit");
-        request.Arguments[6].ShouldBeNull();
+        GetStructuredValue(request, "bodyStatus").ShouldBe("captured");
+        GetStructuredValue(request, "requestBody")!.ToString().ShouldContain("123456789");
         context.Request.Body.ShouldBeSameAs(originalBody);
     }
 
@@ -163,7 +166,7 @@ public class StructuredLoggingTests
         await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, false, true));
 
         StructuredLogEntry log = logger.Entries.ShouldHaveSingleItem();
-        String body = log.Arguments[5]!.ToString()!;
+        String body = GetStructuredValue(log, "responseBody")!.ToString()!;
         body.ShouldContain("[REDACTED]");
         body.ShouldNotContain("response-secret");
         context.Response.Body.Position = 0;
@@ -182,8 +185,8 @@ public class StructuredLoggingTests
         await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, true, false));
 
         StructuredLogEntry request = logger.Entries.ShouldHaveSingleItem();
-        request.Arguments[5].ShouldBe("unsupported_content_type");
-        request.Arguments[6].ShouldBeNull();
+        GetStructuredValue(request, "bodyStatus").ShouldBe("unsupported_content_type");
+        GetStructuredValue(request, "requestBody").ShouldBeNull();
         String.Join('|', request.Arguments).ShouldNotContain("binary-secret");
     }
 
@@ -202,13 +205,13 @@ public class StructuredLoggingTests
         await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, true, false));
 
         StructuredLogEntry request = logger.Entries.ShouldHaveSingleItem();
-        request.Arguments[6].ShouldBe(expectedBody);
-        String redactedBody = request.Arguments[6] as String ?? String.Empty;
+        GetStructuredValue(request, "requestBody").ShouldBe(expectedBody);
+        String redactedBody = GetStructuredValue(request, "requestBody") as String ?? String.Empty;
         redactedBody.ShouldNotContain("body-secret");
     }
 
     [Fact]
-    public async Task Middleware_OmitsResponseBodyWhenItExceedsConfiguredLimit()
+    public async Task Middleware_RedactsResponseBodyWithoutSizeLimit()
     {
         CapturingLogger logger = new();
         Shared.Logger.Logger.Initialise(logger);
@@ -220,14 +223,11 @@ public class StructuredLoggingTests
             return inner.Response.WriteAsync(payload, TestContext.Current.CancellationToken);
         });
 
-        await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, false, true)
-        {
-            MaximumResponseBodyBytes = 8
-        });
+        await middleware.Invoke(context, new RequestResponseMiddlewareLoggingConfig(LogLevel.Information, false, true));
 
         StructuredLogEntry response = logger.Entries.ShouldHaveSingleItem();
-        response.Arguments[4].ShouldBe("size_limit");
-        response.Arguments[5].ShouldBeNull();
+        GetStructuredValue(response, "bodyStatus").ShouldBe("captured");
+        GetStructuredValue(response, "responseBody")!.ToString().ShouldContain("a value larger than the limit");
         context.Response.Body.Position = 0;
         using StreamReader reader = new(context.Response.Body, Encoding.UTF8, leaveOpen: true);
         (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe(payload);
@@ -242,6 +242,24 @@ public class StructuredLoggingTests
         context.Request.ContentType = contentType;
         context.Response.Body = new MemoryStream();
         return context;
+    }
+
+    private static Object? GetStructuredValue(StructuredLogEntry entry, String propertyName)
+    {
+        Int32 argumentIndex = 0;
+        Int32 searchFrom = 0;
+        while (true)
+        {
+            Int32 placeholderStart = entry.Template.IndexOf('{', searchFrom);
+            if (placeholderStart < 0) break;
+            Int32 placeholderEnd = entry.Template.IndexOf('}', placeholderStart + 1);
+            if (placeholderEnd < 0) break;
+            String currentProperty = entry.Template.Substring(placeholderStart + 1, placeholderEnd - placeholderStart - 1);
+            if (currentProperty == propertyName) return entry.Arguments[argumentIndex];
+            argumentIndex++;
+            searchFrom = placeholderEnd + 1;
+        }
+        throw new InvalidOperationException($"Structured property '{propertyName}' was not found in the log template.");
     }
 
     private sealed record StructuredLogEntry(String Template, Object?[] Arguments, LogLevel Level);
