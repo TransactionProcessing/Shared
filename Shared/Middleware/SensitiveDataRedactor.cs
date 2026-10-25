@@ -33,9 +33,8 @@ internal static class SensitiveDataRedactor
         return result;
     }
 
-    public static BodyCaptureResult RedactBody(ReadOnlyMemory<Byte> body, String? contentType, IReadOnlySet<String> sensitiveFieldNames, Int32 maximumBytes, IReadOnlySet<String> supportedContentTypes)
+    public static BodyCaptureResult RedactBody(ReadOnlyMemory<Byte> body, String? contentType, IReadOnlySet<String> sensitiveFieldNames, IReadOnlySet<String> supportedContentTypes)
     {
-        if (body.Length > Math.Max(0, maximumBytes)) return new(null, "size_limit");
         if (!TryGetBodyFormat(contentType, supportedContentTypes, out BodyFormat format)) return new(null, "unsupported_content_type");
         try
         {

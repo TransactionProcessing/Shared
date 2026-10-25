@@ -13,6 +13,4 @@ public record RequestResponseMiddlewareLoggingConfig(LogLevel LoggingLevel, Bool
     public IReadOnlySet<String> AllowedRequestHeaders { get; init; } = new HashSet<String>(new[] { "Accept", "Content-Type", "User-Agent", "X-Request-Id", "correlationId", "Authorization", "Cookie" }, StringComparer.OrdinalIgnoreCase);
     public IReadOnlySet<String> AllowedResponseHeaders { get; init; } = new HashSet<String>(new[] { "Cache-Control", "Content-Length", "Content-Type", "ETag", "X-Response-Id", "Set-Cookie" }, StringComparer.OrdinalIgnoreCase);
     public IReadOnlySet<String> SupportedBodyContentTypes { get; init; } = new HashSet<String>(new[] { "application/json", "application/*+json", "application/x-www-form-urlencoded", "application/xml", "text/xml", "application/soap+xml" }, StringComparer.OrdinalIgnoreCase);
-    public Int32 MaximumRequestBodyBytes { get; init; } = 32768;
-    public Int32 MaximumResponseBodyBytes { get; init; } = 32768;
 }
