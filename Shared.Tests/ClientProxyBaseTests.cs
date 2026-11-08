@@ -386,7 +386,7 @@ public sealed class ClientProxyBaseTests
 
         result.IsFailed.ShouldBeTrue();
         result.Status.ShouldBe(ResultStatus.Failure);
-        result.Message.ShouldContain("The request body could not be serialized: boom");
+        result.Message.ShouldBe("The request body could not be serialized: boom");
     }
 
     [Fact]

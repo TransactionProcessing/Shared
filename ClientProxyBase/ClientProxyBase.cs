@@ -533,7 +533,7 @@ public abstract class ClientProxyBase {
                 serialisedBody = Serialise(body);
             }
             catch (Exception exception) {
-                return Result.Failure($"Error serializing the request body could not be serialized: {exception.Message}");
+                return Result.Failure($"The request body could not be serialized: {exception.Message}");
             }
 
             if (serialisedBody is null) {
