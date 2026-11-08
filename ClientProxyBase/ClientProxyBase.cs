@@ -1,5 +1,5 @@
-﻿using Microsoft.VisualBasic;
-using Shared.Logger.TennantContext;
+﻿using Shared.Logger.TennantContext;
+using Shared.Results;
 using SimpleResults;
 using System;
 using System.Collections.Generic;
@@ -378,8 +378,12 @@ public abstract class ClientProxyBase {
                                                              List<(string header, string value)>? additionalHeaders,
                                                              CancellationToken cancellationToken) {
         try {
-            using var request = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
-            using var response = await HttpClient.SendAsync(request, cancellationToken);
+            Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
+            if (requestResult.IsFailed)
+                return ResultHelpers.CreateFailure(requestResult);
+            using HttpRequestMessage request = requestResult.Data;
+
+            using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapNonGenericResult(method, response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
@@ -402,8 +406,11 @@ public abstract class ClientProxyBase {
                                                    List<(string header, string value)>? additionalHeaders,
                                                    CancellationToken cancellationToken) {
         try {
-            using var request = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
-            using var response = await HttpClient.SendAsync(request, cancellationToken);
+            Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
+            if (requestResult.IsFailed)
+                return ResultHelpers.CreateFailure(requestResult);
+            using HttpRequestMessage request = requestResult.Data;
+            using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapNonGenericResult(method, response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
@@ -425,9 +432,12 @@ public abstract class ClientProxyBase {
                                                             List<(string header, string value)>? additionalHeaders,
                                                             CancellationToken cancellationToken) {
         try {
-            using var request = CreateMultipartRequest(requestUri, fileData, fileName, formFields, accessToken, additionalHeaders);
-            using var response = await HttpClient.SendAsync(request, cancellationToken);
-            return await MapNonGenericResult(HttpMethod.Post, response, cancellationToken);
+            Result<HttpRequestMessage> requestResult = CreateMultipartRequest(requestUri, fileData, fileName, formFields, accessToken, additionalHeaders);
+            if (requestResult.IsFailed)
+                return ResultHelpers.CreateFailure(requestResult);
+            using HttpRequestMessage request = requestResult.Data;
+            using HttpResponseMessage response = await this.HttpClient.SendAsync(request, cancellationToken);
+            return await this.MapNonGenericResult(HttpMethod.Post, response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
             return Result.Failure(exception.Message);
@@ -447,8 +457,11 @@ public abstract class ClientProxyBase {
                                                                      List<(string header, string value)>? additionalHeaders,
                                                                      CancellationToken cancellationToken) {
         try {
-            using var request = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
-            using var response = await HttpClient.SendAsync(request, cancellationToken);
+            Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
+            if (requestResult.IsFailed)
+                return ResultHelpers.CreateFailure(requestResult);
+            using HttpRequestMessage request = requestResult.Data;
+            using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapGenericResult<TResponse>(method, response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
@@ -469,8 +482,11 @@ public abstract class ClientProxyBase {
                                                                      List<(string header, string value)>? additionalHeaders,
                                                                      CancellationToken cancellationToken) {
         try {
-            using var request = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
-            using var response = await HttpClient.SendAsync(request, cancellationToken);
+            Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
+            if (requestResult.IsFailed)
+                return ResultHelpers.CreateFailure(requestResult);
+            using HttpRequestMessage request = requestResult.Data;
+            using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapGenericResult<TResponse>(method, response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
@@ -484,20 +500,20 @@ public abstract class ClientProxyBase {
         }
     }
 
-    private HttpRequestMessage CreateRequest(HttpMethod method,
+    private Result<HttpRequestMessage> CreateRequest(HttpMethod method,
                                              string requestUri,
                                              object? body,
                                              string? accessToken,
                                              List<(string header, string value)>? additionalHeaders) {
         if (string.IsNullOrWhiteSpace(requestUri)) {
-            throw new ArgumentException("Request URI cannot be null, empty, or whitespace.", nameof(requestUri));
+            return Result.Invalid("Request URI cannot be null, empty, or whitespace.");
         }
 
-        var request = new HttpRequestMessage(method, requestUri);
+        HttpRequestMessage request = new HttpRequestMessage(method, requestUri);
 
         if (accessToken is not null) {
             if (string.IsNullOrWhiteSpace(accessToken)) {
-                throw new ArgumentException("Access token cannot be null, empty, or whitespace.", nameof(accessToken));
+                return Result.Invalid("Access token cannot be null, empty, or whitespace.");
             }
 
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -517,79 +533,98 @@ public abstract class ClientProxyBase {
                 serialisedBody = Serialise(body);
             }
             catch (Exception exception) {
-                throw new InvalidOperationException($"The request body could not be serialized: {exception.Message}", exception);
+                return Result.Failure($"The request body could not be serialized: {exception.Message}");
             }
 
             if (serialisedBody is null) {
-                throw new InvalidOperationException("The request body could not be serialized.");
+                return Result.Failure("The request body could not be serialized.");
             }
 
             request.Content = new StringContent(serialisedBody, Encoding.UTF8, "application/json");
         }
 
         if (additionalHeaders is not null) {
-            AddHeaders(request, additionalHeaders);
+            Result result = AddHeaders(request, additionalHeaders);
+            if (result.IsFailed)
+                return ResultHelpers.CreateFailure(result);
         }
 
-        return request;
+        return  Result.Success(request);
     }
 
-    private HttpRequestMessage CreateRequest(HttpMethod method,
+    private Result<HttpRequestMessage> CreateRequest(HttpMethod method,
                                              string requestUri,
                                              HttpContent content,
                                              string? accessToken,
                                              List<(string header, string value)>? additionalHeaders) {
         if (content is null) {
-            throw new ArgumentNullException(nameof(content));
+            return Result.Invalid("Request content cannot be null");
         }
+    
+        Result<HttpRequestMessage> createRequestResult = CreateRequest(method, requestUri, body: null, accessToken, additionalHeaders: null);
+        if (createRequestResult.IsFailed)
+            return createRequestResult;
 
-        var request = CreateRequest(method, requestUri, body: null, accessToken, additionalHeaders: null);
+        HttpRequestMessage request = createRequestResult.Data;
         request.Content = content;
 
         if (additionalHeaders is not null) {
-            AddHeaders(request, additionalHeaders);
+            Result result = AddHeaders(request, additionalHeaders);
+            if (result.IsFailed)
+                return ResultHelpers.CreateFailure(result);
         }
 
-        return request;
+        return Result.Success(request);
     }
 
-    private HttpRequestMessage CreateMultipartRequest(string requestUri,
+    private Result<HttpRequestMessage> CreateMultipartRequest(string requestUri,
                                                       byte[] fileData,
                                                       string fileName,
                                                       List<(string field, string value)> formFields,
                                                       string accessToken,
                                                       List<(string header, string value)>? additionalHeaders) {
         if (fileData is null) {
-            throw new ArgumentNullException(nameof(fileData));
+            return Result.Invalid("file data content cannot be null");
         }
 
         if (string.IsNullOrWhiteSpace(fileName)) {
-            throw new ArgumentException("File name cannot be null, empty, or whitespace.", nameof(fileName));
+            return Result.Invalid("file name cannot be null, empty, or whitespace.");
         }
 
         if (formFields is null) {
-            throw new ArgumentNullException(nameof(formFields));
+            return Result.Invalid("form fields cannot be null");
         }
 
-        var request = CreateRequest(HttpMethod.Post, requestUri, body: null, accessToken, additionalHeaders: null);
-        request.Content = CreateMultipartContent(fileData, fileName, formFields);
+        Result<HttpRequestMessage> createRequestResult = CreateRequest(HttpMethod.Post, requestUri, body: null, accessToken, additionalHeaders: null);
+        if (createRequestResult.IsFailed)
+            return ResultHelpers.CreateFailure(createRequestResult);
+
+        HttpRequestMessage request = createRequestResult.Data;
+        
+        Result<MultipartFormDataContent> createMultipartContentResult = CreateMultipartContent(fileData, fileName, formFields);
+        if (createMultipartContentResult.IsFailed)
+            return ResultHelpers.CreateFailure(createMultipartContentResult);
+
+        request.Content = createMultipartContentResult.Data;
 
         if (additionalHeaders is not null) {
-            AddHeaders(request, additionalHeaders);
+            Result result = AddHeaders(request, additionalHeaders);
+            if (result.IsFailed)
+                return ResultHelpers.CreateFailure(result);
         }
 
         return request;
     }
 
-    private static void AddHeaders(HttpRequestMessage request,
+    private static Result AddHeaders(HttpRequestMessage request,
                                    List<(string header, string value)> additionalHeaders) {
-        foreach (var (header, value) in additionalHeaders) {
+        foreach ((String header, String value) in additionalHeaders) {
             if (string.IsNullOrWhiteSpace(header)) {
-                throw new ArgumentException("Header name cannot be null, empty, or whitespace.", nameof(additionalHeaders));
+                return Result.Invalid("Header name cannot be null, empty, or whitespace.");
             }
 
             if (string.IsNullOrWhiteSpace(value)) {
-                throw new ArgumentException($"Header value for '{header}' cannot be null, empty, or whitespace.", nameof(additionalHeaders));
+                return Result.Invalid($"Header value for '{header}' cannot be null, empty, or whitespace.");
             }
 
             if (string.Equals(header, TenantContext.KeyNameCorrelationId, StringComparison.OrdinalIgnoreCase)
@@ -605,32 +640,34 @@ public abstract class ClientProxyBase {
                 continue;
             }
 
-            throw new InvalidOperationException($"The header '{header}' could not be added to the request.");
+            return Result.Invalid($"The header '{header}' could not be added to the request.");
         }
+
+        return Result.Success();
     }
 
-    private static MultipartFormDataContent CreateMultipartContent(byte[] fileData,
-                                                                   string fileName,
-                                                                   List<(string field, string value)> formFields) {
-        var multipartContent = new MultipartFormDataContent();
+    private static Result<MultipartFormDataContent> CreateMultipartContent(byte[] fileData,
+                                                                           string fileName,
+                                                                           List<(string field, string value)> formFields) {
+        MultipartFormDataContent multipartContent = new MultipartFormDataContent();
 
-        var fileContent = new ByteArrayContent(fileData);
+        ByteArrayContent fileContent = new ByteArrayContent(fileData);
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
         multipartContent.Add(fileContent, "file", fileName);
 
-        foreach (var (field, value) in formFields) {
+        foreach ((String field, String value) in formFields) {
             if (string.IsNullOrWhiteSpace(field)) {
-                throw new ArgumentException("Form field name cannot be null, empty, or whitespace.", nameof(formFields));
+                return Result.Invalid("Form field name cannot be null, empty, or whitespace.");
             }
 
             if (string.IsNullOrWhiteSpace(value)) {
-                throw new ArgumentException($"Form field value for '{field}' cannot be null, empty, or whitespace.", nameof(formFields));
+                return Result.Invalid($"Form field value for '{field}' cannot be null, empty, or whitespace.");
             }
 
             multipartContent.Add(new StringContent(value), field);
         }
 
-        return multipartContent;
+        return Result.Success(multipartContent);
     }
 
     private async Task<Result> MapNonGenericResult(HttpMethod method,
@@ -650,7 +687,7 @@ public abstract class ClientProxyBase {
             return await MapFailedResult(response, cancellationToken);
         }
 
-        var rawContent = await ReadContent(response, cancellationToken);
+        String rawContent = await ReadContent(response, cancellationToken);
         if (string.IsNullOrWhiteSpace(rawContent)) {
             return Result.Failure("The response content was empty.");
         }
@@ -698,18 +735,21 @@ public abstract class ClientProxyBase {
 
     private static async Task<Result> MapFailedResult(HttpResponseMessage response,
                                                       CancellationToken cancellationToken) {
-        var rawContent = await ReadContent(response, cancellationToken);
-        var errorMessages = ExtractErrors(rawContent);
-        var primaryMessage = BuildPrimaryMessage(response, errorMessages);
+        String rawContent = await ReadContent(response, cancellationToken);
+        Result<IReadOnlyList<String>> errorMessages = ExtractErrors(rawContent);
+        if (errorMessages.IsFailed)
+            return ResultHelpers.CreateFailure(errorMessages);
+
+        String primaryMessage = BuildPrimaryMessage(response, errorMessages.Data);
 
         return response.StatusCode switch {
-            HttpStatusCode.BadRequest => Result.Invalid(primaryMessage, errorMessages),
-            HttpStatusCode.Unauthorized => Result.Unauthorized(primaryMessage, errorMessages),
-            HttpStatusCode.Forbidden => Result.Forbidden(primaryMessage, errorMessages),
-            HttpStatusCode.NotFound => Result.NotFound(primaryMessage, errorMessages),
-            HttpStatusCode.Conflict => Result.Conflict(primaryMessage, errorMessages),
-            _ when (int)response.StatusCode >= 500 => Result.CriticalError(primaryMessage, errorMessages),
-            _ => Result.Failure(primaryMessage, errorMessages)
+            HttpStatusCode.BadRequest => Result.Invalid(primaryMessage, errorMessages.Data),
+            HttpStatusCode.Unauthorized => Result.Unauthorized(primaryMessage, errorMessages.Data),
+            HttpStatusCode.Forbidden => Result.Forbidden(primaryMessage, errorMessages.Data),
+            HttpStatusCode.NotFound => Result.NotFound(primaryMessage, errorMessages.Data),
+            HttpStatusCode.Conflict => Result.Conflict(primaryMessage, errorMessages.Data),
+            _ when (int)response.StatusCode >= 500 => Result.CriticalError(primaryMessage, errorMessages.Data),
+            _ => Result.Failure(primaryMessage, errorMessages.Data)
         };
     }
 
@@ -722,20 +762,22 @@ public abstract class ClientProxyBase {
         return await response.Content.ReadAsStringAsync(cancellationToken);
     }
 
-    private static IReadOnlyList<string> ExtractErrors(string? rawContent) {
+    private static Result<IReadOnlyList<string>> ExtractErrors(string? rawContent) {
         if (string.IsNullOrWhiteSpace(rawContent)) {
-            return [];
+            return Result.Success<IReadOnlyList<String>>(new List<String>());
         }
 
         try {
-            using var document = JsonDocument.Parse(rawContent);
-            var errors = new List<string>();
-            AppendErrors(document.RootElement, errors);
+            using JsonDocument document = JsonDocument.Parse(rawContent);
+            List<String> errors = new List<string>();
+            Result result = AppendErrors(document.RootElement, errors);
+            if (result.IsFailed)
+                return ResultHelpers.CreateFailure(result);
 
             return errors.Count == 0 ? [rawContent] : errors;
         }
         catch (JsonException) {
-            return [rawContent];
+            return Result.Success<IReadOnlyList<String>>([rawContent]);
         }
     }
 
@@ -745,7 +787,7 @@ public abstract class ClientProxyBase {
         "message"
     ];
 
-    private static void AppendErrors(JsonElement element,
+    private static Result AppendErrors(JsonElement element,
                                      ICollection<string> errors) {
         switch (element.ValueKind) {
             case JsonValueKind.Object:
@@ -753,7 +795,7 @@ public abstract class ClientProxyBase {
                 break;
 
             case JsonValueKind.Array:
-                foreach (var item in element.EnumerateArray()) {
+                foreach (JsonElement item in element.EnumerateArray()) {
                     AppendErrors(item, errors);
                 }
                 break;
@@ -762,23 +804,25 @@ public abstract class ClientProxyBase {
                 AddIfPresent(errors, element.GetString());
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(element.ValueKind), element.ValueKind, null);
+                return Result.Invalid($"Invalid Value Kind {element.ValueKind}");
         }
+
+        return Result.Success();
     }
 
     private static void AppendObjectErrors(JsonElement element,
                                            ICollection<string> errors) {
-        foreach (var propertyName in MessageProperties) {
-            if (element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String) {
+        foreach (String propertyName in MessageProperties) {
+            if (element.TryGetProperty(propertyName, out JsonElement value) && value.ValueKind == JsonValueKind.String) {
                 AddIfPresent(errors, value.GetString());
             }
         }
 
-        if (element.TryGetProperty("errors", out var nestedErrors)) {
+        if (element.TryGetProperty("errors", out JsonElement nestedErrors)) {
             AppendErrors(nestedErrors, errors);
         }
 
-        foreach (var property in element.EnumerateObject()) {
+        foreach (JsonProperty property in element.EnumerateObject()) {
             if (IsReservedProperty(property.Name)) {
                 continue;
             }
