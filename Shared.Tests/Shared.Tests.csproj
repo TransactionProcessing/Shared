@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0</TargetFrameworks>
-		<DebugType>Full</DebugType>
+		<DebugType>None</DebugType>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
