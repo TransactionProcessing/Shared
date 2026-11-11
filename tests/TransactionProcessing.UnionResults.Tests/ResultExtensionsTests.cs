@@ -17,6 +17,7 @@ public sealed class ResultExtensionsTests
         Assert.False(Result.Fail(Missing).IsSuccess());
         Assert.True(Result.Fail(MissingErrors).IsFailure());
         Assert.Equal("missing", Result.Fail(MissingErrors).GetFailureMessage());
+        Assert.Equal("missing", Result.Fail(Missing).GetFailureMessage());
         Assert.Null(Result.Ok().GetFailureMessage());
         Assert.Null(Result.NoContent().GetFailureMessage());
         Assert.Throws<InvalidOperationException>(() => default(Result).IsSuccess());
@@ -140,12 +141,24 @@ public sealed class ResultExtensionsTests
         failure.Tap(() => successCount++);
         Result.Ok().TapError(_ => errorCount++);
         noContent.TapError(_ => errorCount++);
+        Result.Fail(Missing).TapError(_ => errorCount++);
         failure.TapError(_ => errorCount++);
 
         Assert.Equal(1, successCount);
-        Assert.Equal(2, errorCount);
+        Assert.Equal(3, errorCount);
         Assert.Throws<InvalidOperationException>(() => default(Result).Tap(() => { }));
         Assert.Throws<InvalidOperationException>(() => default(Result).TapError(_ => { }));
+    }
+
+    [Fact]
+    public void Error_list_supports_generic_and_non_generic_enumeration()
+    {
+        var errors = new ErrorList([Missing, Error.NotFound("also missing")]);
+
+        var enumerated = new List<Error>();
+        var enumerator = ((System.Collections.IEnumerable)errors).GetEnumerator();
+        while (enumerator.MoveNext()) enumerated.Add(Assert.IsType<Error>(enumerator.Current));
+        Assert.Equal(errors.ToArray(), enumerated);
     }
 
     [Fact]

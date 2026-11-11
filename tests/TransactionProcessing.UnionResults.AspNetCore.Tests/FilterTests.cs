@@ -42,6 +42,8 @@ public sealed class FilterTests
             api.MapGet("/ok-empty", () => Result.Ok());
             api.MapGet("/no-content", () => Result.NoContent());
             api.MapGet("/created", () => Result<string>.Created("created", "/items/42"));
+            api.MapGet("/created-no-location", () => Result<string>.Created("created"));
+            api.MapGet("/empty-outcome", () => new CustomOutcome(new ResultOutcome(ResultKind.Ok)));
             api.MapGet("/raw", () => "raw response");
         });
         using var client = app.GetTestClient();
@@ -54,6 +56,10 @@ public sealed class FilterTests
         Assert.Equal(System.Net.HttpStatusCode.OK, empty.StatusCode);
         Assert.Empty(await empty.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
 
+        var outcomeWithoutValue = await client.GetAsync("/api/empty-outcome", TestContext.Current.CancellationToken);
+        Assert.Equal(System.Net.HttpStatusCode.OK, outcomeWithoutValue.StatusCode);
+        Assert.Empty(await outcomeWithoutValue.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
+
         var noContent = await client.GetAsync("/api/no-content", TestContext.Current.CancellationToken);
         Assert.Equal(System.Net.HttpStatusCode.NoContent, noContent.StatusCode);
 
@@ -62,8 +68,33 @@ public sealed class FilterTests
         Assert.Equal("/items/42", created.Headers.Location?.OriginalString);
         Assert.Equal("\"created\"", await created.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
+        var createdWithoutLocation = await client.GetAsync("/api/created-no-location", TestContext.Current.CancellationToken);
+        Assert.Equal(System.Net.HttpStatusCode.Created, createdWithoutLocation.StatusCode);
+        Assert.Null(createdWithoutLocation.Headers.Location);
+
         var raw = await client.GetAsync("/api/raw", TestContext.Current.CancellationToken);
         Assert.Equal("raw response", await raw.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Rejects_invalid_created_locations_and_unknown_union_kinds()
+    {
+        await using var app = await StartApp(api =>
+        {
+            api.MapGet("/invalid-location", () => Result<string>.Created("value", "http://["));
+            api.MapGet("/null-created", () => new CustomOutcome(new ResultOutcome(ResultKind.Created)));
+            api.MapGet("/unknown-kind", () => new CustomOutcome(new ResultOutcome((ResultKind)int.MaxValue)));
+        });
+        using var client = app.GetTestClient();
+
+        using var invalidLocation = await client.GetAsync("/api/invalid-location", TestContext.Current.CancellationToken);
+        Assert.Equal(System.Net.HttpStatusCode.InternalServerError, invalidLocation.StatusCode);
+
+        using var nullCreated = await client.GetAsync("/api/null-created", TestContext.Current.CancellationToken);
+        Assert.Equal(System.Net.HttpStatusCode.InternalServerError, nullCreated.StatusCode);
+
+        using var unknownKind = await client.GetAsync("/api/unknown-kind", TestContext.Current.CancellationToken);
+        Assert.Equal(System.Net.HttpStatusCode.InternalServerError, unknownKind.StatusCode);
     }
 
     [Fact]
@@ -73,6 +104,11 @@ public sealed class FilterTests
         {
             api.MapGet("/conflict", () => Result.Fail(Error.Conflict("conflict")));
             api.MapGet("/critical", () => Result.Fail(Error.Critical("secret detail")));
+            api.MapGet("/unauthorized", () => Result.Fail(Error.Unauthorized("unauthorized")));
+            api.MapGet("/forbidden", () => Result.Fail(Error.Forbidden("forbidden")));
+            api.MapGet("/not-found", () => Result.Fail(Error.NotFound("missing")));
+            api.MapGet("/failure", () => Result.Fail(Error.Failure("failed")));
+            api.MapGet("/unknown", () => Result.Fail(new Error("Unknown", "unknown", ErrorType.Unknown)));
             api.MapGet("/validation", () => Result.Fail(new ErrorList([
                 Error.Validation("Email is invalid", "email"),
                 Error.Validation("Email is required", "email"),
@@ -93,6 +129,17 @@ public sealed class FilterTests
         Assert.Equal(500, critical.RootElement.GetProperty("status").GetInt32());
         Assert.Equal("An unexpected error occurred.", critical.RootElement.GetProperty("title").GetString());
 
+        using var unauthorized = await GetProblem(client, "/api/unauthorized");
+        Assert.Equal(401, unauthorized.RootElement.GetProperty("status").GetInt32());
+        using var forbidden = await GetProblem(client, "/api/forbidden");
+        Assert.Equal(403, forbidden.RootElement.GetProperty("status").GetInt32());
+        using var notFound = await GetProblem(client, "/api/not-found");
+        Assert.Equal(404, notFound.RootElement.GetProperty("status").GetInt32());
+        using var failure = await GetProblem(client, "/api/failure");
+        Assert.Equal(500, failure.RootElement.GetProperty("status").GetInt32());
+        using var unknown = await GetProblem(client, "/api/unknown");
+        Assert.Equal(500, unknown.RootElement.GetProperty("status").GetInt32());
+
         using var validation = await GetProblem(client, "/api/validation");
         Assert.Equal(400, validation.RootElement.GetProperty("status").GetInt32());
         Assert.Equal(3, validation.RootElement.GetProperty("codes").GetArrayLength());
@@ -101,6 +148,42 @@ public sealed class FilterTests
 
         using var mixedCodes = await GetProblem(client, "/api/mixed-codes");
         Assert.Equal(400, mixedCodes.RootElement.GetProperty("status").GetInt32());
+    }
+
+    [Fact]
+    public async Task Mixed_error_code_statuses_fall_back_to_the_error_category()
+    {
+        var cases = new (string Path, ErrorType Type, int ExpectedStatus)[]
+        {
+            ("validation", ErrorType.Validation, 400),
+            ("unauthorized", ErrorType.Unauthorized, 401),
+            ("forbidden", ErrorType.Forbidden, 403),
+            ("not-found", ErrorType.NotFound, 404),
+            ("conflict", ErrorType.Conflict, 409),
+            ("failure", ErrorType.Failure, 503),
+            ("critical", ErrorType.Critical, 500),
+            ("unknown", ErrorType.Unknown, 500),
+        };
+        await using var app = await StartApp(api =>
+        {
+            foreach (var (path, type, _) in cases)
+            {
+                api.MapGet($"/{path}", () => Result.Fail(new ErrorList([
+                    new Error("first", "first", type), new Error("second", "second", type)])));
+            }
+        }, options =>
+        {
+            options.MapCode("first", 418);
+            options.MapCode("second", 422);
+            options.Map(ErrorType.Failure, 503);
+        });
+        using var client = app.GetTestClient();
+
+        foreach (var (path, _, expectedStatus) in cases)
+        {
+            using var problem = await GetProblem(client, $"/api/{path}");
+            Assert.Equal(expectedStatus, problem.RootElement.GetProperty("status").GetInt32());
+        }
     }
 
     [Fact]
@@ -164,5 +247,10 @@ public sealed class FilterTests
         using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    private sealed class CustomOutcome(ResultOutcome outcome) : IResultOutcome
+    {
+        public ResultOutcome GetOutcome() => outcome;
     }
 }
