@@ -1,5 +1,5 @@
-﻿using System.Net;
-using SimpleResults;
+using System.Net;
+using TransactionProcessing.UnionResults;
 using System;
 using System.Net.Http;
 using System.Threading;

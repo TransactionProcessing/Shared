@@ -8,11 +8,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="SimpleResults" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TransactionProcessing.Shared.Logger\TransactionProcessing.Shared.Logger.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\src\TransactionProcessing.UnionResults\TransactionProcessing.UnionResults.csproj" />
   </ItemGroup>
 
 	<Target Name="IncludeP2PAssets">

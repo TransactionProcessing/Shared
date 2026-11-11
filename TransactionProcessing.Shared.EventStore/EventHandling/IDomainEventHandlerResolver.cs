@@ -1,7 +1,7 @@
-﻿namespace TransactionProcessing.Shared.EventStore.EventHandling;
+namespace TransactionProcessing.Shared.EventStore.EventHandling;
 
 using DomainDrivenDesign.EventSourcing;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System.Collections.Generic;
 
 public interface IDomainEventHandlerResolver

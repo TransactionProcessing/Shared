@@ -2,6 +2,60 @@ namespace TransactionProcessing.UnionResults;
 
 public static class ResultExtensions
 {
+    public static bool IsSuccess(this Result result) => result switch
+    {
+        TransactionProcessing.UnionResults.Ok or TransactionProcessing.UnionResults.NoContent => true,
+        Error or ErrorList => false,
+        null => throw new InvalidOperationException("A default Result has no value."),
+    };
+
+    public static bool IsFailure(this Result result) => !result.IsSuccess();
+
+    public static bool IsSuccess<T>(this Result<T> result) => result switch
+    {
+        Ok<T> or Created<T> or NoContent => true,
+        Error or ErrorList => false,
+        null => throw new InvalidOperationException("A default Result<T> has no value."),
+    };
+
+    public static bool IsFailure<T>(this Result<T> result) => !result.IsSuccess();
+
+    public static T GetValueOrThrow<T>(this Result<T> result) => result switch
+    {
+        Ok<T> ok => ok.Value,
+        Created<T> created => created.Value,
+        NoContent => throw new InvalidOperationException("A NoContent result does not contain a value."),
+        Error error => throw new InvalidOperationException(error.Message),
+        ErrorList errors => throw new InvalidOperationException(string.Join(Environment.NewLine, errors.Select(static error => error.Message))),
+        null => throw new InvalidOperationException("A default Result<T> has no value."),
+    };
+
+    public static string? GetFailureMessage(this Result result) => result switch
+    {
+        Error error => error.Message,
+        ErrorList errors => errors[0].Message,
+        TransactionProcessing.UnionResults.Ok or TransactionProcessing.UnionResults.NoContent => null,
+        null => throw new InvalidOperationException("A default Result has no value."),
+    };
+
+    public static string? GetFailureMessage<T>(this Result<T> result) => result switch
+    {
+        Error error => error.Message,
+        ErrorList errors => errors[0].Message,
+        Ok<T> or Created<T> or NoContent => null,
+        null => throw new InvalidOperationException("A default Result<T> has no value."),
+    };
+
+    public static Result ToResult<T>(this Result<T> result) => result switch
+    {
+        Ok<T> => Result.Ok(),
+        Created<T> => Result.Ok(),
+        NoContent => Result.NoContent(),
+        Error error => Result.Fail(error),
+        ErrorList errors => Result.Fail(errors),
+        null => throw new InvalidOperationException("A default Result<T> has no value."),
+    };
+
     public static TResult Match<TResult>(this Result result, Func<TResult> ok, Func<TResult> noContent, Func<Error, TResult> error, Func<ErrorList, TResult> errors) => result switch
     {
         Ok => ok(), NoContent => noContent(), Error e => error(e), ErrorList es => errors(es),

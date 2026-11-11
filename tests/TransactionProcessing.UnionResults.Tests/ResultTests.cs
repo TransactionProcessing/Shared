@@ -21,6 +21,19 @@ public sealed class ResultTests
     }
 
     [Fact]
+    public void Value_access_and_failure_projection_preserve_union_outcomes()
+    {
+        var success = Result<int>.Created(42, "/items/42");
+        Assert.True(success.IsSuccess());
+        Assert.Equal(42, success.GetValueOrThrow());
+
+        var failure = Result<int>.Fail(new Error("Item.Missing", "Missing", ErrorType.NotFound));
+        Assert.True(failure.IsFailure());
+        Assert.Equal("Missing", failure.GetFailureMessage());
+        Assert.Equal(ErrorType.NotFound, failure.ToResult().GetOutcome().Error?.ErrorType);
+    }
+
+    [Fact]
     public void Error_list_snapshots_and_checks_categories()
     {
         var input = new List<Error> { new("A", "first", ErrorType.Validation) };

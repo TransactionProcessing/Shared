@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Memory;
 using TransactionProcessing.Shared.DomainDrivenDesign.EventSourcing;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -21,14 +21,14 @@ public interface IAggregateService
     Task<Result<TAggregate>> Get<TAggregate>(Guid aggregateId,
                                              CancellationToken cancellationToken) where TAggregate : Aggregate, new();
 
-    Task<SimpleResults.Result<TAggregate>> GetLatest<TAggregate>(Guid aggregateId,
+    Task<Result<TAggregate>> GetLatest<TAggregate>(Guid aggregateId,
                                                                  CancellationToken cancellationToken) where TAggregate : Aggregate, new();
 
-    Task<SimpleResults.Result<TAggregate>> GetLatestFromLastEvent<TAggregate>(Guid aggregateId,
+    Task<Result<TAggregate>> GetLatestFromLastEvent<TAggregate>(Guid aggregateId,
                                                                               CancellationToken cancellationToken) where TAggregate : Aggregate, new();
 
-    Task<SimpleResults.Result<TAggregate>> GetLatestAggregateAsync<TAggregate>(Guid aggregateId,
-                                                                               Func<IAggregateRepository<TAggregate, DomainEvent>, Guid, CancellationToken, Task<SimpleResults.Result<TAggregate>>> getLatestVersionFunc,
+    Task<Result<TAggregate>> GetLatestAggregateAsync<TAggregate>(Guid aggregateId,
+                                                                               Func<IAggregateRepository<TAggregate, DomainEvent>, Guid, CancellationToken, Task<Result<TAggregate>>> getLatestVersionFunc,
                                                                                CancellationToken cancellationToken) where TAggregate : Aggregate, new();
 
     Task<Result> Save<TAggregate>(TAggregate aggregate,
@@ -136,7 +136,7 @@ public class AggregateService : IAggregateService
             }
 
             // Not found in cache so call GetLatest
-            SimpleResults.Result<TAggregate> aggregateResult = this.GetLatest<TAggregate>(aggregateId, cancellationToken).Result;
+            Result<TAggregate> aggregateResult = this.GetLatest<TAggregate>(aggregateId, cancellationToken).Result;
 
             if (aggregateResult.IsSuccess)
             {
@@ -155,7 +155,7 @@ public class AggregateService : IAggregateService
         }
     }
 
-    public async Task<SimpleResults.Result<TAggregate>> GetLatest<TAggregate>(Guid aggregateId,
+    public async Task<Result<TAggregate>> GetLatest<TAggregate>(Guid aggregateId,
                                                                               CancellationToken cancellationToken) where TAggregate : Aggregate, new()
     {
         return await this.GetLatestAggregateAsync<TAggregate>(aggregateId, (repo,
@@ -163,7 +163,7 @@ public class AggregateService : IAggregateService
                                                                             cancellation) => repo.GetLatestVersion(id, cancellation), cancellationToken);
     }
 
-    public async Task<SimpleResults.Result<TAggregate>> GetLatestFromLastEvent<TAggregate>(Guid aggregateId,
+    public async Task<Result<TAggregate>> GetLatestFromLastEvent<TAggregate>(Guid aggregateId,
                                                                                            CancellationToken cancellationToken) where TAggregate : Aggregate, new()
     {
         return await this.GetLatestAggregateAsync<TAggregate>(aggregateId, (repo,
@@ -171,8 +171,8 @@ public class AggregateService : IAggregateService
                                                                             cancellation) => repo.GetLatestVersionFromLastEvent(id, cancellation), cancellationToken);
     }
 
-    public async Task<SimpleResults.Result<TAggregate>> GetLatestAggregateAsync<TAggregate>(Guid aggregateId,
-                                                                                            Func<IAggregateRepository<TAggregate, DomainEvent>, Guid, CancellationToken, Task<SimpleResults.Result<TAggregate>>> getLatestVersionFunc,
+    public async Task<Result<TAggregate>> GetLatestAggregateAsync<TAggregate>(Guid aggregateId,
+                                                                                            Func<IAggregateRepository<TAggregate, DomainEvent>, Guid, CancellationToken, Task<Result<TAggregate>>> getLatestVersionFunc,
                                                                                             CancellationToken cancellationToken) where TAggregate : Aggregate, new()
     {
         Stopwatch stopwatch = Stopwatch.StartNew();

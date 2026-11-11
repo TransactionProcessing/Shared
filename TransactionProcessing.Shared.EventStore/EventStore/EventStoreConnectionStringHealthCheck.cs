@@ -1,5 +1,5 @@
-﻿using KurrentDB.Client;
-using SimpleResults;
+using KurrentDB.Client;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.EventStore;
 

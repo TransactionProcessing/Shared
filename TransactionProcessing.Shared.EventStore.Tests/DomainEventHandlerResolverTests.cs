@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TransactionProcessing.Shared.EventStore.EventHandling;
 using TransactionProcessing.Shared.EventStore.Tests.TestObjects;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.Tests;
 

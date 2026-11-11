@@ -1,6 +1,6 @@
 using KurrentDB.Client;
 using TransactionProcessing.Shared.Serialisation;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.SubscriptionWorker;
 
@@ -114,11 +114,11 @@ public class PersistentSubscription
                                              Result result)
     {
         String errors = result.Errors?.Any() == true
-            ? String.Join(Environment.NewLine, result.Errors.Where(error => !String.IsNullOrWhiteSpace(error)))
+            ? String.Join(Environment.NewLine, result.Errors.Where(error => !String.IsNullOrWhiteSpace(error.Message)).Select(error => error.Message))
             : String.Empty;
 
         String resultDetails = String.IsNullOrWhiteSpace(result.Message)
-            ? $"Result status [{result.Status}]. Errors [{errors}]"
+            ? $"Result status [{result.GetOutcome().Kind}]. Errors [{errors}]"
             : $"Result was {result.Message}";
 
         Object[] objectArray = new[] { resolvedEvent.Event.EventType, resolvedEvent.GetResolvedEventDataAsString(), resultDetails };

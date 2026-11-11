@@ -6,7 +6,7 @@ using TransactionProcessing.Shared.DomainDrivenDesign.EventSourcing;
 using TransactionProcessing.Shared.EventStore.Aggregate;
 using TransactionProcessing.Shared.EventStore.ProjectionEngine;
 using TransactionProcessing.Shared.EventStore.Tests.TestObjects;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using TransactionProcessing.Shared.Logger;
 
 namespace TransactionProcessing.Shared.EventStore.Tests;

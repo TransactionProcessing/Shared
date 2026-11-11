@@ -13,7 +13,6 @@
     <PackageReference Include="Reqnroll" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="KurrentDB.Client" />
-    <PackageReference Include="SimpleResults" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="Docker.DotNet" />
@@ -22,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TransactionProcessing.ClientProxyBase\TransactionProcessing.ClientProxyBase.csproj" />
     <ProjectReference Include="..\TransactionProcessing.Shared\TransactionProcessing.Shared.csproj" />
+    <ProjectReference Include="..\src\TransactionProcessing.UnionResults\TransactionProcessing.UnionResults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

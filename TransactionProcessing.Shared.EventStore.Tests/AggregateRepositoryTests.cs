@@ -2,7 +2,7 @@ using System.Text.Json;
 using KurrentDB.Client;
 using TransactionProcessing.Shared.EventStore.Tests.TestObjects;
 using TransactionProcessing.Shared.Serialisation;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.Tests;
 
@@ -36,7 +36,7 @@ public class AggregateRepositoryTests{
         List<ResolvedEvent> e = new(){
                                                            new ResolvedEvent(r, null, null)
                                                        };
-        context.ReadEvents(Arg<String>.Any(), Arg<Int64>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(e);
+        context.ReadEvents(Arg<String>.Any(), Arg<Int64>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(e));
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
         testAggregate.IsSuccess.ShouldBeTrue();
         testAggregate.Data.ShouldNotBeNull();
@@ -52,7 +52,7 @@ public class AggregateRepositoryTests{
         context.ReadEvents(Arg<String>.Any(), Arg<Int64>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.NotFound("Stream doesnt exist"));
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
         testAggregate.IsFailed.ShouldBeTrue();
-        testAggregate.Status.ShouldBe(ResultStatus.NotFound);
+        testAggregate.Errors[0].ErrorType.ShouldBe(ErrorType.NotFound);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class AggregateRepositoryTests{
         {
             new ResolvedEvent(r, null, null)
         };
-        context.ReadEvents(Arg<String>.Any(), Arg<Int64>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(e);
+        context.ReadEvents(Arg<String>.Any(), Arg<Int64>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(e));
         Result<TestAggregate> result = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
         result.IsFailed.ShouldBeTrue();
     }
@@ -80,7 +80,7 @@ public class AggregateRepositoryTests{
 
         List<ResolvedEvent> e = new();
         context.ReadEvents(Arg<String>.Any(), Arg<Int64>.Any(), Arg<CancellationToken>.Any())
-            .ReturnsAsync(e);
+            .ReturnsAsync(Result.Success(e));
 
         IDomainEventFactory<IDomainEvent> factory = new DomainEventFactory();
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new AggregateRepository<TestAggregate, DomainEvent>(context.Instance(), factory);
@@ -101,7 +101,7 @@ public class AggregateRepositoryTests{
         List<ResolvedEvent> e = new(){
             new ResolvedEvent(r, null, null)
         };
-        context.GetEventsBackward(Arg<String>.Any(), Arg<Int32>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(e);
+        context.GetEventsBackward(Arg<String>.Any(), Arg<Int32>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(e));
 
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
         testAggregate.IsSuccess.ShouldBeTrue();
@@ -118,7 +118,7 @@ public class AggregateRepositoryTests{
         List<ResolvedEvent> e = new(){
             new ResolvedEvent(r, null, null)
         };
-        context.GetEventsBackward(Arg<String>.Any(), Arg<Int32>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(e);
+        context.GetEventsBackward(Arg<String>.Any(), Arg<Int32>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(e));
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new(context.Instance(), factory);
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
@@ -174,7 +174,7 @@ public class AggregateRepositoryTests{
         List<ResolvedEvent> e = new() {
             new ResolvedEvent(r, null, null)
         };
-        context.GetEventsBackward(Arg<String>.Any(), Arg<Int32>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(e);
+        context.GetEventsBackward(Arg<String>.Any(), Arg<Int32>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(e));
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new(context.Instance(), factory);
         Result<TestAggregate> testAggregaterResult = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);

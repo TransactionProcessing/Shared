@@ -7,7 +7,7 @@ using TransactionProcessing.Shared.Logger;
 using Microsoft.Extensions.Caching.Memory;
 using Imposter.Abstractions;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System.Threading;
 using Xunit;
 
@@ -221,7 +221,7 @@ public class AggregateServiceTests {
         aggregate.SetAggregateName("1", Guid.NewGuid());
         var repositoryMock = new TestAggregateRepository();
 
-        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Result.Failure());
+        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Result.Fail(Error.Failure("failure")));
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -262,7 +262,7 @@ public class AggregateServiceTests {
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
-        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult<Result<TestAggregate>>(Result.Failure());
+        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Result<TestAggregate>.Fail(Error.Failure("failure")));
 
         // Act
         var result = await _aggregateService.GetLatest<TestAggregate>(aggregateId, CancellationToken.None);
@@ -314,7 +314,7 @@ public class AggregateServiceTests {
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
-        repositoryMock.GetLatestVersionFromLastEventHandler = (_, _) => Task.FromResult<Result<TestAggregate>>(Result.Failure());
+        repositoryMock.GetLatestVersionFromLastEventHandler = (_, _) => Task.FromResult(Result<TestAggregate>.Fail(Error.Failure("failure")));
 
         // Act
         var result = await _aggregateService.GetLatestFromLastEvent<TestAggregate>(aggregateId, CancellationToken.None);

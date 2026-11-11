@@ -1,8 +1,8 @@
-﻿using System.Threading;
+using System.Threading;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using TransactionProcessing.Shared.Serialisation;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System.Linq;
 
 namespace TransactionProcessing.Shared.IntegrationTesting.TestContainers;

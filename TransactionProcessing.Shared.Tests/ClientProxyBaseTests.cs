@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.Tests;
 
@@ -385,7 +385,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Post("widgets", new SampleRequest("broken"));
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldBe("The request body could not be serialized: boom");
     }
 
@@ -398,7 +398,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Post("widgets", new SampleRequest("null"));
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldBe("The request body could not be serialized.");
         handler.LastRequest.ShouldBeNull();
     }
@@ -418,7 +418,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/7");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldContain("The response body could not be deserialized: cannot parse");
     }
 
@@ -431,7 +431,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/timeout");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.CriticalError);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Critical);
         result.Message.ShouldBe("The HTTP request timed out.");
     }
 
@@ -449,11 +449,11 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldBe("Validation failed");
-        result.Errors.ShouldContain("Validation failed");
-        result.Errors.ShouldContain("Name is required");
-        result.Errors.ShouldContain("Age must be positive");
+        result.Errors.Select(error => error.Message).ShouldContain("Validation failed");
+        result.Errors.Select(error => error.Message).ShouldContain("Name is required");
+        result.Errors.Select(error => error.Message).ShouldContain("Age must be positive");
     }
 
     [Fact]
@@ -469,7 +469,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/8");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldContain("is not assignable");
     }
 
@@ -486,7 +486,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/1", " ");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("Access token");
         handler.LastRequest.ShouldBeNull();
     }
@@ -514,7 +514,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>(requestUri!);
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("Request URI");
         handler.LastRequest.ShouldBeNull();
     }
@@ -530,7 +530,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/empty");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldBe("The response content was empty.");
     }
 
@@ -546,20 +546,20 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/null");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldBe("The response body could not be deserialized.");
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.Unauthorized, ResultStatus.Unauthorized)]
-    [InlineData(HttpStatusCode.Forbidden, ResultStatus.Forbidden)]
-    [InlineData(HttpStatusCode.NotFound, ResultStatus.NotFound)]
-    [InlineData(HttpStatusCode.Conflict, ResultStatus.Conflict)]
-    [InlineData(HttpStatusCode.InternalServerError, ResultStatus.CriticalError)]
-    [InlineData(HttpStatusCode.BadGateway, ResultStatus.CriticalError)]
-    [InlineData(HttpStatusCode.BadRequest, ResultStatus.Invalid)]
-    [InlineData(HttpStatusCode.UnprocessableEntity, ResultStatus.Failure)]
-    public async Task Delete_MapsFailureStatusCodes(HttpStatusCode statusCode, ResultStatus expectedStatus)
+    [InlineData(HttpStatusCode.Unauthorized, ErrorType.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden, ErrorType.Forbidden)]
+    [InlineData(HttpStatusCode.NotFound, ErrorType.NotFound)]
+    [InlineData(HttpStatusCode.Conflict, ErrorType.Conflict)]
+    [InlineData(HttpStatusCode.InternalServerError, ErrorType.Critical)]
+    [InlineData(HttpStatusCode.BadGateway, ErrorType.Critical)]
+    [InlineData(HttpStatusCode.BadRequest, ErrorType.Validation)]
+    [InlineData(HttpStatusCode.UnprocessableEntity, ErrorType.Failure)]
+    public async Task Delete_MapsFailureStatusCodes(HttpStatusCode statusCode, ErrorType expectedStatus)
     {
         var handler = new RecordingHandler(_ => new HttpResponseMessage(statusCode)
         {
@@ -570,9 +570,9 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Delete("widgets/failed");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(expectedStatus);
+        result.Errors[0].ErrorType.ShouldBe(expectedStatus);
         result.Message.ShouldBe("server message");
-        result.Errors.ShouldContain("server message");
+        result.Errors.Select(error => error.Message).ShouldContain("server message");
     }
 
     [Fact]
@@ -587,7 +587,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/failed");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.CriticalError);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Critical);
         result.Message.ShouldBe("Bad Gateway");
     }
 
@@ -618,9 +618,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/missing");
 
-        result.Status.ShouldBe(ResultStatus.NotFound);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.NotFound);
         result.Message.ShouldBe("plain error");
-        result.Errors.ShouldContain("plain error");
+        result.Errors.Select(error => error.Message).ShouldContain("plain error");
     }
 
     [Theory]
@@ -641,9 +641,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldBe(expectedMessage);
-        result.Errors.ShouldContain(expectedMessage);
+        result.Errors.Select(error => error.Message).ShouldContain(expectedMessage);
     }
 
     [Theory]
@@ -692,9 +692,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldBe(body);
-        result.Errors.ShouldContain(body);
+        result.Errors.Select(error => error.Message).ShouldContain(body);
     }
 
     [Fact]
@@ -709,7 +709,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/null-content");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldBe("The response content was empty.");
     }
 
@@ -724,7 +724,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/1", [(header, value)]);
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -737,7 +737,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/1", [(":invalid", "value")]);
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("could not be added");
         handler.LastRequest.ShouldBeNull();
     }
@@ -754,7 +754,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Post("uploads", [1, 2], fileName!, [], "token");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("file name");
         handler.LastRequest.ShouldBeNull();
     }
@@ -770,7 +770,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Post("uploads", [1, 2], "file.txt", [(field, value)], "token");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -783,7 +783,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Post("uploads", (byte[])null!, "file.txt", [], "token");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("file data");
         handler.LastRequest.ShouldBeNull();
     }
@@ -802,7 +802,7 @@ public sealed class ClientProxyBaseTests
             "token");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("form fields");
         handler.LastRequest.ShouldBeNull();
     }
@@ -829,7 +829,7 @@ public sealed class ClientProxyBaseTests
             [(header, value)]);
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -907,7 +907,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Put<SampleResponse>(requestUri, content, accessToken, headers!);
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -954,7 +954,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/1");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.CriticalError);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Critical);
         result.Message.ShouldBe("network unavailable");
     }
 
@@ -966,7 +966,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>("widgets/1");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Failure);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
         result.Message.ShouldBe("invalid request state");
     }
 
@@ -979,7 +979,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Post("widgets/raw", (HttpContent)null!);
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("content cannot be null");
         handler.LastRequest.ShouldBeNull();
     }
@@ -993,7 +993,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Post("uploads", [1], "file.txt", [], " ");
 
         result.IsFailed.ShouldBeTrue();
-        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("Access token");
         handler.LastRequest.ShouldBeNull();
     }
@@ -1014,27 +1014,27 @@ public sealed class ClientProxyBaseTests
     }
 
     [Theory]
-    [InlineData(RequestPipeline.RequestBody, HandlerFailure.HttpRequest, ResultStatus.CriticalError)]
-    [InlineData(RequestPipeline.RequestBody, HandlerFailure.InvalidOperation, ResultStatus.Failure)]
-    [InlineData(RequestPipeline.RequestBody, HandlerFailure.Timeout, ResultStatus.CriticalError)]
-    [InlineData(RequestPipeline.RawContent, HandlerFailure.HttpRequest, ResultStatus.CriticalError)]
-    [InlineData(RequestPipeline.RawContent, HandlerFailure.InvalidOperation, ResultStatus.Failure)]
-    [InlineData(RequestPipeline.RawContent, HandlerFailure.Timeout, ResultStatus.CriticalError)]
-    [InlineData(RequestPipeline.GenericContent, HandlerFailure.HttpRequest, ResultStatus.CriticalError)]
-    [InlineData(RequestPipeline.GenericContent, HandlerFailure.InvalidOperation, ResultStatus.Failure)]
-    [InlineData(RequestPipeline.GenericContent, HandlerFailure.Timeout, ResultStatus.CriticalError)]
-    [InlineData(RequestPipeline.Multipart, HandlerFailure.HttpRequest, ResultStatus.CriticalError)]
-    [InlineData(RequestPipeline.Multipart, HandlerFailure.InvalidOperation, ResultStatus.Failure)]
-    [InlineData(RequestPipeline.Multipart, HandlerFailure.Timeout, ResultStatus.CriticalError)]
+    [InlineData(RequestPipeline.RequestBody, HandlerFailure.HttpRequest, ErrorType.Critical)]
+    [InlineData(RequestPipeline.RequestBody, HandlerFailure.InvalidOperation, ErrorType.Failure)]
+    [InlineData(RequestPipeline.RequestBody, HandlerFailure.Timeout, ErrorType.Critical)]
+    [InlineData(RequestPipeline.RawContent, HandlerFailure.HttpRequest, ErrorType.Critical)]
+    [InlineData(RequestPipeline.RawContent, HandlerFailure.InvalidOperation, ErrorType.Failure)]
+    [InlineData(RequestPipeline.RawContent, HandlerFailure.Timeout, ErrorType.Critical)]
+    [InlineData(RequestPipeline.GenericContent, HandlerFailure.HttpRequest, ErrorType.Critical)]
+    [InlineData(RequestPipeline.GenericContent, HandlerFailure.InvalidOperation, ErrorType.Failure)]
+    [InlineData(RequestPipeline.GenericContent, HandlerFailure.Timeout, ErrorType.Critical)]
+    [InlineData(RequestPipeline.Multipart, HandlerFailure.HttpRequest, ErrorType.Critical)]
+    [InlineData(RequestPipeline.Multipart, HandlerFailure.InvalidOperation, ErrorType.Failure)]
+    [InlineData(RequestPipeline.Multipart, HandlerFailure.Timeout, ErrorType.Critical)]
     public async Task RequestPipelines_MapHandlerExceptions(
         RequestPipeline pipeline,
         HandlerFailure failure,
-        ResultStatus expectedStatus)
+        ErrorType expectedStatus)
     {
         var handler = new RecordingHandler(_ => throw CreateHandlerException(failure));
         var sut = CreateWrapper(handler);
 
-        ResultStatus resultStatus = await InvokePipeline(pipeline, sut, CancellationToken.None);
+        ErrorType resultStatus = await InvokePipeline(pipeline, sut, CancellationToken.None);
 
         resultStatus.ShouldBe(expectedStatus);
     }
@@ -1230,7 +1230,7 @@ public sealed class ClientProxyBaseTests
             }),
             deserialise: (_, _) => new SampleResponse(1, "ok"));
 
-    private static async Task<ResultStatus> InvokePipeline(
+    private static async Task<ErrorType> InvokePipeline(
         RequestPipeline pipeline,
         TestHttpClientWrapper sut,
         CancellationToken cancellationToken)
@@ -1238,19 +1238,19 @@ public sealed class ClientProxyBaseTests
         switch (pipeline)
         {
             case RequestPipeline.RequestBody:
-                return (await sut.Post("widgets", new SampleRequest("request"), cancellationToken)).Status;
+                return (await sut.Post("widgets", new SampleRequest("request"), cancellationToken)).Errors[0].ErrorType;
             case RequestPipeline.RawContent:
                 using (var content = new StringContent("raw"))
                 {
-                    return (await sut.Post("widgets/raw", (HttpContent)content, cancellationToken)).Status;
+                    return (await sut.Post("widgets/raw", (HttpContent)content, cancellationToken)).Errors[0].ErrorType;
                 }
             case RequestPipeline.GenericContent:
                 using (var content = new StringContent("raw"))
                 {
-                    return (await sut.Put<SampleResponse>("widgets/1", content, cancellationToken)).Status;
+                    return (await sut.Put<SampleResponse>("widgets/1", content, cancellationToken)).Errors[0].ErrorType;
                 }
             case RequestPipeline.Multipart:
-                return (await sut.Post("uploads", [1], "file.txt", [], "token", cancellationToken)).Status;
+                return (await sut.Post("uploads", [1], "file.txt", [], "token", cancellationToken)).Errors[0].ErrorType;
             default:
                 throw new ArgumentOutOfRangeException(nameof(pipeline), pipeline, null);
         }

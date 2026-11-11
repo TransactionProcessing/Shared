@@ -1,5 +1,5 @@
 using TransactionProcessing.Shared.EventStore.Tests.TestObjects;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.Tests;
 
@@ -31,10 +31,10 @@ public class EventDispatchHelperTests{
         List<IDomainEventHandler> handlers = new();
         IDomainEventHandlerImposter domainEventHandler = new();
         domainEventHandler.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-            .ReturnsAsync(Result.Failure());
+            .ReturnsAsync(Result.Fail(Error.Failure("failure")));
         IDomainEventHandlerImposter domainEventHandler2 = new();
         domainEventHandler2.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-            .ReturnsAsync(Result.Failure());
+            .ReturnsAsync(Result.Fail(Error.Failure("failure")));
         handlers.Add(domainEventHandler.Instance());
         handlers.Add(domainEventHandler2.Instance());
         Result dispatchResult = await @event.DispatchToHandlers(handlers, CancellationToken.None);

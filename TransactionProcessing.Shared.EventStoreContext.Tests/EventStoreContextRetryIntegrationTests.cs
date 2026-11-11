@@ -12,7 +12,7 @@ using TransactionProcessing.Shared.IntegrationTesting;
 using NUnit.Framework;
 using System.Linq;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStoreContext.Tests;
 
@@ -69,12 +69,12 @@ public class EventStoreContextRetryIntegrationTests : IDisposable
         {
             Result insertEventResult = await context.InsertEvents(streamName, -1, events, CancellationToken.None);
 
-            TestContext.WriteLine($"Insert success: {insertEventResult.IsSuccess}; status: {insertEventResult.Status}; message: {insertEventResult.Message}; errors: {String.Join(" | ", insertEventResult.Errors ?? new List<String>())}");
+            TestContext.WriteLine($"Insert success: {insertEventResult.IsSuccess}; status: {insertEventResult.GetOutcome().Kind}; message: {insertEventResult.Message}; errors: {String.Join(" | ", insertEventResult.Errors.Select(error => error.Message))}");
             await restartTask;
 
             insertEventResult.IsSuccess.ShouldBeTrue();
 
-            Result<List<ResolvedEvent>>? readEventsResult = null;
+            Result<List<ResolvedEvent>> readEventsResult = default;
             await Retry.For(async () =>
             {
                 readEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
