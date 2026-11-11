@@ -1,0 +1,40 @@
+﻿using System;
+
+namespace TransactionProcessing.Shared.IntegrationTesting;
+
+public enum ContainerType
+{
+    SqlServer,
+    KurrentDb,
+    MessagingService,
+    SecurityService,
+    CallbackHandler,
+    TestHost,
+    TransactionProcessor,
+    FileProcessor,
+    TransactionProcessorAcl,
+    ConfigurationHost,
+    EstateManagementUI,
+    EstateReporting,
+    SubscriptionService,
+    NotSet
+}
+
+[Flags]
+public enum DockerServices
+{
+    None = 0,
+    SqlServer = 1,
+    KurrentDb = 2,
+    MessagingService = 4,
+    SecurityService = 8,
+    CallbackHandler = 16,
+    TestHost = 32,
+    TransactionProcessor = 64,
+    FileProcessor = 128,
+    TransactionProcessorAcl = 256,
+    ConfigurationHost = 512,
+    EstateManagementUI = 1024,
+    EstateReporting = 2048,
+    SubscriptionService = 4096,
+}

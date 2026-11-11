@@ -1,0 +1,69 @@
+using EventStore.Client;
+using Microsoft.Extensions.Configuration;
+using Imposter.Abstractions;
+using TransactionProcessing.Shared.EventStore.EventStore;
+using TransactionProcessing.Shared.General;
+using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace TransactionProcessing.Shared.EventStore.Tests;
+
+public class EventStoreContextManagerTests {
+    private readonly EventStoreContextManager Manager;
+    
+    private readonly IEventStoreContextImposter Context1;
+    private readonly IEventStoreContextImposter Context2;
+    private const String ConnectionStringIdentifier = "ConnectionString";
+    private const String ConnectionStringIdentifier1 = "ConnectionString1";
+
+    public EventStoreContextManagerTests() {
+        this.Context1 = new IEventStoreContextImposter();
+        this.Context2 = new IEventStoreContextImposter();
+        this.Manager = new EventStoreContextManager((s) => {
+            if (s.Contains("133"))
+                return this.Context1.Instance();
+            return this.Context2.Instance();
+        });
+        
+        IReadOnlyDictionary<String, String> defaultAppSettings = new Dictionary<String, String>
+        {
+            ["EventStoreSettings:ConnectionString"] = "https://192.168.1.133:2113",
+            ["EventStoreSettings:ConnectionString1"] = "https://192.168.1.134:2113",
+        };
+        IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddInMemoryCollection(defaultAppSettings);
+        ConfigurationReader.Initialise(configurationBuilder.Build());
+    }
+
+    [Fact]
+    public void EventStoreContextManager_GetContext_ByConnectionIdentifier_ContextReturned() {
+        var ctx = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
+        ctx.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void EventStoreContextManager_GetContextFromResolver_UseCache_ByConnectionIdentifier_ContextReturned()
+    {
+        var ctx = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
+        ctx.ShouldNotBeNull();
+        var ctx2 = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
+        ctx2.ShouldNotBeNull();
+        ctx.GetHashCode().ShouldBe(ctx2.GetHashCode());
+    }
+
+    [Fact]
+    public void EventStoreContextManager_GetContextFromResolver_MultipleContexts_ContextReturned()
+    {
+        var ctx = this.Manager.GetEventStoreContext(ConnectionStringIdentifier);
+        ctx.ShouldNotBeNull();
+
+        var ctx2 = this.Manager.GetEventStoreContext(ConnectionStringIdentifier1);
+        ctx2.ShouldNotBeNull();
+        ctx.GetHashCode().ShouldNotBe(ctx2.GetHashCode());
+    }
+}

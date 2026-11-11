@@ -18,27 +18,32 @@ jobs:
     steps:
     - uses: actions/checkout@v2.3.4    
 
+    - name: Install .NET 11 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 11.0.x
+
     - name: Restore Nuget Packages
-      run: dotnet restore Shared.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
+      run: dotnet restore TransactionProcessing.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
     - name: Build Code
-      run: dotnet build Shared.sln --configuration Release
+      run: dotnet build TransactionProcessing.sln --configuration Release
 
     - name: Run Unit Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "Shared.Tests/Shared.Tests.csproj" \
-            --results-directory "coverage/Shared.Tests" \
-            --coverlet --coverlet-output-format lcov --coverlet-file-prefix Shared.Tests \
+        dotnet test "TransactionProcessing.Shared.Tests/TransactionProcessing.Shared.Tests.csproj" \
+            --results-directory "coverage/TransactionProcessing.Shared.Tests" \
+            --coverlet --coverlet-output-format lcov --coverlet-file-prefix TransactionProcessing.Shared.Tests \
             --coverlet-exclude "[xunit*]*" \
             --coverlet-exclude-by-attribute Obsolete \
             --coverlet-exclude-by-attribute GeneratedCodeAttribute \
             --coverlet-exclude-by-attribute CompilerGeneratedAttribute \
             --coverlet-exclude-by-attribute ExcludeFromCodeCoverageAttribute
 
-        dotnet test "Shared.EventStore.Tests/Shared.EventStore.Tests.csproj" \
-            --results-directory "coverage/Shared.EventStore.Tests" \
-            --coverlet --coverlet-output-format lcov --coverlet-file-prefix Shared.EventStore.Tests \
+        dotnet test "TransactionProcessing.Shared.EventStore.Tests/TransactionProcessing.Shared.EventStore.Tests.csproj" \
+            --results-directory "coverage/TransactionProcessing.Shared.EventStore.Tests" \
+            --coverlet --coverlet-output-format lcov --coverlet-file-prefix TransactionProcessing.Shared.EventStore.Tests \
             --coverlet-exclude "[xunit*]*" \
             --coverlet-exclude-by-attribute Obsolete \
             --coverlet-exclude-by-attribute GeneratedCodeAttribute \
