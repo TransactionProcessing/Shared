@@ -1,22 +1,22 @@
-# Shared
+# TransactionProcessing shared libraries
 
 Reusable .NET libraries for transaction-processing services, including logging, serialization, web helpers, Entity Framework support, EventStore integration, result handling, and test infrastructure.
 
-[![Nightly Build](https://github.com/TransactionProcessing/Shared/actions/workflows/nightlybuild.yml/badge.svg)](https://github.com/TransactionProcessing/Shared/actions/workflows/nightlybuild.yml)
-[![Release](https://github.com/TransactionProcessing/Shared/actions/workflows/createrelease.yml/badge.svg)](https://github.com/TransactionProcessing/Shared/actions/workflows/createrelease.yml)
-[![Codacy Code Quality](https://app.codacy.com/project/badge/Grade/470520d84090465eaaa59b6061882392)](https://app.codacy.com/gh/TransactionProcessing/Shared/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/470520d84090465eaaa59b6061882392)](https://app.codacy.com/gh/TransactionProcessing/Shared/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![Nightly Build](https://github.com/TransactionProcessing/TransactionProcessing.Shared/actions/workflows/nightlybuild.yml/badge.svg)](https://github.com/TransactionProcessing/TransactionProcessing.Shared/actions/workflows/nightlybuild.yml)
+[![Release](https://github.com/TransactionProcessing/TransactionProcessing.Shared/actions/workflows/createrelease.yml/badge.svg)](https://github.com/TransactionProcessing/TransactionProcessing.Shared/actions/workflows/createrelease.yml)
+[![Codacy Code Quality](https://app.codacy.com/project/badge/Grade/470520d84090465eaaa59b6061882392)](https://app.codacy.com/gh/TransactionProcessing/TransactionProcessing.Shared/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/470520d84090465eaaa59b6061882392)](https://app.codacy.com/gh/TransactionProcessing/TransactionProcessing.Shared/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 
 ## NuGet packages
 
 | Package | Purpose | Version |
 |---|---|---|
-| `ClientProxyBase` | HTTP client proxy foundations | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/ClientProxyBase.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/ClientProxyBase) |
-| `Shared` | Common web, serialization, middleware, and EF helpers | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared) |
-| `Shared.DomainDrivenDesign` | Domain-driven design primitives | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.DomainDrivenDesign.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.DomainDrivenDesign) |
-| `Shared.EventStore` | EventStore/KurrentDB integration | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.EventStore.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.EventStore) |
-| `Shared.IntegrationTesting` | Docker and integration-test helpers | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.IntegrationTesting.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.IntegrationTesting) |
-| `Shared.Logger` | Logging and correlation context | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Logger.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Logger) |
+| `TransactionProcessing.ClientProxyBase` | HTTP client proxy foundations | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.ClientProxyBase.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.ClientProxyBase) |
+| `TransactionProcessing.Shared` | Common web, serialization, middleware, and EF helpers | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared) |
+| `TransactionProcessing.Shared.DomainDrivenDesign` | Domain-driven design primitives | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.DomainDrivenDesign.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.DomainDrivenDesign) |
+| `TransactionProcessing.Shared.EventStore` | EventStore/KurrentDB integration | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.EventStore.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.EventStore) |
+| `TransactionProcessing.Shared.IntegrationTesting` | Docker and integration-test helpers | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.IntegrationTesting.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.IntegrationTesting) |
+| `TransactionProcessing.Shared.Logger` | Logging and correlation context | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.Logger.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.Logger) |
 | `Shared.Results` | Result types and retry policies | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Results.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Results) |
 | `Shared.Results.Web` | ASP.NET result mappings | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Results.Web.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Results.Web) |
 | `TransactionProcessing.ApiDefaults` | Minimal API versioning, OpenAPI, and Scalar defaults | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.ApiDefaults.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.ApiDefaults) |
@@ -32,7 +32,7 @@ Reusable .NET libraries for transaction-processing services, including logging, 
 Install the package required by your application:
 
 ```bash
-dotnet add package Shared
+dotnet add package TransactionProcessing.Shared
 ```
 
 Other packages can be installed independently depending on the functionality required.
@@ -50,7 +50,7 @@ Other packages can be installed independently depending on the functionality req
 
 ## API defaults sample
 
-`TransactionProcessing.ApiDefaults` is a separate package. It is not referenced by `Shared`, so applications that only consume the non-web shared packages do not gain its ASP.NET Core dependencies.
+`TransactionProcessing.ApiDefaults` is a separate package. It is not referenced by `TransactionProcessing.Shared`, so applications that only consume the non-web shared packages do not gain its ASP.NET Core dependencies.
 
 Install it into an ASP.NET Core Minimal API project:
 
@@ -84,7 +84,7 @@ The package serves version-specific OpenAPI documents at `/openapi/v1.json` and 
 Run the test suite with:
 
 ```bash
-dotnet test --solution Shared.sln
+dotnet test --solution TransactionProcessing.sln
 ```
 
 Docker-backed integration tests require a compatible Linux Docker engine.
@@ -93,12 +93,12 @@ Docker-backed integration tests require a compatible Linux Docker engine.
 
 The repository is split into focused packages so applications can reference only the shared functionality they need.
 
-- `Shared` — core web, serialization, middleware, and persistence helpers
-- `Shared.Logger` — logging and tenant context
+- `TransactionProcessing.Shared` — core web, serialization, middleware, and persistence helpers
+- `TransactionProcessing.Shared.Logger` — logging and tenant context
 - `Shared.Results` — result and retry-policy abstractions
-- `Shared.EventStore` — EventStore integration
-- `Shared.IntegrationTesting` — integration-test infrastructure
-- `Shared.Tests` — unit tests for the core shared library
+- `TransactionProcessing.Shared.EventStore` — EventStore integration
+- `TransactionProcessing.Shared.IntegrationTesting` — integration-test infrastructure
+- `TransactionProcessing.Shared.Tests` — unit tests for the core shared library
 
 ## Contributing
 

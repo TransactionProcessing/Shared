@@ -4,9 +4,9 @@ using System.Text;
 
 namespace Driver;
 
-using Shared.DomainDrivenDesign.EventSourcing;
-using Shared.EventStore.Aggregate;
-using Shared.EventStore.EventStore;
+using TransactionProcessing.Shared.DomainDrivenDesign.EventSourcing;
+using TransactionProcessing.Shared.EventStore.Aggregate;
+using TransactionProcessing.Shared.EventStore.EventStore;
 
 public record TestAggregate1 : Aggregate
 {

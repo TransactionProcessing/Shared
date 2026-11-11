@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net11.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="SimpleResults" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TransactionProcessing.Shared.Logger\TransactionProcessing.Shared.Logger.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\Shared.Results\Shared.Results.csproj" PrivateAssets="All" />
+  </ItemGroup>
+
+	<Target Name="IncludeP2PAssets">
+		<ItemGroup>
+			<BuildOutputInPackage Include="$(OutputPath)Shared.Results.dll" />
+			<BuildOutputInPackage Include="$(OutputPath)TransactionProcessing.Shared.Logger.dll" />
+		</ItemGroup>
+	</Target>
+
+</Project>

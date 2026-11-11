@@ -1,0 +1,122 @@
+using KurrentDB.Client;
+using TransactionProcessing.Shared.General;
+using TransactionProcessing.Shared.Serialisation;
+
+namespace TransactionProcessing.Shared.EventStore.Tests.TestObjects;
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using DomainDrivenDesign.EventSourcing;
+using PersistentSubscriptionInfo = SubscriptionWorker.PersistentSubscriptionInfo;
+
+public class TestData
+{
+
+    public static readonly Guid AggregateId = Guid.Parse("103B335B-540A-4985-BB80-FD9B2BABF866");
+    public static readonly Guid EventId = Guid.Parse("C9416757-582C-4F67-A320-80FE1E937045");
+
+    public static readonly string EstateName = "Test Estate 1";
+
+    public static EventRecord CreateEventRecord<T>(T domainEvent, string streamId, bool addToMap) where T : DomainEvent
+    {
+        byte[] eventData = Encoding.UTF8.GetBytes(StringSerialiser.Serialise(domainEvent, new SerialiserOptions(SerialiserPropertyFormat.CamelCase, IgnoreNullValues: true, WriteIndented: true)));
+        byte[] customEventMetaData = Encoding.UTF8.GetBytes(string.Empty);
+
+        Dictionary<string, string> metaData = new();
+        metaData.Add("type", domainEvent.GetType().FullName);
+        metaData.Add("created", "1000000");
+        metaData.Add("content-type", "application-json");
+
+        if (addToMap)
+            TypeMap.AddType(typeof(T), domainEvent.GetType().FullName);
+
+        EventRecord r = new(streamId,
+            Uuid.FromGuid(domainEvent.EventId),
+            0,
+            new Position(0, 0),
+            metaData,
+            eventData,
+            customEventMetaData);
+        return r;
+    }
+
+    public static EventRecord CreateEventRecord<T>(T domainEvent,
+                                                   string streamId) where T : DomainEvent =>
+        CreateEventRecord(domainEvent, streamId, true);
+
+    public static List<PersistentSubscriptionInfo> GetPersistentSubscriptions_DemoEstate()
+    {
+        List<PersistentSubscriptionInfo> list = new List<PersistentSubscriptionInfo>();
+
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "DemoEstate",
+            GroupName = "Estate Management"
+        });
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "$et-EstateCreatedEvent",
+            GroupName = "Migrations"
+        });
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "FileProcessorSubscriptionStream_DemoEstate",
+            GroupName = "File Processor"
+        });
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "TransactionProcessorSubscriptionStream_DemoEstate",
+            GroupName = "Transaction Processor"
+        });
+
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "$ce-MerchantBalanceArchive",
+            GroupName = "Ordered"
+        });
+
+        return list;
+    }
+
+    public static List<PersistentSubscriptionInfo> GetPersistentSubscriptions_DemoEstate_Updated()
+    {
+        List<PersistentSubscriptionInfo> list = new List<PersistentSubscriptionInfo>();
+
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "DemoEstate",
+            GroupName = "Estate Management"
+        });
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "$et-EstateCreatedEvent",
+            GroupName = "Migrations"
+        });
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "FileProcessorSubscriptionStream_DemoEstate",
+            GroupName = "File Processor"
+        });
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "TransactionProcessorSubscriptionStream_DemoEstate",
+            GroupName = "Transaction Processor"
+        });
+
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "$ce-MerchantBalanceArchive",
+            GroupName = "Ordered"
+        });
+
+        list.Add(new PersistentSubscriptionInfo
+        {
+            StreamName = "DemoEstate2",
+            GroupName = "Estate Management"
+        });
+
+        return list;
+    }
+
+}

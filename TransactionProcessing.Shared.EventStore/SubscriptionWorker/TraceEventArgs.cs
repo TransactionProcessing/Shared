@@ -1,0 +1,12 @@
+﻿namespace TransactionProcessing.Shared.EventStore.SubscriptionWorker;
+
+using System;
+using System.Diagnostics.CodeAnalysis;
+
+[ExcludeFromCodeCoverage]
+public class TraceEventArgs : EventArgs
+{
+
+    public String Message { get; set; }
+
+}
