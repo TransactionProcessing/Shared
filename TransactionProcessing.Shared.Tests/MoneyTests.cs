@@ -13,12 +13,37 @@ using Xunit;
 
 public partial class SharedTests
 {
+    public static TheoryData<Decimal> MoneyCreationCases => new()
+    {
+        { 0m },
+        { 1.00m },
+        { 1.59m },
+        { 100.00m },
+        { -1.59m }
+    };
+
+    public static TheoryData<Decimal, Decimal, Decimal> MoneyAdditionCases => new()
+    {
+        { 1m, 100m, 101m },
+        { 0m, 100m, 100m },
+        { -1m, 100m, 99m },
+        { 1.01m, 100.01m, 101.02m },
+        { 0.01m, 100.01m, 100.02m },
+        { -1.01m, 100.01m, 99m }
+    };
+
+    public static TheoryData<Decimal, Decimal, Decimal> MoneySubtractionCases => new()
+    {
+        { 1m, 100m, -99m },
+        { 0m, 100m, -100m },
+        { -1m, 100m, -101m },
+        { 1.01m, 100.01m, -99m },
+        { 0.01m, 100.01m, -100m },
+        { -1.01m, 100.01m, -101.02m }
+    };
+
     [Theory]
-    [InlineData(0)]
-    [InlineData(1.00)]
-    [InlineData(1.59)]
-    [InlineData(100.00)]
-    [InlineData(-1.59)]
+    [MemberData(nameof(MoneyCreationCases))]
     public void Money_CanBeCreated_IsCreated(Decimal moneyValue)
     {
         Money money = Money.Create(moneyValue);
@@ -28,12 +53,7 @@ public partial class SharedTests
     }
 
     [Theory]
-    [InlineData(1,100,101)]
-    [InlineData(0, 100, 100)]
-    [InlineData(-1, 100, 99)]
-    [InlineData(1.01, 100.01, 101.02)]
-    [InlineData(0.01, 100.01, 100.02)]
-    [InlineData(-1.01, 100.01, 99)]
+    [MemberData(nameof(MoneyAdditionCases))]
     public void Money_AddOperator_ValueAdded(Decimal initialValue, Decimal valueToAdd, Decimal expectedResult)
     {
         Money money1 = Money.Create(initialValue);
@@ -44,12 +64,7 @@ public partial class SharedTests
     }
 
     [Theory]
-    [InlineData(1, 100, -99)]
-    [InlineData(0, 100, -100)]
-    [InlineData(-1, 100, -101)]
-    [InlineData(1.01, 100.01, -99)]
-    [InlineData(0.01, 100.01, -100)]
-    [InlineData(-1.01, 100.01, -101.02)]
+    [MemberData(nameof(MoneySubtractionCases))]
     public void Money_SubtractOperator_ValueAdded(Decimal initialValue, Decimal valueToSubtract, Decimal expectedResult)
     {
         Money money1 = Money.Create(initialValue);
