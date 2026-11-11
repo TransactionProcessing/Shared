@@ -40,11 +40,7 @@ public class ReqnrollTableHelperTests
     }
 
     [Theory]
-    [InlineData("Field1", "-1.00", -1.00)]
-    [InlineData("Field1", "0.00", 0.00)]
-    [InlineData("Field1", "1.00", 1.00)]
-    [InlineData("Field1", "-1.23", -1.23)]
-    [InlineData("Field1", "1.23", 1.23)]
+    [MemberData(nameof(GetDecimalTestData))]
     public void ReqnrollTableHelper_GetDecimalValue_ExpectedValueIsReturned(String header, String value, Decimal expectedValue)
     {
         List<String> headers = new();
@@ -53,6 +49,15 @@ public class ReqnrollTableHelperTests
         table.AddRow(value);
         Decimal actual = ReqnrollTableHelper.GetDecimalValue(table.Rows.First(), header);
         actual.ShouldBe(expectedValue);
+    }
+
+    public static IEnumerable<object[]> GetDecimalTestData()
+    {
+        yield return new object[] { "Field1", "-1.00", -1.00m };
+        yield return new object[] { "Field1", "0.00", 0.00m };
+        yield return new object[] { "Field1", "1.00", 1.00m };
+        yield return new object[] { "Field1", "-1.23", -1.23m };
+        yield return new object[] { "Field1", "1.23", 1.23m };
     }
 
     [Theory]
