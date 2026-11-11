@@ -1,5 +1,4 @@
-﻿using System;
-using Shared.Results;
+using System;
 using SimpleResults;
 
 namespace TransactionProcessing.Shared.EventStore.Helpers;
@@ -10,11 +9,11 @@ public static class DomainServiceHelper
         where T : Aggregate.Aggregate, new()  // Constraint: T is a subclass of Aggregate and has a parameterless constructor
     {
         if (result.IsFailed && result.Status != ResultStatus.NotFound) {
-            return ResultHelpers.CreateFailure(result);
+            return FailureResultFactory.Create(result);
         }
 
         if (result.Status == ResultStatus.NotFound && isNotFoundError) {
-            return ResultHelpers.CreateFailure(result);
+            return FailureResultFactory.Create(result);
         }
 
         T aggregate = result.Status switch

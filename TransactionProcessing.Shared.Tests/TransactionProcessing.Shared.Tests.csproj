@@ -31,8 +31,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\TransactionProcessing.ClientProxyBase\TransactionProcessing.ClientProxyBase.csproj" />
 		<ProjectReference Include="..\TransactionProcessing.Shared.EventStore\TransactionProcessing.Shared.EventStore.csproj" />
-		<ProjectReference Include="..\Shared.Results.Web\Shared.Results.Web.csproj" />
-		<ProjectReference Include="..\Shared.Results\Shared.Results.csproj" />
 		<ProjectReference Include="..\TransactionProcessing.Shared\TransactionProcessing.Shared.csproj" />
 	</ItemGroup>
 

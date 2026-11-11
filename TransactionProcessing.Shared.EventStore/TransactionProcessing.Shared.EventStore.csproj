@@ -21,7 +21,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\TransactionProcessing.Shared.DomainDrivenDesign\TransactionProcessing.Shared.DomainDrivenDesign.csproj" />
-		<ProjectReference Include="..\Shared.Results\Shared.Results.csproj" />
 		<ProjectReference Include="..\TransactionProcessing.Shared\TransactionProcessing.Shared.csproj" />
 	</ItemGroup>
 

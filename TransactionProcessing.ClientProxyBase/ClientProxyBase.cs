@@ -1,5 +1,4 @@
-﻿using TransactionProcessing.Shared.Logger.TennantContext;
-using Shared.Results;
+using TransactionProcessing.Shared.Logger.TennantContext;
 using SimpleResults;
 using System;
 using System.Collections.Generic;
@@ -380,7 +379,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
             if (requestResult.IsFailed)
-                return ResultHelpers.CreateFailure(requestResult);
+                return FailureResultFactory.Create(requestResult);
             using HttpRequestMessage request = requestResult.Data;
 
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
@@ -408,7 +407,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
             if (requestResult.IsFailed)
-                return ResultHelpers.CreateFailure(requestResult);
+                return FailureResultFactory.Create(requestResult);
             using HttpRequestMessage request = requestResult.Data;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapNonGenericResult(method, response, cancellationToken);
@@ -434,7 +433,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateMultipartRequest(requestUri, fileData, fileName, formFields, accessToken, additionalHeaders);
             if (requestResult.IsFailed)
-                return ResultHelpers.CreateFailure(requestResult);
+                return FailureResultFactory.Create(requestResult);
             using HttpRequestMessage request = requestResult.Data;
             using HttpResponseMessage response = await this.HttpClient.SendAsync(request, cancellationToken);
             return await this.MapNonGenericResult(HttpMethod.Post, response, cancellationToken);
@@ -459,7 +458,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
             if (requestResult.IsFailed)
-                return ResultHelpers.CreateFailure(requestResult);
+                return FailureResultFactory.Create(requestResult);
             using HttpRequestMessage request = requestResult.Data;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapGenericResult<TResponse>(method, response, cancellationToken);
@@ -484,7 +483,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
             if (requestResult.IsFailed)
-                return ResultHelpers.CreateFailure(requestResult);
+                return FailureResultFactory.Create(requestResult);
             using HttpRequestMessage request = requestResult.Data;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapGenericResult<TResponse>(method, response, cancellationToken);
@@ -546,7 +545,7 @@ public abstract class ClientProxyBase {
         if (additionalHeaders is not null) {
             Result result = AddHeaders(request, additionalHeaders);
             if (result.IsFailed)
-                return ResultHelpers.CreateFailure(result);
+                return FailureResultFactory.Create(result);
         }
 
         return  Result.Success(request);
@@ -571,7 +570,7 @@ public abstract class ClientProxyBase {
         if (additionalHeaders is not null) {
             Result result = AddHeaders(request, additionalHeaders);
             if (result.IsFailed)
-                return ResultHelpers.CreateFailure(result);
+                return FailureResultFactory.Create(result);
         }
 
         return Result.Success(request);
@@ -597,20 +596,20 @@ public abstract class ClientProxyBase {
 
         Result<HttpRequestMessage> createRequestResult = CreateRequest(HttpMethod.Post, requestUri, body: null, accessToken, additionalHeaders: null);
         if (createRequestResult.IsFailed)
-            return ResultHelpers.CreateFailure(createRequestResult);
+            return FailureResultFactory.Create(createRequestResult);
 
         HttpRequestMessage request = createRequestResult.Data;
         
         Result<MultipartFormDataContent> createMultipartContentResult = CreateMultipartContent(fileData, fileName, formFields);
         if (createMultipartContentResult.IsFailed)
-            return ResultHelpers.CreateFailure(createMultipartContentResult);
+            return FailureResultFactory.Create(createMultipartContentResult);
 
         request.Content = createMultipartContentResult.Data;
 
         if (additionalHeaders is not null) {
             Result result = AddHeaders(request, additionalHeaders);
             if (result.IsFailed)
-                return ResultHelpers.CreateFailure(result);
+                return FailureResultFactory.Create(result);
         }
 
         return request;
@@ -738,7 +737,7 @@ public abstract class ClientProxyBase {
         String rawContent = await ReadContent(response, cancellationToken);
         Result<IReadOnlyList<String>> errorMessages = ExtractErrors(rawContent);
         if (errorMessages.IsFailed)
-            return ResultHelpers.CreateFailure(errorMessages);
+            return FailureResultFactory.Create(errorMessages);
 
         String primaryMessage = BuildPrimaryMessage(response, errorMessages.Data);
 
@@ -772,7 +771,7 @@ public abstract class ClientProxyBase {
             List<String> errors = new List<string>();
             Result result = AppendErrors(document.RootElement, errors);
             if (result.IsFailed)
-                return ResultHelpers.CreateFailure(result);
+                return FailureResultFactory.Create(result);
 
             return errors.Count == 0 ? [rawContent] : errors;
         }

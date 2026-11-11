@@ -13,12 +13,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TransactionProcessing.Shared.Logger\TransactionProcessing.Shared.Logger.csproj" PrivateAssets="All" />
-    <ProjectReference Include="..\Shared.Results\Shared.Results.csproj" PrivateAssets="All" />
   </ItemGroup>
 
 	<Target Name="IncludeP2PAssets">
 		<ItemGroup>
-			<BuildOutputInPackage Include="$(OutputPath)Shared.Results.dll" />
 			<BuildOutputInPackage Include="$(OutputPath)TransactionProcessing.Shared.Logger.dll" />
 		</ItemGroup>
 	</Target>

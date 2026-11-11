@@ -17,8 +17,6 @@ Reusable .NET libraries for transaction-processing services, including logging, 
 | `TransactionProcessing.Shared.EventStore` | EventStore/KurrentDB integration | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.EventStore.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.EventStore) |
 | `TransactionProcessing.Shared.IntegrationTesting` | Docker and integration-test helpers | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.IntegrationTesting.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.IntegrationTesting) |
 | `TransactionProcessing.Shared.Logger` | Logging and correlation context | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.Logger.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.Logger) |
-| `Shared.Results` | Result types and retry policies | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Results.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Results) |
-| `Shared.Results.Web` | ASP.NET result mappings | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/Shared.Results.Web.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/Shared.Results.Web) |
 | `TransactionProcessing.ApiDefaults` | Minimal API versioning, OpenAPI, and Scalar defaults | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.ApiDefaults.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.ApiDefaults) |
 
 ## Requirements
@@ -95,7 +93,7 @@ The repository is split into focused packages so applications can reference only
 
 - `TransactionProcessing.Shared` — core web, serialization, middleware, and persistence helpers
 - `TransactionProcessing.Shared.Logger` — logging and tenant context
-- `Shared.Results` — result and retry-policy abstractions
+- `TransactionProcessing.UnionResults` — C# union-based results and Minimal API Problem Details mapping
 - `TransactionProcessing.Shared.EventStore` — EventStore integration
 - `TransactionProcessing.Shared.IntegrationTesting` — integration-test infrastructure
 - `TransactionProcessing.Shared.Tests` — unit tests for the core shared library
