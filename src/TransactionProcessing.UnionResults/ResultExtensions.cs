@@ -93,7 +93,7 @@ public static class ResultExtensions
 
     public static Result Tap(this Result result, Action action) => result switch
     {
-        Ok => TapOk(result, action), NoContent or Error or ErrorList => result,
+        Ok or NoContent => TapOk(result, action), Error or ErrorList => result,
         null => throw new InvalidOperationException(DefaultResultHasNoValue),
     };
 

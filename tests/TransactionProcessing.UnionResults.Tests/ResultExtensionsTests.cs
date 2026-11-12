@@ -149,7 +149,7 @@ public sealed class ResultExtensionsTests
         Result.Fail(Missing).TapError(_ => errorCount++);
         failure.TapError(_ => errorCount++);
 
-        Assert.Equal(1, successCount);
+        Assert.Equal(2, successCount);
         Assert.Equal(3, errorCount);
         Assert.Throws<InvalidOperationException>(() => default(Result).Tap(() => { }));
         Assert.Throws<InvalidOperationException>(() => default(Result).TapError(_ => { }));

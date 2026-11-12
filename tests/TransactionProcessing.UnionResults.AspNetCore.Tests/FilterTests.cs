@@ -298,6 +298,8 @@ public sealed class FilterTests
         var registeredOptions = provider.GetRequiredService<IOptions<UnionResultOptions>>().Value;
         Assert.Throws<InvalidOperationException>(() => registeredOptions.Map(ErrorType.NotFound, 410));
         Assert.Throws<InvalidOperationException>(() => registeredOptions.MapCode("Gone", 410));
+        Assert.Throws<InvalidOperationException>(() => registeredOptions.IncludeErrorCodes = false);
+        Assert.Throws<InvalidOperationException>(() => registeredOptions.IncludeTraceId = false);
     }
 
     [Fact]
