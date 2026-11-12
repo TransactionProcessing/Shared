@@ -15,6 +15,7 @@ namespace TransactionProcessing.UnionResults.AspNetCore.Tests;
 public sealed class FilterTests
 {
     private const string Conflict = "conflict";
+    private const string ContentProperty = "content";
     private const string EmailField = "email";
     private const string FirstCode = "first";
     private const string InvalidLocation = "https://[";
@@ -111,14 +112,14 @@ public sealed class FilterTests
         Assert.Equal(["200", "201", "204", "400", "401", "403", "404", "409", "422", "500"], genericResponses.EnumerateObject().Select(static response => response.Name).Order(StringComparer.Ordinal));
         Assert.Equal(["200", "204", "400", "401", "403", "404", "409", "500"], nonGenericResponses.EnumerateObject().Select(static response => response.Name).Order(StringComparer.Ordinal));
         Assert.Equal(["200"], rawResponses.EnumerateObject().Select(static response => response.Name));
-        Assert.True(genericResponses.GetProperty("422").GetProperty("content").TryGetProperty("application/problem+json", out _));
-        Assert.True(genericResponses.GetProperty("200").GetProperty("content").TryGetProperty("application/json", out _));
-        Assert.True(genericResponses.GetProperty("201").GetProperty("content").TryGetProperty("application/json", out _));
-        var successSchema = genericResponses.GetProperty("200").GetProperty("content").GetProperty("application/json").GetProperty("schema");
+        Assert.True(genericResponses.GetProperty("422").GetProperty(ContentProperty).TryGetProperty("application/problem+json", out _));
+        Assert.True(genericResponses.GetProperty("200").GetProperty(ContentProperty).TryGetProperty("application/json", out _));
+        Assert.True(genericResponses.GetProperty("201").GetProperty(ContentProperty).TryGetProperty("application/json", out _));
+        var successSchema = genericResponses.GetProperty("200").GetProperty(ContentProperty).GetProperty("application/json").GetProperty("schema");
         Assert.Equal("string", successSchema.GetProperty("type").GetString());
-        Assert.False(genericResponses.GetProperty("204").TryGetProperty("content", out _));
-        Assert.False(nonGenericResponses.GetProperty("200").TryGetProperty("content", out _));
-        Assert.False(nonGenericResponses.GetProperty("204").TryGetProperty("content", out _));
+        Assert.False(genericResponses.GetProperty("204").TryGetProperty(ContentProperty, out _));
+        Assert.False(nonGenericResponses.GetProperty("200").TryGetProperty(ContentProperty, out _));
+        Assert.False(nonGenericResponses.GetProperty("204").TryGetProperty(ContentProperty, out _));
     }
 
     [Fact]

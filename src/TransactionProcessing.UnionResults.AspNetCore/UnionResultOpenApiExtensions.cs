@@ -10,6 +10,8 @@ namespace TransactionProcessing.UnionResults.AspNetCore;
 /// </summary>
 public static class UnionResultOpenApiExtensions
 {
+    private const string ApplicationJsonContentType = "application/json";
+
     private static readonly int[] DefaultProblemStatusCodes =
     [
         StatusCodes.Status400BadRequest,
@@ -67,10 +69,10 @@ public static class UnionResultOpenApiExtensions
         endpoint.AddOpenApiOperationTransformer(async (operation, context, cancellationToken) =>
         {
             var schema = await context.GetOrCreateSchemaAsync(typeof(T), null, cancellationToken).ConfigureAwait(false);
-            if (operation.Responses?.TryGetValue("200", out var ok) == true && ok.Content?.ContainsKey("application/json") == true)
-                ok.Content["application/json"] = new OpenApiMediaType { Schema = schema };
-            if (operation.Responses?.TryGetValue("201", out var created) == true && created.Content?.ContainsKey("application/json") == true)
-                created.Content["application/json"] = new OpenApiMediaType { Schema = schema };
+            if (operation.Responses?.TryGetValue("200", out var ok) == true && ok.Content?.ContainsKey(ApplicationJsonContentType) == true)
+                ok.Content[ApplicationJsonContentType] = new OpenApiMediaType { Schema = schema };
+            if (operation.Responses?.TryGetValue("201", out var created) == true && created.Content?.ContainsKey(ApplicationJsonContentType) == true)
+                created.Content[ApplicationJsonContentType] = new OpenApiMediaType { Schema = schema };
             if (operation.Responses?.TryGetValue("204", out var noContent) == true) noContent.Content?.Clear();
         });
 
