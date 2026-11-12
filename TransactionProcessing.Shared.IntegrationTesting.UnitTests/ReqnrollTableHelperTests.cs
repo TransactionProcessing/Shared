@@ -5,9 +5,11 @@ using Shouldly;
 
 public class ReqnrollTableHelperTests
 {
+    private const string FieldOneHeader = "Field1";
+
     [Theory]
-    [InlineData("Field1", "true", true)]
-    [InlineData("Field1", "false", false)]
+    [InlineData(FieldOneHeader, "true", true)]
+    [InlineData(FieldOneHeader, "false", false)]
     public void ReqnrollTableHelper_GetBooleanValue_ExpectedValueIsReturned(String header, String value, Boolean expectedValue)
     {
         List<String> headers = new();
@@ -53,17 +55,17 @@ public class ReqnrollTableHelperTests
 
     public static IEnumerable<object[]> GetDecimalTestData()
     {
-        yield return new object[] { "Field1", "-1.00", -1.00m };
-        yield return new object[] { "Field1", "0.00", 0.00m };
-        yield return new object[] { "Field1", "1.00", 1.00m };
-        yield return new object[] { "Field1", "-1.23", -1.23m };
-        yield return new object[] { "Field1", "1.23", 1.23m };
+        yield return new object[] { FieldOneHeader, "-1.00", -1.00m };
+        yield return new object[] { FieldOneHeader, "0.00", 0.00m };
+        yield return new object[] { FieldOneHeader, "1.00", 1.00m };
+        yield return new object[] { FieldOneHeader, "-1.23", -1.23m };
+        yield return new object[] { FieldOneHeader, "1.23", 1.23m };
     }
 
     [Theory]
-    [InlineData("Field1", "-1", -1.00)]
-    [InlineData("Field1", "0", 0.00)]
-    [InlineData("Field1", "1", 1.00)]        
+    [InlineData(FieldOneHeader, "-1", -1.00)]
+    [InlineData(FieldOneHeader, "0", 0.00)]
+    [InlineData(FieldOneHeader, "1", 1.00)]
     public void ReqnrollTableHelper_GetIntValue_ExpectedValueIsReturned(String header, String value, Int32 expectedValue)
     {
         List<String> headers = new();
@@ -75,9 +77,9 @@ public class ReqnrollTableHelperTests
     }
 
     [Theory]
-    [InlineData("Field1", "-1", -1.00)]
-    [InlineData("Field1", "0", 0.00)]
-    [InlineData("Field1", "1", 1.00)]
+    [InlineData(FieldOneHeader, "-1", -1.00)]
+    [InlineData(FieldOneHeader, "0", 0.00)]
+    [InlineData(FieldOneHeader, "1", 1.00)]
     public void ReqnrollTableHelper_GetShortValue_ExpectedValueIsReturned(String header, String value, Int16 expectedValue)
     {
         List<String> headers = new();
@@ -91,7 +93,7 @@ public class ReqnrollTableHelperTests
     [Fact]
     public void ReqnrollTableHelper_GetStringRowValue_ExpectedValueIsReturned()
     {
-        String header = "Field1";
+        String header = FieldOneHeader;
         String expectedValue = "TestStringValue";
 
         List<String> headers = new();
@@ -104,12 +106,12 @@ public class ReqnrollTableHelperTests
     }
 
     [Theory]
-    [InlineData("Field1", "Ordinal", StringComparison.Ordinal)]
-    [InlineData("Field1", "OrdinalIgnoreCase", StringComparison.OrdinalIgnoreCase)]
-    [InlineData("Field1", "InvariantCulture", StringComparison.InvariantCulture)]
-    [InlineData("Field1", "InvariantCultureIgnoreCase", StringComparison.InvariantCultureIgnoreCase)]
-    [InlineData("Field1", "CurrentCulture", StringComparison.CurrentCulture)]
-    [InlineData("Field1", "CurrentCultureIgnoreCase", StringComparison.CurrentCultureIgnoreCase)]
+    [InlineData(FieldOneHeader, "Ordinal", StringComparison.Ordinal)]
+    [InlineData(FieldOneHeader, "OrdinalIgnoreCase", StringComparison.OrdinalIgnoreCase)]
+    [InlineData(FieldOneHeader, "InvariantCulture", StringComparison.InvariantCulture)]
+    [InlineData(FieldOneHeader, "InvariantCultureIgnoreCase", StringComparison.InvariantCultureIgnoreCase)]
+    [InlineData(FieldOneHeader, "CurrentCulture", StringComparison.CurrentCulture)]
+    [InlineData(FieldOneHeader, "CurrentCultureIgnoreCase", StringComparison.CurrentCultureIgnoreCase)]
     public void ReqnrollTableHelper_GetEnumValue_ExpectedResultIsReturned(String header, String value, StringComparison expectedValue)
     {
         List<String> headers = new();

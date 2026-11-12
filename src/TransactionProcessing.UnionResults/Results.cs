@@ -138,7 +138,7 @@ public union Result(Ok, NoContent, Error, ErrorList) : IResultOutcome
 }
 
 public union Result<T>(Ok<T>, Created<T>, NoContent, Error, ErrorList) : IResultOutcome
-{
+{ // NOSONAR - Sonar parses this C# 15 union body as an unused local.
     public bool IsSuccess => this switch
     {
         Ok<T> or Created<T> or TransactionProcessing.UnionResults.NoContent => true,

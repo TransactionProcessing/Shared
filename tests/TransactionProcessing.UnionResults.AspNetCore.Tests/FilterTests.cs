@@ -13,6 +13,13 @@ namespace TransactionProcessing.UnionResults.AspNetCore.Tests;
 
 public sealed class FilterTests
 {
+    private const string Conflict = "conflict";
+    private const string EmailField = "email";
+    private const string FirstCode = "first";
+    private const string InvalidLocation = "https://[";
+    private const string SecondCode = "second";
+    private const string StatusProperty = "status";
+
     [Fact]
     public async Task Maps_union_success_and_failure_to_http_responses()
     {
@@ -81,7 +88,7 @@ public sealed class FilterTests
     {
         await using var app = await StartApp(api =>
         {
-            api.MapGet("/invalid-location", () => Result<string>.Created("value", "http://["));
+            api.MapGet("/invalid-location", () => Result<string>.Created("value", InvalidLocation));
             api.MapGet("/null-created", () => new CustomOutcome(new ResultOutcome(ResultKind.Created)));
             api.MapGet("/unknown-kind", () => new CustomOutcome(new ResultOutcome((ResultKind)int.MaxValue)));
         });
@@ -102,7 +109,7 @@ public sealed class FilterTests
     {
         await using var app = await StartApp(api =>
         {
-            api.MapGet("/conflict", () => Result.Fail(Error.Conflict("conflict")));
+            api.MapGet("/conflict", () => Result.Fail(Error.Conflict(Conflict)));
             api.MapGet("/critical", () => Result.Fail(Error.Critical("secret detail")));
             api.MapGet("/unauthorized", () => Result.Fail(Error.Unauthorized("unauthorized")));
             api.MapGet("/forbidden", () => Result.Fail(Error.Forbidden("forbidden")));
@@ -110,44 +117,44 @@ public sealed class FilterTests
             api.MapGet("/failure", () => Result.Fail(Error.Failure("failed")));
             api.MapGet("/unknown", () => Result.Fail(new Error("Unknown", "unknown", ErrorType.Unknown)));
             api.MapGet("/validation", () => Result.Fail(new ErrorList([
-                Error.Validation("Email is invalid", "email"),
-                Error.Validation("Email is required", "email"),
+                Error.Validation("Email is invalid", EmailField),
+                Error.Validation("Email is required", EmailField),
                 Error.Validation("Name is required", "name")])));
             api.MapGet("/mixed-codes", () => Result.Fail(new ErrorList([
-                new Error("first", "first validation", ErrorType.Validation),
-                new Error("second", "second validation", ErrorType.Validation)])));
+                new Error(FirstCode, "first validation", ErrorType.Validation),
+                new Error(SecondCode, "second validation", ErrorType.Validation)])));
         });
         using var client = app.GetTestClient();
 
         using var conflict = await GetProblem(client, "/api/conflict");
-        Assert.Equal(409, conflict.RootElement.GetProperty("status").GetInt32());
-        Assert.Equal("conflict", conflict.RootElement.GetProperty("title").GetString());
+        Assert.Equal(409, conflict.RootElement.GetProperty(StatusProperty).GetInt32());
+        Assert.Equal(Conflict, conflict.RootElement.GetProperty("title").GetString());
         Assert.Equal("Conflict", conflict.RootElement.GetProperty("code").GetString());
         Assert.True(conflict.RootElement.TryGetProperty("traceId", out _));
 
         using var critical = await GetProblem(client, "/api/critical");
-        Assert.Equal(500, critical.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(500, critical.RootElement.GetProperty(StatusProperty).GetInt32());
         Assert.Equal("An unexpected error occurred.", critical.RootElement.GetProperty("title").GetString());
 
         using var unauthorized = await GetProblem(client, "/api/unauthorized");
-        Assert.Equal(401, unauthorized.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(401, unauthorized.RootElement.GetProperty(StatusProperty).GetInt32());
         using var forbidden = await GetProblem(client, "/api/forbidden");
-        Assert.Equal(403, forbidden.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(403, forbidden.RootElement.GetProperty(StatusProperty).GetInt32());
         using var notFound = await GetProblem(client, "/api/not-found");
-        Assert.Equal(404, notFound.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(404, notFound.RootElement.GetProperty(StatusProperty).GetInt32());
         using var failure = await GetProblem(client, "/api/failure");
-        Assert.Equal(500, failure.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(500, failure.RootElement.GetProperty(StatusProperty).GetInt32());
         using var unknown = await GetProblem(client, "/api/unknown");
-        Assert.Equal(500, unknown.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(500, unknown.RootElement.GetProperty(StatusProperty).GetInt32());
 
         using var validation = await GetProblem(client, "/api/validation");
-        Assert.Equal(400, validation.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(400, validation.RootElement.GetProperty(StatusProperty).GetInt32());
         Assert.Equal(3, validation.RootElement.GetProperty("codes").GetArrayLength());
-        Assert.Equal(2, validation.RootElement.GetProperty("errors").GetProperty("email").GetArrayLength());
+        Assert.Equal(2, validation.RootElement.GetProperty("errors").GetProperty(EmailField).GetArrayLength());
         Assert.Equal(1, validation.RootElement.GetProperty("errors").GetProperty("name").GetArrayLength());
 
         using var mixedCodes = await GetProblem(client, "/api/mixed-codes");
-        Assert.Equal(400, mixedCodes.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(400, mixedCodes.RootElement.GetProperty(StatusProperty).GetInt32());
     }
 
     [Fact]
@@ -159,7 +166,7 @@ public sealed class FilterTests
             ("unauthorized", ErrorType.Unauthorized, 401),
             ("forbidden", ErrorType.Forbidden, 403),
             ("not-found", ErrorType.NotFound, 404),
-            ("conflict", ErrorType.Conflict, 409),
+            (Conflict, ErrorType.Conflict, 409),
             ("failure", ErrorType.Failure, 503),
             ("critical", ErrorType.Critical, 500),
             ("unknown", ErrorType.Unknown, 500),
@@ -169,12 +176,12 @@ public sealed class FilterTests
             foreach (var (path, type, _) in cases)
             {
                 api.MapGet($"/{path}", () => Result.Fail(new ErrorList([
-                    new Error("first", "first", type), new Error("second", "second", type)])));
+                    new Error(FirstCode, FirstCode, type), new Error(SecondCode, SecondCode, type)])));
             }
         }, options =>
         {
-            options.MapCode("first", 418);
-            options.MapCode("second", 422);
+            options.MapCode(FirstCode, 418);
+            options.MapCode(SecondCode, 422);
             options.Map(ErrorType.Failure, 503);
         });
         using var client = app.GetTestClient();
@@ -182,7 +189,7 @@ public sealed class FilterTests
         foreach (var (path, _, expectedStatus) in cases)
         {
             using var problem = await GetProblem(client, $"/api/{path}");
-            Assert.Equal(expectedStatus, problem.RootElement.GetProperty("status").GetInt32());
+            Assert.Equal(expectedStatus, problem.RootElement.GetProperty(StatusProperty).GetInt32());
         }
     }
 
@@ -191,8 +198,8 @@ public sealed class FilterTests
     {
         await using var app = await StartApp(api =>
         {
-            api.MapGet("/override", () => Result.Fail(new Error("Email.Invalid", "invalid email", ErrorType.Validation, "email")));
-            api.MapGet("/category", () => Result.Fail(Error.Conflict("conflict")));
+            api.MapGet("/override", () => Result.Fail(new Error("Email.Invalid", "invalid email", ErrorType.Validation, EmailField)));
+            api.MapGet("/category", () => Result.Fail(Error.Conflict(Conflict)));
         }, options =>
         {
             options.Map(ErrorType.Conflict, 422);
@@ -204,13 +211,13 @@ public sealed class FilterTests
         using var client = app.GetTestClient();
 
         using var overridden = await GetProblem(client, "/api/override");
-        Assert.Equal(418, overridden.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(418, overridden.RootElement.GetProperty(StatusProperty).GetInt32());
         Assert.False(overridden.RootElement.TryGetProperty("code", out _));
         Assert.False(overridden.RootElement.TryGetProperty("traceId", out _));
-        Assert.Equal("invalid email", overridden.RootElement.GetProperty("errors").GetProperty("email")[0].GetString());
+        Assert.Equal("invalid email", overridden.RootElement.GetProperty("errors").GetProperty(EmailField)[0].GetString());
 
         using var category = await GetProblem(client, "/api/category");
-        Assert.Equal(422, category.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(422, category.RootElement.GetProperty(StatusProperty).GetInt32());
     }
 
     [Fact]

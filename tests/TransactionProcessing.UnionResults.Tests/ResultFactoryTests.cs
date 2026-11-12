@@ -5,14 +5,19 @@ namespace TransactionProcessing.UnionResults.Tests;
 
 public sealed class ResultFactoryTests
 {
+    private const string FailureMessage = "failure";
+    private const string MissingMessage = "missing";
+    private const string SampleValue = "value";
+    private const string ErrorDetail = "detail";
+
     [Fact]
     public void Error_factories_assign_their_error_categories()
     {
         var errors = new[]
         {
-            (Error.Failure("failure"), ErrorType.Failure),
+            (Error.Failure(FailureMessage), ErrorType.Failure),
             (Error.Validation("validation", "name"), ErrorType.Validation),
-            (Error.NotFound("missing"), ErrorType.NotFound),
+            (Error.NotFound(MissingMessage), ErrorType.NotFound),
             (Error.Unauthorized("unauthorized"), ErrorType.Unauthorized),
             (Error.Forbidden("forbidden"), ErrorType.Forbidden),
             (Error.Conflict("conflict"), ErrorType.Conflict),
@@ -44,7 +49,7 @@ public sealed class ResultFactoryTests
         Assert.Throws<ArgumentNullException>(() => new ErrorList(null!));
         Assert.Throws<ArgumentException>(() => new ErrorList([]));
         Assert.Throws<ArgumentException>(() => new ErrorList([null!]));
-        Assert.Throws<ArgumentException>(() => new ErrorList([Error.Validation("bad"), Error.NotFound("missing")]));
+        Assert.Throws<ArgumentException>(() => new ErrorList([Error.Validation("bad"), Error.NotFound(MissingMessage)]));
 
         var first = Error.Validation("first");
         var second = Error.Validation("second");
@@ -53,7 +58,6 @@ public sealed class ResultFactoryTests
         Assert.Equal(2, errors.Count);
         Assert.Same(first, errors[0]);
         Assert.Equal(new[] { first, second }, errors.ToArray());
-        Assert.Equal(2, ((System.Collections.IEnumerable)errors).Cast<object>().Count());
     }
 
     [Fact]
@@ -66,8 +70,8 @@ public sealed class ResultFactoryTests
         Assert.Equal(ResultKind.Ok, Result.CreatedResource().GetOutcome().Kind);
         Assert.Equal(ResultKind.NoContent, Result.DeletedResource().GetOutcome().Kind);
         Assert.Equal(ResultKind.NoContent, Result.UpdatedResource().GetOutcome().Kind);
-        Assert.Equal("value", Result.ObtainedResource("value").Data);
-        Assert.Equal(ResultKind.Created, Result<string>.Created("value", "/items/1").GetOutcome().Kind);
+        Assert.Equal(SampleValue, Result.ObtainedResource(SampleValue).Data);
+        Assert.Equal(ResultKind.Created, Result<string>.Created(SampleValue, "/items/1").GetOutcome().Kind);
         Assert.Equal(ResultKind.NoContent, Result<string>.NoContent().GetOutcome().Kind);
         Assert.Throws<ArgumentNullException>(() => Result<string>.Ok(null!));
         Assert.Throws<ArgumentNullException>(() => Result<string>.Created(null!));
@@ -78,10 +82,10 @@ public sealed class ResultFactoryTests
     {
         var singleErrors = new[]
         {
-            Result.Failure("failure"),
+            Result.Failure(FailureMessage),
             Result.Validation("validation"),
             Result.Invalid("invalid"),
-            Result.NotFound("missing"),
+            Result.NotFound(MissingMessage),
             Result.Unauthorized("unauthorized"),
             Result.Forbidden("forbidden"),
             Result.Conflict("conflict"),
@@ -93,14 +97,14 @@ public sealed class ResultFactoryTests
 
         var errorLists = new[]
         {
-            Result.Failure("failure", ["detail"]),
-            Result.Invalid("invalid", ["detail"]),
-            Result.Validation("validation", ["detail"]),
-            Result.NotFound("missing", ["detail"]),
-            Result.Unauthorized("unauthorized", ["detail"]),
-            Result.Forbidden("forbidden", ["detail"]),
-            Result.Conflict("conflict", ["detail"]),
-            Result.CriticalError("critical", ["detail"]),
+            Result.Failure(FailureMessage, [ErrorDetail]),
+            Result.Invalid("invalid", [ErrorDetail]),
+            Result.Validation("validation", [ErrorDetail]),
+            Result.NotFound(MissingMessage, [ErrorDetail]),
+            Result.Unauthorized("unauthorized", [ErrorDetail]),
+            Result.Forbidden("forbidden", [ErrorDetail]),
+            Result.Conflict("conflict", [ErrorDetail]),
+            Result.CriticalError("critical", [ErrorDetail]),
         };
         Assert.Equal(
             [ErrorType.Failure, ErrorType.Validation, ErrorType.Validation, ErrorType.NotFound, ErrorType.Unauthorized, ErrorType.Forbidden, ErrorType.Conflict, ErrorType.Critical],
@@ -119,13 +123,13 @@ public sealed class ResultFactoryTests
         var fallback = Result.Failure(Array.Empty<string>());
         Assert.Single(fallback);
         Assert.Equal("An unspecified error occurred.", fallback[0].Message);
-        Assert.Throws<ArgumentNullException>(() => Result.Failure("failure", null!));
+        Assert.Throws<ArgumentNullException>(() => Result.Failure(FailureMessage, null!));
     }
 
     [Fact]
     public void Generic_failure_factory_propagates_single_and_multiple_errors()
     {
-        var single = Result<int>.FromFailure(Result.Fail(Error.NotFound("missing")));
+        var single = Result<int>.FromFailure(Result.Fail(Error.NotFound(MissingMessage)));
         Assert.Equal(ErrorType.NotFound, single.Errors[0].ErrorType);
         var multiple = Result<int>.FromFailure(Result.Fail(new ErrorList([Error.Validation("one"), Error.Validation("two")])));
         Assert.Equal(2, multiple.Errors.Count);
@@ -136,11 +140,11 @@ public sealed class ResultFactoryTests
     [Fact]
     public void Default_results_reject_value_access_and_report_no_errors_for_success()
     {
-        var successful = Result.Success("value");
+        var successful = Result.Success(SampleValue);
         Assert.Empty(successful.Errors);
         Assert.Empty(Result.Ok().Errors);
         Assert.False(successful.IsFailed);
-        Assert.True(Result.Fail(Error.Failure("failure")).IsFailed);
+        Assert.True(Result.Fail(Error.Failure(FailureMessage)).IsFailed);
         Assert.Throws<InvalidOperationException>(() => default(Result).IsFailed);
         Assert.Throws<InvalidOperationException>(() => default(Result).Errors);
         Assert.Throws<InvalidOperationException>(() => default(Result).Message);

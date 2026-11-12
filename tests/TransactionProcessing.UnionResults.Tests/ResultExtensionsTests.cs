@@ -5,7 +5,12 @@ namespace TransactionProcessing.UnionResults.Tests;
 
 public sealed class ResultExtensionsTests
 {
-    private static readonly Error Missing = Error.NotFound("missing");
+    private const string MissingMessage = "missing";
+    private const string NoContentLabel = "no content";
+    private const string EmptyLabel = "empty";
+    private const string ItemTwoLocation = "/items/2";
+
+    private static readonly Error Missing = Error.NotFound(MissingMessage);
     private static readonly ErrorList MissingErrors = new([Missing, Error.NotFound("also missing")]);
 
     [Fact]
@@ -16,8 +21,8 @@ public sealed class ResultExtensionsTests
         Assert.True(Result.NoContent().IsSuccess());
         Assert.False(Result.Fail(Missing).IsSuccess());
         Assert.True(Result.Fail(MissingErrors).IsFailure());
-        Assert.Equal("missing", Result.Fail(MissingErrors).GetFailureMessage());
-        Assert.Equal("missing", Result.Fail(Missing).GetFailureMessage());
+        Assert.Equal(MissingMessage, Result.Fail(MissingErrors).GetFailureMessage());
+        Assert.Equal(MissingMessage, Result.Fail(Missing).GetFailureMessage());
         Assert.Null(Result.Ok().GetFailureMessage());
         Assert.Null(Result.NoContent().GetFailureMessage());
         Assert.Throws<InvalidOperationException>(() => default(Result).IsSuccess());
@@ -40,12 +45,12 @@ public sealed class ResultExtensionsTests
         Assert.True(failures.IsFailure());
         Assert.Equal(42, success.GetValueOrThrow());
         Assert.Equal(43, created.GetValueOrThrow());
-        Assert.Equal("missing", failures.GetFailureMessage());
+        Assert.Equal(MissingMessage, failures.GetFailureMessage());
         Assert.Null(success.GetFailureMessage());
         Assert.Null(noContent.GetFailureMessage());
         Assert.Throws<InvalidOperationException>(() => noContent.GetValueOrThrow());
         Assert.Throws<InvalidOperationException>(() => failure.GetValueOrThrow());
-        Assert.Equal("missing" + Environment.NewLine + "also missing", Assert.Throws<InvalidOperationException>(() => failures.GetValueOrThrow()).Message);
+        Assert.Equal(MissingMessage + Environment.NewLine + "also missing", Assert.Throws<InvalidOperationException>(() => failures.GetValueOrThrow()).Message);
         Assert.Throws<InvalidOperationException>(() => default(Result<int>).IsSuccess());
         Assert.Throws<InvalidOperationException>(() => default(Result<int>).GetFailureMessage());
     }
@@ -66,13 +71,13 @@ public sealed class ResultExtensionsTests
     {
         static string Match(Result result) => result.Match(
             () => "ok",
-            () => "no content",
+            () => NoContentLabel,
             error => error.Message,
             errors => $"{errors.Count} errors");
 
         Assert.Equal("ok", Match(Result.Ok()));
-        Assert.Equal("no content", Match(Result.NoContent()));
-        Assert.Equal("missing", Match(Result.Fail(Missing)));
+        Assert.Equal(NoContentLabel, Match(Result.NoContent()));
+        Assert.Equal(MissingMessage, Match(Result.Fail(Missing)));
         Assert.Equal("2 errors", Match(Result.Fail(MissingErrors)));
         Assert.Throws<InvalidOperationException>(() => Match(default));
     }
@@ -83,15 +88,15 @@ public sealed class ResultExtensionsTests
         static string Match(Result<int> result) => result.Match(
             value => $"ok:{value}",
             (value, location) => $"created:{value}:{location}",
-            () => "no content",
+            () => NoContentLabel,
             error => error.Message,
             errors => $"{errors.Count} errors");
 
         Assert.Equal("ok:1", Match(Result<int>.Ok(1)));
-        Assert.Equal("created:2:/items/2", Match(Result<int>.Created(2, "/items/2")));
+        Assert.Equal("created:2:/items/2", Match(Result<int>.Created(2, ItemTwoLocation)));
         Assert.Equal("created:2:", Match(Result<int>.Created(2)));
-        Assert.Equal("no content", Match(Result<int>.NoContent()));
-        Assert.Equal("missing", Match(Result<int>.Fail(Missing)));
+        Assert.Equal(NoContentLabel, Match(Result<int>.NoContent()));
+        Assert.Equal(MissingMessage, Match(Result<int>.Fail(Missing)));
         Assert.Equal("2 errors", Match(Result<int>.Fail(MissingErrors)));
         Assert.Throws<InvalidOperationException>(() => Match(default));
     }
@@ -109,7 +114,7 @@ public sealed class ResultExtensionsTests
         Assert.Equal(2, Result<int>.Fail(MissingErrors).Map(value => value * 2).Errors.Count);
 
         Assert.Equal("3", Result<int>.Ok(2).Bind(value => Result<string>.Ok((value + 1).ToString())).Data);
-        Assert.Equal("3", Result<int>.Created(2, "/items/2").Bind(value => Result<string>.Ok((value + 1).ToString())).Data);
+        Assert.Equal("3", Result<int>.Created(2, ItemTwoLocation).Bind(value => Result<string>.Ok((value + 1).ToString())).Data);
         Assert.Equal(ResultKind.NoContent, Result<int>.NoContent().Bind(value => Result<string>.Ok(value.ToString())).GetOutcome().Kind);
         Assert.Same(Missing, Result<int>.Fail(Missing).Bind(value => Result<string>.Ok(value.ToString())).Errors[0]);
         Assert.Equal(2, Result<int>.Fail(MissingErrors).Bind(value => Result<string>.Ok(value.ToString())).Errors.Count);
@@ -156,7 +161,8 @@ public sealed class ResultExtensionsTests
         var errors = new ErrorList([Missing, Error.NotFound("also missing")]);
 
         var enumerated = new List<Error>();
-        var enumerator = ((System.Collections.IEnumerable)errors).GetEnumerator();
+        System.Collections.IEnumerable nonGenericErrors = errors;
+        var enumerator = nonGenericErrors.GetEnumerator();
         while (enumerator.MoveNext()) enumerated.Add(Assert.IsType<Error>(enumerator.Current));
         Assert.Equal(errors.ToArray(), enumerated);
     }
@@ -167,7 +173,7 @@ public sealed class ResultExtensionsTests
         var values = new List<int>();
         var errors = new List<Error>();
         Result<int>.Ok(1).Tap(values.Add);
-        Result<int>.Created(2, "/items/2").Tap(values.Add);
+        Result<int>.Created(2, ItemTwoLocation).Tap(values.Add);
         Result<int>.NoContent().Tap(values.Add);
         Result<int>.Fail(Missing).Tap(values.Add);
         Result<int>.Ok(3).TapError(errors.Add);
@@ -189,50 +195,50 @@ public sealed class ResultExtensionsTests
         var matchOk = await Task.FromResult(Result<int>.Ok(2)).MatchAsync(
             value => Task.FromResult($"ok:{value}"),
             (value, location) => Task.FromResult($"created:{value}:{location}"),
-            () => Task.FromResult("empty"),
+            () => Task.FromResult(EmptyLabel),
             error => Task.FromResult(error.Message),
             errors => Task.FromResult($"{errors.Count} errors"), token);
         Assert.Equal("ok:2", matchOk);
-        Assert.Equal("created:2:/items/2", await Task.FromResult(Result<int>.Created(2, "/items/2")).MatchAsync(
+        Assert.Equal("created:2:/items/2", await Task.FromResult(Result<int>.Created(2, ItemTwoLocation)).MatchAsync(
             value => Task.FromResult($"ok:{value}"),
             (value, location) => Task.FromResult($"created:{value}:{location}"),
-            () => Task.FromResult("empty"),
+            () => Task.FromResult(EmptyLabel),
             error => Task.FromResult(error.Message),
             errors => Task.FromResult($"{errors.Count} errors"), token));
-        Assert.Equal("empty", await Task.FromResult(Result<int>.NoContent()).MatchAsync(
+        Assert.Equal(EmptyLabel, await Task.FromResult(Result<int>.NoContent()).MatchAsync(
             value => Task.FromResult($"ok:{value}"),
             (value, location) => Task.FromResult($"created:{value}:{location}"),
-            () => Task.FromResult("empty"),
+            () => Task.FromResult(EmptyLabel),
             error => Task.FromResult(error.Message),
             errors => Task.FromResult($"{errors.Count} errors"), token));
-        Assert.Equal("missing", await Task.FromResult(Result<int>.Fail(Missing)).MatchAsync(
+        Assert.Equal(MissingMessage, await Task.FromResult(Result<int>.Fail(Missing)).MatchAsync(
             value => Task.FromResult($"ok:{value}"),
             (value, location) => Task.FromResult($"created:{value}:{location}"),
-            () => Task.FromResult("empty"),
+            () => Task.FromResult(EmptyLabel),
             error => Task.FromResult(error.Message),
             errors => Task.FromResult($"{errors.Count} errors"), token));
         Assert.Equal("2 errors", await Task.FromResult(Result<int>.Fail(MissingErrors)).MatchAsync(
             value => Task.FromResult($"ok:{value}"),
             (value, location) => Task.FromResult($"created:{value}:{location}"),
-            () => Task.FromResult("empty"),
+            () => Task.FromResult(EmptyLabel),
             error => Task.FromResult(error.Message),
             errors => Task.FromResult($"{errors.Count} errors"), token));
 
         Assert.Equal(4, (await Task.FromResult(Result<int>.Ok(2)).MapAsync((value, _) => Task.FromResult(value * 2), token)).Data);
-        Assert.Equal("/items/2", Assert.IsType<Created<int>>((await Task.FromResult(Result<int>.Created(2, "/items/2")).MapAsync((value, _) => Task.FromResult(value * 2), token)).Value).Location);
+        Assert.Equal(ItemTwoLocation, Assert.IsType<Created<int>>((await Task.FromResult(Result<int>.Created(2, ItemTwoLocation)).MapAsync((value, _) => Task.FromResult(value * 2), token)).Value).Location);
         Assert.Equal(ResultKind.NoContent, (await Task.FromResult(Result<int>.NoContent()).MapAsync((value, _) => Task.FromResult(value * 2), token)).GetOutcome().Kind);
         Assert.Same(Missing, (await Task.FromResult(Result<int>.Fail(Missing)).MapAsync((value, _) => Task.FromResult(value * 2), token)).Errors[0]);
         Assert.Equal(2, (await Task.FromResult(Result<int>.Fail(MissingErrors)).MapAsync((value, _) => Task.FromResult(value * 2), token)).Errors.Count);
 
         Assert.Equal("2", (await Task.FromResult(Result<int>.Ok(2)).BindAsync((value, _) => Task.FromResult(Result<string>.Ok(value.ToString())), token)).Data);
-        Assert.Equal("2", (await Task.FromResult(Result<int>.Created(2, "/items/2")).BindAsync((value, _) => Task.FromResult(Result<string>.Ok(value.ToString())), token)).Data);
+        Assert.Equal("2", (await Task.FromResult(Result<int>.Created(2, ItemTwoLocation)).BindAsync((value, _) => Task.FromResult(Result<string>.Ok(value.ToString())), token)).Data);
         Assert.Equal(ResultKind.NoContent, (await Task.FromResult(Result<int>.NoContent()).BindAsync((value, _) => Task.FromResult(Result<string>.Ok(value.ToString())), token)).GetOutcome().Kind);
         Assert.Same(Missing, (await Task.FromResult(Result<int>.Fail(Missing)).BindAsync((value, _) => Task.FromResult(Result<string>.Ok(value.ToString())), token)).Errors[0]);
         Assert.Equal(2, (await Task.FromResult(Result<int>.Fail(MissingErrors)).BindAsync((value, _) => Task.FromResult(Result<string>.Ok(value.ToString())), token)).Errors.Count);
 
         var tappedValues = new List<int>();
         await Task.FromResult(Result<int>.Ok(1)).TapAsync((value, _) => { tappedValues.Add(value); return Task.CompletedTask; }, token);
-        await Task.FromResult(Result<int>.Created(2, "/items/2")).TapAsync((value, _) => { tappedValues.Add(value); return Task.CompletedTask; }, token);
+        await Task.FromResult(Result<int>.Created(2, ItemTwoLocation)).TapAsync((value, _) => { tappedValues.Add(value); return Task.CompletedTask; }, token);
         await Task.FromResult(Result<int>.NoContent()).TapAsync((value, _) => { tappedValues.Add(value); return Task.CompletedTask; }, token);
         await Task.FromResult(Result<int>.Fail(Missing)).TapAsync((value, _) => { tappedValues.Add(value); return Task.CompletedTask; }, token);
         Assert.Equal(new[] { 1, 2 }, tappedValues);
