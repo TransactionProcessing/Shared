@@ -18,12 +18,12 @@
 	<PackageReference Include="Microsoft.NET.Test.Sdk" />
 	<PackageReference Include="NUnit" />
 	<PackageReference Include="NUnit3TestAdapter" />
-	<PackageReference Include="SimpleResults" />
 	<PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\TransactionProcessing.Shared.EventStore\TransactionProcessing.Shared.EventStore.csproj" />
+		<ProjectReference Include="..\src\TransactionProcessing.UnionResults\TransactionProcessing.UnionResults.csproj" />
 		<ProjectReference Include="..\TransactionProcessing.Shared.IntegrationTesting\TransactionProcessing.Shared.IntegrationTesting.csproj" />
 	</ItemGroup>
 

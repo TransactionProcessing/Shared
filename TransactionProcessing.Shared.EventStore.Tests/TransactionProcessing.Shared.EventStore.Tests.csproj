@@ -21,7 +21,6 @@
       <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Imposter" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="SimpleResults" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -32,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TransactionProcessing.Shared.EventStore\TransactionProcessing.Shared.EventStore.csproj" />
+		<ProjectReference Include="..\src\TransactionProcessing.UnionResults\TransactionProcessing.UnionResults.csproj" />
   </ItemGroup>
 
 </Project>

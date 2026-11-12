@@ -1,6 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using TransactionProcessing.Shared.Exceptions;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.SubscriptionWorker;
 
@@ -33,13 +33,12 @@ public static class EventDispatchHelper
         {
             Result[] results = await all;
             if (results.Any(r => r.IsFailed)) {
-                var failedResults = results.Where(r => r.IsFailed && !String.IsNullOrEmpty(r.Message)).Select(r => r.Message).ToList();
-                var failedResults2 = results.Where(r => r.IsFailed).Select(r => r.Errors).ToList();
-                var masterList = new List<String>();
-                masterList.AddRange(failedResults);
-                foreach (IEnumerable<String> enumerable in failedResults2) {
-                    masterList.AddRange(enumerable);
-                }
+                List<String> masterList = results
+                    .Where(static result => result.IsFailed)
+                    .SelectMany(static result => result.Errors)
+                    .Select(static error => error.Message)
+                    .Where(static message => !String.IsNullOrWhiteSpace(message))
+                    .ToList();
                     
                 String errors = String.Join(Environment.NewLine, masterList);
                 // We have a failed result so need to do something with it

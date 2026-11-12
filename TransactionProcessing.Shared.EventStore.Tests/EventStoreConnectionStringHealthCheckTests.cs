@@ -10,7 +10,7 @@ using TransactionProcessing.Shared.EventStore.EventStore;
 using TransactionProcessing.Shared.EventStore.Tests.TestObjects;
 using TransactionProcessing.Shared.Serialisation;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using Xunit;
 
 namespace TransactionProcessing.Shared.EventStore.Tests;
@@ -52,7 +52,7 @@ public class EventStoreConnectionStringHealthCheckTests {
     {
         IEventStoreContextImposter context = new();
         
-        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Failure());
+        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result<List<ResolvedEvent>>.Fail(Error.Failure("failure")));
         EventStoreConnectionStringHealthCheck healthCheck = new(context.Instance());
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
         result.Status.ShouldBe(HealthStatus.Unhealthy);

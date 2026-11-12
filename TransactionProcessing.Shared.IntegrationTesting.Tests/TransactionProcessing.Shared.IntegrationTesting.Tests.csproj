@@ -22,13 +22,13 @@
     <PackageReference Include="Reqnroll" />
     <PackageReference Include="Reqnroll.NUnit" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="SimpleResults" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TransactionProcessing.ClientProxyBase\TransactionProcessing.ClientProxyBase.csproj" />
 	  <ProjectReference Include="..\TransactionProcessing.Shared.IntegrationTesting\TransactionProcessing.Shared.IntegrationTesting.csproj" />
+	  <ProjectReference Include="..\src\TransactionProcessing.UnionResults\TransactionProcessing.UnionResults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

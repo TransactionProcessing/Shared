@@ -1,7 +1,6 @@
-﻿using KurrentDB.Client;
+using KurrentDB.Client;
 using TransactionProcessing.Shared.Exceptions;
-using Shared.Results;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.Aggregate;
 
@@ -49,7 +48,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         Result<List<ResolvedEvent>> readEventsResult = await this.EventStoreContext.ReadEvents(streamName, 0, cancellationToken);
 
         if (readEventsResult.IsFailed)
-            return ResultHelpers.CreateFailure(readEventsResult);
+            return Result<TAggregate>.FromFailure(readEventsResult);
 
         return this.ProcessEvents(aggregate, readEventsResult.Data);
         
@@ -64,7 +63,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
         Result<List<ResolvedEvent>> getEventsResult = await this.EventStoreContext.GetEventsBackward(streamName, 1, cancellationToken);
         if (getEventsResult.IsFailed)
-            return ResultHelpers.CreateFailure(getEventsResult);
+            return Result<TAggregate>.FromFailure(getEventsResult);
         return this.ProcessEvents(aggregate, getEventsResult.Data);
     }
 
@@ -95,7 +94,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
 
         Result result = await this.EventStoreContext.InsertEvents(streamName, aggregate.Version, events, cancellationToken);
         if (result.IsFailed)
-            return ResultHelpers.CreateFailure(result);
+            return result;
 
         aggregate.CommitPendingEvents();
         return Result.Success();

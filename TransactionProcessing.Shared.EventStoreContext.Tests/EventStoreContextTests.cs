@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using KurrentDB.Client;
 using NLog;
 using TransactionProcessing.Shared.DomainDrivenDesign.EventSourcing;
@@ -9,7 +9,7 @@ using TransactionProcessing.Shared.Logger;
 using TransactionProcessing.Shared.Middleware;
 using TransactionProcessing.Shared.Serialisation;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using Microsoft.Extensions.Configuration;
 
 namespace TransactionProcessing.Shared.EventStoreContext.Tests;
@@ -149,7 +149,7 @@ public class EventStoreContextTests : IDisposable{
         Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
         insertEventResult.IsSuccess.ShouldBeTrue();
 
-        Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+        Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
         resolvedEventsResult.IsSuccess.ShouldBeTrue();
         resolvedEventsResult.Data.Count.ShouldBe(events.Length);
@@ -191,7 +191,7 @@ public class EventStoreContextTests : IDisposable{
         Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
         insertEventResult.IsSuccess.ShouldBeTrue();
 
-        Result<List<ResolvedEvent>>? resolvedEventsResult = await context.GetEventsBackward(streamName, events.Length, CancellationToken.None);
+        Result<List<ResolvedEvent>> resolvedEventsResult = await context.GetEventsBackward(streamName, events.Length, CancellationToken.None);
 
         resolvedEventsResult.IsSuccess.ShouldBeTrue();
         resolvedEventsResult.Data.Count.ShouldBe(events.Length);
@@ -210,9 +210,9 @@ public class EventStoreContextTests : IDisposable{
         Guid aggreggateId = Guid.NewGuid();
         String streamName = $"TestStream1-{aggreggateId:N}";
             
-        Result<List<ResolvedEvent>>? resolvedEventsResult = await context.GetEventsBackward(streamName, 1, CancellationToken.None);
+        Result<List<ResolvedEvent>> resolvedEventsResult = await context.GetEventsBackward(streamName, 1, CancellationToken.None);
 
-        resolvedEventsResult.Status.ShouldBe(ResultStatus.NotFound);
+        resolvedEventsResult.Errors[0].ErrorType.ShouldBe(ErrorType.NotFound);
 
     }
 
@@ -243,14 +243,14 @@ public class EventStoreContextTests : IDisposable{
         Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
         insertEventResult.IsSuccess.ShouldBeTrue();
 
-        Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+        Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
         resolvedEventsResult.IsSuccess.ShouldBeTrue();
         resolvedEventsResult.Data.Count.ShouldBe(events.Length);
 
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estate.push(e.data.estateName);\r\n        }\r\n  });";
 
-        Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+        Result<String> queryResult = await context.RunTransientQuery(query, CancellationToken.None);
         queryResult.IsFailed.ShouldBeTrue();
 
         String errors = String.Join("|", queryResult.Errors);
@@ -291,14 +291,14 @@ public class EventStoreContextTests : IDisposable{
         Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
         insertEventResult.IsSuccess.ShouldBeTrue();
 
-        Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+        Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
         resolvedEventsResult.IsSuccess.ShouldBeTrue();
         resolvedEventsResult.Data.Count.ShouldBe(events.Length);
 
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
 
-        Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+        Result<String> queryResult = await context.RunTransientQuery(query, CancellationToken.None);
         queryResult.IsSuccess.ShouldBeTrue();
         queryResult.Data.ShouldNotBeNullOrEmpty();
 
@@ -337,14 +337,14 @@ public class EventStoreContextTests : IDisposable{
         Result insertEventResult = await context.InsertEvents(streamName, -1, events.ToList(), CancellationToken.None);
         insertEventResult.IsSuccess.ShouldBeTrue();
 
-        Result<List<ResolvedEvent>>? resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
+        Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
         resolvedEventsResult.IsSuccess.ShouldBeTrue();
         resolvedEventsResult.Data.Count.ShouldBe(events.Length);
 
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                \r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s, e){\r\n          }\r\n  });";
 
-        Result<String>? queryResult = await context.RunTransientQuery(query, CancellationToken.None);
+        Result<String> queryResult = await context.RunTransientQuery(query, CancellationToken.None);
         queryResult.IsSuccess.ShouldBeTrue();
         queryResult.Data.ShouldBeEmpty();
     }

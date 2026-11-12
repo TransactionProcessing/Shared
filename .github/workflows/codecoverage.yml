@@ -50,6 +50,24 @@ jobs:
             --coverlet-exclude-by-attribute CompilerGeneratedAttribute \
             --coverlet-exclude-by-attribute ExcludeFromCodeCoverageAttribute
 
+        dotnet test "tests/TransactionProcessing.UnionResults.Tests/TransactionProcessing.UnionResults.Tests.csproj" \
+            --results-directory "coverage/TransactionProcessing.UnionResults.Tests" \
+            --coverlet --coverlet-output-format lcov --coverlet-file-prefix TransactionProcessing.UnionResults.Tests \
+            --coverlet-exclude "[xunit*]*" \
+            --coverlet-exclude-by-attribute Obsolete \
+            --coverlet-exclude-by-attribute GeneratedCodeAttribute \
+            --coverlet-exclude-by-attribute CompilerGeneratedAttribute \
+            --coverlet-exclude-by-attribute ExcludeFromCodeCoverageAttribute
+
+        dotnet test "tests/TransactionProcessing.UnionResults.AspNetCore.Tests/TransactionProcessing.UnionResults.AspNetCore.Tests.csproj" \
+            --results-directory "coverage/TransactionProcessing.UnionResults.AspNetCore.Tests" \
+            --coverlet --coverlet-output-format lcov --coverlet-file-prefix TransactionProcessing.UnionResults.AspNetCore.Tests \
+            --coverlet-exclude "[xunit*]*" \
+            --coverlet-exclude-by-attribute Obsolete \
+            --coverlet-exclude-by-attribute GeneratedCodeAttribute \
+            --coverlet-exclude-by-attribute CompilerGeneratedAttribute \
+            --coverlet-exclude-by-attribute ExcludeFromCodeCoverageAttribute
+
     - name: Inspect coverage reports
       run: |
         echo "Files produced under coverage/:"

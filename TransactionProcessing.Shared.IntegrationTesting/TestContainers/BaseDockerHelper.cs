@@ -1,9 +1,9 @@
-﻿using Docker.DotNet.Models;
+using Docker.DotNet.Models;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System.Net.Http.Headers;
 using TransactionProcessing.Shared.Serialisation;
 
@@ -240,7 +240,7 @@ public abstract class BaseDockerHelper{
             _ => null
     };
 
-    public SimpleResults.Result<(String imageName, Boolean useLatest)> GetImageDetails(ContainerType key){
+    public Result<(String imageName, Boolean useLatest)> GetImageDetails(ContainerType key){
         KeyValuePair<ContainerType, (String imageName, Boolean useLatest)> details = this.ImageDetails.SingleOrDefault(c => c.Key == key);
         if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
             // No details found so throw an error
@@ -554,7 +554,7 @@ public abstract class BaseDockerHelper{
             }
         }
 
-        SimpleResults.Result<(String imageName, Boolean useLatest)> imageDetailsResult = this.GetImageDetails(ContainerType.SecurityService);
+        Result<(String imageName, Boolean useLatest)> imageDetailsResult = this.GetImageDetails(ContainerType.SecurityService);
         if (imageDetailsResult.IsFailed) {
             throw new Exception($"Image details not found for {ContainerType.SecurityService}");
         }
@@ -929,7 +929,7 @@ public abstract class BaseDockerHelper{
             cancellationToken.ThrowIfCancellationRequested();
             this.Trace($"About to do health check for {containerType}");
 
-            SimpleResults.Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, cancellationToken);
+            Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, cancellationToken);
 
             if (healthCheckResult.IsSuccess) {
                 HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckResult.Data, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));

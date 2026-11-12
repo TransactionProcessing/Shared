@@ -17,7 +17,6 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<PackageReference Include="RichardSzalay.MockHttp" />
-		<PackageReference Include="SimpleResults" />
 		<PackageReference Include="System.Security.Cryptography.Pkcs" />
 		<PackageReference Include="xunit.v3" />
 		<PackageReference Include="xunit.runner.visualstudio">
@@ -31,9 +30,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\TransactionProcessing.ClientProxyBase\TransactionProcessing.ClientProxyBase.csproj" />
 		<ProjectReference Include="..\TransactionProcessing.Shared.EventStore\TransactionProcessing.Shared.EventStore.csproj" />
-		<ProjectReference Include="..\Shared.Results.Web\Shared.Results.Web.csproj" />
-		<ProjectReference Include="..\Shared.Results\Shared.Results.csproj" />
 		<ProjectReference Include="..\TransactionProcessing.Shared\TransactionProcessing.Shared.csproj" />
+		<ProjectReference Include="..\src\TransactionProcessing.UnionResults\TransactionProcessing.UnionResults.csproj" />
 	</ItemGroup>
 
 </Project>

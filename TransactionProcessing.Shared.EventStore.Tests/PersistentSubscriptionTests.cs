@@ -14,7 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TransactionProcessing.Shared.DomainDrivenDesign.EventSourcing;
 using TransactionProcessing.Shared.EventStore.EventHandling;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using TransactionProcessing.Shared.EventStore.SubscriptionWorker;
 using TransactionProcessing.Shared.General;
 using TransactionProcessing.Shared.Logger;
@@ -40,10 +40,10 @@ public class PersistentSubscriptionTests : IDisposable
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
         TestDomainEventHandler eventHandler = new();
         IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
-        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler>()
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler>()
         {
             eventHandler
-        });
+        }));
             
         InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
         CancellationToken cancellationToken = CancellationToken.None;
@@ -73,7 +73,7 @@ public class PersistentSubscriptionTests : IDisposable
         PersistentSubscriptionDetails details = new("$ce-test", "local-correlation");
         CorrelationCapturingEventHandler eventHandler = new();
         IDomainEventHandlerResolverImposter resolver = new();
-        resolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler> { eventHandler });
+        resolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler> { eventHandler }));
         InMemoryPersistentSubscriptionsClient client = new();
         PersistentSubscription subscription = PersistentSubscription.Create(client, details, resolver.Instance());
 
@@ -102,10 +102,10 @@ public class PersistentSubscriptionTests : IDisposable
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
         TestDomainEventHandler eventHandler = new();
         IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
-        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler>()
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler>()
         {
             eventHandler
-        });
+        }));
         InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
         CancellationToken cancellationToken = CancellationToken.None;
             
@@ -132,11 +132,11 @@ public class PersistentSubscriptionTests : IDisposable
         TestDomainEventHandler eventHandler1 = new();
         TestDomainEventHandler eventHandler2 = new();
         IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
-        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(new List<IDomainEventHandler>()
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler>()
         {
             eventHandler1,
             eventHandler2
-        });
+        }));
         InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
         CancellationToken cancellationToken = CancellationToken.None;
             
@@ -170,13 +170,13 @@ public class PersistentSubscriptionTests : IDisposable
             IDomainEventHandlerResolverImposter domainEventHandlerResolver = new();
             IDomainEventHandlerImposter domainEventHandler = new();
             domainEventHandler.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-                .ReturnsAsync(Result.Failure(new List<String>()));
+                .ReturnsAsync(Result.Fail(Error.Failure(String.Empty)));
 
             domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any())
-                .Returns(new List<IDomainEventHandler>()
+                .Returns(Result.Success(new List<IDomainEventHandler>()
                 {
                     domainEventHandler.Instance()
-                });
+                }));
 
             InMemoryPersistentSubscriptionsClient persistentSubscriptionsClient = new();
             PersistentSubscription persistentSubscription =

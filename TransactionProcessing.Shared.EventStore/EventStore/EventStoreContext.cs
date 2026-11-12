@@ -1,6 +1,6 @@
-﻿using KurrentDB.Client;
+using KurrentDB.Client;
 using TransactionProcessing.Shared.Exceptions;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.EventStore;
 
