@@ -34,6 +34,36 @@ public sealed class ResultTests
     }
 
     [Fact]
+    public void Generic_payload_types_can_overlap_with_other_union_cases()
+    {
+        var errorPayload = Error.NotFound("payload");
+        var successfulError = Result<Error>.Ok(errorPayload).GetOutcome();
+        var failedError = Result<Error>.Fail(errorPayload).GetOutcome();
+
+        Assert.Equal(ResultKind.Ok, successfulError.Kind);
+        Assert.Same(errorPayload, successfulError.Value);
+        Assert.Equal(ResultKind.Error, failedError.Kind);
+        Assert.Same(errorPayload, failedError.Error);
+
+        var errorListPayload = new ErrorList([errorPayload]);
+        var successfulErrorList = Result<ErrorList>.Ok(errorListPayload).GetOutcome();
+        var failedErrorList = Result<ErrorList>.Fail(errorListPayload).GetOutcome();
+        Assert.Equal(ResultKind.Ok, successfulErrorList.Kind);
+        Assert.Same(errorListPayload, successfulErrorList.Value);
+        Assert.Equal(ResultKind.ErrorList, failedErrorList.Kind);
+        Assert.Same(errorListPayload, failedErrorList.Errors);
+
+        var noContentPayload = new NoContent();
+        var successfulNoContent = Result<NoContent>.Ok(noContentPayload).GetOutcome();
+        var actualNoContent = Result<NoContent>.NoContent().GetOutcome();
+
+        Assert.Equal(ResultKind.Ok, successfulNoContent.Kind);
+        Assert.Same(noContentPayload, successfulNoContent.Value);
+        Assert.Equal(ResultKind.NoContent, actualNoContent.Kind);
+        Assert.Null(actualNoContent.Value);
+    }
+
+    [Fact]
     public void Error_list_snapshots_and_checks_categories()
     {
         var input = new List<Error> { new("A", "first", ErrorType.Validation) };

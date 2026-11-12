@@ -85,6 +85,64 @@ public sealed class FilterTests
     }
 
     [Fact]
+    public async Task OpenApi_describes_union_results_only_on_endpoints_opted_in()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddUnionResults();
+        builder.Services.AddOpenApi();
+        await using var app = builder.Build();
+        var api = app.MapGroup("/api").AddUnionResultFilter();
+        api.MapGet("/generic", () => Result<string>.Ok("value"))
+            .ProducesUnionResult<string>(422);
+        api.MapGet("/non-generic", () => Result.Ok())
+            .ProducesUnionResult();
+        api.MapGet("/raw", () => "raw response");
+        app.MapOpenApi();
+        await app.StartAsync(TestContext.Current.CancellationToken);
+        using var client = app.GetTestClient();
+
+        using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json", TestContext.Current.CancellationToken));
+        var paths = document.RootElement.GetProperty("paths");
+        var genericResponses = paths.GetProperty("/api/generic").GetProperty("get").GetProperty("responses");
+        var nonGenericResponses = paths.GetProperty("/api/non-generic").GetProperty("get").GetProperty("responses");
+        var rawResponses = paths.GetProperty("/api/raw").GetProperty("get").GetProperty("responses");
+
+        Assert.Equal(["200", "201", "204", "400", "401", "403", "404", "409", "422", "500"], genericResponses.EnumerateObject().Select(static response => response.Name).Order(StringComparer.Ordinal));
+        Assert.Equal(["200", "204", "400", "401", "403", "404", "409", "500"], nonGenericResponses.EnumerateObject().Select(static response => response.Name).Order(StringComparer.Ordinal));
+        Assert.Equal(["200"], rawResponses.EnumerateObject().Select(static response => response.Name));
+        Assert.True(genericResponses.GetProperty("422").GetProperty("content").TryGetProperty("application/problem+json", out _));
+        Assert.True(genericResponses.GetProperty("200").GetProperty("content").TryGetProperty("application/json", out _));
+        Assert.True(genericResponses.GetProperty("201").GetProperty("content").TryGetProperty("application/json", out _));
+        var successSchema = genericResponses.GetProperty("200").GetProperty("content").GetProperty("application/json").GetProperty("schema");
+        Assert.Equal("string", successSchema.GetProperty("type").GetString());
+        Assert.False(genericResponses.GetProperty("204").TryGetProperty("content", out _));
+        Assert.False(nonGenericResponses.GetProperty("200").TryGetProperty("content", out _));
+        Assert.False(nonGenericResponses.GetProperty("204").TryGetProperty("content", out _));
+    }
+
+    [Fact]
+    public void OpenApi_rejects_invalid_additional_problem_status_codes()
+    {
+        var builder = WebApplication.CreateBuilder();
+        var app = builder.Build();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => app.MapGet("/invalid", () => Result.Ok()).ProducesUnionResult(399));
+    }
+
+    [Fact]
+    public async Task Unexpected_exceptions_are_left_to_exception_handler()
+    {
+        await using var app = await StartApp(api => api.MapGet("/exception", () => Task.FromException<string>(new InvalidOperationException("private exception detail"))));
+        using var client = app.GetTestClient();
+
+        using var response = await client.GetAsync("/api/exception", TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.DoesNotContain("private exception detail", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Rejects_invalid_created_locations_and_unknown_union_kinds()
     {
         await using var app = await StartApp(api =>
@@ -130,12 +188,15 @@ public sealed class FilterTests
         using var conflict = await GetProblem(client, "/api/conflict");
         Assert.Equal(409, conflict.RootElement.GetProperty(StatusProperty).GetInt32());
         Assert.Equal(Conflict, conflict.RootElement.GetProperty("title").GetString());
+        Assert.Equal("/api/conflict", conflict.RootElement.GetProperty("instance").GetString());
         Assert.Equal("Conflict", conflict.RootElement.GetProperty("code").GetString());
         Assert.True(conflict.RootElement.TryGetProperty("traceId", out _));
 
         using var critical = await GetProblem(client, "/api/critical");
         Assert.Equal(500, critical.RootElement.GetProperty(StatusProperty).GetInt32());
         Assert.Equal("An unexpected error occurred.", critical.RootElement.GetProperty("title").GetString());
+        Assert.Equal("/api/critical", critical.RootElement.GetProperty("instance").GetString());
+        Assert.DoesNotContain("secret detail", critical.RootElement.ToString(), StringComparison.Ordinal);
 
         using var unauthorized = await GetProblem(client, "/api/unauthorized");
         Assert.Equal(401, unauthorized.RootElement.GetProperty(StatusProperty).GetInt32());
@@ -237,6 +298,17 @@ public sealed class FilterTests
         var registeredOptions = provider.GetRequiredService<IOptions<UnionResultOptions>>().Value;
         Assert.Throws<InvalidOperationException>(() => registeredOptions.Map(ErrorType.NotFound, 410));
         Assert.Throws<InvalidOperationException>(() => registeredOptions.MapCode("Gone", 410));
+    }
+
+    [Fact]
+    public async Task Invalid_mapping_fails_when_the_application_starts()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddUnionResults(options => options.Map(ErrorType.Failure, 399));
+        await using var app = builder.Build();
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => app.StartAsync(TestContext.Current.CancellationToken));
     }
 
     private static async Task<WebApplication> StartApp(Action<RouteGroupBuilder> mapRoutes, Action<UnionResultOptions>? configure = null)

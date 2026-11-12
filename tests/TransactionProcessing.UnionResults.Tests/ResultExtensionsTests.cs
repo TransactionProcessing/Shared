@@ -261,4 +261,72 @@ public sealed class ResultExtensionsTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Task.FromResult(Result<int>.Ok(1)).TapAsync((_, _) => Task.CompletedTask, cancelled.Token));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Task.FromResult(Result<int>.Ok(1)).TapErrorAsync((_, _) => Task.CompletedTask, cancelled.Token));
     }
+
+    [Fact]
+    public async Task Match_async_passes_cancellation_to_callbacks_and_propagates_callback_failures()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var receivedToken = default(CancellationToken);
+        var actual = await Task.FromResult(Result<int>.Ok(7)).MatchAsync(
+            (value, token) => { receivedToken = token; return Task.FromResult(value); },
+            (value, _, token) => { receivedToken = token; return Task.FromResult(value); },
+            token => { receivedToken = token; return Task.FromResult(0); },
+            (_, token) => { receivedToken = token; return Task.FromResult(0); },
+            (_, token) => { receivedToken = token; return Task.FromResult(0); },
+            cancellation.Token);
+
+        Assert.Equal(7, actual);
+        Assert.Equal(cancellation.Token, receivedToken);
+
+        using var inFlightCancellation = new CancellationTokenSource();
+        var inFlightMatch = Task.FromResult(Result<int>.Ok(1)).MatchAsync(
+            async (_, token) => { await Task.Delay(Timeout.Infinite, token).ConfigureAwait(false); return 0; },
+            (_, _, _) => Task.FromResult(0),
+            _ => Task.FromResult(0),
+            (_, _) => Task.FromResult(0),
+            (_, _) => Task.FromResult(0),
+            inFlightCancellation.Token);
+        inFlightCancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => inFlightMatch);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromResult(Result<int>.Ok(1)).MatchAsync(
+            (_, _) => Task.FromException<int>(new InvalidOperationException("callback failed")),
+            (_, _, _) => Task.FromResult(0),
+            _ => Task.FromResult(0),
+            (_, _) => Task.FromResult(0),
+            (_, _) => Task.FromResult(0), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Match_async_cancels_while_waiting_for_the_input_result()
+    {
+        var pending = new TaskCompletionSource<Result<int>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var cancellation = new CancellationTokenSource();
+        var match = pending.Task.MatchAsync(
+            value => Task.FromResult(value),
+            (value, _) => Task.FromResult(value),
+            () => Task.FromResult(0),
+            _ => Task.FromResult(0),
+            _ => Task.FromResult(0),
+            cancellation.Token);
+
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => match);
+    }
+
+    [Fact]
+    public async Task Async_transform_and_tap_methods_propagate_callback_failures()
+    {
+        var failure = new InvalidOperationException("callback failed");
+        Func<int, CancellationToken, Task<int>> map = (_, _) => Task.FromException<int>(failure);
+        Func<int, CancellationToken, Task<Result<int>>> bind = (_, _) => Task.FromException<Result<int>>(failure);
+        Func<int, CancellationToken, Task> tap = (_, _) => Task.FromException(failure);
+        Func<Error, CancellationToken, Task> tapError = (_, _) => Task.FromException(failure);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromResult(Result<int>.Ok(1)).MapAsync(map, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromResult(Result<int>.Ok(1)).BindAsync(bind, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromResult(Result<int>.Ok(1)).TapAsync(tap, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Task.FromResult(Result<int>.Fail(Missing)).TapErrorAsync(tapError, TestContext.Current.CancellationToken));
+    }
 }
