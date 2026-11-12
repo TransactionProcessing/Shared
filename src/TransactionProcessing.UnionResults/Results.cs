@@ -137,8 +137,9 @@ public union Result(Ok, NoContent, Error, ErrorList) : IResultOutcome
     };
 }
 
+#pragma warning disable S1481 // Sonar misreads the C# 15 union declaration body as an unused local.
 public union Result<T>(Ok<T>, Created<T>, NoContent, Error, ErrorList) : IResultOutcome
-{ // NOSONAR - Sonar parses this C# 15 union body as an unused local.
+{
     public bool IsSuccess => this switch
     {
         Ok<T> or Created<T> or TransactionProcessing.UnionResults.NoContent => true,
@@ -181,3 +182,4 @@ public union Result<T>(Ok<T>, Created<T>, NoContent, Error, ErrorList) : IResult
         null => throw new InvalidOperationException("A default Result<T> has no value."),
     };
 }
+#pragma warning restore S1481
