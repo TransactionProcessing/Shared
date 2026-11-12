@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.UnionResults.AspNetCore;
@@ -59,9 +61,17 @@ internal sealed class UnionResultEndpointFilter(IOptions<UnionResultOptions> opt
                 .GroupBy(static item => item.Field ?? string.Empty)
                 .ToDictionary(static group => group.Key, static group => group.Select(static item => item.Message).ToArray());
         }
-        if (!options.IncludeTraceId)
-            return Results.Json(problem, statusCode: status, contentType: "application/problem+json");
-
-        return Results.Problem(problem.Detail, problem.Instance, problem.Status, problem.Title, problem.Type, extensions: problem.Extensions);
+        return Results.Json(
+            problem,
+            UnionResultJsonSerializerContext.Default.ProblemDetails,
+            "application/problem+json",
+            status);
     }
+}
+
+[JsonSerializable(typeof(ProblemDetails))]
+[JsonSerializable(typeof(string[]))]
+[JsonSerializable(typeof(Dictionary<string, string[]>))]
+internal partial class UnionResultJsonSerializerContext : JsonSerializerContext
+{
 }

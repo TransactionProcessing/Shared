@@ -12,11 +12,13 @@ public static class UnionResultServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddProblemDetails();
-        services.AddOptions<UnionResultOptions>().Configure(options =>
-        {
-            configure?.Invoke(options);
-            options.Freeze();
-        });
+        services.AddOptions<UnionResultOptions>()
+            .Configure(options =>
+            {
+                configure?.Invoke(options);
+                options.Freeze();
+            })
+            .ValidateOnStart();
         return services;
     }
 

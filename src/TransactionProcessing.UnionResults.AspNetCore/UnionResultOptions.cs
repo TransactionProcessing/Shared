@@ -7,10 +7,21 @@ public sealed class UnionResultOptions
 {
     private readonly Dictionary<ErrorType, int> categoryMappings = [];
     private readonly Dictionary<string, int> codeMappings = new(StringComparer.Ordinal);
+    private bool includeErrorCodes = true;
+    private bool includeTraceId = true;
     private bool frozen;
 
-    public bool IncludeErrorCodes { get; set; } = true;
-    public bool IncludeTraceId { get; set; } = true;
+    public bool IncludeErrorCodes
+    {
+        get => includeErrorCodes;
+        set { EnsureMutable(); includeErrorCodes = value; }
+    }
+
+    public bool IncludeTraceId
+    {
+        get => includeTraceId;
+        set { EnsureMutable(); includeTraceId = value; }
+    }
 
     public UnionResultOptions Map(ErrorType errorType, int statusCode)
     {

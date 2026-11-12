@@ -11,6 +11,7 @@
     <RootNamespace>TransactionProcessing.UnionResults.AspNetCore</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\TransactionProcessing.UnionResults\TransactionProcessing.UnionResults.csproj" />
   </ItemGroup>

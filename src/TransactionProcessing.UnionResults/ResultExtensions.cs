@@ -93,7 +93,7 @@ public static class ResultExtensions
 
     public static Result Tap(this Result result, Action action) => result switch
     {
-        Ok => TapOk(result, action), NoContent or Error or ErrorList => result,
+        Ok or NoContent => TapOk(result, action), Error or ErrorList => result,
         null => throw new InvalidOperationException(DefaultResultHasNoValue),
     };
 
@@ -120,8 +120,36 @@ public static class ResultExtensions
 
     public static async Task<TResult> MatchAsync<T, TResult>(this Task<Result<T>> task, Func<T, Task<TResult>> ok, Func<T, string?, Task<TResult>> created, Func<Task<TResult>> noContent, Func<Error, Task<TResult>> error, Func<ErrorList, Task<TResult>> errors, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(ok);
+        ArgumentNullException.ThrowIfNull(created);
+        ArgumentNullException.ThrowIfNull(noContent);
+        ArgumentNullException.ThrowIfNull(error);
+        ArgumentNullException.ThrowIfNull(errors);
+        return await task.MatchAsync(
+            (value, _) => ok(value),
+            (value, location, _) => created(value, location),
+            _ => noContent(),
+            (value, _) => error(value),
+            (value, _) => errors(value),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async Task<TResult> MatchAsync<T, TResult>(this Task<Result<T>> task, Func<T, CancellationToken, Task<TResult>> ok, Func<T, string?, CancellationToken, Task<TResult>> created, Func<CancellationToken, Task<TResult>> noContent, Func<Error, CancellationToken, Task<TResult>> error, Func<ErrorList, CancellationToken, Task<TResult>> errors, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(task);
+        ArgumentNullException.ThrowIfNull(ok);
+        ArgumentNullException.ThrowIfNull(created);
+        ArgumentNullException.ThrowIfNull(noContent);
+        ArgumentNullException.ThrowIfNull(error);
+        ArgumentNullException.ThrowIfNull(errors);
         cancellationToken.ThrowIfCancellationRequested();
-        return await (await task.WaitAsync(cancellationToken).ConfigureAwait(false)).Match(ok, created, noContent, error, errors).ConfigureAwait(false);
+        var result = await task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        return await result.Match(
+            value => ok(value, cancellationToken),
+            (value, location) => created(value, location, cancellationToken),
+            () => noContent(cancellationToken),
+            value => error(value, cancellationToken),
+            value => errors(value, cancellationToken)).ConfigureAwait(false);
     }
 
     public static async Task<Result<TResult>> MapAsync<T, TResult>(this Task<Result<T>> task, Func<T, CancellationToken, Task<TResult>> map, CancellationToken cancellationToken = default)
