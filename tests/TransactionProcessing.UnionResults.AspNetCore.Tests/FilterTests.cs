@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -244,6 +245,11 @@ public sealed class FilterTests
         builder.WebHost.UseTestServer();
         builder.Services.AddUnionResults(configure);
         var app = builder.Build();
+        app.UseExceptionHandler(errorApp => errorApp.Run(context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            return Task.CompletedTask;
+        }));
         mapRoutes(app.MapGroup("/api").AddUnionResultFilter());
         await app.StartAsync(TestContext.Current.CancellationToken);
         return app;
