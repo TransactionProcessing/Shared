@@ -38,31 +38,31 @@ jobs:
         
     - name: Build Nuget Packages
       run: |
-        dotnet pack "TransactionProcessing.Shared\TransactionProcessing.Shared.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet pack "src/TransactionProcessing.UnionResults/TransactionProcessing.UnionResults.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet nuget push Nugets/TransactionProcessing.UnionResults.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+        dotnet pack "src/TransactionProcessing.UnionResults.AspNetCore/TransactionProcessing.UnionResults.AspNetCore.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet nuget push Nugets/TransactionProcessing.UnionResults.AspNetCore.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+        dotnet pack "TransactionProcessing.Shared.Logger/TransactionProcessing.Shared.Logger.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet nuget push Nugets/TransactionProcessing.Shared.Logger.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+        dotnet pack "TransactionProcessing.Shared/TransactionProcessing.Shared.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/TransactionProcessing.Shared.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
-        dotnet pack "TransactionProcessing.Shared.Logger\TransactionProcessing.Shared.Logger.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
-        dotnet nuget push Nugets/TransactionProcessing.Shared.Logger.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-        
-        dotnet pack "TransactionProcessing.Shared.DomainDrivenDesign\TransactionProcessing.Shared.DomainDrivenDesign.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet pack "TransactionProcessing.Shared.DomainDrivenDesign/TransactionProcessing.Shared.DomainDrivenDesign.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/TransactionProcessing.Shared.DomainDrivenDesign.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
-        dotnet pack "TransactionProcessing.Shared.EventStore\TransactionProcessing.Shared.EventStore.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet pack "TransactionProcessing.Shared.EventStore/TransactionProcessing.Shared.EventStore.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/TransactionProcessing.Shared.EventStore.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
-        dotnet pack "TransactionProcessing.ClientProxyBase\TransactionProcessing.ClientProxyBase.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet pack "TransactionProcessing.ClientProxyBase/TransactionProcessing.ClientProxyBase.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/TransactionProcessing.ClientProxyBase.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
-        dotnet pack "TransactionProcessing.Shared.IntegrationTesting\TransactionProcessing.Shared.IntegrationTesting.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet pack "TransactionProcessing.Shared.IntegrationTesting/TransactionProcessing.Shared.IntegrationTesting.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/TransactionProcessing.Shared.IntegrationTesting.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
-        dotnet pack "Shared.Results\Shared.Results.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
-        dotnet nuget push Nugets/Shared.Results.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-
-        dotnet pack "Shared.Results.Web\Shared.Results.Web.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
-        dotnet nuget push Nugets/Shared.Results.Web.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-
-        dotnet pack "TransactionProcessing.ApiDefaults\TransactionProcessing.ApiDefaults.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet pack "TransactionProcessing.ApiDefaults/TransactionProcessing.ApiDefaults.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/TransactionProcessing.ApiDefaults.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
   create-shared-issue:
