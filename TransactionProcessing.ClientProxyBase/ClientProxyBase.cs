@@ -567,7 +567,7 @@ public abstract class ClientProxyBase {
     
         Result<HttpRequestMessage> createRequestResult = CreateRequest(method, requestUri, body: null, accessToken, additionalHeaders: null);
         if (!createRequestResult.TryGetValueOrFailure(out var request, out var requestFailure))
-            return createRequestResult.IsFailed ? createRequestResult : Result<HttpRequestMessage>.Fail(requestFailure);
+            return requestFailure;
         request.Content = content;
 
         if (additionalHeaders is not null) {
@@ -599,13 +599,11 @@ public abstract class ClientProxyBase {
 
         Result<HttpRequestMessage> createRequestResult = CreateRequest(HttpMethod.Post, requestUri, body: null, accessToken, additionalHeaders: null);
         if (!createRequestResult.TryGetValueOrFailure(out var request, out var requestFailure))
-            return createRequestResult.IsFailed ? createRequestResult : Result<HttpRequestMessage>.Fail(requestFailure);
+            return requestFailure;
         
         Result<MultipartFormDataContent> createMultipartContentResult = CreateMultipartContent(fileData, fileName, formFields);
         if (!createMultipartContentResult.TryGetValueOrFailure(out var multipartContent, out var contentFailure))
-            return createMultipartContentResult.IsFailed
-                ? Result<HttpRequestMessage>.FromFailure(createMultipartContentResult)
-                : Result<HttpRequestMessage>.Fail(contentFailure);
+            return contentFailure;
 
         request.Content = multipartContent;
 
@@ -740,7 +738,7 @@ public abstract class ClientProxyBase {
         String rawContent = await ReadContent(response, cancellationToken);
         Result<IReadOnlyList<String>> extractionResult = ExtractErrors(rawContent);
         if (!extractionResult.TryGetValueOrFailure(out var errorMessages, out var failure))
-            return extractionResult.IsFailed ? extractionResult.ToResult() : Result.Fail(failure);
+            return failure;
 
         String primaryMessage = BuildPrimaryMessage(response, errorMessages);
 

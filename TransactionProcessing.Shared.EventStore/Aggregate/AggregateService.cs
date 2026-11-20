@@ -118,7 +118,7 @@ public class AggregateService : IAggregateService
             Result<TAggregate> getResult = await this.GetLatest<TAggregate>(aggregateId, cancellationToken);
 
             if (!getResult.TryGetValueOrFailure(out var latestAggregate, out var failure))
-                return getResult.IsFailed ? getResult : Result<TAggregate>.Fail(failure);
+                return failure;
 
             return Result.Success(latestAggregate);
         }
@@ -139,7 +139,7 @@ public class AggregateService : IAggregateService
             if (!aggregateResult.TryGetValueOrFailure(out aggregate, out var failure))
             {
                 Logger.Logger.LogWarning("aggregateResult failed {aggregateResult}", failure[0].Message);
-                return aggregateResult.IsFailed ? aggregateResult : Result<TAggregate>.Fail(failure);
+                return failure;
             }
 
             this.SetCache<TAggregate>(at, aggregate);
@@ -186,7 +186,7 @@ public class AggregateService : IAggregateService
         {
             Result<TAggregate> aggregateResult = await getLatestVersionFunc(repository, aggregateId, cancellationToken);
             if (!aggregateResult.TryGetValueOrFailure(out aggregate, out var failure))
-                return aggregateResult.IsFailed ? aggregateResult : Result<TAggregate>.Fail(failure);
+                return failure;
         }
         catch (Exception ex)
         {

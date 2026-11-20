@@ -14,6 +14,6 @@ public static class DomainServiceHelper
         if (failure.ErrorType == ErrorType.NotFound && !isNotFoundError)
             return Result.Success(new T { AggregateId = aggregateId });
 
-        return result.IsFailed ? result : Result<T>.Fail(failure);
+        return failure;
     }
 }

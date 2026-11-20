@@ -48,7 +48,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         Result<List<ResolvedEvent>> readEventsResult = await this.EventStoreContext.ReadEvents(streamName, 0, cancellationToken);
 
         if (!readEventsResult.TryGetValueOrFailure(out var events, out var failure))
-            return readEventsResult.IsFailed ? Result<TAggregate>.FromFailure(readEventsResult) : Result<TAggregate>.Fail(failure);
+            return failure;
 
         return this.ProcessEvents(aggregate, events);
         
@@ -63,7 +63,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         String streamName = AggregateRepository<TAggregate, TDomainEvent>.GetStreamName(aggregate.AggregateId);
         Result<List<ResolvedEvent>> getEventsResult = await this.EventStoreContext.GetEventsBackward(streamName, 1, cancellationToken);
         if (!getEventsResult.TryGetValueOrFailure(out var events, out var failure))
-            return getEventsResult.IsFailed ? Result<TAggregate>.FromFailure(getEventsResult) : Result<TAggregate>.Fail(failure);
+            return failure;
 
         return this.ProcessEvents(aggregate, events);
     }
