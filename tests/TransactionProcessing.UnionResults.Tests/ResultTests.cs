@@ -15,9 +15,11 @@ public sealed class ResultTests
     }
 
     [Fact]
-    public void Default_result_fails_fast()
+    public void Default_result_projects_to_an_error()
     {
-        Assert.Throws<InvalidOperationException>(() => default(Result<int>).GetOutcome());
+        var outcome = default(Result<int>).GetOutcome();
+        Assert.Equal(ResultKind.Error, outcome.Kind);
+        Assert.Equal(ErrorType.Critical, outcome.Error?.ErrorType);
     }
 
     [Fact]
@@ -25,7 +27,8 @@ public sealed class ResultTests
     {
         var success = Result<int>.Created(42, "/items/42");
         Assert.True(success.IsSuccess());
-        Assert.Equal(42, success.GetValueOrThrow());
+        Assert.True(success.TryGetValue(out var value));
+        Assert.Equal(42, value);
 
         var failure = Result<int>.Fail(new Error("Item.Missing", "Missing", ErrorType.NotFound));
         Assert.True(failure.IsFailure());
