@@ -12,7 +12,7 @@ public static class ResultExtensions
 
     public static bool IsFailure<T>(this Result<T> result) => result.IsFailed;
 
-    public static string? GetFailureMessage(this Result result) => result.GetFailureMessage();
+    public static string? GetFailureMessage(this Result result) => result.FailureMessage;
 
     public static string? GetFailureMessage<T>(this Result<T> result) => result.GetFailureMessage();
 
@@ -48,11 +48,11 @@ public static class ResultExtensions
 
     public static Result<TResult> Bind<T, TResult>(this Result<T> result, Func<T, Result<TResult>> bind) => result.Bind(bind);
 
-    public static Result Bind(this Result result, Func<Result> bind) => result.Bind(bind);
+    public static Result Bind(this Result result, Func<Result> bind) => result.BindCore(bind);
 
-    public static Result Tap(this Result result, Action action) => result.Tap(action);
+    public static Result Tap(this Result result, Action action) => result.TapCore(action);
 
-    public static Result TapError(this Result result, Action<Error> action) => result.TapError(action);
+    public static Result TapError(this Result result, Action<Error> action) => result.TapErrorCore(action);
 
     public static Result<T> Tap<T>(this Result<T> result, Action<T> action) => result.Tap(action);
 

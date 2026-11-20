@@ -21,7 +21,7 @@ public sealed class ResultExtensionsTests
         Assert.True(Result.NoContent().IsSuccess());
         Assert.False(Result.Fail(Missing).IsSuccess());
         Assert.True(Result.Fail(MissingErrors).IsFailure());
-        Assert.Equal(MissingMessage, Result.Fail(MissingErrors).GetFailureMessage());
+        Assert.Equal(MissingMessage, ResultExtensions.GetFailureMessage(Result.Fail(MissingErrors)));
         Assert.Equal(MissingMessage, Result.Fail(Missing).GetFailureMessage());
         Assert.Null(Result.Ok().GetFailureMessage());
         Assert.Null(Result.NoContent().GetFailureMessage());
@@ -64,10 +64,11 @@ public sealed class ResultExtensionsTests
     [InlineData(true)]
     public void Try_get_value_or_failure_returns_the_payload_for_either_value_case(bool created)
     {
-        var result = created ? Result<string>.Created("voucher") : Result<string>.Ok("voucher");
+        const string payload = "voucher";
+        var result = created ? Result<string>.Created(payload) : Result<string>.Ok(payload);
 
         Assert.True(result.TryGetValueOrFailure(out var value, out var failure));
-        Assert.Equal("voucher", value);
+        Assert.Equal(payload, value);
         Assert.Null(failure);
     }
 
@@ -163,7 +164,7 @@ public sealed class ResultExtensionsTests
     [Fact]
     public void Non_generic_bind_preserves_no_content_and_failures()
     {
-        Assert.Equal(ResultKind.Ok, Result.Ok().Bind(() => Result.Ok()).GetOutcome().Kind);
+        Assert.Equal(ResultKind.Ok, ResultExtensions.Bind(Result.Ok(), Result.Ok).GetOutcome().Kind);
         Assert.Equal(ResultKind.NoContent, Result.NoContent().Bind(() => Result.Ok()).GetOutcome().Kind);
         Assert.Same(Missing, Result.Fail(Missing).Bind(() => Result.Ok()).Errors[0]);
         Assert.Equal(2, Result.Fail(MissingErrors).Bind(() => Result.Ok()).Errors.Count);
@@ -179,13 +180,13 @@ public sealed class ResultExtensionsTests
         var failure = Result.Fail(MissingErrors);
 
         var success = Result.Ok();
-        Assert.Same(success.Value, success.Tap(() => successCount++).Value);
+        Assert.Same(success.Value, ResultExtensions.Tap(success, () => successCount++).Value);
         noContent.Tap(() => successCount++);
         failure.Tap(() => successCount++);
         Result.Ok().TapError(_ => errorCount++);
         noContent.TapError(_ => errorCount++);
         Result.Fail(Missing).TapError(_ => errorCount++);
-        failure.TapError(_ => errorCount++);
+        ResultExtensions.TapError(failure, _ => errorCount++);
 
         Assert.Equal(2, successCount);
         Assert.Equal(3, errorCount);

@@ -84,7 +84,7 @@ public union Result(Ok, NoContent, Error, ErrorList) : IResultOutcome
 
     public bool IsSuccess => this is TransactionProcessing.UnionResults.Ok or TransactionProcessing.UnionResults.NoContent;
     public bool IsFailed => !IsSuccess;
-    public string Message => GetFailureMessage() ?? string.Empty;
+    public string Message => FailureMessage ?? string.Empty;
     public IReadOnlyList<Error> Errors => this switch
     {
         Error error => [error],
@@ -93,7 +93,9 @@ public union Result(Ok, NoContent, Error, ErrorList) : IResultOutcome
         null => [Uninitialized],
     };
 
-    public string? GetFailureMessage() => this switch
+    public string? GetFailureMessage() => FailureMessage;
+
+    internal string? FailureMessage => this switch
     {
         Error error => error.Message,
         ErrorList errors => errors[0].Message,
@@ -168,10 +170,14 @@ public union Result(Ok, NoContent, Error, ErrorList) : IResultOutcome
         return Capture(() => Result<TResult>.Ok(result.MatchCore(ok, noContent, error, errors)), Result<TResult>.Fail);
     }
 
-    public Result Bind(Func<Result> bind) => MatchCore(
+    public Result Bind(Func<Result> bind) => BindCore(bind);
+
+    internal Result BindCore(Func<Result> bind) => MatchCore(
         () => Capture(bind, Fail), NoContent, Fail, Fail);
 
-    public Result Tap(Action action)
+    public Result Tap(Action action) => TapCore(action);
+
+    internal Result TapCore(Action action)
     {
         var result = this;
         Result TapSuccess() => Capture(() => { action(); return result; }, Fail);
@@ -179,7 +185,9 @@ public union Result(Ok, NoContent, Error, ErrorList) : IResultOutcome
         return MatchCore(TapSuccess, TapSuccess, Fail, Fail);
     }
 
-    public Result TapError(Action<Error> action)
+    public Result TapError(Action<Error> action) => TapErrorCore(action);
+
+    internal Result TapErrorCore(Action<Error> action)
     {
         var result = this;
         return MatchCore(
@@ -231,14 +239,7 @@ public union Result<T>(Ok<T>, Created<T>, NoContent, Error, ErrorList) : IResult
     /// <summary>Gets the payload, or the default value of <typeparamref name="T"/> when the result has no payload.</summary>
     /// <remarks>Use <see cref="TryGetValue"/> to distinguish a missing payload from a default-valued payload.</remarks>
     [MaybeNull]
-    public T Data
-    {
-        get
-        {
-            TryGetValue(out var value);
-            return value;
-        }
-    }
+    public T Data => TryGetValue(out var value) ? value : default;
 
     public string Message => GetFailureMessage() ?? string.Empty;
     public IReadOnlyList<Error> Errors => this switch
