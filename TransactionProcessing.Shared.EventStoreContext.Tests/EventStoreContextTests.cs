@@ -151,12 +151,12 @@ public class EventStoreContextTests : IDisposable{
 
         Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
-        resolvedEventsResult.IsSuccess.ShouldBeTrue();
-        resolvedEventsResult.Data.Count.ShouldBe(events.Length);
+        resolvedEventsResult.TryGetValue(out var resolvedEvents).ShouldBeTrue();
+        resolvedEvents.Count.ShouldBe(events.Length);
 
         IDomainEventFactory<IDomainEvent> domainEventFactory = new DomainEventFactory();
 
-        foreach (ResolvedEvent resolvedEvent in resolvedEventsResult.Data) {
+        foreach (ResolvedEvent resolvedEvent in resolvedEvents) {
             EstateCreatedEvent domainEvent =
                 TypeMapConvertor.Convertor(domainEventFactory, aggregateId, resolvedEvent) as EstateCreatedEvent;
             domainEvent.EstateId.ShouldBe(aggregateId);
@@ -193,8 +193,8 @@ public class EventStoreContextTests : IDisposable{
 
         Result<List<ResolvedEvent>> resolvedEventsResult = await context.GetEventsBackward(streamName, events.Length, CancellationToken.None);
 
-        resolvedEventsResult.IsSuccess.ShouldBeTrue();
-        resolvedEventsResult.Data.Count.ShouldBe(events.Length);
+        resolvedEventsResult.TryGetValue(out var resolvedEvents).ShouldBeTrue();
+        resolvedEvents.Count.ShouldBe(events.Length);
     }
 
     [Test]
@@ -245,8 +245,8 @@ public class EventStoreContextTests : IDisposable{
 
         Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
-        resolvedEventsResult.IsSuccess.ShouldBeTrue();
-        resolvedEventsResult.Data.Count.ShouldBe(events.Length);
+        resolvedEventsResult.TryGetValue(out var resolvedEvents).ShouldBeTrue();
+        resolvedEvents.Count.ShouldBe(events.Length);
 
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estate.push(e.data.estateName);\r\n        }\r\n  });";
 
@@ -293,19 +293,19 @@ public class EventStoreContextTests : IDisposable{
 
         Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
-        resolvedEventsResult.IsSuccess.ShouldBeTrue();
-        resolvedEventsResult.Data.Count.ShouldBe(events.Length);
+        resolvedEventsResult.TryGetValue(out var resolvedEvents).ShouldBeTrue();
+        resolvedEvents.Count.ShouldBe(events.Length);
 
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                estates:[]\r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s,e){\r\n          s.estates.push(e.data.estateName);\r\n        }\r\n  });";
 
         Result<String> queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-        queryResult.IsSuccess.ShouldBeTrue();
-        queryResult.Data.ShouldNotBeNullOrEmpty();
+        queryResult.TryGetValue(out var queryPayload).ShouldBeTrue();
+        queryPayload.ShouldNotBeNullOrEmpty();
 
         var definition = new{
             estates = new List<String>()
         };
-        var result = StringSerialiser.DeserialiseAnonymousType(queryResult.Data, definition);
+        var result = StringSerialiser.DeserialiseAnonymousType(queryPayload, definition);
 
         result.estates.Contains(event1.EstateName).ShouldBeTrue();
         result.estates.Contains(event2.EstateName).ShouldBeTrue();
@@ -339,14 +339,14 @@ public class EventStoreContextTests : IDisposable{
 
         Result<List<ResolvedEvent>> resolvedEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
 
-        resolvedEventsResult.IsSuccess.ShouldBeTrue();
-        resolvedEventsResult.Data.Count.ShouldBe(events.Length);
+        resolvedEventsResult.TryGetValue(out var resolvedEvents).ShouldBeTrue();
+        resolvedEvents.Count.ShouldBe(events.Length);
 
         String query = "fromStream('$et-EstateCreatedEvent')\r\n  .when({\r\n      $init: function (s, e)\r\n        {\r\n            return {\r\n                \r\n            };\r\n        },\r\n        \"EstateCreatedEvent\": function(s, e){\r\n          }\r\n  });";
 
         Result<String> queryResult = await context.RunTransientQuery(query, CancellationToken.None);
-        queryResult.IsSuccess.ShouldBeTrue();
-        queryResult.Data.ShouldBeEmpty();
+        queryResult.TryGetValue(out var queryPayload).ShouldBeTrue();
+        queryPayload.ShouldBeEmpty();
     }
 
     private IEventStoreContext CreateContext(Boolean secureEventStore, TimeSpan? deadline = null){

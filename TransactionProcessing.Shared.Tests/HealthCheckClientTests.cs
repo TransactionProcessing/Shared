@@ -29,8 +29,8 @@ public partial class SharedTests
 
         var result = await healthCheckClient.PerformHealthCheck("http", "127.0.0.1", 5000, CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(expectedResponse);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(expectedResponse);
     }
 
     [Theory]

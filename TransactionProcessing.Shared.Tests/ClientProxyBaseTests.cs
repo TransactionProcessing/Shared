@@ -39,9 +39,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/42");
 
-        result.IsSuccess.ShouldBeTrue();
+        result.TryGetValue(out var payload).ShouldBeTrue();
         result.IsFailed.ShouldBeFalse();
-        result.Data.ShouldBe(expected);
+        payload.ShouldBe(expected);
         deserialiseCalls.ShouldBe(1);
     }
 
@@ -66,8 +66,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<string>("widgets/raw");
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(responseBody);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(responseBody);
         deserialiseCalls.ShouldBe(0);
     }
 
@@ -325,8 +325,8 @@ public sealed class ClientProxyBaseTests
             "token-345",
             [("X-Correlation-Id", "corr-5")]);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(expected);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(expected);
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Patch);
         handler.LastRequest.AuthorizationParameter.ShouldBe("token-345");
@@ -364,8 +364,8 @@ public sealed class ClientProxyBaseTests
             "token-patch",
             [("X-Correlation-Id", "corr-patch")]);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(expected);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(expected);
         serialiseCalls.ShouldBe(0);
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Patch);
@@ -514,6 +514,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>(requestUri!);
 
         result.IsFailed.ShouldBeTrue();
+        result.GetOutcome().Kind.ShouldBe(ResultKind.ErrorList);
         result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("Request URI");
         handler.LastRequest.ShouldBeNull();
@@ -829,6 +830,7 @@ public sealed class ClientProxyBaseTests
             [(header, value)]);
 
         result.IsFailed.ShouldBeTrue();
+        result.GetOutcome().Kind.ShouldBe(ResultKind.ErrorList);
         result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
@@ -858,8 +860,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post<SampleRequest, SampleResponse>("widgets", new SampleRequest("created"));
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(expected);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(expected);
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Post);
         handler.LastRequest.Body.ShouldBe("{}");
     }
@@ -877,8 +879,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Put<SampleResponse>("widgets/13", content);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(expected);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(expected);
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Put);
         handler.LastRequest.Body.ShouldBe("raw-put");
     }
@@ -923,8 +925,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Patch<SampleRequest, SampleResponse>("widgets/14", new SampleRequest("patched"));
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(expected);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(expected);
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Patch);
         handler.LastRequest.Body.ShouldBe("{}");
     }

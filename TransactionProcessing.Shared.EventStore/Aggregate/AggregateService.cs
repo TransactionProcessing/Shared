@@ -117,12 +117,10 @@ public class AggregateService : IAggregateService
             // We don't use caching for this aggregate so just hit GetLatest
             Result<TAggregate> getResult = await this.GetLatest<TAggregate>(aggregateId, cancellationToken);
 
-            if (getResult.IsFailed)
-            {
-                return getResult;
-            }
+            if (!getResult.TryGetValueOrFailure(out var latestAggregate, out var failure))
+                return failure;
 
-            return Result.Success(getResult.Data);
+            return Result.Success(latestAggregate);
         }
 
         try
@@ -138,15 +136,14 @@ public class AggregateService : IAggregateService
             // Not found in cache so call GetLatest
             Result<TAggregate> aggregateResult = this.GetLatest<TAggregate>(aggregateId, cancellationToken).Result;
 
-            if (aggregateResult.IsSuccess)
+            if (!aggregateResult.TryGetValueOrFailure(out aggregate, out var failure))
             {
-                aggregate = aggregateResult.Data;
-                this.SetCache<TAggregate>(at, aggregateResult.Data);
-                return Result.Success(aggregate);
+                Logger.Logger.LogWarning("aggregateResult failed {aggregateResult}", failure[0].Message);
+                return failure;
             }
 
-            Logger.Logger.LogWarning("aggregateResult failed {aggregateResult}", aggregateResult.Message);
-            return aggregateResult;
+            this.SetCache<TAggregate>(at, aggregate);
+            return Result.Success(aggregate);
         }
         finally
         {
@@ -188,9 +185,8 @@ public class AggregateService : IAggregateService
         try
         {
             Result<TAggregate> aggregateResult = await getLatestVersionFunc(repository, aggregateId, cancellationToken);
-            if (aggregateResult.IsFailed)
-                return aggregateResult;
-            aggregate = aggregateResult.Data;
+            if (!aggregateResult.TryGetValueOrFailure(out aggregate, out var failure))
+                return failure;
         }
         catch (Exception ex)
         {

@@ -65,16 +65,18 @@ public sealed class ResultFactoryTests
     {
         Assert.Equal(ResultKind.Ok, Result.Ok().GetOutcome().Kind);
         Assert.Equal(ResultKind.Ok, Result.Success().GetOutcome().Kind);
-        Assert.Equal(42, Result.Success(42).Data);
+        Assert.Equal(42, Result.Success(42).GetOutcome().Value);
         Assert.Equal(ResultKind.NoContent, Result.NoContent().GetOutcome().Kind);
         Assert.Equal(ResultKind.Ok, Result.CreatedResource().GetOutcome().Kind);
         Assert.Equal(ResultKind.NoContent, Result.DeletedResource().GetOutcome().Kind);
         Assert.Equal(ResultKind.NoContent, Result.UpdatedResource().GetOutcome().Kind);
-        Assert.Equal(SampleValue, Result.ObtainedResource(SampleValue).Data);
+        Assert.Equal(SampleValue, Result.ObtainedResource(SampleValue).GetOutcome().Value);
         Assert.Equal(ResultKind.Created, Result<string>.Created(SampleValue, "/items/1").GetOutcome().Kind);
         Assert.Equal(ResultKind.NoContent, Result<string>.NoContent().GetOutcome().Kind);
-        Assert.Throws<ArgumentNullException>(() => Result<string>.Ok(null!));
-        Assert.Throws<ArgumentNullException>(() => Result<string>.Created(null!));
+        Assert.Equal(ResultKind.Error, Result<string>.Ok(null!).GetOutcome().Kind);
+        Assert.Equal(ResultKind.Error, Result<string>.Created(null!).GetOutcome().Kind);
+        Assert.Equal(ResultKind.Error, Result.Fail((Error)null!).GetOutcome().Kind);
+        Assert.Equal(ResultKind.Error, Result<int>.Fail((ErrorList)null!).GetOutcome().Kind);
     }
 
     [Fact]
@@ -123,7 +125,7 @@ public sealed class ResultFactoryTests
         var fallback = Result.Failure(Array.Empty<string>());
         Assert.Single(fallback);
         Assert.Equal("An unspecified error occurred.", fallback[0].Message);
-        Assert.Throws<ArgumentNullException>(() => Result.Failure(FailureMessage, null!));
+        Assert.Equal(FailureMessage, Assert.Single(Result.Failure(FailureMessage, null!)).Message);
     }
 
     [Fact]
@@ -133,23 +135,22 @@ public sealed class ResultFactoryTests
         Assert.Equal(ErrorType.NotFound, single.Errors[0].ErrorType);
         var multiple = Result<int>.FromFailure(Result.Fail(new ErrorList([Error.Validation("one"), Error.Validation("two")])));
         Assert.Equal(2, multiple.Errors.Count);
-        Assert.Throws<InvalidOperationException>(() => Result<int>.FromFailure(Result.Ok()));
-        Assert.Throws<ArgumentNullException>(() => Result<int>.FromFailure(null!));
+        Assert.Equal(ResultKind.Error, Result<int>.FromFailure(Result.Ok()).GetOutcome().Kind);
+        Assert.Equal(ResultKind.Error, Result<int>.FromFailure(null!).GetOutcome().Kind);
     }
 
     [Fact]
-    public void Default_results_reject_value_access_and_report_no_errors_for_success()
+    public void Default_results_report_a_failure_and_successes_have_no_errors()
     {
         var successful = Result.Success(SampleValue);
         Assert.Empty(successful.Errors);
         Assert.Empty(Result.Ok().Errors);
         Assert.False(successful.IsFailed);
         Assert.True(Result.Fail(Error.Failure(FailureMessage)).IsFailed);
-        Assert.Throws<InvalidOperationException>(() => default(Result).IsFailed);
-        Assert.Throws<InvalidOperationException>(() => default(Result).Errors);
-        Assert.Throws<InvalidOperationException>(() => default(Result).Message);
-        Assert.Throws<InvalidOperationException>(() => default(Result<int>).Data);
-        Assert.Throws<InvalidOperationException>(() => default(Result<int>).Errors);
-        Assert.Throws<InvalidOperationException>(() => default(Result<int>).Message);
+        Assert.True(default(Result).IsFailed);
+        Assert.Equal(Assert.Single(default(Result).Errors).Message, default(Result).Message);
+        Assert.True(default(Result<int>).IsFailed);
+        Assert.False(default(Result<int>).TryGetValue(out _));
+        Assert.Equal(Assert.Single(default(Result<int>).Errors).Message, default(Result<int>).Message);
     }
 }
