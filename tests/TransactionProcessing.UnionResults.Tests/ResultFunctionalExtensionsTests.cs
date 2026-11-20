@@ -4,6 +4,7 @@ namespace TransactionProcessing.UnionResults.Tests;
 
 public sealed class ResultFunctionalExtensionsTests
 {
+    private const string CallbackFailed = "Callback failed";
     private static readonly Error Missing = new(ErrorType.NotFound, "Item not found");
     private static readonly Error Invalid = new(ErrorType.Validation, "Value must be positive");
     private static readonly ErrorList ValidationErrors = new([Invalid, new Error(ErrorType.Validation, "Name is required")]);
@@ -17,8 +18,8 @@ public sealed class ResultFunctionalExtensionsTests
         var mapped = Results.Ok(21).Map(value => $"{value * 2}");
 
         Assert.Equal("42", Assert.IsType<Success<string>>(mapped.Value).Value);
-        Assert.Same(Missing, single.Map(Unexpected<int, string>).Value);
-        Assert.Same(ValidationErrors, multiple.Map(Unexpected<int, string>).Value);
+        Assert.Same(Missing, single.Map(UnexpectedCallback<int, string>()).Value);
+        Assert.Same(ValidationErrors, multiple.Map(UnexpectedCallback<int, string>()).Value);
     }
 
     [Fact]
@@ -43,8 +44,8 @@ public sealed class ResultFunctionalExtensionsTests
 
         Assert.Same(result.Value, result.Bind(Unexpected<Result>).Value);
         Assert.Same(result.Value, result.Bind(Unexpected<Result<string>>).Value);
-        Assert.Same(generic.Value, generic.Bind(Unexpected<int, Result>).Value);
-        Assert.Same(generic.Value, generic.Bind(Unexpected<int, Result<string>>).Value);
+        Assert.Same(generic.Value, generic.Bind(UnexpectedCallback<int, Result>()).Value);
+        Assert.Same(generic.Value, generic.Bind(UnexpectedCallback<int, Result<string>>()).Value);
     }
 
     [Fact]
@@ -53,11 +54,11 @@ public sealed class ResultFunctionalExtensionsTests
         Result<int> single = Missing;
         Result<int> multiple = ValidationErrors;
 
-        Assert.Equal(42, Results.Ok(42).Match(value => value, Unexpected<IReadOnlyList<Error>, int>));
-        Assert.Equal(42, Results.Ok().Match(() => 42, Unexpected<IReadOnlyList<Error>, int>));
-        Assert.Same(Missing, Assert.Single(single.Match(Unexpected<int, IReadOnlyList<Error>>, errors => errors)));
+        Assert.Equal(42, Results.Ok(42).Match(value => value, UnexpectedCallback<IReadOnlyList<Error>, int>()));
+        Assert.Equal(42, Results.Ok().Match(() => 42, UnexpectedCallback<IReadOnlyList<Error>, int>()));
+        Assert.Same(Missing, Assert.Single(single.Match(UnexpectedCallback<int, IReadOnlyList<Error>>(), errors => errors)));
         Assert.Same(Missing, Assert.Single(Results.Fail(Missing).Match(Unexpected<IReadOnlyList<Error>>, errors => errors)));
-        Assert.Same(ValidationErrors, multiple.Match(Unexpected<int, IReadOnlyList<Error>>, errors => errors));
+        Assert.Same(ValidationErrors, multiple.Match(UnexpectedCallback<int, IReadOnlyList<Error>>(), errors => errors));
         Assert.Same(ValidationErrors, Results.Fail(ValidationErrors).Match(Unexpected<IReadOnlyList<Error>>, errors => errors));
     }
 
@@ -93,7 +94,7 @@ public sealed class ResultFunctionalExtensionsTests
     public void Ensure_preserves_existing_failures_without_running_the_predicate()
     {
         Assert.Same(Missing, Results.Fail(Missing).Ensure(Unexpected<bool>, Invalid).Value);
-        Assert.Same(ValidationErrors, ((Result<int>)ValidationErrors).Ensure(Unexpected<int, bool>, Invalid).Value);
+        Assert.Same(ValidationErrors, ((Result<int>)ValidationErrors).Ensure(UnexpectedCallback<int, bool>(), Invalid).Value);
     }
 
     [Fact]
@@ -102,8 +103,8 @@ public sealed class ResultFunctionalExtensionsTests
         var result = Results.Ok();
         var generic = Results.Ok(42);
 
-        Assert.Same(result.Value, result.MapError(Unexpected<Error, Error>).Value);
-        Assert.Same(generic.Value, generic.MapError(Unexpected<Error, Error>).Value);
+        Assert.Same(result.Value, result.MapError(UnexpectedCallback<Error, Error>()).Value);
+        Assert.Same(generic.Value, generic.MapError(UnexpectedCallback<Error, Error>()).Value);
         Assert.Equal(ToCritical(Missing), Assert.IsType<Error>(Results.Fail(Missing).MapError(ToCritical).Value));
         Assert.Equal(ToCritical(Missing), Assert.IsType<Error>(((Result<int>)Missing).MapError(ToCritical).Value));
 
@@ -133,7 +134,7 @@ public sealed class ResultFunctionalExtensionsTests
     [Fact]
     public void Map_bind_and_tap_convert_callback_exceptions_to_critical_errors()
     {
-        var failure = new InvalidOperationException("Callback failed");
+        var failure = new InvalidOperationException(CallbackFailed);
         var expected = new Error(ErrorType.Critical, failure.Message);
 
         Assert.Equal(expected, Results.Ok(42).Map<int, int>(_ => throw failure).Value);
@@ -152,21 +153,21 @@ public sealed class ResultFunctionalExtensionsTests
             .Bind(Results.Ok, token)
             .Tap(() => observed++, token)
             .Ensure(() => observed == 1, Invalid, token)
-            .MapError(Unexpected<Error, Error>, token)
+            .MapError(UnexpectedCallback<Error, Error>(), token)
             .Bind(() => Results.Ok(21), token)
             .Map(value => value * 2, token)
             .Bind(value => Results.Ok(value), token)
             .Tap(value => observed = value, token)
             .Ensure(value => value == 42, Invalid, token)
-            .MapError(Unexpected<Error, Error>, token)
-            .Match(value => value, Unexpected<IReadOnlyList<Error>, int>, token);
+            .MapError(UnexpectedCallback<Error, Error>(), token)
+            .Match(value => value, UnexpectedCallback<IReadOnlyList<Error>, int>(), token);
 
         Assert.Equal(42, result);
         Assert.Equal(42, observed);
 
         var converted = await Task.FromResult(Results.Ok(42))
             .Bind(value => value == 42 ? Results.Ok() : Results.Fail(Invalid), token)
-            .Match(() => true, Unexpected<IReadOnlyList<Error>, bool>, token);
+            .Match(() => true, UnexpectedCallback<IReadOnlyList<Error>, bool>(), token);
         Assert.True(converted);
     }
 
@@ -181,21 +182,21 @@ public sealed class ResultFunctionalExtensionsTests
             .BindAsync(() => Task.FromResult(result), token)
             .TapAsync(() => { observed++; return Task.CompletedTask; }, token)
             .EnsureAsync(() => Task.FromResult(observed == 1), Invalid, token)
-            .MapErrorAsync(Unexpected<Error, Task<Error>>, token)
+            .MapErrorAsync(UnexpectedCallback<Error, Task<Error>>(), token)
             .BindAsync(() => Task.FromResult(Results.Ok(21)), token)
             .MapAsync(value => Task.FromResult(value * 2), token)
             .BindAsync(value => Task.FromResult(Results.Ok(value)), token)
             .TapAsync(value => { observed = value; return Task.CompletedTask; }, token)
             .EnsureAsync(value => Task.FromResult(value == 42), Invalid, token)
-            .MapErrorAsync(Unexpected<Error, Task<Error>>, token)
-            .MatchAsync(Task.FromResult, Unexpected<IReadOnlyList<Error>, Task<int>>, token);
+            .MapErrorAsync(UnexpectedCallback<Error, Task<Error>>(), token)
+            .MatchAsync(Task.FromResult, UnexpectedCallback<IReadOnlyList<Error>, Task<int>>(), token);
 
         Assert.Equal(42, matched);
         Assert.Equal(42, observed);
 
         var converted = await Task.FromResult(Results.Ok(42))
             .BindAsync(value => Task.FromResult(value == 42 ? Results.Ok() : Results.Fail(Invalid)), token)
-            .MatchAsync(() => Task.FromResult(true), Unexpected<IReadOnlyList<Error>, Task<bool>>, token);
+            .MatchAsync(() => Task.FromResult(true), UnexpectedCallback<IReadOnlyList<Error>, Task<bool>>(), token);
         Assert.True(converted);
     }
 
@@ -225,8 +226,8 @@ public sealed class ResultFunctionalExtensionsTests
 
         Assert.Same(result.Value, resultWithoutPayload.Value);
         Assert.Equal(42, observed);
-        Assert.Equal(42, await checkedGeneric.MatchAsync(Task.FromResult, Unexpected<IReadOnlyList<Error>, Task<int>>));
-        Assert.True(await resultWithoutPayload.MatchAsync(() => Task.FromResult(true), Unexpected<IReadOnlyList<Error>, Task<bool>>));
+        Assert.Equal(42, await checkedGeneric.MatchAsync(Task.FromResult, UnexpectedCallback<IReadOnlyList<Error>, Task<int>>()));
+        Assert.True(await resultWithoutPayload.MatchAsync(() => Task.FromResult(true), UnexpectedCallback<IReadOnlyList<Error>, Task<bool>>()));
     }
 
     [Theory]
@@ -238,17 +239,17 @@ public sealed class ResultFunctionalExtensionsTests
         Result result = useErrorList ? Results.Fail(ValidationErrors) : Results.Fail(Missing);
         Result<int> generic = useErrorList ? (Result<int>)ValidationErrors : Missing;
 
-        Assert.Same(generic.Value, (await generic.MapAsync(Unexpected<int, Task<string>>, token)).Value);
-        Assert.Same(generic.Value, (await generic.BindAsync(Unexpected<int, Task<Result<string>>>, token)).Value);
-        Assert.Same(generic.Value, (await generic.BindAsync(Unexpected<int, Task<Result>>, token)).Value);
+        Assert.Same(generic.Value, (await generic.MapAsync(UnexpectedCallback<int, Task<string>>(), token)).Value);
+        Assert.Same(generic.Value, (await generic.BindAsync(UnexpectedCallback<int, Task<Result<string>>>(), token)).Value);
+        Assert.Same(generic.Value, (await generic.BindAsync(UnexpectedCallback<int, Task<Result>>(), token)).Value);
         Assert.Same(result.Value, (await result.BindAsync(Unexpected<Task<Result>>, token)).Value);
         Assert.Same(result.Value, (await result.BindAsync(Unexpected<Task<Result<string>>>, token)).Value);
-        Assert.Same(generic.Value, (await generic.TapAsync(Unexpected<int, Task>, token)).Value);
+        Assert.Same(generic.Value, (await generic.TapAsync(UnexpectedCallback<int, Task>(), token)).Value);
         Assert.Same(result.Value, (await result.TapAsync(Unexpected<Task>, token)).Value);
-        Assert.Same(generic.Value, (await generic.EnsureAsync(Unexpected<int, Task<bool>>, Invalid)).Value);
+        Assert.Same(generic.Value, (await generic.EnsureAsync(UnexpectedCallback<int, Task<bool>>(), Invalid)).Value);
         Assert.Same(result.Value, (await result.EnsureAsync(Unexpected<Task<bool>>, Invalid)).Value);
 
-        var errors = await generic.MatchAsync(Unexpected<int, Task<IReadOnlyList<Error>>>, Task.FromResult);
+        var errors = await generic.MatchAsync(UnexpectedCallback<int, Task<IReadOnlyList<Error>>>(), Task.FromResult);
         Assert.Equal(result.GetErrors().AsEnumerable(), errors);
         errors = await result.MatchAsync(Unexpected<Task<IReadOnlyList<Error>>>, Task.FromResult);
         Assert.Equal(generic.GetErrors().AsEnumerable(), errors);
@@ -274,7 +275,7 @@ public sealed class ResultFunctionalExtensionsTests
     [Fact]
     public async Task Async_map_awaits_and_converts_callback_exceptions_to_critical_errors()
     {
-        var failure = new InvalidOperationException("Callback failed");
+        var failure = new InvalidOperationException(CallbackFailed);
         var completion = new TaskCompletionSource<int>();
         var mapped = Results.Ok(42).MapAsync(_ => completion.Task, TestContext.Current.CancellationToken);
 
@@ -288,7 +289,7 @@ public sealed class ResultFunctionalExtensionsTests
     public async Task Async_bind_and_tap_convert_callback_exceptions_to_critical_errors()
     {
         var token = TestContext.Current.CancellationToken;
-        var failure = new InvalidOperationException("Callback failed");
+        var failure = new InvalidOperationException(CallbackFailed);
         var expected = new Error(ErrorType.Critical, failure.Message);
 
         Assert.Equal(expected, (await Results.Ok(42).BindAsync(_ => Task.FromException<Result<int>>(failure), token)).Value);
@@ -301,7 +302,7 @@ public sealed class ResultFunctionalExtensionsTests
     public async Task Async_error_mapping_awaits_started_callbacks_even_after_a_synchronous_throw()
     {
         var pending = new TaskCompletionSource<Error>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var exception = new InvalidOperationException("Callback failed");
+        var exception = new InvalidOperationException(CallbackFailed);
         var mapped = Results.Fail(ValidationErrors).MapErrorAsync(error =>
             error == Invalid ? pending.Task : throw exception);
         var completedEarly = mapped.IsCompleted;
@@ -327,7 +328,7 @@ public sealed class ResultFunctionalExtensionsTests
     {
         var pending = new TaskCompletionSource<Result<int>>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var cancellation = new CancellationTokenSource();
-        var mapped = pending.Task.MapAsync(Unexpected<int, Task<int>>, cancellation.Token);
+        var mapped = pending.Task.MapAsync(UnexpectedCallback<int, Task<int>>(), cancellation.Token);
 
         cancellation.Cancel();
 
@@ -357,5 +358,5 @@ public sealed class ResultFunctionalExtensionsTests
 
     private static TOut Unexpected<TOut>() => throw new InvalidOperationException("Unexpected callback");
 
-    private static TOut Unexpected<TIn, TOut>(TIn _) => Unexpected<TOut>();
+    private static Func<TIn, TOut> UnexpectedCallback<TIn, TOut>() => static _ => Unexpected<TOut>();
 }

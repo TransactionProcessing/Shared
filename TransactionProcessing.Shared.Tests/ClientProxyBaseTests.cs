@@ -1190,6 +1190,8 @@ public sealed class ClientProxyBaseTests
     [Fact]
     public async Task GenericBodyOverloads_WithHttpContent_ForwardRawContentWithoutSerializing()
     {
+        const string rawBody = "raw-body";
+
         var serialiseCalls = 0;
         var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -1206,18 +1208,18 @@ public sealed class ClientProxyBaseTests
 
         (string Name, Func<Task<bool>> Execute)[] operations =
         [
-            ("post without response", async () => (await sut.Post<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess()),
-            ("put without response", async () => (await sut.Put<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess()),
-            ("patch without response", async () => (await sut.Patch<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess()),
-            ("post with response", async () => (await sut.Post<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess()),
-            ("put with response", async () => (await sut.Put<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess()),
-            ("patch with response", async () => (await sut.Patch<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess())
+            ("post without response", async () => (await sut.Post<StringContent>("widgets", new StringContent(rawBody))).IsSuccess()),
+            ("put without response", async () => (await sut.Put<StringContent>("widgets", new StringContent(rawBody))).IsSuccess()),
+            ("patch without response", async () => (await sut.Patch<StringContent>("widgets", new StringContent(rawBody))).IsSuccess()),
+            ("post with response", async () => (await sut.Post<HttpContent, SampleResponse>("widgets", new StringContent(rawBody))).IsSuccess()),
+            ("put with response", async () => (await sut.Put<HttpContent, SampleResponse>("widgets", new StringContent(rawBody))).IsSuccess()),
+            ("patch with response", async () => (await sut.Patch<HttpContent, SampleResponse>("widgets", new StringContent(rawBody))).IsSuccess())
         ];
 
         foreach ((string name, Func<Task<bool>> execute) in operations)
         {
             (await execute()).ShouldBeTrue(name);
-            handler.LastRequest!.Body.ShouldBe("raw-body");
+            handler.LastRequest!.Body.ShouldBe(rawBody);
         }
 
         serialiseCalls.ShouldBe(0);
