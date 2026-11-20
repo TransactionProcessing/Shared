@@ -379,7 +379,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
             if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
-                return requestResult.IsFailed ? requestResult.ToResult() : Result.Fail(failure);
+                return failure;
 
             using HttpRequestMessage request = requestMessage;
 
@@ -408,7 +408,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
             if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
-                return requestResult.IsFailed ? requestResult.ToResult() : Result.Fail(failure);
+                return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
@@ -435,7 +435,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateMultipartRequest(requestUri, fileData, fileName, formFields, accessToken, additionalHeaders);
             if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
-                return requestResult.IsFailed ? requestResult.ToResult() : Result.Fail(failure);
+                return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await this.HttpClient.SendAsync(request, cancellationToken);
@@ -461,7 +461,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
             if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
-                return requestResult.IsFailed ? Result<TResponse>.FromFailure(requestResult) : Result<TResponse>.Fail(failure);
+                return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
@@ -487,7 +487,7 @@ public abstract class ClientProxyBase {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
             if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
-                return requestResult.IsFailed ? Result<TResponse>.FromFailure(requestResult) : Result<TResponse>.Fail(failure);
+                return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);

@@ -514,6 +514,7 @@ public sealed class ClientProxyBaseTests
         var result = await sut.Get<SampleResponse>(requestUri!);
 
         result.IsFailed.ShouldBeTrue();
+        result.GetOutcome().Kind.ShouldBe(ResultKind.ErrorList);
         result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         result.Message.ShouldContain("Request URI");
         handler.LastRequest.ShouldBeNull();
@@ -829,6 +830,7 @@ public sealed class ClientProxyBaseTests
             [(header, value)]);
 
         result.IsFailed.ShouldBeTrue();
+        result.GetOutcome().Kind.ShouldBe(ResultKind.ErrorList);
         result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
