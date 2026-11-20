@@ -40,8 +40,8 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(aggregate);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(aggregate);
     }
 
     [Fact]
@@ -59,8 +59,8 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(aggregate);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(aggregate);
     }
 
     [Fact]
@@ -80,8 +80,8 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(aggregate);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(aggregate);
         _memoryCache.TryGetValue(cacheKey, out var cachedAggregate).ShouldBeTrue();
     }
 
@@ -250,8 +250,8 @@ public class AggregateServiceTests {
         var result = await _aggregateService.GetLatest<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(aggregate);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(aggregate);
     }
 
     [Fact]
@@ -302,8 +302,8 @@ public class AggregateServiceTests {
         var result = await _aggregateService.GetLatestFromLastEvent<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBe(aggregate);
+        result.TryGetValue(out var payload).ShouldBeTrue();
+        payload.ShouldBe(aggregate);
     }
 
     [Fact]

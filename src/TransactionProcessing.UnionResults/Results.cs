@@ -236,11 +236,6 @@ public union Result<T>(Ok<T>, Created<T>, NoContent, Error, ErrorList) : IResult
     public bool IsSuccess => this is Ok<T> or Created<T> or TransactionProcessing.UnionResults.NoContent;
     public bool IsFailed => !IsSuccess;
 
-    /// <summary>Gets the payload, or the default value of <typeparamref name="T"/> when the result has no payload.</summary>
-    /// <remarks>Use <see cref="TryGetValue"/> to distinguish a missing payload from a default-valued payload.</remarks>
-    [MaybeNull]
-    public T Data => TryGetValue(out var value) ? value : default;
-
     public string Message => GetFailureMessage() ?? string.Empty;
     public IReadOnlyList<Error> Errors => this switch
     {

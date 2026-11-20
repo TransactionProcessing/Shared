@@ -203,7 +203,10 @@ public class PersistentSubscription
                 return;
             }
 
-            List<IDomainEventHandler> domainEventHandlers = domainEventHandlersResult.Data;
+            if (!domainEventHandlersResult.TryGetValue(out var domainEventHandlers)) {
+                Logger.Logger.LogError("Handler lookup returned no value for event type {EventType}", domainEvent.GetType().Name);
+                return;
+            }
 
             Result result = await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
             if (result.IsSuccess) {

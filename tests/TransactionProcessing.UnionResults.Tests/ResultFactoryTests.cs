@@ -151,9 +151,6 @@ public sealed class ResultFactoryTests
         Assert.Equal(Assert.Single(default(Result).Errors).Message, default(Result).Message);
         Assert.True(default(Result<int>).IsFailed);
         Assert.False(default(Result<int>).TryGetValue(out _));
-        Assert.Equal(0, default(Result<int>).Data);
-        Assert.Null(Result<string>.NoContent().Data);
-        Assert.Equal(SampleValue, successful.Data);
         Assert.Equal(Assert.Single(default(Result<int>).Errors).Message, default(Result<int>).Message);
     }
 }

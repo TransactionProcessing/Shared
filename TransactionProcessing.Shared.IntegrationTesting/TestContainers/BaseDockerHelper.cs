@@ -249,6 +249,16 @@ public abstract class BaseDockerHelper{
 
         return Result.Success(details.Value);
     }
+
+    private (String imageName, Boolean useLatest) GetRequiredImageDetails(ContainerType key)
+    {
+        var result = this.GetImageDetails(key);
+        if (!result.TryGetValueOrFailure(out var details, out var failure))
+            throw new InvalidOperationException(failure[0].Message);
+
+        return details;
+    }
+
     public void SetHostPort(ContainerType key, Int32 hostPort){
         KeyValuePair<ContainerType, Int32> details = this.HostPorts.SingleOrDefault(c => c.Key == key);
         if (!details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
@@ -281,7 +291,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.CallbackHandler).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.CallbackHandler);
 
         ContainerBuilder callbackHandlerContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.CallbackHandlerContainerName)  // similar to WithName()
@@ -332,7 +342,7 @@ public abstract class BaseDockerHelper{
             {"EVENTSTORE_PROJECTION_EXECUTION_TIMEOUT","5000"}
         };
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.KurrentDb).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.KurrentDb);
 
         ContainerBuilder kurrentDbContainer = new(imageDetails.imageName);
         
@@ -392,7 +402,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.FileProcessor).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.FileProcessor);
 
         ContainerBuilder fileProcessorContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.FileProcessorContainerName)  // similar to WithName()
@@ -439,7 +449,7 @@ public abstract class BaseDockerHelper{
             $"http://{this.EstateReportingContainerName}:{DockerPorts.EstateReportingDockerPort}");
         environmentVariables.Add("ConnectionStrings:TransactionProcessorReadModel", this.SetConnectionString("TransactionProcessorReadModel", this.UseSecureSqlServerDatabase));
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateManagementUI).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.EstateManagementUI);
 
         ContainerBuilder containerBuilder = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.EstateManagementUiContainerName)
@@ -457,7 +467,7 @@ public abstract class BaseDockerHelper{
         environmentVariables.Add("ConnectionStrings:KurrentDb", this.GenerateKurrentDbConnectionString());
         environmentVariables.Add("ConnectionStrings:SubscriptionServiceDb", this.SetConnectionString("SubscriptionService", this.UseSecureSqlServerDatabase));
         
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.SubscriptionService).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.SubscriptionService);
 
         ContainerBuilder subscriptionServiceContainer = new ContainerBuilder(imageDetails.imageName).WithName(this.SubscriptionServiceContainerName)
                                                                                                     .WithEnvironment(environmentVariables)
@@ -476,7 +486,7 @@ public abstract class BaseDockerHelper{
             "ConnectionStrings:ConfigurationDatabase",
             this.SetConnectionString("master", this.UseSecureSqlServerDatabase));
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.ConfigurationHost).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.ConfigurationHost);
 
         ContainerBuilder configHostContainer = new ContainerBuilder(imageDetails.imageName).WithName(this.ConfigHostContainerName)
                                                                                            .WithEnvironment(environmentVariables)
@@ -502,7 +512,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.MessagingService).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.MessagingService);
 
         ContainerBuilder messagingServiceContainer = new ContainerBuilder(imageDetails.imageName).WithName(this.MessagingServiceContainerName) // similar to WithName()
                                                                                                  .WithEnvironment(environmentVariables)
@@ -554,12 +564,9 @@ public abstract class BaseDockerHelper{
             }
         }
 
-        Result<(String imageName, Boolean useLatest)> imageDetailsResult = this.GetImageDetails(ContainerType.SecurityService);
-        if (imageDetailsResult.IsFailed) {
-            throw new Exception($"Image details not found for {ContainerType.SecurityService}");
-        }
+        var imageDetails = this.GetRequiredImageDetails(ContainerType.SecurityService);
 
-        ContainerBuilder securityServiceContainer = new ContainerBuilder(imageDetailsResult.Data.imageName)
+        ContainerBuilder securityServiceContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.SecurityServiceContainerName)
             .WithEnvironment(environmentVariables)
             .MountHostFolder(this.HostTraceFolder)
@@ -580,7 +587,7 @@ public abstract class BaseDockerHelper{
     public virtual ContainerBuilder ConfigureSqlContainer()
     {
         this.Trace("About to start SQL Server Container");
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.SqlServer).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.SqlServer);
 
         ContainerBuilder containerService = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.SqlServerContainerName)  // similar to WithName()
@@ -605,7 +612,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TestHost).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.TestHost);
         
         ContainerBuilder testHostContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.TestHostContainerName)  // similar to WithName()
@@ -629,7 +636,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.EstateReporting).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.EstateReporting);
 
         ContainerBuilder estateReportingContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.EstateReportingContainerName)  // similar to WithName()
@@ -660,7 +667,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TransactionProcessorAcl).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.TransactionProcessorAcl);
 
         ContainerBuilder transactionProcessorACLContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.TransactionProcessorAclContainerName)  // similar to WithName()
@@ -689,7 +696,7 @@ public abstract class BaseDockerHelper{
             environmentVariables.Add(additionalEnvironmentVariable.Key, additionalEnvironmentVariable.Value);
         }
 
-        (String imageName, Boolean useLatest) imageDetails = this.GetImageDetails(ContainerType.TransactionProcessor).Data;
+        (String imageName, Boolean useLatest) imageDetails = this.GetRequiredImageDetails(ContainerType.TransactionProcessor);
 
         ContainerBuilder transactionProcessorContainer = new ContainerBuilder(imageDetails.imageName)
             .WithName(this.TransactionProcessorContainerName)  // similar to WithName()
@@ -931,17 +938,17 @@ public abstract class BaseDockerHelper{
 
             Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, cancellationToken);
 
-            if (healthCheckResult.IsSuccess) {
-                HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckResult.Data, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
+            if (healthCheckResult.TryGetValueOrFailure(out var healthCheckBody, out var failure)) {
+                HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckBody, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
 
-                this.Trace($"health check complete for {containerType} result is [{healthCheckResult.Data}]");
+                this.Trace($"health check complete for {containerType} result is [{healthCheckBody}]");
 
-                result.Status.ShouldBe(nameof(HealthCheckStatus.Healthy), $"Service Type: {containerType} Details {healthCheckResult.Data}");
+                result.Status.ShouldBe(nameof(HealthCheckStatus.Healthy), $"Service Type: {containerType} Details {healthCheckBody}");
                 this.Trace($"health check complete for {containerType}");
             }
             else {
                 this.Trace($"health check failed for {containerType}");
-                throw new InvalidOperationException($"Health check failed for {containerType} [{healthCheckResult.Message}]");
+                throw new InvalidOperationException($"Health check failed for {containerType} [{failure[0].Message}]");
             }
         }, cancellationToken, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
     }

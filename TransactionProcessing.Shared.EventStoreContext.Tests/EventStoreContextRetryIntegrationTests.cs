@@ -78,8 +78,8 @@ public class EventStoreContextRetryIntegrationTests : IDisposable
             await Retry.For(async () =>
             {
                 readEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
-                readEventsResult.IsSuccess.ShouldBeTrue();
-                readEventsResult.Data.Count.ShouldBe(1);
+                readEventsResult.TryGetValue(out var readEvents).ShouldBeTrue();
+                readEvents.Count.ShouldBe(1);
             }, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(2));
         }
         finally

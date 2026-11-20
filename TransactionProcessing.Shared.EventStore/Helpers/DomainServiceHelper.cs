@@ -8,19 +8,12 @@ public static class DomainServiceHelper
     public static Result<T> HandleGetAggregateResult<T>(Result<T> result, Guid aggregateId, bool isNotFoundError = true)
         where T : Aggregate.Aggregate, new()  // Constraint: T is a subclass of Aggregate and has a parameterless constructor
     {
-        ErrorType? errorType = result.GetOutcome().Error?.ErrorType ?? result.GetOutcome().Errors?.ErrorType;
-        if (result.IsFailed && errorType != ErrorType.NotFound) {
-            return result;
-        }
+        if (result.TryGetValueOrFailure(out var aggregate, out var failure))
+            return Result.Success(aggregate);
 
-        if (errorType == ErrorType.NotFound && isNotFoundError) {
-            return result;
-        }
+        if (failure.ErrorType == ErrorType.NotFound && !isNotFoundError)
+            return Result.Success(new T { AggregateId = aggregateId });
 
-        T aggregate = errorType == ErrorType.NotFound
-            ? new T { AggregateId = aggregateId }
-            : result.Data;
-
-        return Result.Success(aggregate);
+        return result.IsFailed ? result : Result<T>.Fail(failure);
     }
 }

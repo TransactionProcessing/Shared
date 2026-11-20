@@ -82,14 +82,14 @@ namespace TransactionProcessing.Shared.EventStore.SubscriptionWorker;
              this.WriteTrace("Full refresh on repository");
 
              Result<List<PersistentSubscriptionInfo>> list = await this.GetAllSubscriptions(cancellationToken);
-             if (list.IsFailed) {
-                 this.WriteTrace(list.Message);
+             if (!list.TryGetValueOrFailure(out var subscriptions, out var failure)) {
+                 this.WriteTrace(failure[0].Message);
                  return this.Subscriptions;
              }
 
              this.FullRefreshHits++;
 
-             this.Subscriptions = this.Subscriptions.Update(list.Data);
+             this.Subscriptions = this.Subscriptions.Update(subscriptions);
 
              this.WriteTrace($"Full refresh on repository completed {this.FullRefreshHits}");
 

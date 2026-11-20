@@ -378,9 +378,10 @@ public abstract class ClientProxyBase {
                                                              CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
-            if (requestResult.IsFailed)
-                return requestResult.ToResult();
-            using HttpRequestMessage request = requestResult.Data;
+            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+                return requestResult.IsFailed ? requestResult.ToResult() : Result.Fail(failure);
+
+            using HttpRequestMessage request = requestMessage;
 
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapNonGenericResult(method, response, cancellationToken);
@@ -406,9 +407,10 @@ public abstract class ClientProxyBase {
                                                    CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
-            if (requestResult.IsFailed)
-                return requestResult.ToResult();
-            using HttpRequestMessage request = requestResult.Data;
+            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+                return requestResult.IsFailed ? requestResult.ToResult() : Result.Fail(failure);
+
+            using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapNonGenericResult(method, response, cancellationToken);
         }
@@ -432,9 +434,10 @@ public abstract class ClientProxyBase {
                                                             CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateMultipartRequest(requestUri, fileData, fileName, formFields, accessToken, additionalHeaders);
-            if (requestResult.IsFailed)
-                return requestResult.ToResult();
-            using HttpRequestMessage request = requestResult.Data;
+            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+                return requestResult.IsFailed ? requestResult.ToResult() : Result.Fail(failure);
+
+            using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await this.HttpClient.SendAsync(request, cancellationToken);
             return await this.MapNonGenericResult(HttpMethod.Post, response, cancellationToken);
         }
@@ -457,9 +460,10 @@ public abstract class ClientProxyBase {
                                                                      CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
-            if (requestResult.IsFailed)
-                return Result<TResponse>.FromFailure(requestResult);
-            using HttpRequestMessage request = requestResult.Data;
+            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+                return requestResult.IsFailed ? Result<TResponse>.FromFailure(requestResult) : Result<TResponse>.Fail(failure);
+
+            using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapGenericResult<TResponse>(method, response, cancellationToken);
         }
@@ -482,9 +486,10 @@ public abstract class ClientProxyBase {
                                                                      CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
-            if (requestResult.IsFailed)
-                return Result<TResponse>.FromFailure(requestResult);
-            using HttpRequestMessage request = requestResult.Data;
+            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+                return requestResult.IsFailed ? Result<TResponse>.FromFailure(requestResult) : Result<TResponse>.Fail(failure);
+
+            using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
             return await MapGenericResult<TResponse>(method, response, cancellationToken);
         }
@@ -561,10 +566,8 @@ public abstract class ClientProxyBase {
         }
     
         Result<HttpRequestMessage> createRequestResult = CreateRequest(method, requestUri, body: null, accessToken, additionalHeaders: null);
-        if (createRequestResult.IsFailed)
-            return createRequestResult;
-
-        HttpRequestMessage request = createRequestResult.Data;
+        if (!createRequestResult.TryGetValueOrFailure(out var request, out var requestFailure))
+            return createRequestResult.IsFailed ? createRequestResult : Result<HttpRequestMessage>.Fail(requestFailure);
         request.Content = content;
 
         if (additionalHeaders is not null) {
@@ -595,16 +598,16 @@ public abstract class ClientProxyBase {
         }
 
         Result<HttpRequestMessage> createRequestResult = CreateRequest(HttpMethod.Post, requestUri, body: null, accessToken, additionalHeaders: null);
-        if (createRequestResult.IsFailed)
-            return Result<HttpRequestMessage>.FromFailure(createRequestResult);
-
-        HttpRequestMessage request = createRequestResult.Data;
+        if (!createRequestResult.TryGetValueOrFailure(out var request, out var requestFailure))
+            return createRequestResult.IsFailed ? createRequestResult : Result<HttpRequestMessage>.Fail(requestFailure);
         
         Result<MultipartFormDataContent> createMultipartContentResult = CreateMultipartContent(fileData, fileName, formFields);
-        if (createMultipartContentResult.IsFailed)
-            return Result<HttpRequestMessage>.FromFailure(createMultipartContentResult);
+        if (!createMultipartContentResult.TryGetValueOrFailure(out var multipartContent, out var contentFailure))
+            return createMultipartContentResult.IsFailed
+                ? Result<HttpRequestMessage>.FromFailure(createMultipartContentResult)
+                : Result<HttpRequestMessage>.Fail(contentFailure);
 
-        request.Content = createMultipartContentResult.Data;
+        request.Content = multipartContent;
 
         if (additionalHeaders is not null) {
             Result result = AddHeaders(request, additionalHeaders);
@@ -735,20 +738,20 @@ public abstract class ClientProxyBase {
     private static async Task<Result> MapFailedResult(HttpResponseMessage response,
                                                       CancellationToken cancellationToken) {
         String rawContent = await ReadContent(response, cancellationToken);
-        Result<IReadOnlyList<String>> errorMessages = ExtractErrors(rawContent);
-        if (errorMessages.IsFailed)
-            return errorMessages.ToResult();
+        Result<IReadOnlyList<String>> extractionResult = ExtractErrors(rawContent);
+        if (!extractionResult.TryGetValueOrFailure(out var errorMessages, out var failure))
+            return extractionResult.IsFailed ? extractionResult.ToResult() : Result.Fail(failure);
 
-        String primaryMessage = BuildPrimaryMessage(response, errorMessages.Data);
+        String primaryMessage = BuildPrimaryMessage(response, errorMessages);
 
         return response.StatusCode switch {
-            HttpStatusCode.BadRequest => Result.Invalid(primaryMessage, errorMessages.Data),
-            HttpStatusCode.Unauthorized => Result.Unauthorized(primaryMessage, errorMessages.Data),
-            HttpStatusCode.Forbidden => Result.Forbidden(primaryMessage, errorMessages.Data),
-            HttpStatusCode.NotFound => Result.NotFound(primaryMessage, errorMessages.Data),
-            HttpStatusCode.Conflict => Result.Conflict(primaryMessage, errorMessages.Data),
-            _ when (int)response.StatusCode >= 500 => Result.CriticalError(primaryMessage, errorMessages.Data),
-            _ => Result.Failure(primaryMessage, errorMessages.Data)
+            HttpStatusCode.BadRequest => Result.Invalid(primaryMessage, errorMessages),
+            HttpStatusCode.Unauthorized => Result.Unauthorized(primaryMessage, errorMessages),
+            HttpStatusCode.Forbidden => Result.Forbidden(primaryMessage, errorMessages),
+            HttpStatusCode.NotFound => Result.NotFound(primaryMessage, errorMessages),
+            HttpStatusCode.Conflict => Result.Conflict(primaryMessage, errorMessages),
+            _ when (int)response.StatusCode >= 500 => Result.CriticalError(primaryMessage, errorMessages),
+            _ => Result.Failure(primaryMessage, errorMessages)
         };
     }
 

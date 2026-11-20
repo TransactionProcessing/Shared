@@ -38,8 +38,7 @@ public class AggregateRepositoryTests{
                                                        };
         context.ReadEvents(Arg<String>.Any(), Arg<Int64>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(e));
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersion(TestData.AggregateId, CancellationToken.None);
-        testAggregate.IsSuccess.ShouldBeTrue();
-        testAggregate.Data.ShouldNotBeNull();
+        testAggregate.TryGetValue(out _).ShouldBeTrue();
     }
 
     [Fact]
@@ -122,8 +121,9 @@ public class AggregateRepositoryTests{
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new(context.Instance(), factory);
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
+        testAggregate.TryGetValue(out var aggregate).ShouldBeTrue();
 
-        Result result = await testAggregateRepository.SaveChanges(testAggregate.Data, CancellationToken.None);
+        Result result = await testAggregateRepository.SaveChanges(aggregate, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
     }
 
@@ -143,8 +143,9 @@ public class AggregateRepositoryTests{
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new(context.Instance(), factory);
         Result<TestAggregate> testAggregate = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
-        testAggregate.Data.SetAggregateName("New name", Guid.NewGuid());
-        Result result = await testAggregateRepository.SaveChanges(testAggregate.Data, CancellationToken.None);
+        testAggregate.TryGetValue(out var aggregate).ShouldBeTrue();
+        aggregate.SetAggregateName("New name", Guid.NewGuid());
+        Result result = await testAggregateRepository.SaveChanges(aggregate, CancellationToken.None);
         result.IsFailed.ShouldBeTrue();
     }
 
@@ -178,7 +179,7 @@ public class AggregateRepositoryTests{
 
         AggregateRepository<TestAggregate, DomainEvent> testAggregateRepository = new(context.Instance(), factory);
         Result<TestAggregate> testAggregaterResult = await testAggregateRepository.GetLatestVersionFromLastEvent(TestData.AggregateId, CancellationToken.None);
-        var testAggregate = testAggregaterResult.Data;
+        testAggregaterResult.TryGetValue(out var testAggregate).ShouldBeTrue();
         testAggregate.SetAggregateName("New name", Guid.NewGuid());
         Result result = await testAggregateRepository.SaveChanges(testAggregate, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
