@@ -1,9 +1,9 @@
+using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-using TransactionProcessing.UnionResults;
+using HttpResults = Microsoft.AspNetCore.Http.Results;
 
 namespace TransactionProcessing.UnionResults.AspNetCore;
 
@@ -12,56 +12,51 @@ internal sealed class UnionResultEndpointFilter(IOptions<UnionResultOptions> opt
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var result = await next(context).ConfigureAwait(false);
-        if (result is not IResultOutcome outcome) return result;
-
-        var response = outcome.GetOutcome();
-        var http = context.HttpContext;
-        switch (response.Kind)
+        if (result is not IUnion union || !IsResultType(result.GetType()))
         {
-            case ResultKind.Ok:
-                if (response.Value is null) { http.Response.StatusCode = StatusCodes.Status200OK; return Results.Empty; }
-                return Results.Ok(response.Value);
-            case ResultKind.Created:
-                if (response.Value is null) throw new InvalidOperationException("A Created result cannot contain a null value.");
-                if (response.Location is not null && !Uri.TryCreate(response.Location, UriKind.RelativeOrAbsolute, out _))
-                    throw new InvalidOperationException("Created Location must be a valid URI.");
-                return Results.Created(response.Location, response.Value);
-            case ResultKind.NoContent:
-                http.Response.StatusCode = StatusCodes.Status204NoContent;
-                return Results.Empty;
-            case ResultKind.Error:
-                return WriteProblem(http, options.Value, response.Error!, [response.Error!]);
-            case ResultKind.ErrorList:
-                return WriteProblem(http, options.Value, null, response.Errors!);
-            default:
-                throw new InvalidOperationException("Unknown union result kind.");
+            return result;
         }
+
+        var http = context.HttpContext;
+        return union.Value switch
+        {
+            Success or IResultSuccess { Value: null } => HttpResults.Ok(),
+            IResultSuccess success => HttpResults.Ok(success.Value),
+            Error error => WriteProblem(http, options.Value.Resolve(error.ErrorType), error.ErrorType, [error]),
+            ErrorList errors => WriteProblem(http, options.Value.Resolve(errors.ErrorType), errors.ErrorType, errors),
+            _ => WriteProblem(http, StatusCodes.Status500InternalServerError, ErrorType.Critical, [])
+        };
     }
 
-    private static IResult WriteProblem(HttpContext context, UnionResultOptions options, Error? error, IReadOnlyList<Error> errors)
+    private static bool IsResultType(Type type) =>
+        type == typeof(Result) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Result<>));
+
+    private IResult WriteProblem(HttpContext context, int status, ErrorType category, IReadOnlyList<Error> errors)
     {
-        var status = error is null ? options.Resolve(new ErrorList(errors)) : options.Resolve(error);
-        var title = status >= 500 ? "An unexpected error occurred." : error?.Message ?? errors[0].Message;
         var problem = new ProblemDetails
         {
             Status = status,
-            Title = title,
+            Title = status >= StatusCodes.Status500InternalServerError
+                ? "An unexpected error occurred."
+                : errors[0].Message,
             Type = $"https://httpstatuses.com/{status}",
             Instance = context.Request.Path
         };
-        if (options.IncludeErrorCodes)
+
+        if (options.Value.IncludeTraceId)
         {
-            if (error is not null) problem.Extensions["code"] = error.Code;
-            else problem.Extensions["codes"] = errors.Select(static item => item.Code).ToArray();
+            problem.Extensions["traceId"] = context.TraceIdentifier;
         }
-        if (options.IncludeTraceId) problem.Extensions["traceId"] = context.TraceIdentifier;
-        if (status < 500 && errors.Any(static item => item.ErrorType == ErrorType.Validation))
+
+        if (status < StatusCodes.Status500InternalServerError && category == ErrorType.Validation)
         {
-            problem.Extensions["errors"] = errors.Where(static item => item.ErrorType == ErrorType.Validation)
-                .GroupBy(static item => item.Field ?? string.Empty)
-                .ToDictionary(static group => group.Key, static group => group.Select(static item => item.Message).ToArray());
+            problem.Extensions["errors"] = new Dictionary<string, string[]>
+            {
+                [string.Empty] = errors.Select(static error => error.Message).ToArray()
+            };
         }
-        return Results.Json(
+
+        return HttpResults.Json(
             problem,
             UnionResultJsonSerializerContext.Default.ProblemDetails,
             "application/problem+json",
@@ -70,7 +65,6 @@ internal sealed class UnionResultEndpointFilter(IOptions<UnionResultOptions> opt
 }
 
 [JsonSerializable(typeof(ProblemDetails))]
-[JsonSerializable(typeof(string[]))]
 [JsonSerializable(typeof(Dictionary<string, string[]>))]
 internal partial class UnionResultJsonSerializerContext : JsonSerializerContext
 {

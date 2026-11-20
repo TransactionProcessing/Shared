@@ -65,7 +65,7 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
         if (!eventIsConfigured)
         {
             // No handlers setup, return null and let the caller decide what to do next
-            return Result.Failure($"No handlers setup for event {domainEvent.GetType().FullName}");
+            return new Error(ErrorType.Failure, $"No handlers setup for event {domainEvent.GetType().FullName}");
         }
 
         List<String> handlers = this.EventHandlerConfiguration
@@ -82,7 +82,7 @@ public class DomainEventHandlerResolver : IDomainEventHandlerResolver
             handlersToReturn.AddRange(foundHandlers.Select(x => x.Value));
         }
 
-        return Result.Success(handlersToReturn);
+        return Results.Ok(handlersToReturn);
     }
 
 }

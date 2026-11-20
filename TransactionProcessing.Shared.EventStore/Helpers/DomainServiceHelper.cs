@@ -9,10 +9,10 @@ public static class DomainServiceHelper
         where T : Aggregate.Aggregate, new()  // Constraint: T is a subclass of Aggregate and has a parameterless constructor
     {
         if (result.TryGetValueOrFailure(out var aggregate, out var failure))
-            return Result.Success(aggregate);
+            return Results.Ok(aggregate);
 
         if (failure.ErrorType == ErrorType.NotFound && !isNotFoundError)
-            return Result.Success(new T { AggregateId = aggregateId });
+            return Results.Ok(new T { AggregateId = aggregateId });
 
         return failure;
     }

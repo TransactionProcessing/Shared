@@ -1,5 +1,4 @@
 using KurrentDB.Client;
-using TransactionProcessing.Shared.Exceptions;
 using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.Aggregate;
@@ -80,7 +79,7 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
 
 
         if (!pendingEvents.Any())
-            return Result.Success();
+            return Results.Ok();
 
         String correlationId = TenantContext.CurrentTenant?.CorrelationId.ToString();
         List<EventData> events = new();
@@ -94,11 +93,11 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
         }
 
         Result result = await this.EventStoreContext.InsertEvents(streamName, aggregate.Version, events, cancellationToken);
-        if (result.IsFailed)
+        if (!result.IsSuccess())
             return result;
 
         aggregate.CommitPendingEvents();
-        return Result.Success();
+        return Results.Ok();
     }
 
     private Result<TAggregate> ProcessEvents(TAggregate aggregate,
@@ -130,14 +129,14 @@ public sealed class AggregateRepository<TAggregate, TDomainEvent> : StandardTrac
                     }
                 });
 
-                return Result.Success(aggregate);
+                return Results.Ok(aggregate);
             }
             catch (Exception ex) {
-                return Result.Failure(ex.GetExceptionMessages());
+                return ex.ToFailureErrors();
             }
         }
 
-        return Result.Success(aggregate);
+        return Results.Ok(aggregate);
     }
 
 }

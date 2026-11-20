@@ -71,10 +71,10 @@ public class EventStoreConnectionStringHealthCheck : IHealthCheck
         try
         {
             Result<List<ResolvedEvent>> readResult = await this.Context.ReadLastEventsFromAll(1, cancellationToken);
-            if (!readResult.TryGetValue(out var events)) {
+            if (readResult.Value is not Success<List<ResolvedEvent>> events) {
                 return HealthCheckResult.Unhealthy("Failed during read of $all stream");
             }
-            if (!events.Any())
+            if (!events.Value.Any())
                 return HealthCheckResult.Unhealthy("$all stream not found");
                 
             return HealthCheckResult.Healthy();

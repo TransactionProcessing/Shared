@@ -28,7 +28,7 @@ public class DomainEventHandlerResolverTests
 
         DomainEventHandlerResolver r = new(eventHandlerConfiguration, CreateEventHandlerFunc);
         Result<List<IDomainEventHandler>> result  = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
-        result.TryGetValue(out var handlers).ShouldBeTrue();
+        var handlers = Assert.IsType<Success<List<IDomainEventHandler>>>(result.Value).Value;
         handlers.Count.ShouldBe(2);
         handlers.Count(x => x.GetType() == typeof(TestDomainEventHandler)).ShouldBe(1);
         handlers.Count(x => x.GetType() == typeof(TestDomainEventHandler2)).ShouldBe(1);
@@ -42,7 +42,7 @@ public class DomainEventHandlerResolverTests
 
         DomainEventHandlerResolver r = new(eventHandlerConfiguration, createEventHandlerFunc);
         Result<List<IDomainEventHandler>> result = r.GetDomainEventHandlers(new EstateCreatedEvent(TestData.AggregateId, TestData.EstateName));
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]

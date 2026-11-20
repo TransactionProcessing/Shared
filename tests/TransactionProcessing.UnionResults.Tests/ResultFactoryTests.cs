@@ -1,156 +1,86 @@
-using TransactionProcessing.UnionResults;
 using Xunit;
 
 namespace TransactionProcessing.UnionResults.Tests;
 
 public sealed class ResultFactoryTests
 {
-    private const string FailureMessage = "failure";
-    private const string MissingMessage = "missing";
-    private const string SampleValue = "value";
-    private const string ErrorDetail = "detail";
+    [Fact]
+    public void Ok_creates_a_success_without_a_payload()
+    {
+        var result = Results.Ok();
+
+        Assert.IsType<Success>(result.Value);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(42)]
+    public void Generic_ok_wraps_the_supplied_value(int value)
+    {
+        var result = Results.Ok(value);
+
+        var success = Assert.IsType<Success<int>>(result.Value);
+        Assert.Equal(value, success.Value);
+    }
 
     [Fact]
-    public void Error_factories_assign_their_error_categories()
+    public void Generic_ok_wraps_a_nullable_payload_even_when_it_is_null()
     {
-        var errors = new[]
+        var result = Results.Ok<string?>(null);
+
+        var success = Assert.IsType<Success<string?>>(result.Value);
+        Assert.Null(success.Value);
+    }
+
+    [Fact]
+    public void Fail_preserves_the_supplied_error()
+    {
+        var error = new Error(ErrorType.NotFound, "Item not found");
+
+        var result = Results.Fail(error);
+
+        Assert.Same(error, Assert.IsType<Error>(result.Value));
+    }
+
+    [Fact]
+    public void Fail_preserves_the_supplied_error_list()
+    {
+        var errors = new ErrorList([new Error(ErrorType.Validation, "Name is required")]);
+
+        var result = Results.Fail(errors);
+
+        Assert.Same(errors, Assert.IsType<ErrorList>(result.Value));
+    }
+
+    [Fact]
+    public void Fail_with_a_missing_error_returns_a_critical_diagnostic()
+    {
+        var expected = new Error(ErrorType.Critical, "A failed result requires an error.");
+
+        Assert.Equal(expected, Assert.Single(Results.Fail((Error)null!).GetErrors()));
+        Assert.Equal(expected, Assert.Single(Results.Fail((ErrorList)null!).GetErrors()));
+    }
+
+    [Fact]
+    public void Message_factories_create_errors_with_the_expected_category_and_message()
+    {
+        const string Message = "  Supplied message  ";
+        (Result Result, ErrorType Category)[] cases =
+        [
+            (Results.Validation(Message), ErrorType.Validation),
+            (Results.Conflict(Message), ErrorType.Conflict),
+            (Results.Critical(Message), ErrorType.Critical),
+            (Results.Fail(Message), ErrorType.Failure),
+            (Results.Forbidden(Message), ErrorType.Forbidden),
+            (Results.NotFound(Message), ErrorType.NotFound),
+            (Results.Unauthorized(Message), ErrorType.Unauthorized),
+            (Results.Unknown(Message), ErrorType.Unknown),
+        ];
+
+        foreach (var (result, category) in cases)
         {
-            (Error.Failure(FailureMessage), ErrorType.Failure),
-            (Error.Validation("validation", "name"), ErrorType.Validation),
-            (Error.NotFound(MissingMessage), ErrorType.NotFound),
-            (Error.Unauthorized("unauthorized"), ErrorType.Unauthorized),
-            (Error.Forbidden("forbidden"), ErrorType.Forbidden),
-            (Error.Conflict("conflict"), ErrorType.Conflict),
-            (Error.Critical("critical"), ErrorType.Critical),
-        };
-
-        foreach (var (error, errorType) in errors)
-            Assert.Equal(errorType, error.ErrorType);
-
-        Assert.Equal("name", errors[1].Item1.Field);
-        Assert.Null(errors[0].Item1.Field);
-    }
-
-    [Fact]
-    public void Error_constructor_validates_code_and_message()
-    {
-        Assert.Throws<ArgumentException>(() => new Error(" ", "message", ErrorType.Failure));
-        Assert.Throws<ArgumentNullException>(() => new Error("code", null!, ErrorType.Failure));
-        var error = new Error("custom.code", "custom message", ErrorType.Unknown, "field");
-        Assert.Equal("custom.code", error.Code);
-        Assert.Equal("custom message", error.Message);
-        Assert.Equal(ErrorType.Unknown, error.ErrorType);
-        Assert.Equal("field", error.Field);
-    }
-
-    [Fact]
-    public void Error_list_validates_entries_and_exposes_read_only_list_contract()
-    {
-        Assert.Throws<ArgumentNullException>(() => new ErrorList(null!));
-        Assert.Throws<ArgumentException>(() => new ErrorList([]));
-        Assert.Throws<ArgumentException>(() => new ErrorList([null!]));
-        Assert.Throws<ArgumentException>(() => new ErrorList([Error.Validation("bad"), Error.NotFound(MissingMessage)]));
-
-        var first = Error.Validation("first");
-        var second = Error.Validation("second");
-        var errors = new ErrorList([first, second]);
-        Assert.Equal(ErrorType.Validation, errors.ErrorType);
-        Assert.Equal(2, errors.Count);
-        Assert.Same(first, errors[0]);
-        Assert.Equal(new[] { first, second }, errors.ToArray());
-    }
-
-    [Fact]
-    public void Result_factories_create_success_and_no_content_cases()
-    {
-        Assert.Equal(ResultKind.Ok, Result.Ok().GetOutcome().Kind);
-        Assert.Equal(ResultKind.Ok, Result.Success().GetOutcome().Kind);
-        Assert.Equal(42, Result.Success(42).GetOutcome().Value);
-        Assert.Equal(ResultKind.NoContent, Result.NoContent().GetOutcome().Kind);
-        Assert.Equal(ResultKind.Ok, Result.CreatedResource().GetOutcome().Kind);
-        Assert.Equal(ResultKind.NoContent, Result.DeletedResource().GetOutcome().Kind);
-        Assert.Equal(ResultKind.NoContent, Result.UpdatedResource().GetOutcome().Kind);
-        Assert.Equal(SampleValue, Result.ObtainedResource(SampleValue).GetOutcome().Value);
-        Assert.Equal(ResultKind.Created, Result<string>.Created(SampleValue, "/items/1").GetOutcome().Kind);
-        Assert.Equal(ResultKind.NoContent, Result<string>.NoContent().GetOutcome().Kind);
-        Assert.Equal(ResultKind.Error, Result<string>.Ok(null!).GetOutcome().Kind);
-        Assert.Equal(ResultKind.Error, Result<string>.Created(null!).GetOutcome().Kind);
-        Assert.Equal(ResultKind.Error, Result.Fail((Error)null!).GetOutcome().Kind);
-        Assert.Equal(ResultKind.Error, Result<int>.Fail((ErrorList)null!).GetOutcome().Kind);
-    }
-
-    [Fact]
-    public void Category_factories_create_single_errors_and_error_lists()
-    {
-        var singleErrors = new[]
-        {
-            Result.Failure(FailureMessage),
-            Result.Validation("validation"),
-            Result.Invalid("invalid"),
-            Result.NotFound(MissingMessage),
-            Result.Unauthorized("unauthorized"),
-            Result.Forbidden("forbidden"),
-            Result.Conflict("conflict"),
-            Result.CriticalError("critical"),
-        };
-        Assert.Equal(
-            [ErrorType.Failure, ErrorType.Validation, ErrorType.Validation, ErrorType.NotFound, ErrorType.Unauthorized, ErrorType.Forbidden, ErrorType.Conflict, ErrorType.Critical],
-            singleErrors.Select(static error => error.ErrorType));
-
-        var errorLists = new[]
-        {
-            Result.Failure(FailureMessage, [ErrorDetail]),
-            Result.Invalid("invalid", [ErrorDetail]),
-            Result.Validation("validation", [ErrorDetail]),
-            Result.NotFound(MissingMessage, [ErrorDetail]),
-            Result.Unauthorized("unauthorized", [ErrorDetail]),
-            Result.Forbidden("forbidden", [ErrorDetail]),
-            Result.Conflict("conflict", [ErrorDetail]),
-            Result.CriticalError("critical", [ErrorDetail]),
-        };
-        Assert.Equal(
-            [ErrorType.Failure, ErrorType.Validation, ErrorType.Validation, ErrorType.NotFound, ErrorType.Unauthorized, ErrorType.Forbidden, ErrorType.Conflict, ErrorType.Critical],
-            errorLists.Select(static errors => errors.ErrorType));
-        Assert.All(errorLists, static errors => Assert.Equal(2, errors.Count));
-    }
-
-    [Fact]
-    public void Error_list_factories_filter_blank_values_and_use_a_fallback_message()
-    {
-        var filtered = Result.Invalid(" summary ", ["field error", " ", ""]);
-        Assert.Equal(2, filtered.Count);
-        Assert.Equal(" summary ", filtered[0].Message);
-        Assert.Equal("field error", filtered[1].Message);
-
-        var fallback = Result.Failure(Array.Empty<string>());
-        Assert.Single(fallback);
-        Assert.Equal("An unspecified error occurred.", fallback[0].Message);
-        Assert.Equal(FailureMessage, Assert.Single(Result.Failure(FailureMessage, null!)).Message);
-    }
-
-    [Fact]
-    public void Generic_failure_factory_propagates_single_and_multiple_errors()
-    {
-        var single = Result<int>.FromFailure(Result.Fail(Error.NotFound(MissingMessage)));
-        Assert.Equal(ErrorType.NotFound, single.Errors[0].ErrorType);
-        var multiple = Result<int>.FromFailure(Result.Fail(new ErrorList([Error.Validation("one"), Error.Validation("two")])));
-        Assert.Equal(2, multiple.Errors.Count);
-        Assert.Equal(ResultKind.Error, Result<int>.FromFailure(Result.Ok()).GetOutcome().Kind);
-        Assert.Equal(ResultKind.Error, Result<int>.FromFailure(null!).GetOutcome().Kind);
-    }
-
-    [Fact]
-    public void Default_results_report_a_failure_and_successes_have_no_errors()
-    {
-        var successful = Result.Success(SampleValue);
-        Assert.Empty(successful.Errors);
-        Assert.Empty(Result.Ok().Errors);
-        Assert.False(successful.IsFailed);
-        Assert.True(Result.Fail(Error.Failure(FailureMessage)).IsFailed);
-        Assert.True(default(Result).IsFailed);
-        Assert.Equal(Assert.Single(default(Result).Errors).Message, default(Result).Message);
-        Assert.True(default(Result<int>).IsFailed);
-        Assert.False(default(Result<int>).TryGetValue(out _));
-        Assert.Equal(Assert.Single(default(Result<int>).Errors).Message, default(Result<int>).Message);
+            var error = Assert.IsType<Error>(result.Value);
+            Assert.Equal(new Error(category, Message), error);
+        }
     }
 }
