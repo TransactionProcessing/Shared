@@ -40,7 +40,7 @@ public class PersistentSubscriptionTests : IDisposable
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
         TestDomainEventHandler eventHandler = new();
         IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
-        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler>()
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Results.Ok(new List<IDomainEventHandler>()
         {
             eventHandler
         }));
@@ -73,7 +73,7 @@ public class PersistentSubscriptionTests : IDisposable
         PersistentSubscriptionDetails details = new("$ce-test", "local-correlation");
         CorrelationCapturingEventHandler eventHandler = new();
         IDomainEventHandlerResolverImposter resolver = new();
-        resolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler> { eventHandler }));
+        resolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Results.Ok(new List<IDomainEventHandler> { eventHandler }));
         InMemoryPersistentSubscriptionsClient client = new();
         PersistentSubscription subscription = PersistentSubscription.Create(client, details, resolver.Instance());
 
@@ -102,7 +102,7 @@ public class PersistentSubscriptionTests : IDisposable
         PersistentSubscriptionDetails persistentSubscriptionDetails = new("$ce-test", "local-1");
         TestDomainEventHandler eventHandler = new();
         IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
-        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler>()
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Results.Ok(new List<IDomainEventHandler>()
         {
             eventHandler
         }));
@@ -132,7 +132,7 @@ public class PersistentSubscriptionTests : IDisposable
         TestDomainEventHandler eventHandler1 = new();
         TestDomainEventHandler eventHandler2 = new();
         IDomainEventHandlerResolverImposter domainEventHandlerResolver = new IDomainEventHandlerResolverImposter();
-        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Result.Success(new List<IDomainEventHandler>()
+        domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any()).Returns(Results.Ok(new List<IDomainEventHandler>()
         {
             eventHandler1,
             eventHandler2
@@ -170,10 +170,10 @@ public class PersistentSubscriptionTests : IDisposable
             IDomainEventHandlerResolverImposter domainEventHandlerResolver = new();
             IDomainEventHandlerImposter domainEventHandler = new();
             domainEventHandler.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-                .ReturnsAsync(Result.Fail(Error.Failure(String.Empty)));
+                .ReturnsAsync(Results.Fail(String.Empty));
 
             domainEventHandlerResolver.GetDomainEventHandlers(Arg<IDomainEvent>.Any())
-                .Returns(Result.Success(new List<IDomainEventHandler>()
+                .Returns(Results.Ok(new List<IDomainEventHandler>()
                 {
                     domainEventHandler.Instance()
                 }));
@@ -273,7 +273,7 @@ public class PersistentSubscriptionTests : IDisposable
         public Task<Result> Handle(IDomainEvent domainEvent, CancellationToken cancellationToken)
         {
             this.CorrelationId = TenantContext.CurrentTenant?.CorrelationId.Value;
-            return Task.FromResult(Result.Success());
+            return Task.FromResult(Results.Ok());
         }
     }
 }

@@ -58,13 +58,13 @@ namespace TransactionProcessing.Shared.EventStore.SubscriptionWorker;
              if (responseMessage.IsSuccessStatusCode) {
                  List<PersistentSubscriptionInfo> list = StringSerialiser.Deserialise<List<PersistentSubscriptionInfo>>(responseBody, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
 
-                 return Result.Success(list);
+                 return Results.Ok(list);
              }
 
-             return Result.Failure($"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
+             return new Error(ErrorType.Failure, $"Response was [{responseBody}] and status code was [{responseMessage.StatusCode}]");
          }
          catch (Exception ex) {
-             return Result.Failure($"Unable to get persistent subscription list. [{ex}]");
+             return new Error(ErrorType.Failure, $"Unable to get persistent subscription list. [{ex}]");
          }
      }
 

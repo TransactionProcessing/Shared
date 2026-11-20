@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 namespace TransactionProcessing.UnionResults.AspNetCore;
@@ -35,13 +34,11 @@ public static class UnionResultOpenApiExtensions
         ArgumentNullException.ThrowIfNull(endpoint);
         ArgumentNullException.ThrowIfNull(additionalProblemStatusCodes);
 
-        endpoint.Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status204NoContent);
+        endpoint.Produces(StatusCodes.Status200OK);
 
         endpoint.AddOpenApiOperationTransformer(static (operation, _, _) =>
         {
             if (operation.Responses?.TryGetValue("200", out var ok) == true) ok.Content?.Clear();
-            if (operation.Responses?.TryGetValue("204", out var noContent) == true) noContent.Content?.Clear();
             return Task.CompletedTask;
         });
 
@@ -62,18 +59,13 @@ public static class UnionResultOpenApiExtensions
         ArgumentNullException.ThrowIfNull(endpoint);
         ArgumentNullException.ThrowIfNull(additionalProblemStatusCodes);
 
-        endpoint.Produces<T>(StatusCodes.Status200OK)
-            .Produces<T>(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status204NoContent);
+        endpoint.Produces<T>(StatusCodes.Status200OK);
 
         endpoint.AddOpenApiOperationTransformer(async (operation, context, cancellationToken) =>
         {
             var schema = await context.GetOrCreateSchemaAsync(typeof(T), null, cancellationToken).ConfigureAwait(false);
             if (operation.Responses?.TryGetValue("200", out var ok) == true && ok.Content?.ContainsKey(ApplicationJsonContentType) == true)
                 ok.Content[ApplicationJsonContentType] = new OpenApiMediaType { Schema = schema };
-            if (operation.Responses?.TryGetValue("201", out var created) == true && created.Content?.ContainsKey(ApplicationJsonContentType) == true)
-                created.Content[ApplicationJsonContentType] = new OpenApiMediaType { Schema = schema };
-            if (operation.Responses?.TryGetValue("204", out var noContent) == true) noContent.Content?.Clear();
         });
 
         return AddProblemResponses(endpoint, additionalProblemStatusCodes);

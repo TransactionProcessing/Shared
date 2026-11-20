@@ -30,7 +30,7 @@ public class EventStoreConnectionStringHealthCheckTests {
 
         var resolvedEvent = new ResolvedEvent(r, null,null);
         
-        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(new List<ResolvedEvent>() { resolvedEvent }));
+        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Results.Ok(new List<ResolvedEvent>() { resolvedEvent }));
         EventStoreConnectionStringHealthCheck healthCheck = new(context.Instance());
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
         result.Status.ShouldBe(HealthStatus.Healthy);
@@ -41,7 +41,7 @@ public class EventStoreConnectionStringHealthCheckTests {
     {
         IEventStoreContextImposter context = new();
         
-        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result.Success(new List<ResolvedEvent>()));
+        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Results.Ok(new List<ResolvedEvent>()));
         EventStoreConnectionStringHealthCheck healthCheck = new(context.Instance());
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
         result.Status.ShouldBe(HealthStatus.Unhealthy);
@@ -52,7 +52,7 @@ public class EventStoreConnectionStringHealthCheckTests {
     {
         IEventStoreContextImposter context = new();
         
-        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(Result<List<ResolvedEvent>>.Fail(Error.Failure("failure")));
+        context.ReadLastEventsFromAll(Arg<long>.Any(), Arg<CancellationToken>.Any()).ReturnsAsync(new Error(ErrorType.Failure, "failure"));
         EventStoreConnectionStringHealthCheck healthCheck = new(context.Instance());
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
         result.Status.ShouldBe(HealthStatus.Unhealthy);

@@ -15,7 +15,7 @@ public class TestDomainEventHandler : IDomainEventHandler
     public async Task<Result> Handle(IDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         DomainEvents.Add(domainEvent);
-        return Result.Success();
+        return Results.Ok();
     }
 }
 
@@ -26,6 +26,6 @@ public class TestDomainEventHandler2 : IDomainEventHandler
     public async Task<Result> Handle(IDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         DomainEvents.Add(domainEvent);
-        return Result.Success();
+        return Results.Ok();
     }
 }

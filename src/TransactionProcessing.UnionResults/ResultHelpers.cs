@@ -3,7 +3,7 @@
 namespace TransactionProcessing.UnionResults;
 
 public static class ResultHelpers {
-    public static ErrorList CreateFailure(object result) {
+    /*public static ErrorList CreateFailure(object result) {
         ArgumentNullException.ThrowIfNull(result);
 
         if (result is IResultOutcome unionResult) {
@@ -22,5 +22,5 @@ public static class ResultHelpers {
 
         string? message = resultType.GetProperty("Message", BindingFlags.Instance | BindingFlags.Public)?.GetValue(result) as string;
         return new ErrorList([Error.Failure(string.IsNullOrWhiteSpace(message) ? "The operation failed." : message)]);
-    }
+    }*/
 }

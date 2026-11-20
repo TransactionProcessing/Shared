@@ -39,8 +39,7 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/42");
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
-        result.IsFailed.ShouldBeFalse();
+        var payload = Assert.IsType<Success<SampleResponse>>(result.Value).Value;
         payload.ShouldBe(expected);
         deserialiseCalls.ShouldBe(1);
     }
@@ -66,7 +65,7 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<string>("widgets/raw");
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<string>>(result.Value).Value;
         payload.ShouldBe(responseBody);
         deserialiseCalls.ShouldBe(0);
     }
@@ -86,7 +85,7 @@ public sealed class ClientProxyBaseTests
             "token-123",
             [("X-Correlation-Id", "corr-1"), ("Accept-Language", "en-GB")]);
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Get);
         handler.LastRequest.AuthorizationScheme.ShouldBe("Bearer");
@@ -117,7 +116,7 @@ public sealed class ClientProxyBaseTests
                 "widgets/1",
                 [(TenantContext.KeyNameCorrelationId, "caller-correlation-id")]);
 
-            result.IsSuccess.ShouldBeTrue();
+            result.IsSuccess().ShouldBeTrue();
             handler.LastRequest.ShouldNotBeNull();
             handler.LastRequest!.Headers[TenantContext.KeyNameCorrelationId]
                 .ShouldBe(tenantCorrelationId.ToString());
@@ -139,7 +138,7 @@ public sealed class ClientProxyBaseTests
             "token-123",
             [("X-Correlation-Id", "corr-2")]);
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Delete);
         handler.LastRequest.AuthorizationScheme.ShouldBe("Bearer");
@@ -169,7 +168,7 @@ public sealed class ClientProxyBaseTests
             "token-123",
             [("X-Correlation-Id", "corr-3"), ("Content-Language", "en-GB")]);
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         serialiseCalls.ShouldBe(1);
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Post);
@@ -203,7 +202,7 @@ public sealed class ClientProxyBaseTests
             "token-post",
             [("X-Correlation-Id", "corr-post")]);
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         serialiseCalls.ShouldBe(0);
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Post);
@@ -234,7 +233,7 @@ public sealed class ClientProxyBaseTests
             "token-456",
             [("X-Correlation-Id", "corr-multipart"), ("Content-Language", "en-GB")]);
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Post);
         handler.LastRequest.AuthorizationScheme.ShouldBe("Bearer");
@@ -263,7 +262,7 @@ public sealed class ClientProxyBaseTests
             "token-234",
             [("X-Correlation-Id", "corr-4")]);
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Put);
         handler.LastRequest.Body.ShouldBe("""{"name":"beta"}""");
@@ -292,7 +291,7 @@ public sealed class ClientProxyBaseTests
             "token-put",
             [("X-Correlation-Id", "corr-put")]);
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         serialiseCalls.ShouldBe(0);
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Put);
@@ -325,7 +324,7 @@ public sealed class ClientProxyBaseTests
             "token-345",
             [("X-Correlation-Id", "corr-5")]);
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<SampleResponse>>(result.Value).Value;
         payload.ShouldBe(expected);
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Patch);
@@ -364,7 +363,7 @@ public sealed class ClientProxyBaseTests
             "token-patch",
             [("X-Correlation-Id", "corr-patch")]);
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<SampleResponse>>(result.Value).Value;
         payload.ShouldBe(expected);
         serialiseCalls.ShouldBe(0);
         handler.LastRequest.ShouldNotBeNull();
@@ -384,9 +383,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("widgets", new SampleRequest("broken"));
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldBe("The request body could not be serialized: boom");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldBe("The request body could not be serialized: boom");
     }
 
     [Fact]
@@ -397,9 +396,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("widgets", new SampleRequest("null"));
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldBe("The request body could not be serialized.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldBe("The request body could not be serialized.");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -417,9 +416,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/7");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldContain("The response body could not be deserialized: cannot parse");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldContain("The response body could not be deserialized: cannot parse");
     }
 
     [Fact]
@@ -430,9 +429,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/timeout");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Critical);
-        result.Message.ShouldBe("The HTTP request timed out.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Critical);
+        result.GetErrors()[0].Message.ShouldBe("The HTTP request timed out.");
     }
 
     [Fact]
@@ -448,12 +447,12 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldBe("Validation failed");
-        result.Errors.Select(error => error.Message).ShouldContain("Validation failed");
-        result.Errors.Select(error => error.Message).ShouldContain("Name is required");
-        result.Errors.Select(error => error.Message).ShouldContain("Age must be positive");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldBe("Validation failed");
+        result.GetErrors().Select(error => error.Message).ShouldContain("Validation failed");
+        result.GetErrors().Select(error => error.Message).ShouldContain("Name is required");
+        result.GetErrors().Select(error => error.Message).ShouldContain("Age must be positive");
     }
 
     [Fact]
@@ -468,9 +467,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/8");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldContain("is not assignable");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldContain("is not assignable");
     }
 
     [Fact]
@@ -485,9 +484,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/1", " ");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("Access token");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("Access token");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -513,10 +512,10 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>(requestUri!);
 
-        result.IsFailed.ShouldBeTrue();
-        result.GetOutcome().Kind.ShouldBe(ResultKind.ErrorList);
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("Request URI");
+        result.IsSuccess().ShouldBeFalse();
+        Assert.IsType<ErrorList>(result.Value);
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("Request URI");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -530,9 +529,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/empty");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldBe("The response content was empty.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldBe("The response content was empty.");
     }
 
     [Fact]
@@ -546,9 +545,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/null");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldBe("The response body could not be deserialized.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldBe("The response body could not be deserialized.");
     }
 
     [Theory]
@@ -570,10 +569,10 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Delete("widgets/failed");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(expectedStatus);
-        result.Message.ShouldBe("server message");
-        result.Errors.Select(error => error.Message).ShouldContain("server message");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(expectedStatus);
+        result.GetErrors()[0].Message.ShouldBe("server message");
+        result.GetErrors().Select(error => error.Message).ShouldContain("server message");
     }
 
     [Fact]
@@ -587,9 +586,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/failed");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Critical);
-        result.Message.ShouldBe("Bad Gateway");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Critical);
+        result.GetErrors()[0].Message.ShouldBe("Bad Gateway");
     }
 
     [Fact]
@@ -604,8 +603,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/failed");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Message.ShouldBe("Request failed with status code 418.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].Message.ShouldBe("Request failed with status code 418.");
     }
 
     [Fact]
@@ -619,9 +618,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/missing");
 
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.NotFound);
-        result.Message.ShouldBe("plain error");
-        result.Errors.Select(error => error.Message).ShouldContain("plain error");
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.NotFound);
+        result.GetErrors()[0].Message.ShouldBe("plain error");
+        result.GetErrors().Select(error => error.Message).ShouldContain("plain error");
     }
 
     [Theory]
@@ -642,9 +641,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldBe(expectedMessage);
-        result.Errors.Select(error => error.Message).ShouldContain(expectedMessage);
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldBe(expectedMessage);
+        result.GetErrors().Select(error => error.Message).ShouldContain(expectedMessage);
     }
 
     [Theory]
@@ -660,8 +659,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Message.ShouldBe(expectedMessage);
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].Message.ShouldBe(expectedMessage);
     }
 
     [Theory]
@@ -678,7 +677,7 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -693,9 +692,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/invalid");
 
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldBe(body);
-        result.Errors.Select(error => error.Message).ShouldContain(body);
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldBe(body);
+        result.GetErrors().Select(error => error.Message).ShouldContain(body);
     }
 
     [Fact]
@@ -709,9 +708,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/null-content");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldBe("The response content was empty.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldBe("The response content was empty.");
     }
 
     [Theory]
@@ -724,8 +723,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/1", [(header, value)]);
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -737,9 +736,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/1", [(":invalid", "value")]);
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("could not be added");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("could not be added");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -754,9 +753,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("uploads", [1, 2], fileName!, [], "token");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("file name");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("file name");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -770,8 +769,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("uploads", [1, 2], "file.txt", [(field, value)], "token");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -783,9 +782,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("uploads", (byte[])null!, "file.txt", [], "token");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("file data");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("file data");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -802,9 +801,9 @@ public sealed class ClientProxyBaseTests
             (List<(string field, string value)>)null!,
             "token");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("form fields");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("form fields");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -829,9 +828,9 @@ public sealed class ClientProxyBaseTests
             accessToken,
             [(header, value)]);
 
-        result.IsFailed.ShouldBeTrue();
-        result.GetOutcome().Kind.ShouldBe(ResultKind.ErrorList);
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.IsSuccess().ShouldBeFalse();
+        Assert.IsType<ErrorList>(result.Value);
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -845,7 +844,7 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("widgets", new SampleRequest("new"));
 
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -860,7 +859,7 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post<SampleRequest, SampleResponse>("widgets", new SampleRequest("created"));
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<SampleResponse>>(result.Value).Value;
         payload.ShouldBe(expected);
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Post);
         handler.LastRequest.Body.ShouldBe("{}");
@@ -879,7 +878,7 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Put<SampleResponse>("widgets/13", content);
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<SampleResponse>>(result.Value).Value;
         payload.ShouldBe(expected);
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Put);
         handler.LastRequest.Body.ShouldBe("raw-put");
@@ -908,8 +907,8 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Put<SampleResponse>(requestUri, content, accessToken, headers!);
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -925,7 +924,7 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Patch<SampleRequest, SampleResponse>("widgets/14", new SampleRequest("patched"));
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<SampleResponse>>(result.Value).Value;
         payload.ShouldBe(expected);
         handler.LastRequest!.Method.ShouldBe(HttpMethod.Patch);
         handler.LastRequest.Body.ShouldBe("{}");
@@ -943,8 +942,8 @@ public sealed class ClientProxyBaseTests
         var patch = await sut.Patch("widgets/15", new SampleRequest("patch"));
         requests.Add(handler.LastRequest!);
 
-        put.IsSuccess.ShouldBeTrue();
-        patch.IsSuccess.ShouldBeTrue();
+        put.IsSuccess().ShouldBeTrue();
+        patch.IsSuccess().ShouldBeTrue();
         requests.Select(request => request.Method).ShouldBe([HttpMethod.Put, HttpMethod.Patch]);
     }
 
@@ -955,9 +954,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/1");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Critical);
-        result.Message.ShouldBe("network unavailable");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Critical);
+        result.GetErrors()[0].Message.ShouldBe("network unavailable");
     }
 
     [Fact]
@@ -967,9 +966,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Get<SampleResponse>("widgets/1");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Failure);
-        result.Message.ShouldBe("invalid request state");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrors()[0].Message.ShouldBe("invalid request state");
     }
 
     [Fact]
@@ -980,9 +979,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("widgets/raw", (HttpContent)null!);
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("content cannot be null");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("content cannot be null");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -994,9 +993,9 @@ public sealed class ClientProxyBaseTests
 
         var result = await sut.Post("uploads", [1], "file.txt", [], " ");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(ErrorType.Validation);
-        result.Message.ShouldContain("Access token");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors()[0].ErrorType.ShouldBe(ErrorType.Validation);
+        result.GetErrors()[0].Message.ShouldContain("Access token");
         handler.LastRequest.ShouldBeNull();
     }
 
@@ -1067,10 +1066,10 @@ public sealed class ClientProxyBaseTests
         var headers = new List<(string header, string value)> { ("X-Test", "value") };
         (string Name, Func<Task<bool>> Execute)[] operations =
         [
-            ("without token or headers", async () => (await sut.Delete("widgets")).IsSuccess),
-            ("with headers", async () => (await sut.Delete("widgets", headers)).IsSuccess),
-            ("with token", async () => (await sut.Delete("widgets", "token")).IsSuccess),
-            ("with token and headers", async () => (await sut.Delete("widgets", "token", headers)).IsSuccess)
+            ("without token or headers", async () => (await sut.Delete("widgets")).IsSuccess()),
+            ("with headers", async () => (await sut.Delete("widgets", headers)).IsSuccess()),
+            ("with token", async () => (await sut.Delete("widgets", "token")).IsSuccess()),
+            ("with token and headers", async () => (await sut.Delete("widgets", "token", headers)).IsSuccess())
         ];
 
         foreach ((string name, Func<Task<bool>> execute) in operations)
@@ -1086,14 +1085,14 @@ public sealed class ClientProxyBaseTests
         var headers = new List<(string header, string value)> { ("X-Test", "value") };
         (string Name, Func<Task<bool>> Execute)[] operations =
         [
-            ("body without token or headers", async () => (await sut.Post("widgets", new SampleRequest("x"))).IsSuccess),
-            ("body with headers", async () => (await sut.Post("widgets", new SampleRequest("x"), headers)).IsSuccess),
-            ("body with token", async () => (await sut.Post("widgets", new SampleRequest("x"), "token")).IsSuccess),
-            ("body with token and headers", async () => (await sut.Post("widgets", new SampleRequest("x"), "token", headers)).IsSuccess),
-            ("content without token or headers", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"))).IsSuccess),
-            ("content with headers", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"), headers)).IsSuccess),
-            ("content with token", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"), "token")).IsSuccess),
-            ("content with token and headers", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"), "token", headers)).IsSuccess)
+            ("body without token or headers", async () => (await sut.Post("widgets", new SampleRequest("x"))).IsSuccess()),
+            ("body with headers", async () => (await sut.Post("widgets", new SampleRequest("x"), headers)).IsSuccess()),
+            ("body with token", async () => (await sut.Post("widgets", new SampleRequest("x"), "token")).IsSuccess()),
+            ("body with token and headers", async () => (await sut.Post("widgets", new SampleRequest("x"), "token", headers)).IsSuccess()),
+            ("content without token or headers", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"))).IsSuccess()),
+            ("content with headers", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"), headers)).IsSuccess()),
+            ("content with token", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"), "token")).IsSuccess()),
+            ("content with token and headers", async () => (await sut.Post("widgets", (HttpContent)new StringContent("raw"), "token", headers)).IsSuccess())
         ];
 
         foreach ((string name, Func<Task<bool>> execute) in operations)
@@ -1109,14 +1108,14 @@ public sealed class ClientProxyBaseTests
         var headers = new List<(string header, string value)> { ("X-Test", "value") };
         (string Name, Func<Task<bool>> Execute)[] operations =
         [
-            ("body without token or headers", async () => (await sut.Put("widgets", new SampleRequest("x"))).IsSuccess),
-            ("body with headers", async () => (await sut.Put("widgets", new SampleRequest("x"), headers)).IsSuccess),
-            ("body with token", async () => (await sut.Put("widgets", new SampleRequest("x"), "token")).IsSuccess),
-            ("body with token and headers", async () => (await sut.Put("widgets", new SampleRequest("x"), "token", headers)).IsSuccess),
-            ("content without token or headers", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"))).IsSuccess),
-            ("content with headers", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"), headers)).IsSuccess),
-            ("content with token", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"), "token")).IsSuccess),
-            ("content with token and headers", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"), "token", headers)).IsSuccess)
+            ("body without token or headers", async () => (await sut.Put("widgets", new SampleRequest("x"))).IsSuccess()),
+            ("body with headers", async () => (await sut.Put("widgets", new SampleRequest("x"), headers)).IsSuccess()),
+            ("body with token", async () => (await sut.Put("widgets", new SampleRequest("x"), "token")).IsSuccess()),
+            ("body with token and headers", async () => (await sut.Put("widgets", new SampleRequest("x"), "token", headers)).IsSuccess()),
+            ("content without token or headers", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"))).IsSuccess()),
+            ("content with headers", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"), headers)).IsSuccess()),
+            ("content with token", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"), "token")).IsSuccess()),
+            ("content with token and headers", async () => (await sut.Put("widgets", (HttpContent)new StringContent("raw"), "token", headers)).IsSuccess())
         ];
 
         foreach ((string name, Func<Task<bool>> execute) in operations)
@@ -1132,14 +1131,14 @@ public sealed class ClientProxyBaseTests
         var headers = new List<(string header, string value)> { ("X-Test", "value") };
         (string Name, Func<Task<bool>> Execute)[] operations =
         [
-            ("body without token or headers", async () => (await sut.Patch("widgets", new SampleRequest("x"))).IsSuccess),
-            ("body with headers", async () => (await sut.Patch("widgets", new SampleRequest("x"), headers)).IsSuccess),
-            ("body with token", async () => (await sut.Patch("widgets", new SampleRequest("x"), "token")).IsSuccess),
-            ("body with token and headers", async () => (await sut.Patch("widgets", new SampleRequest("x"), "token", headers)).IsSuccess),
-            ("content without token or headers", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"))).IsSuccess),
-            ("content with headers", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"), headers)).IsSuccess),
-            ("content with token", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"), "token")).IsSuccess),
-            ("content with token and headers", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"), "token", headers)).IsSuccess)
+            ("body without token or headers", async () => (await sut.Patch("widgets", new SampleRequest("x"))).IsSuccess()),
+            ("body with headers", async () => (await sut.Patch("widgets", new SampleRequest("x"), headers)).IsSuccess()),
+            ("body with token", async () => (await sut.Patch("widgets", new SampleRequest("x"), "token")).IsSuccess()),
+            ("body with token and headers", async () => (await sut.Patch("widgets", new SampleRequest("x"), "token", headers)).IsSuccess()),
+            ("content without token or headers", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"))).IsSuccess()),
+            ("content with headers", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"), headers)).IsSuccess()),
+            ("content with token", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"), "token")).IsSuccess()),
+            ("content with token and headers", async () => (await sut.Patch("widgets", (HttpContent)new StringContent("raw"), "token", headers)).IsSuccess())
         ];
 
         foreach ((string name, Func<Task<bool>> execute) in operations)
@@ -1156,30 +1155,30 @@ public sealed class ClientProxyBaseTests
         SampleRequest body = new("x");
         (string Name, Func<Task<bool>> Execute)[] operations =
         [
-            ("post body without token or headers", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body)).IsSuccess),
-            ("post body with headers", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body, headers)).IsSuccess),
-            ("post body with token", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body, "token")).IsSuccess),
-            ("post body with token and headers", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body, "token", headers)).IsSuccess),
-            ("put body without token or headers", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body)).IsSuccess),
-            ("put body with headers", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body, headers)).IsSuccess),
-            ("put body with token", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body, "token")).IsSuccess),
-            ("put body with token and headers", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body, "token", headers)).IsSuccess),
-            ("patch body without token or headers", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body)).IsSuccess),
-            ("patch body with headers", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body, headers)).IsSuccess),
-            ("patch body with token", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body, "token")).IsSuccess),
-            ("patch body with token and headers", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body, "token", headers)).IsSuccess),
-            ("post content without token or headers", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"))).IsSuccess),
-            ("post content with headers", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"), headers)).IsSuccess),
-            ("post content with token", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"), "token")).IsSuccess),
-            ("post content with token and headers", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"), "token", headers)).IsSuccess),
-            ("put content without token or headers", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"))).IsSuccess),
-            ("put content with headers", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"), headers)).IsSuccess),
-            ("put content with token", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"), "token")).IsSuccess),
-            ("put content with token and headers", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"), "token", headers)).IsSuccess),
-            ("patch content without token or headers", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"))).IsSuccess),
-            ("patch content with headers", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"), headers)).IsSuccess),
-            ("patch content with token", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"), "token")).IsSuccess),
-            ("patch content with token and headers", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"), "token", headers)).IsSuccess)
+            ("post body without token or headers", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body)).IsSuccess()),
+            ("post body with headers", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body, headers)).IsSuccess()),
+            ("post body with token", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body, "token")).IsSuccess()),
+            ("post body with token and headers", async () => (await sut.Post<SampleRequest, SampleResponse>("widgets", body, "token", headers)).IsSuccess()),
+            ("put body without token or headers", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body)).IsSuccess()),
+            ("put body with headers", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body, headers)).IsSuccess()),
+            ("put body with token", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body, "token")).IsSuccess()),
+            ("put body with token and headers", async () => (await sut.Put<SampleRequest, SampleResponse>("widgets", body, "token", headers)).IsSuccess()),
+            ("patch body without token or headers", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body)).IsSuccess()),
+            ("patch body with headers", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body, headers)).IsSuccess()),
+            ("patch body with token", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body, "token")).IsSuccess()),
+            ("patch body with token and headers", async () => (await sut.Patch<SampleRequest, SampleResponse>("widgets", body, "token", headers)).IsSuccess()),
+            ("post content without token or headers", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"))).IsSuccess()),
+            ("post content with headers", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"), headers)).IsSuccess()),
+            ("post content with token", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"), "token")).IsSuccess()),
+            ("post content with token and headers", async () => (await sut.Post<SampleResponse>("widgets", new StringContent("raw"), "token", headers)).IsSuccess()),
+            ("put content without token or headers", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"))).IsSuccess()),
+            ("put content with headers", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"), headers)).IsSuccess()),
+            ("put content with token", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"), "token")).IsSuccess()),
+            ("put content with token and headers", async () => (await sut.Put<SampleResponse>("widgets", new StringContent("raw"), "token", headers)).IsSuccess()),
+            ("patch content without token or headers", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"))).IsSuccess()),
+            ("patch content with headers", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"), headers)).IsSuccess()),
+            ("patch content with token", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"), "token")).IsSuccess()),
+            ("patch content with token and headers", async () => (await sut.Patch<SampleResponse>("widgets", new StringContent("raw"), "token", headers)).IsSuccess())
         ];
 
         foreach ((string name, Func<Task<bool>> execute) in operations)
@@ -1207,12 +1206,12 @@ public sealed class ClientProxyBaseTests
 
         (string Name, Func<Task<bool>> Execute)[] operations =
         [
-            ("post without response", async () => (await sut.Post<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess),
-            ("put without response", async () => (await sut.Put<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess),
-            ("patch without response", async () => (await sut.Patch<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess),
-            ("post with response", async () => (await sut.Post<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess),
-            ("put with response", async () => (await sut.Put<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess),
-            ("patch with response", async () => (await sut.Patch<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess)
+            ("post without response", async () => (await sut.Post<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess()),
+            ("put without response", async () => (await sut.Put<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess()),
+            ("patch without response", async () => (await sut.Patch<StringContent>("widgets", new StringContent("raw-body"))).IsSuccess()),
+            ("post with response", async () => (await sut.Post<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess()),
+            ("put with response", async () => (await sut.Put<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess()),
+            ("patch with response", async () => (await sut.Patch<HttpContent, SampleResponse>("widgets", new StringContent("raw-body"))).IsSuccess())
         ];
 
         foreach ((string name, Func<Task<bool>> execute) in operations)
@@ -1240,19 +1239,19 @@ public sealed class ClientProxyBaseTests
         switch (pipeline)
         {
             case RequestPipeline.RequestBody:
-                return (await sut.Post("widgets", new SampleRequest("request"), cancellationToken)).Errors[0].ErrorType;
+                return (await sut.Post("widgets", new SampleRequest("request"), cancellationToken)).GetErrors()[0].ErrorType;
             case RequestPipeline.RawContent:
                 using (var content = new StringContent("raw"))
                 {
-                    return (await sut.Post("widgets/raw", (HttpContent)content, cancellationToken)).Errors[0].ErrorType;
+                    return (await sut.Post("widgets/raw", (HttpContent)content, cancellationToken)).GetErrors()[0].ErrorType;
                 }
             case RequestPipeline.GenericContent:
                 using (var content = new StringContent("raw"))
                 {
-                    return (await sut.Put<SampleResponse>("widgets/1", content, cancellationToken)).Errors[0].ErrorType;
+                    return (await sut.Put<SampleResponse>("widgets/1", content, cancellationToken)).GetErrors()[0].ErrorType;
                 }
             case RequestPipeline.Multipart:
-                return (await sut.Post("uploads", [1], "file.txt", [], "token", cancellationToken)).Errors[0].ErrorType;
+                return (await sut.Post("uploads", [1], "file.txt", [], "token", cancellationToken)).GetErrors()[0].ErrorType;
             default:
                 throw new ArgumentOutOfRangeException(nameof(pipeline), pipeline, null);
         }

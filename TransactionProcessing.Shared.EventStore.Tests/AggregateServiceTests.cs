@@ -27,6 +27,19 @@ public class AggregateServiceTests {
     }
 
     [Fact]
+    public async Task GetLatest_returns_a_critical_error_when_the_repository_returns_a_null_aggregate() {
+        var repository = new TestAggregateRepository();
+        repository.GetLatestVersionHandler = (_, _) => Task.FromResult(Results.Ok<TestAggregate>(null));
+        _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repository);
+
+        var result = await _aggregateService.GetLatest<TestAggregate>(Guid.NewGuid(), TestContext.Current.CancellationToken);
+
+        var error = Assert.Single(result.GetErrors());
+        error.ErrorType.ShouldBe(ErrorType.Critical);
+        error.Message.ShouldBe("The result contained no value.");
+    }
+
+    [Fact]
     public async Task Get_ShouldReturnAggregateFromCache_WhenAggregateIsCached() {
         // Arrange
         var aggregateId = Guid.NewGuid();
@@ -40,7 +53,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<TestAggregate>>(result.Value).Value;
         payload.ShouldBe(aggregate);
     }
 
@@ -51,7 +64,7 @@ public class AggregateServiceTests {
         var aggregate = new TestAggregate { AggregateId = aggregateId };
         var repositoryMock = new TestAggregateRepository();
 
-        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Result.Success(aggregate));
+        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Results.Ok(aggregate));
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -59,7 +72,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<TestAggregate>>(result.Value).Value;
         payload.ShouldBe(aggregate);
     }
 
@@ -72,7 +85,7 @@ public class AggregateServiceTests {
         var cacheKey = $"TestAggregate-{aggregateId}";
         this._aggregateService.AddCachedAggregate(typeof(TestAggregate));
 
-        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Result.Success(aggregate));
+        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Results.Ok(aggregate));
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -80,7 +93,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<TestAggregate>>(result.Value).Value;
         payload.ShouldBe(aggregate);
         _memoryCache.TryGetValue(cacheKey, out var cachedAggregate).ShouldBeTrue();
     }
@@ -91,7 +104,7 @@ public class AggregateServiceTests {
         var aggregateId = Guid.NewGuid();
         var repositoryMock = new TestAggregateRepository();
 
-        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult<Result<TestAggregate>>(Result.Failure("Error getting latest"));
+        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult<Result<TestAggregate>>(new Error(ErrorType.Failure, "Error getting latest"));
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -99,7 +112,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -116,8 +129,8 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Get<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsFailed.ShouldBeTrue();
-        result.Message.ShouldBe("Exception Message");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrorMessage().ShouldBe("Exception Message");
     }
 
     [Fact]
@@ -127,7 +140,7 @@ public class AggregateServiceTests {
         aggregate.SetAggregateName("1", Guid.NewGuid());
         var repositoryMock = new TestAggregateRepository();
 
-        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Result.Success());
+        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Results.Ok());
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -135,7 +148,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Save(aggregate, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
         repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
     }
@@ -148,7 +161,7 @@ public class AggregateServiceTests {
         var repositoryMock = new TestAggregateRepository();
         this._aggregateService.AddCachedAggregate(typeof(TestAggregate));
 
-        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Result.Success());
+        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Results.Ok());
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -156,7 +169,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Save(aggregate, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
         repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
     }
@@ -169,7 +182,7 @@ public class AggregateServiceTests {
         var repositoryMock = new TestAggregateRepository();
         this._aggregateService.AddCachedAggregate(typeof(TestAggregate));
 
-        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Result.Success());
+        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Results.Ok());
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -177,7 +190,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Save(aggregate, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         repositoryMock.SaveChangesInvocations.Count.ShouldBe(0);
     }
 
@@ -189,7 +202,7 @@ public class AggregateServiceTests {
         var repositoryMock = new TestAggregateRepository();
         this._aggregateService.AddCachedAggregate(typeof(TestAggregate));
 
-        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Result.Success());
+        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Results.Ok());
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -197,7 +210,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Save(aggregate, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
         repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
         repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
 
@@ -221,7 +234,7 @@ public class AggregateServiceTests {
         aggregate.SetAggregateName("1", Guid.NewGuid());
         var repositoryMock = new TestAggregateRepository();
 
-        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Result.Fail(Error.Failure("failure")));
+        repositoryMock.SaveChangesHandler = (_, _) => Task.FromResult(Results.Fail("failure"));
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
@@ -229,7 +242,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.Save(aggregate, CancellationToken.None);
 
         // Assert
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
         repositoryMock.SaveChangesInvocations.Count.ShouldBe(1);
         repositoryMock.SaveChangesInvocations[0].Aggregate.ShouldBeSameAs(aggregate);
     }
@@ -244,13 +257,13 @@ public class AggregateServiceTests {
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
-        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Result.Success(aggregate));
+        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Results.Ok(aggregate));
 
         // Act
         var result = await _aggregateService.GetLatest<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<TestAggregate>>(result.Value).Value;
         payload.ShouldBe(aggregate);
     }
 
@@ -262,13 +275,13 @@ public class AggregateServiceTests {
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
-        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult(Result<TestAggregate>.Fail(Error.Failure("failure")));
+        repositoryMock.GetLatestVersionHandler = (_, _) => Task.FromResult((Result<TestAggregate>)new Error(ErrorType.Failure, "failure"));
 
         // Act
         var result = await _aggregateService.GetLatest<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -284,7 +297,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.GetLatest<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -296,13 +309,13 @@ public class AggregateServiceTests {
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
-        repositoryMock.GetLatestVersionFromLastEventHandler = (_, _) => Task.FromResult(Result.Success(aggregate));
+        repositoryMock.GetLatestVersionFromLastEventHandler = (_, _) => Task.FromResult(Results.Ok(aggregate));
 
         // Act
         var result = await _aggregateService.GetLatestFromLastEvent<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.TryGetValue(out var payload).ShouldBeTrue();
+        var payload = Assert.IsType<Success<TestAggregate>>(result.Value).Value;
         payload.ShouldBe(aggregate);
     }
 
@@ -314,13 +327,13 @@ public class AggregateServiceTests {
 
         _repositoryResolverMock.Resolve<TestAggregate, DomainEvent>().Returns(repositoryMock);
 
-        repositoryMock.GetLatestVersionFromLastEventHandler = (_, _) => Task.FromResult(Result<TestAggregate>.Fail(Error.Failure("failure")));
+        repositoryMock.GetLatestVersionFromLastEventHandler = (_, _) => Task.FromResult((Result<TestAggregate>)new Error(ErrorType.Failure, "failure"));
 
         // Act
         var result = await _aggregateService.GetLatestFromLastEvent<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -336,7 +349,7 @@ public class AggregateServiceTests {
         var result = await _aggregateService.GetLatestFromLastEvent<TestAggregate>(aggregateId, CancellationToken.None);
 
         // Assert
-        result.IsFailed.ShouldBeTrue();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]

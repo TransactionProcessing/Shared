@@ -113,13 +113,15 @@ public class PersistentSubscription
     private static (String messageTemplate, Object[]? args) BuildFailureMessage(ResolvedEvent resolvedEvent,
                                              Result result)
     {
-        String errors = result.Errors?.Any() == true
-            ? String.Join(Environment.NewLine, result.Errors.Where(error => !String.IsNullOrWhiteSpace(error.Message)).Select(error => error.Message))
-            : String.Empty;
+        ErrorList errors = EventStoreResultExtensions.GetFailureErrors(result.Value);
+        String message = errors[0].Message;
+        String errorMessages = String.Join(Environment.NewLine, errors
+            .Select(error => error.Message)
+            .Where(errorMessage => !String.IsNullOrWhiteSpace(errorMessage)));
 
-        String resultDetails = String.IsNullOrWhiteSpace(result.Message)
-            ? $"Result status [{result.GetOutcome().Kind}]. Errors [{errors}]"
-            : $"Result was {result.Message}";
+        String resultDetails = String.IsNullOrWhiteSpace(message)
+            ? $"Result status [{result.Value?.GetType().Name ?? nameof(Error)}]. Errors [{errorMessages}]"
+            : $"Result was {message}";
 
         Object[] objectArray = new[] { resolvedEvent.Event.EventType, resolvedEvent.GetResolvedEventDataAsString(), resultDetails };
 
@@ -195,7 +197,7 @@ public class PersistentSubscription
 
             Result<List<IDomainEventHandler>> domainEventHandlersResult = domainEventHandlerResolver.GetDomainEventHandlers(domainEvent);
 
-            if (domainEventHandlersResult.IsFailed) {
+            if (domainEventHandlersResult.Value is not Success<List<IDomainEventHandler>> handlers) {
                 // Log a line of trace out 
                 this.EventHandlerMissing($"No event handlers configured for Event Type [{domainEvent.GetType().Name}]");
 
@@ -203,13 +205,13 @@ public class PersistentSubscription
                 return;
             }
 
-            if (!domainEventHandlersResult.TryGetValue(out var domainEventHandlers)) {
+            if (handlers.Value is not { } domainEventHandlers) {
                 Logger.Logger.LogError("Handler lookup returned no value for event type {EventType}", domainEvent.GetType().Name);
                 return;
             }
 
             Result result = await domainEvent.DispatchToHandlers(domainEventHandlers, cts.Token);
-            if (result.IsSuccess) {
+            if (result.IsSuccess()) {
                 await PersistentSubscriptionsHelper.AckEvent(persistentSubscription, resolvedEvent);
             }
             else {

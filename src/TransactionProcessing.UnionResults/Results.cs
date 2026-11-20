@@ -1,9 +1,48 @@
-using System.Diagnostics.CodeAnalysis;
 
 namespace TransactionProcessing.UnionResults;
 
-public enum ErrorType
+public union Result(Success, Error, ErrorList);
+
+public union Result<T>(Success<T>, Error, ErrorList);
+
+public sealed record Success();
+
+/// <summary>Provides access to a successful payload when its type is known only at runtime.</summary>
+public interface IResultSuccess
 {
+    object? Value { get; }
+}
+
+public sealed record Success<T>(T Value) : IResultSuccess
+{
+    object? IResultSuccess.Value => Value;
+}
+
+public sealed record Error(ErrorType ErrorType, String Message);
+
+public sealed class ErrorList : IReadOnlyList<Error> {
+    private readonly Error[] Errors;
+
+    public ErrorList(IEnumerable<Error> errors) {
+        ArgumentNullException.ThrowIfNull(errors);
+        this.Errors = errors.ToArray();
+        if (this.Errors.Length == 0)
+            throw new ArgumentException("An error list must contain at least one error.", nameof(errors));
+        if (this.Errors.Any(static error => error is null))
+            throw new ArgumentException("An error list cannot contain null errors.", nameof(errors));
+        ErrorType = this.Errors[0].ErrorType;
+        if (this.Errors.Any(error => error.ErrorType != ErrorType))
+            throw new ArgumentException("All errors in an error list must have the same category.", nameof(errors));
+    }
+
+    public ErrorType ErrorType { get; }
+    public int Count => this.Errors.Length;
+    public Error this[int index] => this.Errors[index];
+    public IEnumerator<Error> GetEnumerator() => ((IEnumerable<Error>)this.Errors).GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.Errors.GetEnumerator();
+}
+
+public enum ErrorType {
     Validation,
     NotFound,
     Unauthorized,
@@ -14,342 +53,493 @@ public enum ErrorType
     Unknown
 }
 
-public sealed record class Ok;
-public sealed record class Ok<T>(T Value);
-public sealed record class Created<T>(T Value, string? Location = null);
-public sealed record class NoContent;
+public static class Results {
+    internal static readonly Error Uninitialized = new(ErrorType.Critical, "An uninitialized result has no outcome.");
+    internal static readonly Error MissingError = new(ErrorType.Critical, "A failed result requires an error.");
 
-public sealed record class Error
-{
-    public Error(string code, string message, ErrorType errorType, string? field = null)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(code);
-        ArgumentNullException.ThrowIfNull(message);
-        Code = code;
-        Message = message;
-        ErrorType = errorType;
-        Field = field;
-    }
-
-    public string Code { get; }
-    public string Message { get; }
-    public ErrorType ErrorType { get; }
-    public string? Field { get; }
-
-    public static Error Failure(string message) => Create(ErrorType.Failure, message);
-    public static Error Validation(string message, string? field = null) => Create(ErrorType.Validation, message, field);
-    public static Error NotFound(string message) => Create(ErrorType.NotFound, message);
-    public static Error Unauthorized(string message) => Create(ErrorType.Unauthorized, message);
-    public static Error Forbidden(string message) => Create(ErrorType.Forbidden, message);
-    public static Error Conflict(string message) => Create(ErrorType.Conflict, message);
-    public static Error Critical(string message) => Create(ErrorType.Critical, message);
-
-    private static Error Create(ErrorType type, string message, string? field = null) => new(type.ToString(), message, type, field);
+    public static Result Ok() => new Success();
+    public static Result<T> Ok<T>(T value) => new Success<T>(value);
+    public static Result Fail(Error? error) => error ?? MissingError;
+    public static Result Fail(ErrorList? errors) => errors is null ? Fail(MissingError) : new Result(errors);
+    public static Result Validation(String message) => new Error(ErrorType.Validation, message);
+    public static Result Conflict(String message) => new Error(ErrorType.Conflict, message);
+    public static Result Critical(String message) => new Error(ErrorType.Critical, message);
+    public static Result Fail(String message) => new Error(ErrorType.Failure, message);
+    public static Result Forbidden(String message) => new Error(ErrorType.Forbidden, message);
+    public static Result NotFound(String message) => new Error(ErrorType.NotFound, message);
+    public static Result Unauthorized(String message) => new Error(ErrorType.Unauthorized, message);
+    public static Result Unknown(String message) => new Error(ErrorType.Unknown, message);
 }
 
-public sealed class ErrorList : IReadOnlyList<Error>
-{
-    private readonly Error[] errors;
-
-    public ErrorList(IEnumerable<Error> errors)
-    {
-        ArgumentNullException.ThrowIfNull(errors);
-        this.errors = errors.ToArray();
-        if (this.errors.Length == 0)
-            throw new ArgumentException("An error list must contain at least one error.", nameof(errors));
-        if (this.errors.Any(static error => error is null))
-            throw new ArgumentException("An error list cannot contain null errors.", nameof(errors));
-        ErrorType = this.errors[0].ErrorType;
-        if (this.errors.Any(error => error.ErrorType != ErrorType))
-            throw new ArgumentException("All errors in an error list must have the same category.", nameof(errors));
+public static class ResultFunctionalExtensions {
+    private static TResult Capture<TResult>(Func<TResult> callback, Func<Error, TResult> onError) {
+        try {
+            return callback();
+        }
+        catch (Exception exception) {
+            return onError(new Error(ErrorType.Critical, exception.Message));
+        }
     }
 
-    public ErrorType ErrorType { get; }
-    public int Count => errors.Length;
-    public Error this[int index] => errors[index];
-    public IEnumerator<Error> GetEnumerator() => ((IEnumerable<Error>)errors).GetEnumerator();
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => errors.GetEnumerator();
+    private static async Task<TResult> CaptureAsync<TResult>(Func<Task<TResult>> callback, Func<Error, TResult> onError,
+        CancellationToken cancellationToken) {
+        cancellationToken.ThrowIfCancellationRequested();
+        try {
+            return await callback().ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested) {
+            return onError(new Error(ErrorType.Critical, exception.Message));
+        }
+    }
+
+    // MAP: transform a generic success value.
+    public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> map) {
+        ArgumentNullException.ThrowIfNull(map);
+        return result.Value switch {
+            Success<TIn> success => Capture(() => Results.Ok(map(success.Value)), static error => error),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    // BIND: generic -> generic, generic -> non-generic, non-generic -> generic, non-generic -> non-generic.
+    public static Result<TOut> Bind<TIn, TOut>(this Result<TIn> result, Func<TIn, Result<TOut>> bind) {
+        ArgumentNullException.ThrowIfNull(bind);
+        return result.Value switch {
+            Success<TIn> success => Capture(() => bind(success.Value), static error => error),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static Result Bind<TIn>(this Result<TIn> result, Func<TIn, Result> bind) {
+        ArgumentNullException.ThrowIfNull(bind);
+        return result.Value switch {
+            Success<TIn> success => Capture(() => bind(success.Value), static error => error),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static Result<TOut> Bind<TOut>(this Result result, Func<Result<TOut>> bind) {
+        ArgumentNullException.ThrowIfNull(bind);
+        return result.Value switch {
+            Success => Capture(bind, static error => error),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static Result Bind(this Result result, Func<Result> bind) {
+        ArgumentNullException.ThrowIfNull(bind);
+        return result.Value switch {
+            Success => Capture(bind, static error => error),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    // MATCH: inspect success and failure. Error is normalized to a one-item read-only list.
+    public static TOut Match<TIn, TOut>(this Result<TIn> result,
+        Func<TIn, TOut> onSuccess, Func<IReadOnlyList<Error>, TOut> onFailure) {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+        return result.Value switch {
+            Success<TIn> success => onSuccess(success.Value),
+            Error error => onFailure([error]),
+            ErrorList errors => onFailure(errors),
+            _ => onFailure([Results.Uninitialized])
+        };
+    }
+
+    public static TOut Match<TOut>(this Result result,
+        Func<TOut> onSuccess, Func<IReadOnlyList<Error>, TOut> onFailure) {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+        return result.Value switch {
+            Success => onSuccess(),
+            Error error => onFailure([error]),
+            ErrorList errors => onFailure(errors),
+            _ => onFailure([Results.Uninitialized])
+        };
+    }
+
+    // TAP: execute a success-only side effect, preserving the result.
+    public static Result<T> Tap<T>(this Result<T> result, Action<T> action) {
+        ArgumentNullException.ThrowIfNull(action);
+        return result.Value switch {
+            Success<T> success => Capture(() => {
+                action(success.Value);
+                return result;
+            }, static error => error),
+            Error or ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static Result Tap(this Result result, Action action) {
+        ArgumentNullException.ThrowIfNull(action);
+        return result.Value switch {
+            Success => Capture(() => {
+                action();
+                return result;
+            }, static error => error),
+            Error or ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    // ENSURE: turn a successful value into an error when a predicate fails.
+    public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> predicate, Error error) {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return result.Value switch {
+            Success<T> success when predicate(success.Value) => result,
+            Success<T> => error ?? Results.MissingError,
+            Error => result,
+            ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static Result Ensure(this Result result, Func<bool> predicate, Error error) {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return result.Value switch {
+            Success when predicate() => result,
+            Success => error ?? Results.MissingError,
+            Error => result,
+            ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    /// <summary>Transforms errors without changing the single-error or error-list case.</summary>
+    /// <exception cref="ArgumentException">Mapped errors in a list have different categories or include null entries.</exception>
+    public static Result<T> MapError<T>(this Result<T> result, Func<Error, Error> map) {
+        ArgumentNullException.ThrowIfNull(map);
+        return result.Value switch {
+            Success<T> => result,
+            Error error => map(error) ?? Results.MissingError,
+            ErrorList errors => new ErrorList(errors.Select(map).ToArray()),
+            _ => Results.Uninitialized
+        };
+    }
+
+    /// <inheritdoc cref="MapError{T}(Result{T}, Func{Error, Error})"/>
+    public static Result MapError(this Result result, Func<Error, Error> map) {
+        ArgumentNullException.ThrowIfNull(map);
+        return result.Value switch {
+            Success => result,
+            Error error => map(error) ?? Results.MissingError,
+            ErrorList errors => new ErrorList(errors.Select(map).ToArray()),
+            _ => Results.Uninitialized
+        };
+    }
+
+    // ASYNC OPERATORS: asynchronous delegates on synchronous Result receivers.
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result,
+        Func<TIn, Task<TOut>> map, CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(map);
+        cancellationToken.ThrowIfCancellationRequested();
+        return result.Value switch {
+            Success<TIn> success => await CaptureAsync(async () => Results.Ok(await map(success.Value).ConfigureAwait(false)),
+                static error => error, cancellationToken).ConfigureAwait(false),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<Result<TOut>> BindAsync<TIn, TOut>(this Result<TIn> result,
+        Func<TIn, Task<Result<TOut>>> bind, CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(bind);
+        cancellationToken.ThrowIfCancellationRequested();
+        return result.Value switch {
+            Success<TIn> success => await CaptureAsync(() => bind(success.Value), static error => error, cancellationToken).ConfigureAwait(false),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<Result> BindAsync<TIn>(this Result<TIn> result,
+        Func<TIn, Task<Result>> bind, CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(bind);
+        cancellationToken.ThrowIfCancellationRequested();
+        return result.Value switch {
+            Success<TIn> success => await CaptureAsync(() => bind(success.Value), static error => error, cancellationToken).ConfigureAwait(false),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<Result<TOut>> BindAsync<TOut>(this Result result,
+        Func<Task<Result<TOut>>> bind, CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(bind);
+        cancellationToken.ThrowIfCancellationRequested();
+        return result.Value switch {
+            Success => await CaptureAsync(bind, static error => error, cancellationToken).ConfigureAwait(false),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<Result> BindAsync(this Result result, Func<Task<Result>> bind, CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(bind);
+        cancellationToken.ThrowIfCancellationRequested();
+        return result.Value switch {
+            Success => await CaptureAsync(bind, static error => error, cancellationToken).ConfigureAwait(false),
+            Error error => error,
+            ErrorList errors => errors,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<TOut> MatchAsync<TIn, TOut>(this Result<TIn> result,
+        Func<TIn, Task<TOut>> onSuccess, Func<IReadOnlyList<Error>, Task<TOut>> onFailure) {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+        return result.Value switch {
+            Success<TIn> success => await onSuccess(success.Value).ConfigureAwait(false),
+            Error error => await onFailure([error]).ConfigureAwait(false),
+            ErrorList errors => await onFailure(errors).ConfigureAwait(false),
+            _ => await onFailure([Results.Uninitialized]).ConfigureAwait(false)
+        };
+    }
+
+    public static async Task<TOut> MatchAsync<TOut>(this Result result,
+        Func<Task<TOut>> onSuccess, Func<IReadOnlyList<Error>, Task<TOut>> onFailure) {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+        return result.Value switch {
+            Success => await onSuccess().ConfigureAwait(false),
+            Error error => await onFailure([error]).ConfigureAwait(false),
+            ErrorList errors => await onFailure(errors).ConfigureAwait(false),
+            _ => await onFailure([Results.Uninitialized]).ConfigureAwait(false)
+        };
+    }
+
+    public static async Task<Result<T>> TapAsync<T>(this Result<T> result, Func<T, Task> action,
+        CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(action);
+        cancellationToken.ThrowIfCancellationRequested();
+        return result.Value switch {
+            Success<T> success => await CaptureAsync(async () => {
+                await action(success.Value).ConfigureAwait(false);
+                return result;
+            }, static error => error, cancellationToken).ConfigureAwait(false),
+            Error or ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<Result> TapAsync(this Result result, Func<Task> action,
+        CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(action);
+        cancellationToken.ThrowIfCancellationRequested();
+        return result.Value switch {
+            Success => await CaptureAsync(async () => {
+                await action().ConfigureAwait(false);
+                return result;
+            }, static error => error, cancellationToken).ConfigureAwait(false),
+            Error or ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<Result<T>> EnsureAsync<T>(this Result<T> result,
+        Func<T, Task<bool>> predicate, Error error) {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return result.Value switch {
+            Success<T> success => await predicate(success.Value).ConfigureAwait(false) ? result : error ?? Results.MissingError,
+            Error => result,
+            ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    public static async Task<Result> EnsureAsync(this Result result,
+        Func<Task<bool>> predicate, Error error) {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return result.Value switch {
+            Success => await predicate().ConfigureAwait(false) ? result : error ?? Results.MissingError,
+            Error => result,
+            ErrorList => result,
+            _ => Results.Uninitialized
+        };
+    }
+
+    /// <summary>Transforms errors asynchronously while preserving their order.</summary>
+    /// <exception cref="ArgumentException">Mapped errors in a list have different categories or include null entries.</exception>
+    public static async Task<Result<T>> MapErrorAsync<T>(this Result<T> result,
+        Func<Error, Task<Error>> map) {
+        ArgumentNullException.ThrowIfNull(map);
+        return result.Value switch {
+            Success<T> => result,
+            Error error => await map(error).ConfigureAwait(false) ?? Results.MissingError,
+            ErrorList errors => await MapErrorListAsync(errors, map).ConfigureAwait(false),
+            _ => Results.Uninitialized
+        };
+    }
+
+    /// <inheritdoc cref="MapErrorAsync{T}(Result{T}, Func{Error, Task{Error}})"/>
+    public static async Task<Result> MapErrorAsync(this Result result,
+        Func<Error, Task<Error>> map) {
+        ArgumentNullException.ThrowIfNull(map);
+        return result.Value switch {
+            Success => result,
+            Error error => await map(error).ConfigureAwait(false) ?? Results.MissingError,
+            ErrorList errors => await MapErrorListAsync(errors, map).ConfigureAwait(false),
+            _ => Results.Uninitialized
+        };
+    }
+
+    private static async Task<ErrorList> MapErrorListAsync(ErrorList errors, Func<Error, Task<Error>> map) {
+        var mapped = await Task.WhenAll(errors.Select(async error => await map(error).ConfigureAwait(false)))
+            .ConfigureAwait(false);
+        return new ErrorList(mapped);
+    }
+
+    // TASK-BASED CHAINING: allows awaitable pipelines without awaiting at every step.
+    public static async Task<Result<TOut>> Map<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, TOut> map, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Map(map);
+
+    public static async Task<Result<TOut>> Bind<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, Result<TOut>> bind, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Bind(bind);
+
+    public static async Task<Result> Bind<TIn>(this Task<Result<TIn>> result,
+        Func<TIn, Result> bind, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Bind(bind);
+
+    public static async Task<Result<TOut>> Bind<TOut>(this Task<Result> result,
+        Func<Result<TOut>> bind, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Bind(bind);
+
+    public static async Task<Result> Bind(this Task<Result> result,
+        Func<Result> bind, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Bind(bind);
+
+    public static async Task<TOut> Match<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, TOut> onSuccess, Func<IReadOnlyList<Error>, TOut> onFailure, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Match(onSuccess, onFailure);
+
+    public static async Task<TOut> Match<TOut>(this Task<Result> result,
+        Func<TOut> onSuccess, Func<IReadOnlyList<Error>, TOut> onFailure, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Match(onSuccess, onFailure);
+
+    public static async Task<Result<T>> Tap<T>(this Task<Result<T>> result,
+        Action<T> action, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Tap(action);
+
+    public static async Task<Result> Tap(this Task<Result> result,
+        Action action, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Tap(action);
+
+    public static async Task<Result<T>> Ensure<T>(this Task<Result<T>> result,
+        Func<T, bool> predicate, Error error, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Ensure(predicate, error);
+
+    public static async Task<Result> Ensure(this Task<Result> result,
+        Func<bool> predicate, Error error, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).Ensure(predicate, error);
+
+    public static async Task<Result<T>> MapError<T>(this Task<Result<T>> result,
+        Func<Error, Error> map, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).MapError(map);
+
+    public static async Task<Result> MapError(this Task<Result> result,
+        Func<Error, Error> map, CancellationToken cancellationToken = default)
+        => (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).MapError(map);
+
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, Task<TOut>> map, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).MapAsync(map, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<Result<TOut>> BindAsync<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, Task<Result<TOut>>> bind, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).BindAsync(bind, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<Result> BindAsync<TIn>(this Task<Result<TIn>> result,
+        Func<TIn, Task<Result>> bind, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).BindAsync(bind, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<Result<TOut>> BindAsync<TOut>(this Task<Result> result,
+        Func<Task<Result<TOut>>> bind, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).BindAsync(bind, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<Result> BindAsync(this Task<Result> result,
+        Func<Task<Result>> bind, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).BindAsync(bind, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, Task<TOut>> onSuccess, Func<IReadOnlyList<Error>, Task<TOut>> onFailure, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).MatchAsync(onSuccess, onFailure).ConfigureAwait(false);
+
+    public static async Task<TOut> MatchAsync<TOut>(this Task<Result> result,
+        Func<Task<TOut>> onSuccess, Func<IReadOnlyList<Error>, Task<TOut>> onFailure, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).MatchAsync(onSuccess, onFailure).ConfigureAwait(false);
+
+    public static async Task<Result<T>> TapAsync<T>(this Task<Result<T>> result,
+        Func<T, Task> action, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).TapAsync(action, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<Result> TapAsync(this Task<Result> result,
+        Func<Task> action, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).TapAsync(action, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> result,
+        Func<T, Task<bool>> predicate, Error error, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).EnsureAsync(predicate, error).ConfigureAwait(false);
+
+    public static async Task<Result> EnsureAsync(this Task<Result> result,
+        Func<Task<bool>> predicate, Error error, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).EnsureAsync(predicate, error).ConfigureAwait(false);
+
+    public static async Task<Result<T>> MapErrorAsync<T>(this Task<Result<T>> result,
+        Func<Error, Task<Error>> map, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).MapErrorAsync(map).ConfigureAwait(false);
+
+    public static async Task<Result> MapErrorAsync(this Task<Result> result,
+        Func<Error, Task<Error>> map, CancellationToken cancellationToken = default)
+        => await (await WaitForInput(result, cancellationToken).ConfigureAwait(false)).MapErrorAsync(map).ConfigureAwait(false);
+
+    public static Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, CancellationToken, Task<TOut>> map, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(map);
+        return result.MapAsync(value => map(value, cancellationToken), cancellationToken);
+    }
+
+    public static Task<Result<TOut>> BindAsync<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, CancellationToken, Task<Result<TOut>>> bind, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(bind);
+        return result.BindAsync(value => bind(value, cancellationToken), cancellationToken);
+    }
+
+    public static Task<Result<T>> TapAsync<T>(this Task<Result<T>> result,
+        Func<T, CancellationToken, Task> action, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(action);
+        return result.TapAsync(value => action(value, cancellationToken), cancellationToken);
+    }
+
+    public static Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> result,
+        Func<TIn, CancellationToken, Task<TOut>> onSuccess,
+        Func<IReadOnlyList<Error>, CancellationToken, Task<TOut>> onFailure, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+        return result.MatchAsync(value => onSuccess(value, cancellationToken),
+            errors => onFailure(errors, cancellationToken), cancellationToken);
+    }
+
+    private static Task<T> WaitForInput<T>(Task<T> input, CancellationToken cancellationToken) {
+        cancellationToken.ThrowIfCancellationRequested();
+        return input.WaitAsync(cancellationToken);
+    }
 }
-
-public enum ResultKind { Ok, Created, NoContent, Error, ErrorList }
-public readonly record struct ResultOutcome(ResultKind Kind, object? Value = null, string? Location = null, Error? Error = null, ErrorList? Errors = null);
-public interface IResultOutcome { ResultOutcome GetOutcome(); }
-
-public union Result(Ok, NoContent, Error, ErrorList) : IResultOutcome
-{
-    private const string UnspecifiedErrorMessage = "An unspecified error occurred.";
-
-    internal static Error Uninitialized { get; } = new("Result.Uninitialized", "An uninitialized result has no outcome.", ErrorType.Critical);
-    internal static Error MissingError { get; } = new("Result.MissingError", "A failed result requires an error.", ErrorType.Critical);
-
-    public bool IsSuccess => this is TransactionProcessing.UnionResults.Ok or TransactionProcessing.UnionResults.NoContent;
-    public bool IsFailed => !IsSuccess;
-    public string Message => FailureMessage ?? string.Empty;
-    public IReadOnlyList<Error> Errors => this switch
-    {
-        Error error => [error],
-        ErrorList errors => errors,
-        TransactionProcessing.UnionResults.Ok or TransactionProcessing.UnionResults.NoContent => [],
-        null => [Uninitialized],
-    };
-
-    public string? GetFailureMessage() => FailureMessage;
-
-    internal string? FailureMessage => this switch
-    {
-        Error error => error.Message,
-        ErrorList errors => errors[0].Message,
-        TransactionProcessing.UnionResults.Ok or TransactionProcessing.UnionResults.NoContent => null,
-        null => Uninitialized.Message,
-    };
-
-    public static Result Ok() => new(new Ok());
-    public static Result Success() => Ok();
-    public static Result<T> Success<T>(T value) => Result<T>.Ok(value);
-    public static Result NoContent() => new(new NoContent());
-    public static Result Fail(Error error) => new(error ?? MissingError);
-    public static Result Fail(ErrorList errors) => errors is null ? Fail(MissingError) : new(errors);
-    public static Error Failure(string message) => Error.Failure(message ?? UnspecifiedErrorMessage);
-    public static ErrorList Failure(IEnumerable<string> errors) => CreateErrors(ErrorType.Failure, string.Empty, errors);
-    public static ErrorList Failure(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.Failure, message, errors);
-    public static Error Validation(string message) => Error.Validation(message ?? UnspecifiedErrorMessage);
-    public static Error Invalid(string message) => Validation(message);
-    public static ErrorList Invalid(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.Validation, message, errors);
-    public static ErrorList Validation(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.Validation, message, errors);
-    public static Error NotFound(string message) => Error.NotFound(message ?? UnspecifiedErrorMessage);
-    public static ErrorList NotFound(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.NotFound, message, errors);
-    public static Error Unauthorized(string message) => Error.Unauthorized(message ?? UnspecifiedErrorMessage);
-    public static ErrorList Unauthorized(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.Unauthorized, message, errors);
-    public static Error Forbidden(string message) => Error.Forbidden(message ?? UnspecifiedErrorMessage);
-    public static ErrorList Forbidden(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.Forbidden, message, errors);
-    public static Error Conflict(string message) => Error.Conflict(message ?? UnspecifiedErrorMessage);
-    public static ErrorList Conflict(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.Conflict, message, errors);
-    public static Error CriticalError(string message) => Error.Critical(message ?? UnspecifiedErrorMessage);
-    public static ErrorList CriticalError(string message, IEnumerable<string> errors) => CreateErrors(ErrorType.Critical, message, errors);
-    public static Result CreatedResource() => Ok();
-    public static Result DeletedResource() => NoContent();
-    public static Result UpdatedResource() => NoContent();
-    public static Result<T> ObtainedResource<T>(T value) => Result<T>.Ok(value);
-
-    private static ErrorList CreateErrors(ErrorType type, string message, IEnumerable<string> errors)
-    {
-        return Capture(() =>
-        {
-            List<Error> values = [];
-            if (!string.IsNullOrWhiteSpace(message))
-                values.Add(new Error(type.ToString(), message, type));
-
-            if (errors is not null)
-            {
-                foreach (var value in errors)
-                {
-                    if (!string.IsNullOrWhiteSpace(value))
-                        values.Add(new Error(type.ToString(), value, type));
-                }
-            }
-
-            if (values.Count == 0)
-                values.Add(new Error(type.ToString(), UnspecifiedErrorMessage, type));
-
-            return new ErrorList(values);
-        }, static error => new ErrorList([error]));
-    }
-
-    public ResultOutcome GetOutcome() => this switch
-    {
-        TransactionProcessing.UnionResults.Ok _ => new(ResultKind.Ok),
-        TransactionProcessing.UnionResults.NoContent _ => new(ResultKind.NoContent),
-        Error error => new(ResultKind.Error, Error: error),
-        ErrorList errors => new(ResultKind.ErrorList, Errors: errors),
-        null => new(ResultKind.Error, Error: Uninitialized),
-    };
-
-    public Result<TResult> Match<TResult>(Func<TResult> ok, Func<TResult> noContent, Func<Error, TResult> error, Func<ErrorList, TResult> errors)
-    {
-        var result = this;
-        return Capture(() => Result<TResult>.Ok(result.MatchCore(ok, noContent, error, errors)), Result<TResult>.Fail);
-    }
-
-    public Result Bind(Func<Result> bind) => BindCore(bind);
-
-    internal Result BindCore(Func<Result> bind) => MatchCore(
-        () => Capture(bind, Fail), NoContent, Fail, Fail);
-
-    public Result Tap(Action action) => TapCore(action);
-
-    internal Result TapCore(Action action)
-    {
-        var result = this;
-        Result TapSuccess() => Capture(() => { action(); return result; }, Fail);
-
-        return MatchCore(TapSuccess, TapSuccess, Fail, Fail);
-    }
-
-    public Result TapError(Action<Error> action) => TapErrorCore(action);
-
-    internal Result TapErrorCore(Action<Error> action)
-    {
-        var result = this;
-        return MatchCore(
-            () => result,
-            () => result,
-            error => Capture(() => { action(error); return Fail(error); }, Fail),
-            errors => Capture(() => { NotifyErrors(errors, action); return Fail(errors); }, Fail));
-    }
-
-    private TResult MatchCore<TResult>(Func<TResult> ok, Func<TResult> noContent, Func<Error, TResult> error, Func<ErrorList, TResult> errors) => this switch
-    {
-        TransactionProcessing.UnionResults.Ok => ok(),
-        TransactionProcessing.UnionResults.NoContent => noContent(),
-        Error value => error(value),
-        ErrorList values => errors(values),
-        null => error(Uninitialized),
-    };
-
-    internal static void NotifyErrors(ErrorList errors, Action<Error> action)
-    {
-        foreach (var error in errors)
-            action(error);
-    }
-
-    internal static TResult Capture<TResult>(Func<TResult> action, Func<Error, TResult> fail)
-    {
-        try
-        {
-            return action();
-        }
-        catch (Exception exception)
-        {
-            return fail(FromException(exception));
-        }
-    }
-
-    internal static Error FromException(Exception exception) => new("Result.Exception", exception.Message ?? UnspecifiedErrorMessage, ErrorType.Critical);
-}
-
-#pragma warning disable S1481 // Sonar misreads the C# 15 union declaration body as an unused local.
-public union Result<T>(Ok<T>, Created<T>, NoContent, Error, ErrorList) : IResultOutcome
-{
-    private static readonly Error MissingValue = new("Result.MissingValue", "A successful result requires a value.", ErrorType.Critical);
-    private static readonly Error ExpectedFailure = new("Result.ExpectedFailure", "Only a failed result can be propagated as a failure.", ErrorType.Critical);
-
-    public bool IsSuccess => this is Ok<T> or Created<T> or TransactionProcessing.UnionResults.NoContent;
-    public bool IsFailed => !IsSuccess;
-
-    public string Message => GetFailureMessage() ?? string.Empty;
-    public IReadOnlyList<Error> Errors => this switch
-    {
-        Error error => [error],
-        ErrorList errors => errors,
-        Ok<T> or Created<T> or TransactionProcessing.UnionResults.NoContent => [],
-        null => [Result.Uninitialized],
-    };
-
-    public string? GetFailureMessage() => this switch
-    {
-        Error error => error.Message,
-        ErrorList errors => errors[0].Message,
-        Ok<T> or Created<T> or TransactionProcessing.UnionResults.NoContent => null,
-        null => Result.Uninitialized.Message,
-    };
-
-    public bool TryGetValue([MaybeNullWhen(false)] out T value)
-    {
-        switch (this)
-        {
-            case Ok<T> ok:
-                value = ok.Value;
-                return true;
-            case Created<T> created:
-                value = created.Value;
-                return true;
-            default:
-                value = default;
-                return false;
-        }
-    }
-
-    public static Result<T> Ok(T value) => value is null ? Fail(MissingValue) : new(new Ok<T>(value));
-    public static Result<T> Created(T value, string? location = null) => value is null ? Fail(MissingValue) : new(new Created<T>(value, location));
-    public static Result<T> NoContent() => new(new NoContent());
-    public static Result<T> Fail(Error error) => new(error ?? Result.MissingError);
-    public static Result<T> Fail(ErrorList errors) => errors is null ? Fail(Result.MissingError) : new(errors);
-
-    public static Result<T> FromFailure(IResultOutcome result) => Result.Capture(() => result?.GetOutcome() switch
-    {
-        { Kind: ResultKind.Error, Error: not null } outcome => Fail(outcome.Error),
-        { Kind: ResultKind.ErrorList, Errors: not null } outcome => Fail(outcome.Errors),
-        _ => Fail(ExpectedFailure),
-    }, Fail);
-
-    public ResultOutcome GetOutcome() => this switch
-    {
-        Ok<T> ok => new(ResultKind.Ok, Value: ok.Value),
-        Created<T> created => new(ResultKind.Created, Value: created.Value, Location: created.Location),
-        TransactionProcessing.UnionResults.NoContent _ => new(ResultKind.NoContent),
-        Error error => new(ResultKind.Error, Error: error),
-        ErrorList errors => new(ResultKind.ErrorList, Errors: errors),
-        null => new(ResultKind.Error, Error: Result.Uninitialized),
-    };
-
-    public Result ToResult() => MatchCore(
-        _ => Result.Ok(), (_, _) => Result.Ok(), Result.NoContent, Result.Fail, Result.Fail);
-
-    public Result<TResult> Match<TResult>(Func<T, TResult> ok, Func<T, string?, TResult> created, Func<TResult> noContent, Func<Error, TResult> error, Func<ErrorList, TResult> errors)
-    {
-        var result = this;
-        return Result.Capture(() => Result<TResult>.Ok(result.MatchCore(ok, created, noContent, error, errors)), Result<TResult>.Fail);
-    }
-
-    public Result<TResult> Map<TResult>(Func<T, TResult> map) => MatchCore(
-        value => Result.Capture(() => Result<TResult>.Ok(map(value)), Result<TResult>.Fail),
-        (value, location) => Result.Capture(() => Result<TResult>.Created(map(value), location), Result<TResult>.Fail),
-        Result<TResult>.NoContent, Result<TResult>.Fail, Result<TResult>.Fail);
-
-    public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> bind) => MatchCore(
-        value => Result.Capture(() => bind(value), Result<TResult>.Fail),
-        (value, _) => Result.Capture(() => bind(value), Result<TResult>.Fail),
-        Result<TResult>.NoContent, Result<TResult>.Fail, Result<TResult>.Fail);
-
-    public Result<T> Tap(Action<T> action)
-    {
-        var result = this;
-        Result<T> TapValue(T value) => Result.Capture(() => { action(value); return result; }, Fail);
-
-        return MatchCore(TapValue, (value, _) => TapValue(value), () => result, Fail, Fail);
-    }
-
-    public Result<T> TapError(Action<Error> action)
-    {
-        var result = this;
-        return MatchCore(
-            _ => result,
-            (_, _) => result,
-            () => result,
-            error => Result.Capture(() => { action(error); return Fail(error); }, Fail),
-            errors => Result.Capture(() => { Result.NotifyErrors(errors, action); return Fail(errors); }, Fail));
-    }
-
-    internal TResult MatchCore<TResult>(Func<T, TResult> ok, Func<T, string?, TResult> created, Func<TResult> noContent, Func<Error, TResult> error, Func<ErrorList, TResult> errors) => this switch
-    {
-        Ok<T> value => ok(value.Value),
-        Created<T> value => created(value.Value, value.Location),
-        TransactionProcessing.UnionResults.NoContent => noContent(),
-        Error value => error(value),
-        ErrorList values => errors(values),
-        null => error(Result.Uninitialized),
-    };
-
-    internal static async Task<Result<T>> CaptureAsync(Func<Task<Result<T>>> action, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await action().ConfigureAwait(false);
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
-        {
-            return Fail(Result.FromException(exception));
-        }
-    }
-}
-#pragma warning restore S1481

@@ -243,20 +243,19 @@ public abstract class BaseDockerHelper{
     public Result<(String imageName, Boolean useLatest)> GetImageDetails(ContainerType key){
         KeyValuePair<ContainerType, (String imageName, Boolean useLatest)> details = this.ImageDetails.SingleOrDefault(c => c.Key == key);
         if (details.Equals(default(KeyValuePair<ContainerType, (String, Boolean)>))){
-            // No details found so throw an error
-            return Result.Failure($"No image details found for Container Type [{key}]");
+            return new Error(ErrorType.Failure, $"No image details found for Container Type [{key}]");
         }
 
-        return Result.Success(details.Value);
+        return Results.Ok(details.Value);
     }
 
     private (String imageName, Boolean useLatest) GetRequiredImageDetails(ContainerType key)
     {
         var result = this.GetImageDetails(key);
-        if (!result.TryGetValueOrFailure(out var details, out var failure))
-            throw new InvalidOperationException(failure[0].Message);
+        if (result.Value is Success<(String imageName, Boolean useLatest)> success)
+            return success.Value;
 
-        return details;
+        throw new InvalidOperationException(result.GetErrors().FirstOrDefault()?.Message ?? "An uninitialized result has no outcome.");
     }
 
     public void SetHostPort(ContainerType key, Int32 hostPort){
@@ -781,17 +780,17 @@ public abstract class BaseDockerHelper{
 
     protected virtual async Task<Result> CreateSubscription(EndpointDefinition endpointDefinition, String indexName, String tag, CancellationToken cancellationToken) {
         if (endpointDefinition == null) {
-            return Result.Failure("Endpoint definition must not be null");
+            return Results.Fail("Endpoint definition must not be null");
         }
 
         if (this.SubscriptionServiceClient == null) {
-            return Result.Failure("SubscriptionServiceClient needs initialised");
+            return Results.Fail("SubscriptionServiceClient needs initialised");
         }
 
         // Check if the endpoint exists already
         SubscriptionApiResponse<IReadOnlyCollection<EndpointDefinition>> existingEndpoints = await this.SubscriptionServiceClient.GetEndpointsAsync(cancellationToken);
         if (existingEndpoints.IsSuccessStatusCode == false) {
-            return Result.Failure($"Error getting existing endpoints Status Code = {existingEndpoints.StatusCode}");
+            return Results.Fail($"Error getting existing endpoints Status Code = {existingEndpoints.StatusCode}");
         }
 
 
@@ -799,7 +798,7 @@ public abstract class BaseDockerHelper{
             // Need to create a new endpoint here
             SubscriptionApiResponse<EndpointDefinition> result = await this.SubscriptionServiceClient.CreateEndpointAsync(endpointDefinition, cancellationToken);
             if (result.IsSuccessStatusCode == false)
-                return Result.Failure($"Error creating endpoint name {endpointDefinition.Name} Status Code = {result.StatusCode}");
+                return Results.Fail($"Error creating endpoint name {endpointDefinition.Name} Status Code = {result.StatusCode}");
         }
 
         String subscriptionId = $"{indexName}_{endpointDefinition.Name}_{tag}";
@@ -823,10 +822,10 @@ public abstract class BaseDockerHelper{
 
             SubscriptionApiResponse<SubscriptionDefinition> result = await this.SubscriptionServiceClient.CreateSubscriptionConfigurationAsync(subscriptionConfigurationRequest, cancellationToken);
             if (result.IsSuccessStatusCode == false)
-                return Result.Failure($"Error subscription configuration id {subscriptionConfigurationRequest.SubscriptionId} Status Code = {result.StatusCode}");
+                return Results.Fail($"Error subscription configuration id {subscriptionConfigurationRequest.SubscriptionId} Status Code = {result.StatusCode}");
         }
 
-        return Result.Success();
+        return Results.Ok();
     }
 
     protected async Task DoSqlServerHealthCheck(
@@ -938,7 +937,8 @@ public abstract class BaseDockerHelper{
 
             Result<String> healthCheckResult = await this.HealthCheckClient.PerformHealthCheck(containerDetails.Item1, "127.0.0.1", containerDetails.Item2, cancellationToken);
 
-            if (healthCheckResult.TryGetValueOrFailure(out var healthCheckBody, out var failure)) {
+            if (healthCheckResult.Value is Success<String> success) {
+                String healthCheckBody = success.Value;
                 HealthChecks.HealthCheckResult result = StringSerialiser.Deserialise<HealthCheckResult>(healthCheckBody, new SerialiserOptions(SerialiserPropertyFormat.CamelCase));
 
                 this.Trace($"health check complete for {containerType} result is [{healthCheckBody}]");
@@ -948,7 +948,8 @@ public abstract class BaseDockerHelper{
             }
             else {
                 this.Trace($"health check failed for {containerType}");
-                throw new InvalidOperationException($"Health check failed for {containerType} [{failure[0].Message}]");
+                String message = healthCheckResult.GetErrors().FirstOrDefault()?.Message ?? "An uninitialized result has no outcome.";
+                throw new InvalidOperationException($"Health check failed for {containerType} [{message}]");
             }
         }, cancellationToken, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(20));
     }

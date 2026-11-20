@@ -109,7 +109,7 @@ public class AggregateService : IAggregateService
         // Check the cache
         if (at != default && this.Cache.TryGetValue(key, out aggregate))
         {
-            return Result.Success(aggregate);
+            return Results.Ok(aggregate);
         }
 
         if (at == default)
@@ -120,7 +120,7 @@ public class AggregateService : IAggregateService
             if (!getResult.TryGetValueOrFailure(out var latestAggregate, out var failure))
                 return failure;
 
-            return Result.Success(latestAggregate);
+            return Results.Ok(latestAggregate);
         }
 
         try
@@ -130,7 +130,7 @@ public class AggregateService : IAggregateService
 
             if (this.Cache.TryGetValueWithMetrics<TAggregate>(key, out TAggregate cachedAggregate))
             {
-                return Result.Success(cachedAggregate);
+                return Results.Ok(cachedAggregate);
             }
 
             // Not found in cache so call GetLatest
@@ -143,7 +143,7 @@ public class AggregateService : IAggregateService
             }
 
             this.SetCache<TAggregate>(at, aggregate);
-            return Result.Success(aggregate);
+            return Results.Ok(aggregate);
         }
         finally
         {
@@ -190,13 +190,13 @@ public class AggregateService : IAggregateService
         }
         catch (Exception ex)
         {
-            return Result.Failure(ex.Message);
+            return new Error(ErrorType.Failure, ex.Message);
         }
 
         stopwatch.Stop();
         histogramMetric.Observe(stopwatch.Elapsed.TotalSeconds);
 
-        return Result.Success(aggregate);
+        return Results.Ok(aggregate);
     }
 
 
@@ -212,7 +212,7 @@ public class AggregateService : IAggregateService
         Histogram histogramMetric = AggregateService.GetHistogramMetric($"{m}_{g}_saved");
 
         counterCalls.Inc();
-        Result result = Result.Success();
+        Result result = Results.Ok();
         // Check the pending events so dont save blindly
         if (aggregate.PendingEvents.Any()) {
             result = await repository.SaveChanges(aggregate, cancellationToken);
@@ -222,7 +222,7 @@ public class AggregateService : IAggregateService
 
         histogramMetric.Observe(stopwatch.Elapsed.TotalSeconds);
 
-        if (result.IsFailed)
+        if (!result.IsSuccess())
         {
             // Get out before any caching
             return result;

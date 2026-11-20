@@ -34,14 +34,14 @@ public static class ClaimsHelper
             userClaim = user.Claims.SingleOrDefault(c => c.Type.Equals(customClaimType, StringComparison.CurrentCultureIgnoreCase));
 
             if (userClaim == null) {
-                return Result.NotFound($"Claim type [{customClaimType}] not found");
+                return new Error(ErrorType.NotFound, $"Claim type [{customClaimType}] not found");
             }
         }
         else {
             userClaim = new Claim(customClaimType, defaultValue);
         }
 
-        return Result.Success(userClaim);
+        return Results.Ok(userClaim);
     }
 
     /// <summary>
