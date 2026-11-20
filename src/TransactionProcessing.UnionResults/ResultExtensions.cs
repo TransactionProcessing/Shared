@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace TransactionProcessing.UnionResults;
 
 public static class ResultExtensions
@@ -13,6 +15,26 @@ public static class ResultExtensions
     public static string? GetFailureMessage(this Result result) => result.GetFailureMessage();
 
     public static string? GetFailureMessage<T>(this Result<T> result) => result.GetFailureMessage();
+
+    /// <summary>Gets the payload or the errors to propagate when the caller requires a payload.</summary>
+    /// <remarks>A <see cref="NoContent"/> result produces a critical error.</remarks>
+    public static bool TryGetValueOrFailure<T>(
+        this Result<T> result,
+        [MaybeNullWhen(false)] out T value,
+        [NotNullWhen(false)] out ErrorList? failure)
+    {
+        if (result.TryGetValue(out value))
+        {
+            failure = null;
+            return true;
+        }
+
+        failure = result.IsFailed
+            ? ResultHelpers.CreateFailure(result)
+            : new ErrorList([Error.Critical("The result contained no value.")]);
+
+        return false;
+    }
 
     public static Result ToResult<T>(this Result<T> result) => result.ToResult();
 

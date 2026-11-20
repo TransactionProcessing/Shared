@@ -59,6 +59,40 @@ public sealed class ResultExtensionsTests
         Assert.Equal(Assert.Single(default(Result<int>).Errors).Message, default(Result<int>).GetFailureMessage());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Try_get_value_or_failure_returns_the_payload_for_either_value_case(bool created)
+    {
+        var result = created ? Result<string>.Created("voucher") : Result<string>.Ok("voucher");
+
+        Assert.True(result.TryGetValueOrFailure(out var value, out var failure));
+        Assert.Equal("voucher", value);
+        Assert.Null(failure);
+    }
+
+    [Fact]
+    public void Try_get_value_or_failure_preserves_the_original_errors()
+    {
+        Assert.False(Result<string>.Fail(Missing).TryGetValueOrFailure(out _, out var singleFailure));
+        Assert.Same(Missing, Assert.Single(singleFailure));
+
+        Assert.False(Result<string>.Fail(MissingErrors).TryGetValueOrFailure(out _, out var multipleFailures));
+        Assert.Same(MissingErrors, multipleFailures);
+
+        var uninitialized = default(Result<string>);
+        Assert.False(uninitialized.TryGetValueOrFailure(out _, out var defaultFailure));
+        Assert.Same(Assert.Single(uninitialized.Errors), Assert.Single(defaultFailure));
+    }
+
+    [Fact]
+    public void Try_get_value_or_failure_returns_a_critical_error_for_no_content()
+    {
+        Assert.False(Result<string>.NoContent().TryGetValueOrFailure(out var value, out var failure));
+        Assert.Null(value);
+        Assert.Equal(ErrorType.Critical, Assert.Single(failure).ErrorType);
+    }
+
     [Fact]
     public void To_result_projects_each_generic_case()
     {
