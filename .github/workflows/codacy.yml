@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   codacy-issue-sync:
-    uses: TransactionProcessing/org-ci-workflows/.github/workflows/sync-codacy-issues.yml@main
+    uses: ./.github/workflows/sync-codacy-issues-shared.yml
     secrets: inherit
     with:
       # Optional: you can omit both and the reusable workflow will default them
@@ -24,3 +24,4 @@ jobs:
       severity_filter: "Error,High,Warning,Info"
       extra_labels: ""
       assignees: ""
+
