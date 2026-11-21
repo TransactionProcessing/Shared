@@ -184,8 +184,7 @@ jobs:
               "ECONNRESET", "ETIMEDOUT", "EAI_AGAIN", "EPIPE", "ECONNREFUSED"
             ]);
 
-            function codacyPost(apiPath, body) {
-              const offset = body.offset ?? "n/a";
+            function codacyPost(apiPath, body, pageNumber) {
 
               return (async () => {
                 for (let attempt = 1; attempt <= CODACY_MAX_ATTEMPTS; attempt++) {
@@ -223,7 +222,7 @@ jobs:
                           try {
                             return resolve({ data: JSON.parse(data), statusCode, requestId });
                           } catch {
-                            return reject(new Error(`Unable to parse Codacy response for offset ${offset}`));
+                            return reject(new Error(`Unable to parse Codacy response for page ${pageNumber}`));
                           }
                         });
                       });
@@ -233,7 +232,7 @@ jobs:
                       req.end();
                     });
 
-                    console.log(`Codacy page offset=${offset} status=${response.statusCode} attempt=${attempt} elapsed_ms=${Date.now() - startedAt} request_id=${response.requestId}`);
+                    console.log(`Codacy page=${pageNumber} status=${response.statusCode} attempt=${attempt} elapsed_ms=${Date.now() - startedAt} request_id=${response.requestId}`);
                     return response.data;
                   } catch (error) {
                     const statusCode = error.statusCode || 0;
@@ -242,10 +241,10 @@ jobs:
                     const retryable = CODACY_RETRYABLE_STATUSES.has(statusCode) ||
                       CODACY_RETRYABLE_NETWORK_CODES.has(error.code) || timedOut;
 
-                    console.warn(`Codacy page offset=${offset} failed status=${statusCode || "network"} attempt=${attempt} elapsed_ms=${Date.now() - startedAt} request_id=${requestId}${timedOut ? " timeout=true" : ""}`);
+                    console.warn(`Codacy page=${pageNumber} failed status=${statusCode || "network"} attempt=${attempt} elapsed_ms=${Date.now() - startedAt} request_id=${requestId}${timedOut ? " timeout=true" : ""}`);
                     if (!retryable || attempt === CODACY_MAX_ATTEMPTS) {
                       const status = statusCode ? `HTTP ${statusCode}` : (timedOut ? "request timeout" : "network error");
-                      throw new Error(`Codacy request failed for page offset ${offset} after ${attempt} attempt(s): ${status}; request_id=${requestId}`);
+                      throw new Error(`Codacy request failed for page ${pageNumber} after ${attempt} attempt(s): ${status}; request_id=${requestId}`);
                     }
 
                     let retryAfterMs = 0;
@@ -256,7 +255,7 @@ jobs:
                     }
                     const backoffMs = Math.min(1000 * (2 ** (attempt - 1)), 8000);
                     const delayMs = Math.min(Math.max(backoffMs, retryAfterMs), 15000);
-                    console.warn(`Retrying Codacy page offset=${offset} in ${delayMs}ms (attempt ${attempt + 1}/${CODACY_MAX_ATTEMPTS}).`);
+                    console.warn(`Retrying Codacy page=${pageNumber} in ${delayMs}ms (attempt ${attempt + 1}/${CODACY_MAX_ATTEMPTS}).`);
                     await new Promise(resolve => setTimeout(resolve, delayMs));
                   }
                 }
@@ -267,20 +266,36 @@ jobs:
               const api = `/api/v3/analysis/organizations/gh/${org}/repositories/${repoName}/issues/search`;
               const pageSize = 100;
               const allIssues = [];
+              const seenCursors = new Set();
+              let cursor;
 
-              for (let offset = 0; ; offset += pageSize) {
-                const response = await codacyPost(api, {
-                  limit: pageSize,
-                  offset,
+              for (let pageNumber = 1; ; pageNumber++) {
+                const query = new URLSearchParams({ limit: String(pageSize) });
+                if (cursor) {
+                  query.set("cursor", cursor);
+                }
+
+                const response = await codacyPost(`${api}?${query.toString()}`, {
                   levels: severities
-                });
+                }, pageNumber);
 
-                const page = response.data || [];
+                const page = response.data;
+                if (!Array.isArray(page)) {
+                  throw new Error(`Codacy returned an invalid issue page ${pageNumber}`);
+                }
                 allIssues.push(...page);
 
-                if (page.length < pageSize) {
+                const nextCursor = response.pagination?.cursor;
+                console.log(`Codacy pagination page=${pageNumber} items=${page.length} total=${response.pagination?.total ?? "unknown"} has_next=${Boolean(nextCursor)}`);
+
+                if (!nextCursor) {
                   break;
                 }
+                if (seenCursors.has(nextCursor)) {
+                  throw new Error(`Codacy repeated pagination cursor after page ${pageNumber}`);
+                }
+                seenCursors.add(nextCursor);
+                cursor = nextCursor;
               }
 
               return allIssues;
