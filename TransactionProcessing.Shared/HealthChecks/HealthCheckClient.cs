@@ -33,21 +33,20 @@ public class HealthCheckClient : IHealthCheckClient
     protected virtual async Task<Result<String>> HandleResponse(HttpResponseMessage responseMessage,
                                                         CancellationToken cancellationToken)
     {
-        // Read the content from the response
         String content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
+        if (responseMessage.IsSuccessStatusCode) {
+            return Results.Ok(content);
+        }
 
-        // Check the response code
-        Result<String> result = (responseMessage.IsSuccessStatusCode, responseMessage.StatusCode) switch {
-            (true, _) => Result.Success<String>(content),
-            (_, HttpStatusCode.BadRequest) => Result.Invalid(content),
-            (_, HttpStatusCode.Forbidden) => Result.Forbidden(content),
-            (_, HttpStatusCode.NotFound) => Result.NotFound(content),
-            (_, HttpStatusCode.Unauthorized) => Result.Unauthorized(content),
-            (_, HttpStatusCode.InternalServerError) => Result.CriticalError(content),
-            _ => Result.Failure(content)
-
+        ErrorType errorType = responseMessage.StatusCode switch {
+            HttpStatusCode.BadRequest => ErrorType.Validation,
+            HttpStatusCode.Forbidden => ErrorType.Forbidden,
+            HttpStatusCode.NotFound => ErrorType.NotFound,
+            HttpStatusCode.Unauthorized => ErrorType.Unauthorized,
+            HttpStatusCode.InternalServerError => ErrorType.Critical,
+            _ => ErrorType.Failure
         };
-        return result;
+        return new Error(errorType, content);
     }
 
     private String BuildRequestUri(String scheme, 

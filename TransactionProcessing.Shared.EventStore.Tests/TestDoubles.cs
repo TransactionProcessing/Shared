@@ -24,7 +24,7 @@ internal sealed class TestAggregateRepository : IAggregateRepository<TestAggrega
     public Task<Result> SaveChanges(TestAggregate aggregate, CancellationToken cancellationToken)
     {
         SaveChangesInvocations.Add((aggregate, cancellationToken));
-        return SaveChangesHandler?.Invoke(aggregate, cancellationToken) ?? Task.FromResult(Result.Success());
+        return SaveChangesHandler?.Invoke(aggregate, cancellationToken) ?? Task.FromResult(Results.Ok());
     }
 
     public Task<Result<TestAggregate>> GetLatestVersionFromLastEvent(Guid aggregateId, CancellationToken cancellationToken) =>

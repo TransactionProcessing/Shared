@@ -21,7 +21,7 @@ public class EventDispatchHelperTests{
         List<IDomainEventHandler> handlers = new();
         handlers.Add(new TestDomainEventHandler());
         Result result = await @event.DispatchToHandlers(handlers, CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
+        result.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -31,14 +31,14 @@ public class EventDispatchHelperTests{
         List<IDomainEventHandler> handlers = new();
         IDomainEventHandlerImposter domainEventHandler = new();
         domainEventHandler.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-            .ReturnsAsync(Result.Fail(Error.Failure("failure")));
+            .ReturnsAsync(Results.Fail("failure"));
         IDomainEventHandlerImposter domainEventHandler2 = new();
         domainEventHandler2.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-            .ReturnsAsync(Result.Fail(Error.Failure("failure")));
+            .ReturnsAsync(Results.Fail("failure"));
         handlers.Add(domainEventHandler.Instance());
         handlers.Add(domainEventHandler2.Instance());
         Result dispatchResult = await @event.DispatchToHandlers(handlers, CancellationToken.None);
-        dispatchResult.IsFailed.ShouldBeTrue();
+        dispatchResult.IsSuccess().ShouldBeFalse();
         
     }
 
@@ -49,18 +49,15 @@ public class EventDispatchHelperTests{
         List<IDomainEventHandler> handlers = new();
         IDomainEventHandlerImposter domainEventHandler = new();
         domainEventHandler.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-            .ReturnsAsync(Result.Failure("Error Message 1"));
+            .ReturnsAsync(Results.Fail("Error Message 1"));
         IDomainEventHandlerImposter domainEventHandler2 = new();
         domainEventHandler2.Handle(Arg<IDomainEvent>.Any(), Arg<CancellationToken>.Any())
-            .ReturnsAsync(Result.Failure(new List<String>() {
-                "Error Message 2",
-                "Error Message 3"
-            }));
+            .ReturnsAsync(Results.Fail(new ErrorList([new Error(ErrorType.Failure, "Error Message 2"), new Error(ErrorType.Failure, "Error Message 3")])));
         handlers.Add(domainEventHandler.Instance());
         handlers.Add(domainEventHandler2.Instance());
         Result dispatchResult = await @event.DispatchToHandlers(handlers, CancellationToken.None);
-        dispatchResult.IsFailed.ShouldBeTrue();
-        dispatchResult.Message.ShouldBe($"One or more event handlers have failed. Error Messages [Error Message 1{Environment.NewLine}Error Message 2{Environment.NewLine}Error Message 3]");
+        dispatchResult.IsSuccess().ShouldBeFalse();
+        dispatchResult.GetErrorMessage().ShouldBe($"One or more event handlers have failed. Error Messages [Error Message 1{Environment.NewLine}Error Message 2{Environment.NewLine}Error Message 3]");
 
     }
 }

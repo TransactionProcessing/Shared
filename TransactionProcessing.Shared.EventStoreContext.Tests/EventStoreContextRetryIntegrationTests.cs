@@ -69,16 +69,16 @@ public class EventStoreContextRetryIntegrationTests : IDisposable
         {
             Result insertEventResult = await context.InsertEvents(streamName, -1, events, CancellationToken.None);
 
-            TestContext.WriteLine($"Insert success: {insertEventResult.IsSuccess}; status: {insertEventResult.GetOutcome().Kind}; message: {insertEventResult.Message}; errors: {String.Join(" | ", insertEventResult.Errors.Select(error => error.Message))}");
+            TestContext.WriteLine($"Insert success: {insertEventResult.IsSuccess()}; errors: {insertEventResult.GetErrorMessage()}");
             await restartTask;
 
-            insertEventResult.IsSuccess.ShouldBeTrue();
+            insertEventResult.IsSuccess().ShouldBeTrue();
 
             Result<List<ResolvedEvent>> readEventsResult = default;
             await Retry.For(async () =>
             {
                 readEventsResult = await context.ReadEvents(streamName, 0, CancellationToken.None);
-                readEventsResult.TryGetValue(out var readEvents).ShouldBeTrue();
+                var readEvents = readEventsResult.Value.ShouldBeOfType<Success<List<ResolvedEvent>>>().Value;
                 readEvents.Count.ShouldBe(1);
             }, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(2));
         }

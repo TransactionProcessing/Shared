@@ -19,7 +19,7 @@ public class SubscriptionRepositoryTests
     {
         List<PersistentSubscriptionInfo> allSubscriptions = (TestData.GetPersistentSubscriptions_DemoEstate());
 
-        Func<CancellationToken, Task<Result<List<PersistentSubscriptionInfo>>>> GetAllSubscriptions = async token => Result.Success(allSubscriptions);
+        Func<CancellationToken, Task<Result<List<PersistentSubscriptionInfo>>>> GetAllSubscriptions = async token => Results.Ok(allSubscriptions);
 
         ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(GetAllSubscriptions);
 
@@ -51,7 +51,7 @@ public class SubscriptionRepositoryTests
         };
 
         Func<CancellationToken, Task<Result<List<PersistentSubscriptionInfo>>>> getAllSubscriptions =
-            _ => Task.FromResult(Result.Success(allSubscriptions));
+            _ => Task.FromResult(Results.Ok(allSubscriptions));
 
         ISubscriptionRepository subscriptionRepository = SubscriptionRepository.Create(getAllSubscriptions);
 

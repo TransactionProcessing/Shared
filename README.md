@@ -77,6 +77,16 @@ app.Run();
 
 The package serves version-specific OpenAPI documents at `/openapi/v1.json` and the Scalar reference at `/scalar`. The version list is discovered from mapped endpoints; adding another version does not require updating the shared package. Run the complete example with `dotnet run --project TransactionProcessing.ApiDefaults.Sample`.
 
+## UnionResults migration
+
+Use `Results.Ok()` for an empty success and `Results.Ok(value)` for a success with a payload. Both map to HTTP 200 through the ASP.NET Core adapter. Use `TypedResults.Created(...)` for HTTP 201 and `TypedResults.NoContent()` for HTTP 204.
+
+The adapter maps errors by `ErrorType`. Replace code-based status overrides with `UnionResultOptions.Map(ErrorType, statusCode)`. Problem Details clients can branch on `status` and display `title`. The former `code` and `codes` extensions are unavailable. Validation messages are now response-level entries in `errors[""]` because the new error type has no field name.
+
+`Map`, `Bind`, and `Tap` convert callback exceptions to critical errors. `Match` projects the selected case directly to the caller's return type, so exceptions from its callbacks propagate. Task-based operators accept a cancellation token for waiting on the input task. Pass that token to the asynchronous callback too if the callback needs to cancel its own work.
+
+`MapError` and `MapErrorAsync` preserve the error-list case. Every mapped entry must share one category. Mixed-category output throws `ArgumentException`.
+
 ## Testing
 
 Run the test suite with:

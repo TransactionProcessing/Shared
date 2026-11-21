@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using TransactionProcessing.Shared.Exceptions;
 using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.SubscriptionWorker;
@@ -32,17 +31,17 @@ public static class EventDispatchHelper
         try
         {
             Result[] results = await all;
-            if (results.Any(r => r.IsFailed)) {
+            if (results.Any(r => !r.IsSuccess())) {
                 List<String> masterList = results
-                    .Where(static result => result.IsFailed)
-                    .SelectMany(static result => result.Errors)
+                    .Where(static result => !result.IsSuccess())
+                    .SelectMany(static result => EventStoreResultExtensions.GetFailureErrors(result.Value))
                     .Select(static error => error.Message)
                     .Where(static message => !String.IsNullOrWhiteSpace(message))
                     .ToList();
                     
                 String errors = String.Join(Environment.NewLine, masterList);
                 // We have a failed result so need to do something with it
-                return Result.Failure($"One or more event handlers have failed. Error Messages [{errors}]");
+                return new Error(ErrorType.Failure, $"One or more event handlers have failed. Error Messages [{errors}]");
             }
         }
         catch (Exception ex)
@@ -50,11 +49,11 @@ public static class EventDispatchHelper
             if (all.Exception != null)
             {
                 Logger.Logger.LogError(all.Exception,String.Empty);
-                return Result.Failure(all.Exception.GetExceptionMessages());
+                return all.Exception.ToFailureErrors();
             }
-            return Result.Failure(ex.GetExceptionMessages());
+            return ex.ToFailureErrors();
         }
-        return Result.Success();
+        return Results.Ok();
     }
 
 }

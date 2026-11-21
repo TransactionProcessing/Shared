@@ -11,6 +11,11 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core' And '$(BuildingInsideVisualStudio)' != 'true' And $([MSBuild]::IsOsPlatform('Windows'))">
+    <!-- Windows command-line builds can run the Reqnroll generator in the existing MSBuild process. -->
+    <ReqnrollGenerationTaskFactory>AssemblyTaskFactory</ReqnrollGenerationTaskFactory>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.Uris" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />

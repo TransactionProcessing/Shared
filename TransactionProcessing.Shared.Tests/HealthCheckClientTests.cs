@@ -29,8 +29,7 @@ public partial class SharedTests
 
         var result = await healthCheckClient.PerformHealthCheck("http", "127.0.0.1", 5000, CancellationToken.None);
 
-        result.TryGetValue(out var payload).ShouldBeTrue();
-        payload.ShouldBe(expectedResponse);
+        Assert.IsType<Success<String>>(result.Value).Value.ShouldBe(expectedResponse);
     }
 
     [Theory]
@@ -44,15 +43,16 @@ public partial class SharedTests
     {
         MockHttpMessageHandler mockHttp = new();
 
-        //String expectedResponse = "{'name' : 'Test'}";
-        mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/healthui").Respond(req => new HttpResponseMessage(statusCode));
+        const String expectedResponse = "Health check failed.";
+        mockHttp.When(HttpMethod.Get, "http://127.0.0.1:5000/healthui").Respond(statusCode, "text/plain", expectedResponse);
 
         HealthCheckClient healthCheckClient = new(mockHttp.ToHttpClient());
 
         Result<String> result = await healthCheckClient.PerformHealthCheck("http", "127.0.0.1", 5000, CancellationToken.None);
 
-        result.IsFailed.ShouldBeTrue();
-        result.Errors[0].ErrorType.ShouldBe(resultStatus);
+        Error error = Assert.IsType<Error>(result.Value);
+        error.ErrorType.ShouldBe(resultStatus);
+        error.Message.ShouldBe(expectedResponse);
     }
 
 }

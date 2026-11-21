@@ -1,5 +1,4 @@
 using KurrentDB.Client;
-using TransactionProcessing.Shared.Exceptions;
 using TransactionProcessing.UnionResults;
 
 namespace TransactionProcessing.Shared.EventStore.EventStore;
@@ -126,17 +125,17 @@ public class EventStoreContext : IEventStoreContext
 
                     if (await response.ReadState == ReadState.StreamNotFound)
                     {
-                        return Result.NotFound($"Stream name {streamName} not found");
+                        return new Error(ErrorType.NotFound, $"Stream name {streamName} not found");
                     }
 
                     List<ResolvedEvent> resolvedEvents = await response.ToListAsync(cancellationToken);
-                    return Result.Success(resolvedEvents);
+                    return Results.Ok(resolvedEvents);
                 });
             }, nameof(this.GetEventsBackward), $"stream {streamName}", this.LogRetry);
         }
         catch (Exception e)
         {
-            return Result.Failure(e.GetExceptionMessages());
+            return e.ToFailureErrors();
         }
     }
 
@@ -154,10 +153,10 @@ public class EventStoreContext : IEventStoreContext
                 });
             }, nameof(this.GetPartitionResultFromProjection), $"projection {projectionName} partition {partitionId}", this.LogRetry);
 
-            return Result.Success<String>(jsonElement.GetRawText());
+            return Results.Ok<String>(jsonElement.GetRawText());
         }
         catch (Exception ex) {
-            return Result.Failure(ex.GetExceptionMessages());
+            return ex.ToFailureErrors();
         }
     }
 
@@ -175,10 +174,10 @@ public class EventStoreContext : IEventStoreContext
                 });
             }, nameof(this.GetPartitionStateFromProjection), $"projection {projectionName} partition {partitionId}", this.LogRetry);
 
-            return Result.Success<String>(jsonElement.GetRawText());
+            return Results.Ok<String>(jsonElement.GetRawText());
         }
         catch (Exception ex) {
-            return Result.Failure(ex.GetExceptionMessages());
+            return ex.ToFailureErrors();
         }
     }
 
@@ -193,10 +192,10 @@ public class EventStoreContext : IEventStoreContext
                             deadline: this.Deadline, cancellationToken: cancellationToken)),
                     nameof(this.GetResultFromProjection), $"projection {projectionName}", this.LogRetry);
 
-            return Result.Success<String>(jsonElement.GetRawText());
+            return Results.Ok<String>(jsonElement.GetRawText());
         }
         catch (Exception ex) {
-            return Result.Failure(ex.GetExceptionMessages());
+            return ex.ToFailureErrors();
         }
     }
 
@@ -210,10 +209,10 @@ public class EventStoreContext : IEventStoreContext
                             deadline: this.Deadline, cancellationToken: cancellationToken)),
                     nameof(this.GetStateFromProjection), $"projection {projectionName}", this.LogRetry);
 
-            return Result.Success<String>(jsonElement.GetRawText());
+            return Results.Ok<String>(jsonElement.GetRawText());
         }
         catch (Exception ex) {
-            return Result.Failure(ex.GetExceptionMessages());
+            return ex.ToFailureErrors();
         }
     }
 
@@ -242,10 +241,10 @@ public class EventStoreContext : IEventStoreContext
                         client.AppendToStreamAsync(streamName, expectedState,
                             aggregateEvents.AsEnumerable(), deadline: this.Deadline, cancellationToken: cancellationToken)),
                 nameof(this.InsertEvents), $"stream {streamName}", this.LogRetry);
-            return Result.Success();
+            return Results.Ok();
         }
         catch (Exception e) {
-            return Result.Failure(e.GetExceptionMessages());
+            return e.ToFailureErrors();
         }
     }
 
@@ -278,7 +277,7 @@ public class EventStoreContext : IEventStoreContext
 
                 if (page.ReadState == ReadState.StreamNotFound) {
                     this.LogInformation($"Read State from Stream {streamName} is {page.ReadState}");
-                    return Result.NotFound($"Stream name {streamName} not found");
+                    return new Error(ErrorType.NotFound, $"Stream name {streamName} not found");
                 }
 
                 resolvedEvents.AddRange(page.Events);
@@ -290,18 +289,18 @@ public class EventStoreContext : IEventStoreContext
             }
 
             this.LogInformation($"About to return {resolvedEvents.Count} events from Stream {streamName}");
-            return Result.Success(resolvedEvents);
+            return Results.Ok(resolvedEvents);
         }
         catch (Exception e)
         {
-            return Result.Failure(e.GetExceptionMessages());
+            return e.ToFailureErrors();
         }
     }
 
     public async Task<Result<List<ResolvedEvent>>> ReadLastEventsFromAll(Int64 numberEvents,
                                                                          CancellationToken cancellationToken) {
         try {
-            return Result.Success(await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
+            return Results.Ok(await EventStoreGrpcRetryPolicy.ExecuteAsync(async () =>
             {
                 return await this.UseClientAsync(async client =>
                 {
@@ -311,7 +310,7 @@ public class EventStoreContext : IEventStoreContext
             }, nameof(this.ReadLastEventsFromAll), $"last {numberEvents} events", this.LogRetry));
         }
         catch (Exception ex) {
-            return Result.Failure(ex.GetExceptionMessages());
+            return ex.ToFailureErrors();
         }
     }
 
@@ -342,7 +341,7 @@ public class EventStoreContext : IEventStoreContext
                 ProjectionRunningStatus status = EventStoreContext.GetStatusFrom(projectionDetails);
 
                 if (status == ProjectionRunningStatus.Faulted)
-                    return Result.Failure($"Projection {projectionDetails.Name} Status is Faulted");
+                    return new Error(ErrorType.Failure, $"Projection {projectionDetails.Name} Status is Faulted");
 
                 // We need to wait until the query has been run before we continue.
                 if (status == ProjectionRunningStatus.Completed || projectionDetails.Progress >= 100)
@@ -354,10 +353,10 @@ public class EventStoreContext : IEventStoreContext
 
                     if (jsonDocument.RootElement.ToString() == "{}")
                     {
-                        return Result.Success<String>(String.Empty);
+                        return Results.Ok<String>(String.Empty);
                     }
 
-                    return Result.Success<String>(jsonDocument.RootElement.ToString());
+                    return Results.Ok<String>(jsonDocument.RootElement.ToString());
                 }
 
                 await Task.Delay(100, source.Token);
@@ -367,7 +366,7 @@ public class EventStoreContext : IEventStoreContext
         {
             this.LogError(rex);
             Exception ex = new(ProjectionRunningStatus.Faulted.ToString(), rex);
-            return Result.Failure(ex.GetExceptionMessages());
+            return ex.ToFailureErrors();
         }
         finally
         {

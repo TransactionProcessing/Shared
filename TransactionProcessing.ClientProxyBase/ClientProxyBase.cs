@@ -1,7 +1,10 @@
+#nullable enable
+
 using TransactionProcessing.Shared.Logger.TennantContext;
 using TransactionProcessing.UnionResults;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -378,22 +381,22 @@ public abstract class ClientProxyBase {
                                                              CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
-            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+            if (!TryGetValueOrFailure(requestResult, out var requestMessage, out var failure))
                 return failure;
 
             using HttpRequestMessage request = requestMessage;
 
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
-            return await MapNonGenericResult(method, response, cancellationToken);
+            return await MapNonGenericResult(response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
-            return Result.Failure(exception.Message);
+            return Results.Fail(exception.Message);
         }
         catch (HttpRequestException exception) {
-            return Result.CriticalError(exception.Message);
+            return Results.Critical(exception.Message);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
-            return Result.CriticalError(HttpTimeoutErrorMessage);
+            return Results.Critical(HttpTimeoutErrorMessage);
         }
     }
 
@@ -407,21 +410,21 @@ public abstract class ClientProxyBase {
                                                    CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
-            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+            if (!TryGetValueOrFailure(requestResult, out var requestMessage, out var failure))
                 return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
-            return await MapNonGenericResult(method, response, cancellationToken);
+            return await MapNonGenericResult(response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
-            return Result.Failure(exception.Message);
+            return Results.Fail(exception.Message);
         }
         catch (HttpRequestException exception) {
-            return Result.CriticalError(exception.Message);
+            return Results.Critical(exception.Message);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
-            return Result.CriticalError(HttpTimeoutErrorMessage);
+            return Results.Critical(HttpTimeoutErrorMessage);
         }
     }
 
@@ -434,21 +437,21 @@ public abstract class ClientProxyBase {
                                                             CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateMultipartRequest(requestUri, fileData, fileName, formFields, accessToken, additionalHeaders);
-            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+            if (!TryGetValueOrFailure(requestResult, out var requestMessage, out var failure))
                 return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await this.HttpClient.SendAsync(request, cancellationToken);
-            return await this.MapNonGenericResult(HttpMethod.Post, response, cancellationToken);
+            return await MapNonGenericResult(response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
-            return Result.Failure(exception.Message);
+            return Results.Fail(exception.Message);
         }
         catch (HttpRequestException exception) {
-            return Result.CriticalError(exception.Message);
+            return Results.Critical(exception.Message);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
-            return Result.CriticalError(HttpTimeoutErrorMessage);
+            return Results.Critical(HttpTimeoutErrorMessage);
         }
     }
 
@@ -460,21 +463,21 @@ public abstract class ClientProxyBase {
                                                                      CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, body, accessToken, additionalHeaders);
-            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+            if (!TryGetValueOrFailure(requestResult, out var requestMessage, out var failure))
                 return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
-            return await MapGenericResult<TResponse>(method, response, cancellationToken);
+            return await MapGenericResult<TResponse>(response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
-            return Result.Failure(exception.Message);
+            return new Error(ErrorType.Failure, exception.Message);
         }
         catch (HttpRequestException exception) {
-            return Result.CriticalError(exception.Message);
+            return new Error(ErrorType.Critical, exception.Message);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
-            return Result.CriticalError(HttpTimeoutErrorMessage);
+            return new Error(ErrorType.Critical, HttpTimeoutErrorMessage);
         }
     }
 
@@ -486,21 +489,21 @@ public abstract class ClientProxyBase {
                                                                      CancellationToken cancellationToken) {
         try {
             Result<HttpRequestMessage> requestResult = CreateRequest(method, requestUri, content, accessToken, additionalHeaders);
-            if (!requestResult.TryGetValueOrFailure(out var requestMessage, out var failure))
+            if (!TryGetValueOrFailure(requestResult, out var requestMessage, out var failure))
                 return failure;
 
             using HttpRequestMessage request = requestMessage;
             using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken);
-            return await MapGenericResult<TResponse>(method, response, cancellationToken);
+            return await MapGenericResult<TResponse>(response, cancellationToken);
         }
         catch (InvalidOperationException exception) {
-            return Result.Failure(exception.Message);
+            return new Error(ErrorType.Failure, exception.Message);
         }
         catch (HttpRequestException exception) {
-            return Result.CriticalError(exception.Message);
+            return new Error(ErrorType.Critical, exception.Message);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
-            return Result.CriticalError(HttpTimeoutErrorMessage);
+            return new Error(ErrorType.Critical, HttpTimeoutErrorMessage);
         }
     }
 
@@ -510,14 +513,14 @@ public abstract class ClientProxyBase {
                                              string? accessToken,
                                              List<(string header, string value)>? additionalHeaders) {
         if (string.IsNullOrWhiteSpace(requestUri)) {
-            return Result.Invalid("Request URI cannot be null, empty, or whitespace.");
+            return new Error(ErrorType.Validation, "Request URI cannot be null, empty, or whitespace.");
         }
 
         HttpRequestMessage request = new HttpRequestMessage(method, requestUri);
 
         if (accessToken is not null) {
             if (string.IsNullOrWhiteSpace(accessToken)) {
-                return Result.Invalid("Access token cannot be null, empty, or whitespace.");
+                return new Error(ErrorType.Validation, "Access token cannot be null, empty, or whitespace.");
             }
 
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -537,11 +540,11 @@ public abstract class ClientProxyBase {
                 serialisedBody = Serialise(body);
             }
             catch (Exception exception) {
-                return Result.Failure($"The request body could not be serialized: {exception.Message}");
+                return new Error(ErrorType.Failure, $"The request body could not be serialized: {exception.Message}");
             }
 
             if (serialisedBody is null) {
-                return Result.Failure("The request body could not be serialized.");
+                return new Error(ErrorType.Failure, "The request body could not be serialized.");
             }
 
             request.Content = new StringContent(serialisedBody, Encoding.UTF8, "application/json");
@@ -549,11 +552,11 @@ public abstract class ClientProxyBase {
 
         if (additionalHeaders is not null) {
             Result result = AddHeaders(request, additionalHeaders);
-            if (result.IsFailed)
-                return Result<HttpRequestMessage>.FromFailure(result);
+            if (!result.IsSuccess())
+                return ToFailure<HttpRequestMessage>(result);
         }
 
-        return  Result.Success(request);
+        return Results.Ok(request);
     }
 
     private Result<HttpRequestMessage> CreateRequest(HttpMethod method,
@@ -562,21 +565,21 @@ public abstract class ClientProxyBase {
                                              string? accessToken,
                                              List<(string header, string value)>? additionalHeaders) {
         if (content is null) {
-            return Result.Invalid("Request content cannot be null");
+            return new Error(ErrorType.Validation, "Request content cannot be null");
         }
     
         Result<HttpRequestMessage> createRequestResult = CreateRequest(method, requestUri, body: null, accessToken, additionalHeaders: null);
-        if (!createRequestResult.TryGetValueOrFailure(out var request, out var requestFailure))
+        if (!TryGetValueOrFailure(createRequestResult, out var request, out var requestFailure))
             return requestFailure;
         request.Content = content;
 
         if (additionalHeaders is not null) {
             Result result = AddHeaders(request, additionalHeaders);
-            if (result.IsFailed)
-                return Result<HttpRequestMessage>.FromFailure(result);
+            if (!result.IsSuccess())
+                return ToFailure<HttpRequestMessage>(result);
         }
 
-        return Result.Success(request);
+        return Results.Ok(request);
     }
 
     private Result<HttpRequestMessage> CreateMultipartRequest(string requestUri,
@@ -586,45 +589,45 @@ public abstract class ClientProxyBase {
                                                       string accessToken,
                                                       List<(string header, string value)>? additionalHeaders) {
         if (fileData is null) {
-            return Result.Invalid("file data content cannot be null");
+            return new Error(ErrorType.Validation, "file data content cannot be null");
         }
 
         if (string.IsNullOrWhiteSpace(fileName)) {
-            return Result.Invalid("file name cannot be null, empty, or whitespace.");
+            return new Error(ErrorType.Validation, "file name cannot be null, empty, or whitespace.");
         }
 
         if (formFields is null) {
-            return Result.Invalid("form fields cannot be null");
+            return new Error(ErrorType.Validation, "form fields cannot be null");
         }
 
         Result<HttpRequestMessage> createRequestResult = CreateRequest(HttpMethod.Post, requestUri, body: null, accessToken, additionalHeaders: null);
-        if (!createRequestResult.TryGetValueOrFailure(out var request, out var requestFailure))
+        if (!TryGetValueOrFailure(createRequestResult, out var request, out var requestFailure))
             return requestFailure;
         
         Result<MultipartFormDataContent> createMultipartContentResult = CreateMultipartContent(fileData, fileName, formFields);
-        if (!createMultipartContentResult.TryGetValueOrFailure(out var multipartContent, out var contentFailure))
+        if (!TryGetValueOrFailure(createMultipartContentResult, out var multipartContent, out var contentFailure))
             return contentFailure;
 
         request.Content = multipartContent;
 
         if (additionalHeaders is not null) {
             Result result = AddHeaders(request, additionalHeaders);
-            if (result.IsFailed)
-                return Result<HttpRequestMessage>.FromFailure(result);
+            if (!result.IsSuccess())
+                return ToFailure<HttpRequestMessage>(result);
         }
 
-        return Result<HttpRequestMessage>.Ok(request);
+        return Results.Ok(request);
     }
 
     private static Result AddHeaders(HttpRequestMessage request,
                                    List<(string header, string value)> additionalHeaders) {
         foreach ((String header, String value) in additionalHeaders) {
             if (string.IsNullOrWhiteSpace(header)) {
-                return Result.Invalid("Header name cannot be null, empty, or whitespace.");
+                return Results.Validation("Header name cannot be null, empty, or whitespace.");
             }
 
             if (string.IsNullOrWhiteSpace(value)) {
-                return Result.Invalid($"Header value for '{header}' cannot be null, empty, or whitespace.");
+                return Results.Validation($"Header value for '{header}' cannot be null, empty, or whitespace.");
             }
 
             if (string.Equals(header, TenantContext.KeyNameCorrelationId, StringComparison.OrdinalIgnoreCase)
@@ -640,10 +643,10 @@ public abstract class ClientProxyBase {
                 continue;
             }
 
-            return Result.Invalid($"The header '{header}' could not be added to the request.");
+            return Results.Validation($"The header '{header}' could not be added to the request.");
         }
 
-        return Result.Success();
+        return Results.Ok();
     }
 
     private static Result<MultipartFormDataContent> CreateMultipartContent(byte[] fileData,
@@ -657,43 +660,41 @@ public abstract class ClientProxyBase {
 
         foreach ((String field, String value) in formFields) {
             if (string.IsNullOrWhiteSpace(field)) {
-                return Result.Invalid("Form field name cannot be null, empty, or whitespace.");
+                return new Error(ErrorType.Validation, "Form field name cannot be null, empty, or whitespace.");
             }
 
             if (string.IsNullOrWhiteSpace(value)) {
-                return Result.Invalid($"Form field value for '{field}' cannot be null, empty, or whitespace.");
+                return new Error(ErrorType.Validation, $"Form field value for '{field}' cannot be null, empty, or whitespace.");
             }
 
             multipartContent.Add(new StringContent(value), field);
         }
 
-        return Result.Success(multipartContent);
+        return Results.Ok(multipartContent);
     }
 
-    private async Task<Result> MapNonGenericResult(HttpMethod method,
-                                                   HttpResponseMessage response,
+    private static async Task<Result> MapNonGenericResult(HttpResponseMessage response,
                                                    CancellationToken cancellationToken) {
         if (response.IsSuccessStatusCode) {
-            return MapSuccessfulResult(method, response.StatusCode);
+            return Results.Ok();
         }
 
         return await MapFailedResult(response, cancellationToken);
     }
 
-    private async Task<Result<TResponse>> MapGenericResult<TResponse>(HttpMethod method,
-                                                                      HttpResponseMessage response,
+    private async Task<Result<TResponse>> MapGenericResult<TResponse>(HttpResponseMessage response,
                                                                       CancellationToken cancellationToken) {
         if (!response.IsSuccessStatusCode) {
-            return Result<TResponse>.FromFailure(await MapFailedResult(response, cancellationToken));
+            return await MapFailedResult(response, cancellationToken);
         }
 
-        String rawContent = await ReadContent(response, cancellationToken);
+        String? rawContent = await ReadContent(response, cancellationToken);
         if (string.IsNullOrWhiteSpace(rawContent)) {
-            return Result.Failure("The response content was empty.");
+            return new Error(ErrorType.Failure, "The response content was empty.");
         }
 
         if (typeof(TResponse) == typeof(string)) {
-            return Result.Success((TResponse)(object)rawContent);
+            return Results.Ok((TResponse)(object)rawContent);
         }
 
         object deserialisedValue;
@@ -702,55 +703,77 @@ public abstract class ClientProxyBase {
             deserialisedValue = Deserialise(rawContent, typeof(TResponse));
         }
         catch (Exception exception) {
-            return Result.Failure($"The response body could not be deserialized: {exception.Message}");
+            return new Error(ErrorType.Failure, $"The response body could not be deserialized: {exception.Message}");
         }
 
         if (deserialisedValue is null) {
-            return Result.Failure("The response body could not be deserialized.");
+            return new Error(ErrorType.Failure, "The response body could not be deserialized.");
         }
 
         if (deserialisedValue is not TResponse value) {
-            return Result.Failure($"The deserialized response type '{deserialisedValue.GetType().FullName}' is not assignable to '{typeof(TResponse).FullName}'.");
+            return new Error(ErrorType.Failure, $"The deserialized response type '{deserialisedValue.GetType().FullName}' is not assignable to '{typeof(TResponse).FullName}'.");
         }
 
-        return method == HttpMethod.Get ? Result.ObtainedResource(value) : Result.Success(value);
+        return Results.Ok(value);
     }
 
-    private static Result MapSuccessfulResult(HttpMethod method,
-                                              HttpStatusCode statusCode) {
-        if (method == HttpMethod.Delete) {
-            return Result.DeletedResource();
+    private static bool TryGetValueOrFailure<T>(Result<T> result,
+                                                 [MaybeNullWhen(false)] out T value,
+                                                 [NotNullWhen(false)] out ErrorList? failure) {
+        if (result.Value is Success<T> success) {
+            value = success.Value;
+            failure = null;
+            return true;
         }
 
-        if (method == HttpMethod.Post && statusCode == HttpStatusCode.Created) {
-            return Result.CreatedResource();
-        }
-
-        if (method == HttpMethod.Put || method == HttpMethod.Patch) {
-            return Result.UpdatedResource();
-        }
-
-        return Result.Success();
+        value = default;
+        failure = result.Value switch {
+            Error error => new ErrorList([error]),
+            ErrorList errors => errors,
+            _ => new ErrorList([new Error(ErrorType.Critical, "An uninitialized result has no outcome.")])
+        };
+        return false;
     }
 
-    private static async Task<Result> MapFailedResult(HttpResponseMessage response,
+    private static Result<T> ToFailure<T>(Result result) => result.Value switch {
+        Error error => error,
+        ErrorList errors => errors,
+        _ => throw new InvalidOperationException("Only a failed result can be propagated as a failure.")
+    };
+
+    private static async Task<ErrorList> MapFailedResult(HttpResponseMessage response,
                                                       CancellationToken cancellationToken) {
-        String rawContent = await ReadContent(response, cancellationToken);
+        String? rawContent = await ReadContent(response, cancellationToken);
         Result<IReadOnlyList<String>> extractionResult = ExtractErrors(rawContent);
-        if (!extractionResult.TryGetValueOrFailure(out var errorMessages, out var failure))
+        if (!TryGetValueOrFailure(extractionResult, out var errorMessages, out var failure))
             return failure;
 
         String primaryMessage = BuildPrimaryMessage(response, errorMessages);
 
-        return response.StatusCode switch {
-            HttpStatusCode.BadRequest => Result.Invalid(primaryMessage, errorMessages),
-            HttpStatusCode.Unauthorized => Result.Unauthorized(primaryMessage, errorMessages),
-            HttpStatusCode.Forbidden => Result.Forbidden(primaryMessage, errorMessages),
-            HttpStatusCode.NotFound => Result.NotFound(primaryMessage, errorMessages),
-            HttpStatusCode.Conflict => Result.Conflict(primaryMessage, errorMessages),
-            _ when (int)response.StatusCode >= 500 => Result.CriticalError(primaryMessage, errorMessages),
-            _ => Result.Failure(primaryMessage, errorMessages)
+        ErrorType errorType = response.StatusCode switch {
+            HttpStatusCode.BadRequest => ErrorType.Validation,
+            HttpStatusCode.Unauthorized => ErrorType.Unauthorized,
+            HttpStatusCode.Forbidden => ErrorType.Forbidden,
+            HttpStatusCode.NotFound => ErrorType.NotFound,
+            HttpStatusCode.Conflict => ErrorType.Conflict,
+            _ when (int)response.StatusCode >= 500 => ErrorType.Critical,
+            _ => ErrorType.Failure
         };
+
+        List<Error> errors = new List<Error>(errorMessages.Count + 1);
+        if (!string.IsNullOrWhiteSpace(primaryMessage)) {
+            errors.Add(new Error(errorType, primaryMessage));
+        }
+
+        foreach (string message in errorMessages) {
+            errors.Add(new Error(errorType, message));
+        }
+
+        if (errors.Count == 0) {
+            errors.Add(new Error(errorType, "An unspecified error occurred."));
+        }
+
+        return new ErrorList(errors);
     }
 
     private static async Task<string?> ReadContent(HttpResponseMessage response,
@@ -764,20 +787,20 @@ public abstract class ClientProxyBase {
 
     private static Result<IReadOnlyList<string>> ExtractErrors(string? rawContent) {
         if (string.IsNullOrWhiteSpace(rawContent)) {
-            return Result.Success<IReadOnlyList<String>>(new List<String>());
+            return Results.Ok<IReadOnlyList<String>>(new List<String>());
         }
 
         try {
             using JsonDocument document = JsonDocument.Parse(rawContent);
             List<String> errors = new List<string>();
             Result result = AppendErrors(document.RootElement, errors);
-            if (result.IsFailed)
-                return Result<IReadOnlyList<String>>.FromFailure(result);
+            if (!result.IsSuccess())
+                return ToFailure<IReadOnlyList<String>>(result);
 
-            return Result<IReadOnlyList<String>>.Ok(errors.Count == 0 ? [rawContent] : errors);
+            return Results.Ok<IReadOnlyList<String>>(errors.Count == 0 ? [rawContent] : errors);
         }
         catch (JsonException) {
-            return Result.Success<IReadOnlyList<String>>([rawContent]);
+            return Results.Ok<IReadOnlyList<String>>([rawContent]);
         }
     }
 
@@ -804,10 +827,10 @@ public abstract class ClientProxyBase {
                 AddIfPresent(errors, element.GetString());
                 break;
             default:
-                return Result.Invalid($"Invalid Value Kind {element.ValueKind}");
+                return Results.Validation($"Invalid Value Kind {element.ValueKind}");
         }
 
-        return Result.Success();
+        return Results.Ok();
     }
 
     private static void AppendObjectErrors(JsonElement element,
