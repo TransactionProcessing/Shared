@@ -209,6 +209,12 @@ jobs:
                           res.headers["x-request-id"] || "unavailable";
 
                         res.on("data", chunk => data += chunk);
+                        res.on("error", reject);
+                        res.on("aborted", () => {
+                          const error = new Error(`Codacy response stream was aborted for page ${pageNumber}`);
+                          error.code = "ECONNRESET";
+                          reject(error);
+                        });
                         res.on("end", () => {
                           const statusCode = res.statusCode || 0;
                           if (statusCode < 200 || statusCode >= 300) {
