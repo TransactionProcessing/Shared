@@ -1,0 +1,889 @@
+# Shared-only local copy of the org workflow with Codacy request safeguards.
+# Based on TransactionProcessing/org-ci-workflows@5414e378acda7a5cf3430cf63cc65c50a72b23c2.
+# Keep in sync with TransactionProcessing/org-ci-workflows when that workflow changes.
+name: Sync Codacy Issues
+
+on:
+  workflow_call:
+    inputs:
+      codacy_org:
+        required: false
+        type: string
+        default: ""
+      codacy_repo:
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+      severity_filter:
+        required: false
+        type: string
+        default: "Error,High,Warning,Info"
+      extra_labels:
+        required: false
+        type: string
+        default: ""
+      assignees:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      CODACY_API_TOKEN:
+        required: true
+      NEON_DATABASE_URL:
+        required: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: codacy-sync-${{ github.repository }}
+      cancel-in-progress: false
+
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install PostgreSQL client
+        run: npm install --no-save pg
+
+      - name: Sync Codacy -> GitHub
+        uses: actions/github-script@v7
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          CODACY_ORG: ${{ inputs.codacy_org }}
+          CODACY_REPO: ${{ inputs.codacy_repo }}
+          EXTRA_LABELS: ${{ inputs.extra_labels }}
+          ASSIGNEES: ${{ inputs.assignees }}
+          SEVERITY_FILTER: ${{ inputs.severity_filter }}
+          NEON_SIMULATE_DISCONNECT_ONCE: ${{ vars.NEON_SIMULATE_DISCONNECT_ONCE }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const https = require("https");
+            const path = require("path");
+            const { Client } = require("pg");
+
+            const token = process.env.CODACY_API_TOKEN;
+            const dbUrl = process.env.NEON_DATABASE_URL;
+            const dryRun = process.env.DRY_RUN === "true";
+
+            const org = process.env.CODACY_ORG || context.repo.owner;
+            const repoName = process.env.CODACY_REPO || context.repo.repo;
+            const githubRepository = `${context.repo.owner}/${context.repo.repo}`;
+
+            const extraLabels = (process.env.EXTRA_LABELS || "")
+              .split(",")
+              .map(s => s.trim())
+              .filter(Boolean);
+
+            const assignees = (process.env.ASSIGNEES || "")
+              .split(",")
+              .map(s => s.trim())
+              .filter(Boolean);
+
+            const severities = (process.env.SEVERITY_FILTER || "")
+              .split(",")
+              .map(s => s.trim())
+              .filter(Boolean);
+
+            if (!token) throw new Error("Missing CODACY_API_TOKEN");
+            if (!dbUrl) throw new Error("Missing NEON_DATABASE_URL");
+
+            const transientDatabaseErrors = new Set([
+              "08000", "08003", "08006", "08001", "08004", "57P01", "57P02", "57P03"
+            ]);
+            let simulatedDisconnectInjected = false;
+
+            function isTransientDatabaseError(error) {
+              return transientDatabaseErrors.has(error?.code) ||
+                /connection terminated unexpectedly|connection (?:is )?closed|socket hang up|client has already been connected/i.test(error?.message || "");
+            }
+
+            async function queryDatabase(text, values = []) {
+              const maxAttempts = 3;
+
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (process.env.NEON_SIMULATE_DISCONNECT_ONCE === "true" && !simulatedDisconnectInjected) {
+                  simulatedDisconnectInjected = true;
+                  const error = new Error("Simulated Neon administrator connection termination");
+                  error.code = "57P01";
+                  console.warn("Injecting one simulated Neon disconnect to exercise retry handling.");
+                  if (attempt === maxAttempts) throw error;
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                  continue;
+                }
+
+                const db = new Client({
+                  connectionString: dbUrl,
+                  ssl: { rejectUnauthorized: false },
+                  connectionTimeoutMillis: 10000,
+                  query_timeout: 15000
+                });
+                let connectionError;
+                db.on("error", error => {
+                  connectionError = error;
+                });
+
+                try {
+                  await db.connect();
+                  const result = await db.query(text, values);
+                  if (connectionError) throw connectionError;
+                  return result;
+                } catch (error) {
+                  if (!isTransientDatabaseError(error) || attempt === maxAttempts) {
+                    const detail = error?.code ? ` (${error.code})` : "";
+                    throw new Error(`Neon database operation failed after ${attempt} attempt(s)${detail}: ${error.message}`);
+                  }
+
+                  const delayMs = 500 * (2 ** (attempt - 1));
+                  console.warn(`Transient Neon database error${error?.code ? ` ${error.code}` : ""}; retrying in ${delayMs}ms (attempt ${attempt}/${maxAttempts}).`);
+                  await new Promise(resolve => setTimeout(resolve, delayMs));
+                } finally {
+                  if (db._connected) {
+                    await db.end().catch(error => console.warn(`Unable to close Neon connection cleanly: ${error.message}`));
+                  }
+                }
+              }
+            }
+
+            const managedLabelDefinitions = [
+              { name: "codacy", color: "0075ca", description: "Managed by the Codacy issue sync workflow" },
+              { name: "bug", color: "d73a4a", description: "Codacy severity mapped to bug" },
+              { name: "warning", color: "fbca04", description: "Codacy severity mapped to warning" },
+              { name: "security", color: "d93f0b", description: "Codacy security finding" },
+              { name: "performance", color: "fbca04", description: "Codacy performance finding" },
+              { name: "refactor", color: "a2eeef", description: "Codacy refactor finding" }
+            ];
+
+            const managedLabelNames = new Set([
+              ...managedLabelDefinitions.map(label => label.name),
+              ...extraLabels
+            ]);
+
+            function uniq(values) {
+              return [...new Set(values.filter(Boolean))];
+            }
+
+            const CODACY_REQUEST_TIMEOUT_MS = 45000;
+            const CODACY_MAX_ATTEMPTS = 4;
+            const CODACY_RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+            const CODACY_RETRYABLE_NETWORK_CODES = new Set([
+              "ECONNRESET", "ETIMEDOUT", "EAI_AGAIN", "EPIPE", "ECONNREFUSED"
+            ]);
+
+            function codacyPost(apiPath, body, pageNumber) {
+
+              return (async () => {
+                for (let attempt = 1; attempt <= CODACY_MAX_ATTEMPTS; attempt++) {
+                  const startedAt = Date.now();
+
+                  try {
+                    const response = await new Promise((resolve, reject) => {
+                      const payload = JSON.stringify(body);
+                      const req = https.request({
+                        hostname: "app.codacy.com",
+                        path: apiPath,
+                        method: "POST",
+                        signal: AbortSignal.timeout(CODACY_REQUEST_TIMEOUT_MS),
+                        headers: {
+                          "api-token": token,
+                          "content-type": "application/json",
+                          "content-length": Buffer.byteLength(payload)
+                        }
+                      }, res => {
+                        let data = "";
+                        const requestId = res.headers["x-amz-cf-id"] ||
+                          res.headers["x-request-id"] || "unavailable";
+
+                        res.on("data", chunk => data += chunk);
+                        res.on("error", reject);
+                        res.on("aborted", () => {
+                          const error = new Error(`Codacy response stream was aborted for page ${pageNumber}`);
+                          error.code = "ECONNRESET";
+                          reject(error);
+                        });
+                        res.on("end", () => {
+                          const statusCode = res.statusCode || 0;
+                          if (statusCode < 200 || statusCode >= 300) {
+                            const error = new Error(`Codacy API returned HTTP ${statusCode}`);
+                            error.statusCode = statusCode;
+                            error.requestId = requestId;
+                            error.retryAfter = res.headers["retry-after"];
+                            return reject(error);
+                          }
+                          if (!data) return resolve({ data: {}, statusCode, requestId });
+                          try {
+                            return resolve({ data: JSON.parse(data), statusCode, requestId });
+                          } catch {
+                            return reject(new Error(`Unable to parse Codacy response for page ${pageNumber}`));
+                          }
+                        });
+                      });
+
+                      req.on("error", reject);
+                      req.write(payload);
+                      req.end();
+                    });
+
+                    console.log(`Codacy page=${pageNumber} status=${response.statusCode} attempt=${attempt} elapsed_ms=${Date.now() - startedAt} request_id=${response.requestId}`);
+                    return response.data;
+                  } catch (error) {
+                    const statusCode = error.statusCode || 0;
+                    const requestId = error.requestId || "unavailable";
+                    const timedOut = error.name === "TimeoutError" || error.name === "AbortError" || error.code === "ABORT_ERR";
+                    const retryable = CODACY_RETRYABLE_STATUSES.has(statusCode) ||
+                      CODACY_RETRYABLE_NETWORK_CODES.has(error.code) || timedOut;
+
+                    console.warn(`Codacy page=${pageNumber} failed status=${statusCode || "network"} attempt=${attempt} elapsed_ms=${Date.now() - startedAt} request_id=${requestId}${timedOut ? " timeout=true" : ""}`);
+                    if (!retryable || attempt === CODACY_MAX_ATTEMPTS) {
+                      const status = statusCode ? `HTTP ${statusCode}` : (timedOut ? "request timeout" : "network error");
+                      throw new Error(`Codacy request failed for page ${pageNumber} after ${attempt} attempt(s): ${status}; request_id=${requestId}`);
+                    }
+
+                    let retryAfterMs = 0;
+                    if (error.retryAfter) {
+                      const retryAfterSeconds = Number(error.retryAfter);
+                      retryAfterMs = Number.isFinite(retryAfterSeconds) ? retryAfterSeconds * 1000 :
+                        Math.max(0, Date.parse(error.retryAfter) - Date.now());
+                    }
+                    const backoffMs = Math.min(1000 * (2 ** (attempt - 1)), 8000);
+                    const delayMs = Math.min(Math.max(backoffMs, retryAfterMs), 15000);
+                    console.warn(`Retrying Codacy page=${pageNumber} in ${delayMs}ms (attempt ${attempt + 1}/${CODACY_MAX_ATTEMPTS}).`);
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                  }
+                }
+              })();
+            }
+
+            async function fetchCodacyIssues() {
+              const api = `/api/v3/analysis/organizations/gh/${org}/repositories/${repoName}/issues/search`;
+              const pageSize = 100;
+              const allIssues = [];
+              const seenCursors = new Set();
+              let cursor;
+
+              for (let pageNumber = 1; ; pageNumber++) {
+                const query = new URLSearchParams({ limit: String(pageSize) });
+                if (cursor) {
+                  query.set("cursor", cursor);
+                }
+
+                const response = await codacyPost(`${api}?${query.toString()}`, {
+                  levels: severities
+                }, pageNumber);
+
+                const page = response.data;
+                if (!Array.isArray(page)) {
+                  throw new Error(`Codacy returned an invalid issue page ${pageNumber}`);
+                }
+                allIssues.push(...page);
+
+                const nextCursor = response.pagination?.cursor;
+                console.log(`Codacy pagination page=${pageNumber} items=${page.length} total=${response.pagination?.total ?? "unknown"} has_next=${Boolean(nextCursor)}`);
+
+                if (!nextCursor) {
+                  break;
+                }
+                if (seenCursors.has(nextCursor)) {
+                  throw new Error(`Codacy repeated pagination cursor after page ${pageNumber}`);
+                }
+                seenCursors.add(nextCursor);
+                cursor = nextCursor;
+              }
+
+              return allIssues;
+            }
+
+            function buildCodacyIssueUrl(ci) {
+              return `https://app.codacy.com/gh/${org}/${repoName}/issues/${ci.issueId}`;
+            }
+
+            function getCodeSnippet(ci) {
+              const candidates = [
+                ci.codeSnippet,
+                ci.snippet,
+                ci.patternInfo?.codeSnippet,
+                ci.location?.codeSnippet,
+                ci.location?.snippet
+              ];
+
+              return candidates.find(value => typeof value === "string" && value.trim().length > 0)?.trim();
+            }
+
+            function getSnippetLanguage(filePath) {
+              if (!filePath) {
+                return "";
+              }
+
+              const fileName = path.basename(filePath);
+              const ext = path.extname(fileName).slice(1).toLowerCase();
+
+              if (!ext) {
+                return "";
+              }
+
+              const map = {
+                js: "javascript",
+                jsx: "javascript",
+                mjs: "javascript",
+                cjs: "javascript",
+                ts: "typescript",
+                tsx: "typescript",
+                py: "python",
+                rb: "ruby",
+                go: "go",
+                java: "java",
+                kt: "kotlin",
+                kts: "kotlin",
+                rs: "rust",
+                php: "php",
+                sh: "bash",
+                bash: "bash",
+                zsh: "bash",
+                ps1: "powershell",
+                yml: "yaml",
+                yaml: "yaml",
+                json: "json",
+                md: "markdown",
+                html: "html",
+                htm: "html",
+                css: "css",
+                scss: "scss",
+                sql: "sql",
+                xml: "xml",
+                scala: "scala",
+                cs: "csharp",
+                cpp: "cpp",
+                cxx: "cpp",
+                cc: "cpp",
+                h: "c",
+                hpp: "cpp",
+                swift: "swift",
+                dart: "dart",
+                lua: "lua",
+                toml: "toml"
+              };
+
+              return map[ext] || "";
+            }
+
+            function getCodacyIssueIdFromText(text) {
+              if (!text) {
+                return "";
+              }
+
+              const patterns = [
+                /<!--\s*codacy-dedupe:\s*([^>\s]+)\s*-->/i,
+                /Codacy Issue ID:\s*`?([^\n`<]+)`?/i,
+                /Codacy issue ID:\s*`?([^\n`<]+)`?/i,
+                /Last Codacy issueId:\s*([^\n`<]+)\s*/i,
+                /Sync key:\s*`?[^`]*::([^`\n<]+)`?/i
+              ];
+
+              for (const pattern of patterns) {
+                const match = text.match(pattern);
+                if (match?.[1]) {
+                  return match[1].trim();
+                }
+              }
+
+              return "";
+            }
+
+            function getCodacyIssueIdFromLabels(labels = []) {
+              const label = labels.find(item => item?.name?.startsWith("codacy:"));
+              return label?.name?.replace("codacy:", "") || "";
+            }
+
+            function getCodacyIssueIdFromIssue(issue) {
+              return (
+                getCodacyIssueIdFromText(issue.body) ||
+                getCodacyIssueIdFromLabels(issue.labels) ||
+                ""
+              );
+            }
+
+            function mapSeverity(p) {
+              const s = (p?.severityLevel || "").toLowerCase();
+              if (s.includes("high") || s.includes("error")) return "bug";
+              if (s.includes("warning")) return "warning";
+              if (s.includes("security")) return "security";
+              if (s.includes("performance")) return "performance";
+              if (s.includes("refactor")) return "refactor";
+              return "codacy";
+            }
+
+            function buildBody(ci) {
+              const snippet = getCodeSnippet(ci);
+              const snippetLanguage = getSnippetLanguage(ci.filePath);
+              const labels = [
+                `- Repository: \`${githubRepository}\``,
+                `- Codacy org: \`${org}\``,
+                `- Codacy repo: \`${repoName}\``,
+                `- Codacy issue ID: \`${ci.issueId}\``,
+                `- Codacy issue: ${buildCodacyIssueUrl(ci)}`,
+                `- File: \`${ci.filePath || "unknown"}\``,
+                `- Line: ${ci.lineNumber ?? "unknown"}`,
+                `- Rule: \`${ci.patternInfo?.id || "unknown"}\``,
+                `- Severity: \`${ci.patternInfo?.severityLevel || "unknown"}\``
+              ];
+
+              const body = [
+                "## Codacy finding",
+                "",
+                ...labels,
+                "",
+                `**Message:** ${ci.message || "No message supplied by Codacy"}`
+              ];
+
+              if (snippet) {
+                body.push(
+                  "",
+                  "<details>",
+                  "<summary>Code snippet</summary>",
+                  "",
+                  `\`\`\`${snippetLanguage}`,
+                  snippet,
+                  "```",
+                  "",
+                  "</details>"
+                );
+              }
+
+              body.push(
+                "",
+                "<details>",
+                "<summary>Sync metadata</summary>",
+                "",
+                `Sync key: \`${githubRepository}::${org}/${repoName}::${ci.issueId}\``,
+                "</details>"
+              );
+
+              return body.join("\n");
+            }
+
+            function buildLabels(ci) {
+              return uniq([
+                "codacy",
+                mapSeverity(ci.patternInfo),
+                ...extraLabels
+              ]);
+            }
+
+            function mergeLabels(existingLabels, desiredLabels) {
+              const existingNames = (existingLabels || []).map(label => label.name || label);
+              const preserved = existingNames.filter(name => !managedLabelNames.has(name));
+              return uniq([...preserved, ...desiredLabels]);
+            }
+
+            async function ensureSchema() {
+              await queryDatabase(`
+                create table if not exists codacy_issue_sync (
+                  github_repository text not null,
+                  codacy_org text not null,
+                  codacy_repo text not null,
+                  codacy_issue_id text not null,
+                  github_issue_number bigint not null,
+                  active boolean not null default true,
+                  first_seen_at timestamptz not null default now(),
+                  last_seen_at timestamptz not null default now(),
+                  closed_at timestamptz,
+                  updated_at timestamptz not null default now(),
+                  primary key (github_repository, codacy_org, codacy_repo, codacy_issue_id)
+                );
+              `);
+
+              await queryDatabase(`
+                create index if not exists codacy_issue_sync_repo_active_idx
+                on codacy_issue_sync (github_repository, codacy_org, codacy_repo, active);
+              `);
+            }
+
+            async function loadState() {
+              const result = await queryDatabase(
+                `
+                  select github_repository, codacy_org, codacy_repo, codacy_issue_id, github_issue_number, active
+                  from codacy_issue_sync
+                  where github_repository = $1
+                    and codacy_org = $2
+                    and codacy_repo = $3
+                `,
+                [githubRepository, org, repoName]
+              );
+
+              return new Map(
+                result.rows.map(row => [row.codacy_issue_id, row])
+              );
+            }
+
+            async function bootstrapExistingState() {
+              const existing = await queryDatabase(
+                `
+                  select count(*)::int as count
+                  from codacy_issue_sync
+                  where github_repository = $1
+                    and codacy_org = $2
+                    and codacy_repo = $3
+                `,
+                [githubRepository, org, repoName]
+              );
+
+              if ((existing.rows[0]?.count || 0) > 0) {
+                return;
+              }
+
+              const issues = await github.paginate(
+                github.rest.issues.listForRepo,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: "all",
+                  labels: "codacy",
+                  per_page: 100
+                }
+              );
+
+              for (const issue of issues) {
+                const codacyIssueId = getCodacyIssueIdFromIssue(issue);
+                if (!codacyIssueId) {
+                  continue;
+                }
+
+                if (!dryRun) {
+                  await queryDatabase(
+                    `
+                      insert into codacy_issue_sync (
+                        github_repository,
+                        codacy_org,
+                        codacy_repo,
+                        codacy_issue_id,
+                        github_issue_number,
+                        active,
+                        first_seen_at,
+                        last_seen_at,
+                        closed_at,
+                        updated_at
+                      )
+                      values ($1, $2, $3, $4, $5, $6, now(), now(), $7, now())
+                      on conflict (github_repository, codacy_org, codacy_repo, codacy_issue_id)
+                      do update set
+                        github_issue_number = excluded.github_issue_number,
+                        active = excluded.active,
+                        last_seen_at = excluded.last_seen_at,
+                        closed_at = excluded.closed_at,
+                        updated_at = excluded.updated_at;
+                    `,
+                    [
+                      githubRepository,
+                      org,
+                      repoName,
+                      codacyIssueId,
+                      issue.number,
+                      issue.state === "open",
+                      issue.state === "closed" ? new Date().toISOString() : null
+                    ]
+                  );
+                }
+              }
+            }
+
+            async function ensureLabels() {
+              if (dryRun) {
+                return;
+              }
+
+              for (const label of managedLabelDefinitions) {
+                try {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description
+                  });
+                } catch (error) {
+                  if (error.status !== 422) {
+                    throw error;
+                  }
+                }
+              }
+
+              for (const name of extraLabels) {
+                try {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name,
+                    color: "ededed",
+                    description: "Added by the Codacy issue sync workflow"
+                  });
+                } catch (error) {
+                  if (error.status !== 422) {
+                    throw error;
+                  }
+                }
+              }
+            }
+
+            async function getIssue(issueNumber) {
+              try {
+                const response = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+
+                return response.data;
+              } catch (error) {
+                if (error.status === 404) {
+                  return null;
+                }
+
+                throw error;
+              }
+            }
+
+            async function saveRecord(ci, issueNumber, active) {
+              if (dryRun) {
+                return;
+              }
+
+              await queryDatabase(
+                `
+                  insert into codacy_issue_sync (
+                    github_repository,
+                    codacy_org,
+                    codacy_repo,
+                    codacy_issue_id,
+                    github_issue_number,
+                    active,
+                    first_seen_at,
+                    last_seen_at,
+                    closed_at,
+                    updated_at
+                  )
+                  values ($1, $2, $3, $4, $5, $6, now(), now(), $7, now())
+                  on conflict (github_repository, codacy_org, codacy_repo, codacy_issue_id)
+                  do update set
+                    github_issue_number = excluded.github_issue_number,
+                    active = excluded.active,
+                    last_seen_at = excluded.last_seen_at,
+                    closed_at = excluded.closed_at,
+                    updated_at = excluded.updated_at;
+                `,
+                [
+                  githubRepository,
+                  org,
+                  repoName,
+                  String(ci.issueId),
+                  issueNumber,
+                  active,
+                  active ? null : new Date().toISOString()
+                ]
+              );
+            }
+
+            async function closeRecord(record, issue) {
+              if (dryRun) {
+                return;
+              }
+
+              await queryDatabase(
+                `
+                  update codacy_issue_sync
+                  set active = false,
+                      closed_at = coalesce(closed_at, now()),
+                      updated_at = now()
+                  where github_repository = $1
+                    and codacy_org = $2
+                    and codacy_repo = $3
+                    and codacy_issue_id = $4;
+                `,
+                [githubRepository, org, repoName, record.codacy_issue_id]
+              );
+
+              if (issue?.state === "open") {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: record.github_issue_number,
+                  state: "closed"
+                });
+              }
+
+              if (record.active && issue?.state === "open") {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: record.github_issue_number,
+                  body: [
+                    "Auto-closed because Codacy no longer reports this finding.",
+                    "",
+                    `Codacy issue ID: ${record.codacy_issue_id}`,
+                    `Repository: ${githubRepository}`
+                  ].join("\n")
+                });
+              }
+            }
+
+            const stats = {
+              created: 0,
+              updated: 0,
+              reopened: 0,
+              closed: 0,
+              bootstrapped: 0
+            };
+
+              await ensureSchema();
+              await bootstrapExistingState();
+              await ensureLabels();
+
+              const codacyIssues = await fetchCodacyIssues();
+              const state = await loadState();
+              const activeIssueIds = new Set(codacyIssues.map(issue => String(issue.issueId)));
+
+              for (const ci of codacyIssues) {
+                const codacyIssueId = String(ci.issueId);
+                const title = `[Codacy] ${ci.message}`;
+                const body = buildBody(ci);
+                const desiredLabels = buildLabels(ci);
+                const existingRecord = state.get(codacyIssueId);
+
+                if (!existingRecord) {
+                  if (!dryRun) {
+                    // Recover an issue created before a prior run lost its Neon connection.
+                    const existingIssues = await github.paginate(github.rest.issues.listForRepo, {
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      state: "all",
+                      labels: "codacy",
+                      per_page: 100
+                    });
+                    const recoveredIssue = existingIssues.find(issue =>
+                      getCodacyIssueIdFromIssue(issue) === codacyIssueId
+                    );
+                    const issue = recoveredIssue || (await github.rest.issues.create({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      title,
+                      body,
+                      labels: desiredLabels,
+                      assignees
+                    })).data;
+
+                    await saveRecord(ci, issue.number, true);
+                  }
+
+                  stats.created++;
+                  continue;
+                }
+
+                const issue = await getIssue(existingRecord.github_issue_number);
+
+                if (!issue) {
+                  if (!dryRun) {
+                    const existingIssues = await github.paginate(github.rest.issues.listForRepo, {
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      state: "all",
+                      labels: "codacy",
+                      per_page: 100
+                    });
+                    const recoveredIssue = existingIssues.find(candidate =>
+                      getCodacyIssueIdFromIssue(candidate) === codacyIssueId
+                    );
+                    const replacementIssue = recoveredIssue || (await github.rest.issues.create({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      title,
+                      body,
+                      labels: desiredLabels,
+                      assignees
+                    })).data;
+
+                    await saveRecord(ci, replacementIssue.number, true);
+                  }
+
+                  stats.created++;
+                  continue;
+                }
+
+                const mergedLabels = mergeLabels(issue.labels, desiredLabels);
+                const currentLabels = uniq((issue.labels || []).map(label => label.name)).sort();
+                const nextLabels = uniq(mergedLabels).sort();
+                const needsTitleUpdate = issue.title !== title;
+                const needsBodyUpdate = issue.body !== body;
+                const needsLabelUpdate = currentLabels.join("\u0000") !== nextLabels.join("\u0000");
+                const needsReopen = issue.state === "closed";
+
+                if (dryRun) {
+                  if (needsReopen) {
+                    stats.reopened++;
+                  }
+                  if (needsTitleUpdate || needsBodyUpdate || needsLabelUpdate) {
+                    stats.updated++;
+                  }
+                  continue;
+                }
+
+                if (needsTitleUpdate || needsBodyUpdate || needsLabelUpdate || needsReopen) {
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    title,
+                    body,
+                    labels: mergedLabels,
+                    state: "open"
+                  });
+
+                  if (needsReopen) {
+                    stats.reopened++;
+                  } else if (needsTitleUpdate || needsBodyUpdate || needsLabelUpdate) {
+                    stats.updated++;
+                  }
+                }
+
+                await saveRecord(ci, issue.number, true);
+              }
+
+              const recordsToClose = [...state.values()]
+                .filter(record => !activeIssueIds.has(String(record.codacy_issue_id)));
+
+              for (const record of recordsToClose) {
+                if (dryRun) {
+                  stats.closed++;
+                  continue;
+                }
+
+                const issue = await getIssue(record.github_issue_number);
+
+                if (!issue) {
+                  await closeRecord(record, null);
+                  stats.closed++;
+                  continue;
+                }
+
+                if (!record.active && issue.state === "closed") {
+                  continue;
+                }
+
+                await closeRecord(record, issue);
+                stats.closed++;
+              }
+
+              console.log(JSON.stringify(stats, null, 2));
+
