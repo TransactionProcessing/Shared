@@ -19,7 +19,7 @@ namespace TransactionProcessing.CertificateDefaults.Tests;
 public sealed class CertificateDefaultsIntegrationTests
 {
     private const string KestrelPathKey = "ServiceOptions:KestrelOptions:Path";
-    private const string KestrelPasswordKey = "ServiceOptions:KestrelOptions:Password";
+    private const string KestrelPasswordKey = "ServiceOptions:KestrelOptions:" + nameof(TestCertificates.Password);
 
     [Theory]
     [InlineData(false)]
@@ -246,11 +246,11 @@ public sealed class CertificateDefaultsIntegrationTests
         public string? Thumbprint { get; private set; }
         public string? FailureReason { get; private set; }
 
-        public bool Invoke(object? _, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors errors)
+        public bool Invoke(object? sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors errors)
         {
             if (certificate is null || chain is null || (errors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
             {
-                FailureReason = $"Certificate or chain was missing, or hostname validation failed: {errors}.";
+                FailureReason = $"Certificate or chain was missing, or hostname validation failed: {errors}. Sender: {sender?.GetType().Name ?? "unknown"}.";
                 return false;
             }
 
