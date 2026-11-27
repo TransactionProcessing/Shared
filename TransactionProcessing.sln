@@ -29,8 +29,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TransactionProcessing.Share
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TransactionProcessing.Shared.IntegrationTesting.UnitTests", "TransactionProcessing.Shared.IntegrationTesting.UnitTests\TransactionProcessing.Shared.IntegrationTesting.UnitTests.csproj", "{5E23CBBB-8484-4F7F-81D9-308957783695}"
 EndProject
-EndProject
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionProcessing.Shared.Logger", "TransactionProcessing.Shared.Logger\TransactionProcessing.Shared.Logger.csproj", "{9A7AF486-C3B6-463D-812E-DD6D5517C7F3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AAF925EC-8E2D-40EA-BA77-87B097A949D8}"
@@ -55,6 +53,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionProcessing.UnionResults.Tests", "tests\TransactionProcessing.UnionResults.Tests\TransactionProcessing.UnionResults.Tests.csproj", "{2A954CE8-4D99-48B2-9C3E-B8398C8CE8B1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionProcessing.UnionResults.AspNetCore.Tests", "tests\TransactionProcessing.UnionResults.AspNetCore.Tests\TransactionProcessing.UnionResults.AspNetCore.Tests.csproj", "{ADD3182E-87D9-49FD-8B47-277B6A7BD84D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionProcessing.CertificateDefaults", "TransactionProcessing.CertificateDefaults\TransactionProcessing.CertificateDefaults.csproj", "{CF14DB76-CBD2-446E-9A63-0733075E8515}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionProcessing.CertificateDefaults.Tests", "TransactionProcessing.CertificateDefaults.Tests\TransactionProcessing.CertificateDefaults.Tests.csproj", "{CDC286F7-05D8-402C-B5CA-3BC164C3D061}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionProcessing.CertificateDefaults.Sample", "TransactionProcessing.CertificateDefaults.Sample\TransactionProcessing.CertificateDefaults.Sample.csproj", "{FDDC66CF-3D0F-474C-8BEF-221B707641EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -142,6 +146,18 @@ Global
 		{ADD3182E-87D9-49FD-8B47-277B6A7BD84D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADD3182E-87D9-49FD-8B47-277B6A7BD84D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADD3182E-87D9-49FD-8B47-277B6A7BD84D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF14DB76-CBD2-446E-9A63-0733075E8515}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF14DB76-CBD2-446E-9A63-0733075E8515}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF14DB76-CBD2-446E-9A63-0733075E8515}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF14DB76-CBD2-446E-9A63-0733075E8515}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDC286F7-05D8-402C-B5CA-3BC164C3D061}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDC286F7-05D8-402C-B5CA-3BC164C3D061}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDC286F7-05D8-402C-B5CA-3BC164C3D061}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDC286F7-05D8-402C-B5CA-3BC164C3D061}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDDC66CF-3D0F-474C-8BEF-221B707641EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDDC66CF-3D0F-474C-8BEF-221B707641EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDDC66CF-3D0F-474C-8BEF-221B707641EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDDC66CF-3D0F-474C-8BEF-221B707641EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
