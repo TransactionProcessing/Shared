@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>TransactionProcessing.CertificateDefaults</PackageId>
+    <Description>Kestrel HTTPS certificate defaults for Transaction Processing services.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>ASP.NET Core;Kestrel;HTTPS;TLS;Certificates</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>
