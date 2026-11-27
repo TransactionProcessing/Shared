@@ -65,6 +65,9 @@ jobs:
         dotnet pack "TransactionProcessing.ApiDefaults/TransactionProcessing.ApiDefaults.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
         dotnet nuget push Nugets/TransactionProcessing.ApiDefaults.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
 
+        dotnet pack "TransactionProcessing.CertificateDefaults/TransactionProcessing.CertificateDefaults.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets
+        dotnet nuget push Nugets/TransactionProcessing.CertificateDefaults.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+
   create-shared-issue:
     needs: build
     uses: TransactionProcessing/org-ci-workflows/.github/workflows/reusable-create-shared-issue.yml@main

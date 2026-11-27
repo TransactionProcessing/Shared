@@ -18,6 +18,9 @@ namespace TransactionProcessing.CertificateDefaults.Tests;
 
 public sealed class CertificateDefaultsIntegrationTests
 {
+    private const string KestrelPathKey = "ServiceOptions:KestrelOptions:Path";
+    private const string KestrelPasswordKey = "ServiceOptions:KestrelOptions:Password";
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -88,12 +91,12 @@ public sealed class CertificateDefaultsIntegrationTests
         var settings = new Dictionary<string, string?>();
         if (path is not null)
         {
-            settings["ServiceOptions:KestrelOptions:Path"] = path;
+            settings[KestrelPathKey] = path;
         }
 
         if (password is not null)
         {
-            settings["ServiceOptions:KestrelOptions:Password"] = password;
+            settings[KestrelPasswordKey] = password;
         }
 
         builder.Configuration.AddInMemoryCollection(settings);
@@ -108,8 +111,8 @@ public sealed class CertificateDefaultsIntegrationTests
         var builder = WebApplication.CreateBuilder();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["ServiceOptions:KestrelOptions:Path"] = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pfx"),
-            ["ServiceOptions:KestrelOptions:Password"] = "test-password"
+            [KestrelPathKey] = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pfx"),
+            [KestrelPasswordKey] = "invalid-test-input"
         });
         Exception exception = Should.Throw<Exception>(
             () => builder.WebHost.ConfigureTransactionProcessingHttps());
@@ -126,8 +129,8 @@ public sealed class CertificateDefaultsIntegrationTests
             var builder = WebApplication.CreateBuilder();
             builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ServiceOptions:KestrelOptions:Path"] = path,
-                ["ServiceOptions:KestrelOptions:Password"] = "test-password"
+                [KestrelPathKey] = path,
+                [KestrelPasswordKey] = "invalid-test-input"
             });
 
             Should.Throw<CryptographicException>(
@@ -146,7 +149,7 @@ public sealed class CertificateDefaultsIntegrationTests
         var builder = WebApplication.CreateBuilder();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["ServiceOptions:KestrelOptions:Path"] = testCertificates.FullChainPath,
+            [KestrelPathKey] = testCertificates.FullChainPath,
             ["ServiceOptions:KestrelOptions:KeyPath"] = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".key")
         });
 
@@ -159,8 +162,8 @@ public sealed class CertificateDefaultsIntegrationTests
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
         var settings = new Dictionary<string, string?>
         {
-            ["ServiceOptions:KestrelOptions:Path"] = certificatePath,
-            ["ServiceOptions:KestrelOptions:Password"] = keyPath is null ? password : null,
+            [KestrelPathKey] = certificatePath,
+            [KestrelPasswordKey] = keyPath is null ? password : null,
             ["ServiceOptions:KestrelOptions:KeyPath"] = keyPath
         };
         builder.Configuration.AddInMemoryCollection(settings);
@@ -243,7 +246,7 @@ public sealed class CertificateDefaultsIntegrationTests
         public string? Thumbprint { get; private set; }
         public string? FailureReason { get; private set; }
 
-        public bool Invoke(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors errors)
+        public bool Invoke(object? _, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors errors)
         {
             if (certificate is null || chain is null || (errors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
             {

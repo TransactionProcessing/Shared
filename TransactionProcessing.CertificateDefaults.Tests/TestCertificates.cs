@@ -6,8 +6,6 @@ namespace TransactionProcessing.CertificateDefaults.Tests;
 
 internal sealed class TestCertificates : IDisposable
 {
-    private const string PfxPassword = "test-certificate-password";
-
     private readonly RSA rootKey = RSA.Create(2048);
     private readonly RSA intermediateKey = RSA.Create(2048);
     private readonly RSA leafKey = RSA.Create(2048);
@@ -15,6 +13,7 @@ internal sealed class TestCertificates : IDisposable
 
     public TestCertificates()
     {
+        Password = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         DateTimeOffset notBefore = DateTimeOffset.UtcNow.AddMinutes(-5);
         DateTimeOffset notAfter = DateTimeOffset.UtcNow.AddDays(2);
 
@@ -56,7 +55,7 @@ internal sealed class TestCertificates : IDisposable
             Leaf,
             X509CertificateLoader.LoadCertificate(Intermediate.RawData)
         };
-        File.WriteAllBytes(PfxPath, pfxCertificates.Export(X509ContentType.Pkcs12, PfxPassword)!);
+        File.WriteAllBytes(PfxPath, pfxCertificates.Export(X509ContentType.Pkcs12, Password)!);
         foreach (X509Certificate2 certificate in pfxCertificates.Skip(1))
         {
             certificate.Dispose();
@@ -71,7 +70,7 @@ internal sealed class TestCertificates : IDisposable
     public string PfxPath { get; }
     public string FullChainPath { get; }
     public string PrivateKeyPath { get; }
-    public string Password => PfxPassword;
+    public string Password { get; }
 
     public void Dispose()
     {

@@ -10,6 +10,7 @@ internal sealed class KestrelCertificateSet : IDisposable
 {
     private readonly List<X509Certificate2> certificates = [];
     private bool disposed;
+    private static readonly TimeSpan PemRegexTimeout = TimeSpan.FromSeconds(1);
 
     public X509Certificate2? ServerCertificate { get; private set; }
 
@@ -150,13 +151,15 @@ internal sealed class KestrelCertificateSet : IDisposable
         foreach (Match match in Regex.Matches(
             pemContent,
             "-----BEGIN CERTIFICATE-----\\s*(?<data>[A-Za-z0-9+/=\\s]+?)\\s*-----END CERTIFICATE-----",
-            RegexOptions.CultureInvariant))
+            RegexOptions.CultureInvariant,
+            PemRegexTimeout))
         {
             string base64 = Regex.Replace(
                 match.Groups["data"].Value,
                 "\\s",
                 string.Empty,
-                RegexOptions.CultureInvariant);
+                RegexOptions.CultureInvariant,
+                PemRegexTimeout);
             imported.Add(X509CertificateLoader.LoadCertificate(Convert.FromBase64String(base64)));
         }
 
