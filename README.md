@@ -18,6 +18,7 @@ Reusable .NET libraries for transaction-processing services, including logging, 
 | `TransactionProcessing.Shared.IntegrationTesting` | Docker and integration-test helpers | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.IntegrationTesting.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.IntegrationTesting) |
 | `TransactionProcessing.Shared.Logger` | Logging and correlation context | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.Shared.Logger.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.Shared.Logger) |
 | `TransactionProcessing.ApiDefaults` | Minimal API versioning, OpenAPI, and Scalar defaults | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.ApiDefaults.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.ApiDefaults) |
+| `TransactionProcessing.CertificateDefaults` | Kestrel HTTPS certificate configuration for PFX or PEM | [![Version](https://img.shields.io/feedz/v/transactionprocessing/nugets/TransactionProcessing.CertificateDefaults.svg?label=Version)](https://feedz.io/portal/org/transactionprocessing/repository/nugets/packages/TransactionProcessing.CertificateDefaults) |
 
 ## Requirements
 
@@ -45,6 +46,27 @@ Other packages can be installed independently depending on the functionality req
 - EventStore/KurrentDB integration
 - Reusable integration-testing infrastructure
 - Shared URL-based API versioning, per-version OpenAPI documents, and Scalar UI (`TransactionProcessing.ApiDefaults`)
+- Kestrel HTTPS certificate configuration for PFX or PEM certificate chains (`TransactionProcessing.CertificateDefaults`)
+
+## Kestrel certificate defaults
+
+`TransactionProcessing.CertificateDefaults` is an opt-in ASP.NET Core package targeting .NET 11. Install it in a web host:
+
+```bash
+dotnet add package TransactionProcessing.CertificateDefaults
+```
+
+Enable Kestrel certificate loading in the host:
+
+```csharp
+using TransactionProcessing.CertificateDefaults;
+
+builder.WebHost.ConfigureTransactionProcessingHttps();
+```
+
+The package reads `ServiceOptions:KestrelOptions`: configure `Path` and `Password` for a password-protected PFX, or `Path` and `KeyPath` for a PEM full chain and separate private key. Keep listener URLs in standard Kestrel or `ASPNETCORE_URLS` configuration. Outbound `AddHttpClient` registrations use normal operating-system certificate trust and hostname validation.
+
+See the [CertificateDefaults package guide](TransactionProcessing.CertificateDefaults/README.md) for secret handling, file permissions, full-chain requirements, restart-based rotation, and the runnable sample.
 
 ## API defaults sample
 
