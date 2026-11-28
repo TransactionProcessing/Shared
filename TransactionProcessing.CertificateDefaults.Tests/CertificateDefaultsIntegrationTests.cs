@@ -145,6 +145,7 @@ public sealed class CertificateDefaultsIntegrationTests
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             [KestrelPathKey] = testCertificates.FullChainPath,
+            [KestrelPasswordKey] = string.Empty,
             ["ServiceOptions:KestrelOptions:KeyPath"] = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".key")
         });
 
