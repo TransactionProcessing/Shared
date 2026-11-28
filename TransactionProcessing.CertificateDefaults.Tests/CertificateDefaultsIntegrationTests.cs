@@ -88,16 +88,11 @@ public sealed class CertificateDefaultsIntegrationTests
         string expectedMessage)
     {
         var builder = WebApplication.CreateBuilder();
-        var settings = new Dictionary<string, string?>();
-        if (path is not null)
+        var settings = new Dictionary<string, string?>
         {
-            settings[KestrelPathKey] = path;
-        }
-
-        if (password is not null)
-        {
-            settings[KestrelPasswordKey] = password;
-        }
+            [KestrelPathKey] = path ?? string.Empty,
+            [KestrelPasswordKey] = password ?? string.Empty
+        };
 
         builder.Configuration.AddInMemoryCollection(settings);
         InvalidOperationException exception = Should.Throw<InvalidOperationException>(
