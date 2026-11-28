@@ -183,7 +183,7 @@ internal sealed class KestrelCertificateSet : IDisposable
                 X509Certificate2 persistedCertificate = X509CertificateLoader.LoadPkcs12(
                     temporaryPfx,
                     temporaryPassword,
-                    X509KeyStorageFlags.EphemeralKeySet);
+                    X509KeyStorageFlags.UserKeySet);
                 serverCertificate.Dispose();
                 serverCertificate = persistedCertificate;
             }
@@ -223,5 +223,7 @@ internal sealed class KestrelCertificateSet : IDisposable
         }
     }
 
-    private static X509KeyStorageFlags GetKeyStorageFlags() => X509KeyStorageFlags.EphemeralKeySet;
+    private static X509KeyStorageFlags GetKeyStorageFlags() => OperatingSystem.IsWindows()
+        ? X509KeyStorageFlags.UserKeySet
+        : X509KeyStorageFlags.EphemeralKeySet;
 }
